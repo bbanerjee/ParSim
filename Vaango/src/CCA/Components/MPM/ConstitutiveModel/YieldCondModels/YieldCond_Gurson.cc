@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -327,10 +327,10 @@ YieldCond_Gurson::computeTangentModulus(const TangentModulusTensor& Ce,
                                         double h_q2,
                                         TangentModulusTensor& Cep)
 {
-  // cerr << getpid() << " Ce = " << Ce;
-  // cerr << getpid() << " f_sigma = " << f_sigma << endl;
-  // cerr << getpid() << " f_q1 = " << f_q1 << " f_q2 = " << f_q2 << endl;
-  // cerr << getpid() << " h_q1 = " << h_q1 << " h_q2 = " << h_q2 << endl <<
+  // std::cerr <<  getpid() << " Ce = " << Ce;
+  // std::cerr <<  getpid() << " f_sigma = " << f_sigma << std::endl;
+  // std::cerr <<  getpid() << " f_q1 = " << f_q1 << " f_q2 = " << f_q2 << std::endl;
+  // std::cerr <<  getpid() << " h_q1 = " << h_q1 << " h_q2 = " << h_q2 << std::endl <<
   // endl;
   double fqhq = f_q1 * h_q1 + f_q2 * h_q2;
   Matrix3 Cr(0.0), rC(0.0);

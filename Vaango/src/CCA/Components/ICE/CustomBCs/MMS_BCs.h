@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,45 +26,44 @@
 #define Packages_Uintah_CCA_Components_Ice_CustomBCs_MMS_BC_h
 
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Labels/ICELabel.h>
+#include <CCA/Components/ICE/Core/ICELabel.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimulationStateP.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManagerP.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <typeinfo>
 
-using namespace Uintah;
 namespace Uintah {
 
   //_____________________________________________________________
   // This struct contains misc. global variables that are needed
   // by most setBC routines.
-  struct mms_variable_basket{
+  struct mms_globalVars{
     double A;
     double viscosity;
     double gamma;
     double cv;
-    string whichMMS;
-    double delT;
+    std::string whichMMS;
   };    
   //____________________________________________________________
-  // This struct contains all of the additional variables needed by setBC.
-  struct mms_vars{
+  // This struct contains all of the additional local variables needed by setBC.
+  struct mms_localVars{
     constCCVariable<double> press_CC;
     constCCVariable<double> rho_CC;
-    string where;
+    std::string where;
+    double simTime;
     double delT;
   };
   //____________________________________________________________
   
   
   bool read_MMS_BC_inputs(const ProblemSpecP&,
-                          mms_variable_basket* mms_vb);
+                          mms_globalVars* mms_vb);
                   
   void addRequires_MMS(Task* t, 
-                       const string& where,
+                       const std::string& where,
                        ICELabel* lb,
                        const MaterialSubset* ice_matls);
                        
@@ -97,36 +72,36 @@ namespace Uintah {
                            ICELabel* lb,
                            const int indx,
                            const Patch* patch,
-                           const string& where,
+                           const std::string& where,
                            bool& setMMS_BCs,
-                           mms_vars* mss_v);
+                           mms_localVars* lv);
                            
   int  set_MMS_Velocity_BC(const Patch* patch,
                            const Patch::FaceType face,
                            CCVariable<Vector>& vel_CC,
-                           const string& var_desc,
+                           const std::string& var_desc,
                            Iterator& bound_ptr,
-                           const string& bc_kind,
-                           SimulationStateP& sharedState,
-                           mms_variable_basket* mms_var_basket,
-                           mms_vars* mms_v);
+                           const std::string& bc_kind,
+                           MaterialManagerP& materialManager,
+                           mms_globalVars* gv,
+                           mms_localVars* lv);
                            
   int  set_MMS_Temperature_BC(const Patch* patch,
                               const Patch::FaceType face,
                               CCVariable<double>& temp_CC,
                               Iterator& bound_ptr,
-                              const string& bc_kind,
-                              mms_variable_basket* mms_var_basket,
-                              mms_vars* mms_v);
+                              const std::string& bc_kind,
+                              mms_globalVars* gv,
+                              mms_localVars* lv);
                               
   int  set_MMS_press_BC(const Patch* patch,
                         const Patch::FaceType face,
                         CCVariable<double>& press_CC,
                         Iterator& bound_ptr,
-                        const string& bc_kind,
-                        SimulationStateP& sharedState,
-                        mms_variable_basket* mms_var_basket,
-                        mms_vars* mms_v);  
+                        const std::string& bc_kind,
+                        MaterialManagerP& materialManager,
+                        mms_globalVars* gv,
+                        mms_localVars* lv);  
                         
                         
 /*______________________________________________________________________ 
@@ -139,9 +114,9 @@ int set_MMS_BCs_FC( const Patch* patch,
                       T& vel_FC,
                       Iterator& bound_ptr,
                       const Vector& dx,
-                      SimulationStateP& sharedState,
-                      mms_variable_basket* mms_var_basket,
-                      mms_vars* mms_v)
+                      MaterialManagerP& materialManager,
+                      mms_globalVars* gv,
+                      mms_localVars* lv)
 {
   //cout<< "Doing set_MMS_BCs_FC: \t\t" << whichVel
   //          << " face " << face << endl;
@@ -164,10 +139,11 @@ int set_MMS_BCs_FC( const Patch* patch,
   
   //__________________________________
   // 
-  double nu = mms_var_basket->viscosity;
-  double A =  mms_var_basket->A;
-  double t  = sharedState->getElapsedTime();
-  t += mms_v->delT;
+  double nu = gv->viscosity;
+  double A =  gv->A;
+  double t = lv->simTime + lv->delT;
+  // double t  = materialManager->getElapsedSimTime();
+  // t += lv->delT;
     
   for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {
     IntVector c = *bound_ptr - oneCell;

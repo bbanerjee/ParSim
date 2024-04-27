@@ -80,7 +80,7 @@ namespace Uintah {
   
     filelist_ = fopen(filelistname.c_str(),"w");
     if (!filelist_) {
-      cerr << "Can't open output file " << filelistname << endl;
+      std::cerr <<  "Can't open output file " << filelistname << endl;
       abort();
     }
   }
@@ -128,14 +128,14 @@ namespace Uintah {
   {
     GridP grid = da_->queryGrid(index_);
   
-    cout << "   " << fieldname << endl;
+    std::cout << "   " << fieldname << endl;
     const Uintah::TypeDescription* subtype = td->getSubType();
   
     int nmats = 0;
     // count the materials
     for(int l=0;l<=0;l++) { // FIXME: only first level
       LevelP level = grid->getLevel(l);
-      for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+      for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
         const Patch* patch = *iter;
         ConsecutiveRangeSet matls= da_->queryMaterials(fieldname, patch, index_);
         for(ConsecutiveRangeSet::iterator matlIter = matls.begin();matlIter != matls.end(); matlIter++) {
@@ -165,7 +165,7 @@ namespace Uintah {
         }
       }
     
-      for(Level::const_patchIterator iter = level->patchesBegin();
+      for(Level::const_patch_iterator iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;
       
@@ -177,17 +177,17 @@ namespace Uintah {
           const int matl = *matlIter;
           if(!flds_.wantMaterial(matl)) continue;
           
-          list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, flds_, tensor_preop);
-          list<VectorDiag const *> vectordiaggens = createVectorDiags(td, flds_, tensor_preop);
-          list<TensorDiag const *> tensordiaggens = createTensorDiags(td, flds_, tensor_preop);
+           std::list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, flds_, tensor_preop);
+           std::list<VectorDiag const *> vectordiaggens = createVectorDiags(td, flds_, tensor_preop);
+           std::list<TensorDiag const *> tensordiaggens = createTensorDiags(td, flds_, tensor_preop);
           /*
-          cout << " have " << scalardiaggens.size() << " scalar diagnostics" << endl;
-          cout << " have " << vectordiaggens.size() << " vector diagnostics" << endl;
-          cout << " have " << tensordiaggens.size() << " tensor diagnostics" << endl;
+          std::cout << " have " << scalardiaggens.size() << " scalar diagnostics" << endl;
+          std::cout << " have " << vectordiaggens.size() << " vector diagnostics" << endl;
+          std::cout << " have " << tensordiaggens.size() << " tensor diagnostics" << endl;
           */
           
           // loop through requested diagnostics
-          list<string> outdiags;
+           std::list<string> outdiags;
           for(list<ScalarDiag const *>::const_iterator diagit(scalardiaggens.begin());diagit!=scalardiaggens.end();diagit++) 
             outdiags.push_back( (*diagit)->name() );
           for(list<VectorDiag const *>::const_iterator diagit(vectordiaggens.begin());diagit!=vectordiaggens.end();diagit++) 
@@ -195,8 +195,8 @@ namespace Uintah {
           for(list<TensorDiag const *>::const_iterator diagit(tensordiaggens.begin());diagit!=tensordiaggens.end();diagit++) 
             outdiags.push_back( (*diagit)->name() );
           
-          map<string, ofstream *> outfiles;
-          map<string, string>     outfieldnames;
+          std::map<std::string, ofstream *> outfiles;
+          std::map<std::string, std::string>     outfieldnames;
           for(list<string>::const_iterator dit(outdiags.begin());dit!=outdiags.end();dit++)
             {
               string outfieldname = fieldname;
@@ -224,10 +224,10 @@ namespace Uintah {
           for(list<ScalarDiag const *>::const_iterator diagit(scalardiaggens.begin());diagit!=scalardiaggens.end();diagit++) 
             {
               ofstream & outfile = *outfiles[(*diagit)->name()];
-              cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
+              std::cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
               
               switch(td->getType()){
-              case Uintah::TypeDescription::CCVariable:
+              case Uintah::TypeDescription::Type::CCVariable:
                 {
                   CCVariable<double> svals;
                   (**diagit)(da_, patch, fieldname, matl, index_, svals);
@@ -244,7 +244,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::NCVariable:
+              case Uintah::TypeDescription::Type::NCVariable:
                 {
                   NCVariable<double> svals;
                   (**diagit)(da_, patch, fieldname, matl, index_, svals);
@@ -261,7 +261,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::ParticleVariable:
+              case Uintah::TypeDescription::Type::ParticleVariable:
                 {
                   ParticleVariable<Point> posns;
                   da_->query(posns, "p.x", matl, patch, index_);
@@ -291,10 +291,10 @@ namespace Uintah {
           for(list<VectorDiag const *>::const_iterator diagit(vectordiaggens.begin());diagit!=vectordiaggens.end();diagit++) 
             {
               ofstream & outfile = *outfiles[(*diagit)->name()];
-              cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
+              std::cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
               
               switch(td->getType()){
-              case Uintah::TypeDescription::CCVariable:
+              case Uintah::TypeDescription::Type::CCVariable:
                 {
                   CCVariable<Vector> vvals;
                   (**diagit)(da_, patch, fieldname, matl, index_, vvals);
@@ -313,7 +313,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::NCVariable:
+              case Uintah::TypeDescription::Type::NCVariable:
                 {
                   NCVariable<Vector> vvals;
                   (**diagit)(da_, patch, fieldname, matl, index_, vvals);
@@ -332,7 +332,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::ParticleVariable:
+              case Uintah::TypeDescription::Type::ParticleVariable:
                 {
                   ParticleVariable<Point> posns;
                   da_->query(posns, "p.x", matl, patch, index_);
@@ -364,10 +364,10 @@ namespace Uintah {
           for(list<TensorDiag const *>::const_iterator diagit(tensordiaggens.begin());diagit!=tensordiaggens.end();diagit++) 
             {
               ofstream & outfile = *outfiles[(*diagit)->name()];
-              cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
+              std::cout << "   " << fileName(outfieldnames[(*diagit)->name()], matl, "txt") << endl;
               
               switch(td->getType()){
-              case Uintah::TypeDescription::CCVariable:
+              case Uintah::TypeDescription::Type::CCVariable:
                 {
                   CCVariable<Matrix3> tvals;
                   (**diagit)(da_, patch, fieldname, matl, index_, tvals);
@@ -392,7 +392,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::NCVariable:
+              case Uintah::TypeDescription::Type::NCVariable:
                 {
                   NCVariable<Matrix3> tvals;
                   (**diagit)(da_, patch, fieldname, matl, index_, tvals);
@@ -417,7 +417,7 @@ namespace Uintah {
                             << endl;
                   }
                 } break;
-              case Uintah::TypeDescription::ParticleVariable:
+              case Uintah::TypeDescription::Type::ParticleVariable:
                 {
                   ParticleVariable<Point> posns;
                   da_->query(posns, "p.x", matl, patch, index_);
@@ -452,13 +452,13 @@ namespace Uintah {
               
             } // vectort diag
           
-          for(map<string, ofstream *>::iterator fit(outfiles.begin());fit!=outfiles.end();fit++)
+          for(map<std::string, ofstream *>::iterator fit(outfiles.begin());fit!=outfiles.end();fit++)
             {
               delete fit->second;
             }
           
           if (no_match)
-            cerr << "WARNING: Unexpected type for " << td->getName() << " of " << subtype->getName() << endl;
+            std::cerr <<  "WARNING: Unexpected type for " << td->getName() << " of " << subtype->getName() << endl;
         
         } // materials
       } // patches

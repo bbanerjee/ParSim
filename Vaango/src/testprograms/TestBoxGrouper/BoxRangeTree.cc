@@ -51,7 +51,7 @@
 
 list<Box*> BoxRangeQuerier::query(const IntVector& low, const IntVector& high)
 {
-  list<Box*> results;
+   std::list<Box*> results;
   for (int i = 0; i < boxes_; i++) {
     if (boxes_[i]->inside(low, high))
       results.push_back(boxes_[i]);
@@ -61,7 +61,7 @@ list<Box*> BoxRangeQuerier::query(const IntVector& low, const IntVector& high)
 
 list<Box*> BoxRangeQuerier::queryNeighbors(const IntVector& low, const IntVector& high)
 {
-  list<Box*> results;
+   std::list<Box*> results;
   for (int i = 0; i < boxes_; i++) {
     if (boxes_[i]->isNeighboring(low, high))
       results.push_back(boxes_[i]);

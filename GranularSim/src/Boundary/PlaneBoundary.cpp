@@ -130,7 +130,7 @@ PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, BoundaryID id,
   std::string vecStr;
   try {
     vecStr = ps["direction"].get<std::string>();
-  } catch (std::exception) {
+  } catch (const std::exception& e) {
     std::cerr
       << "**ERROR** Normal direction not found in plane boundary geometry\n";
     std::cerr << "  Add the direction: [x, y, z]  key-value pair.";
@@ -140,7 +140,7 @@ PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, BoundaryID id,
 
   try {
     vecStr = ps["position"].get<std::string>();
-  } catch (std::exception) {
+  } catch (const std::exception& e) {
     std::cerr
       << "**ERROR** Centroid poosition not found in plane boundary geometry\n";
     std::cerr << "  Add the position: [x, y, z]  key-value pair.";
@@ -152,7 +152,7 @@ PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, BoundaryID id,
   try {
     vecStr = ps["initial_velocity"].get<std::string>();
     d_velocity = Vec::fromString(vecStr);
-  } catch (std::exception) {
+  } catch (const std::exception& e) {
     std::cerr
       << "**WARNING** Centroid poosition not found in plane boundary geometry\n"
       << "  Using 0 initial velocity. Add the initial_velocity: [x, y, z]  key-value pair.";
@@ -178,7 +178,7 @@ PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, BoundaryID id,
         Vec edgePoint = Vec::fromString(vecStr);
         b_extraEdge.push_back(Plane(edgeDirec, edgePoint));
       }
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       std::cerr << "**ERROR** Normal direction/Centroid position not found in "
                    "edge geometry\n";
       std::cerr << "  Add the direction: [x, y, z] tag.";

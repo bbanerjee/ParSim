@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,53 +24,43 @@
  * IN THE SOFTWARE.
  */
 
-
-#include <Core/GeometryPiece/NullGeometryPiece.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/GeometryPiece/NullGeometryPiece.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
+
 #include <fstream>
+#include <memory>
 
-using namespace Uintah;
-using std::ifstream;
+namespace Uintah {
 
-const string NullGeometryPiece::TYPE_NAME = "null";
+const std::string NullGeometryPiece::TYPE_NAME = "null";
 
-NullGeometryPiece::NullGeometryPiece(ProblemSpecP& /*ps*/)
-{
-  name_ = "Unnamed Null";
-  d_box = Box(Point(0.,0.,0.),Point(0.,0.,0.));
+NullGeometryPiece::NullGeometryPiece(ProblemSpecP& /*ps*/) {
+  d_name = "Unnamed Null";
+  d_box = Box(Point(0., 0., 0.), Point(0., 0., 0.));
 }
 
-NullGeometryPiece::NullGeometryPiece(const string& /*file_name*/)
-{
-}
-
-NullGeometryPiece::~NullGeometryPiece()
-{
-}
+NullGeometryPiece::NullGeometryPiece(const string& /*file_name*/) {}
 
 void
-NullGeometryPiece::outputHelper( ProblemSpecP & ps ) const
-{
+NullGeometryPiece::outputHelper(ProblemSpecP& ps) const {
   ps->appendChild("null");
 }
 
 GeometryPieceP
-NullGeometryPiece::clone() const
-{
-  return scinew NullGeometryPiece(*this);
+NullGeometryPiece::clone() const {
+  return std::make_shared<NullGeometryPiece>(*this);
 }
 
 bool
-NullGeometryPiece::inside(const Point& /*p*/) const
-{
+NullGeometryPiece::inside(const Point& /*p*/) const {
   return true;
 }
 
 Box
-NullGeometryPiece::getBoundingBox() const
-{
+NullGeometryPiece::getBoundingBox() const {
   return d_box;
 }
 
+} // end namespace Uintah

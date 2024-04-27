@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,46 +24,41 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <Core/Grid/Variables/DifferenceIterator.h>
 
-namespace Uintah
-{
+namespace Uintah {
 
-  DifferenceIterator::DifferenceIterator(Iterator iter1, Iterator iter2) : ListOfCellsIterator()
-  {
-    iter1.reset();
-    iter2.reset();
-    while(!iter1.done() && !iter2.done() )
+DifferenceIterator::DifferenceIterator(Iterator iter1, Iterator iter2)
+  : ListOfCellsIterator()
+{
+  iter1.reset();
+  iter2.reset();
+  while (!iter1.done() && !iter2.done()) {
+    if (*iter1 == *iter2) // in both lists advance iterators
     {
-      if(*iter1==*iter2) //in both lists advance iterators
-      {
-        iter1++;
-        iter2++;
-      }
-      else if(*iter1<*iter2) //in iter1 only
-      {
-        add(*iter1);
-        iter1++;
-      }
-      else    //in iter2 only
-      {
-        iter2++;              
-      }
-    }
-    //add remaining cells in iter1
-    while(!iter1.done())
+      iter1++;
+      iter2++;
+    } else if (*iter1 < *iter2) // in iter1 only
     {
       add(*iter1);
       iter1++;
-    }     
+    } else // in iter2 only
+    {
+      iter2++;
+    }
   }
-  std::ostream& operator<<(std::ostream& out, const Uintah::DifferenceIterator& b)
-  {
-    out << "[DifferenceIterator at index" << b.index_ << " of " << b.listOfCells_.size() << "]" ;
-
-    return out;
-
+  // add remaining cells in iter1
+  while (!iter1.done()) {
+    add(*iter1);
+    iter1++;
   }
 }
-  
+std::ostream&
+operator<<(std::ostream& out, const Uintah::DifferenceIterator& b)
+{
+  out << "[DifferenceIterator at index" << b.d_index << " of "
+      << b.d_list_of_cells.size() << "]";
+
+  return out;
+}
+}

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,8 +27,8 @@
 #ifndef __IMPLICIT_CM_H__
 #define __IMPLICIT_CM_H__
 
-#include <CCA/Components/MPM/MPMFlags.h>
-#include <CCA/Components/MPM/Solver.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/ImpMPMSolvers/Solver.h>
 #include <vector>
 #include <Core/Grid/Variables/Array3.h>
 #include <Core/Grid/Variables/ComputeSet.h>
@@ -104,7 +104,7 @@ protected:
 
   void loadBMatsGIMP(Array3<int> l2g, int dof[81], double B[6][81],
                      double Bnl[3][81], vector<Vector> d_S,
-                     vector<IntVector> ni, double oodx[3]) const;
+                     std::vector<IntVector> ni, double oodx[3]) const;
 
   ///////////////////////////////////////////////////////////////////////
   /*! Initialize the common quantities that all the implicit constituive

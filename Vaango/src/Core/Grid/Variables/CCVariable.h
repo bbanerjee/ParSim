@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -77,18 +78,18 @@ WARNING
       
     //////////
     // Insert Documentation Here:
-    const TypeDescription* virtualGetTypeDescription() const 
+    const TypeDescription* virtualGetTypeDescription() const override
     { return getTypeDescription(); }
     static const TypeDescription* getTypeDescription();
     
-    virtual GridVariableBase* clone();
-    virtual const GridVariableBase* clone() const;
-    virtual GridVariableBase* cloneType() const
+    virtual GridVariableBase* clone() override;
+    virtual const GridVariableBase* clone() const override;
+    virtual GridVariableBase* cloneType() const override
     { return scinew CCVariable<T>(); }
     
     // allocate(IntVector, IntVector) is hidden without this
     using GridVariable<T>::allocate;
-    virtual void allocate(const Patch* patch, const IntVector& boundary)
+    virtual void allocate(const Patch* patch, const IntVector& boundary) override
     {      
       IntVector l,h;
       patch->computeVariableExtents(Patch::CellBased, boundary, 
@@ -121,7 +122,7 @@ WARNING
   CCVariable<T>::getTypeDescription()
   {
     if(!td){
-      td = scinew TypeDescription(TypeDescription::CCVariable,
+      td = scinew TypeDescription(TypeDescription::Type::CCVariable,
                                   "CCVariable", &maker,
                                   fun_getTypeDescription((T*)0));
     }

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,7 +28,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/Membrane.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <fstream>
 #include <iostream>
@@ -123,10 +123,10 @@ Membrane::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("shear_modulus", d_modelParam.shear);
 }
 
-Membrane*
+std::unique_ptr<ConstitutiveModel>
 Membrane::clone()
 {
-  return scinew Membrane(*this);
+  return std::make_unique<Membrane>(*this);
 }
 
 void
@@ -284,7 +284,7 @@ Membrane::computeStressTensor(const PatchSubset* patches,
       Matrix3 UU = Vaango::Util::Identity;
       Matrix3 RR = Vaango::Util::Identity;
       pDefGrad_old[idx].polarDecompositionRMB(UU, RR);
-      // std::cout << RR << endl << endl;
+      // std::cout << RR << std::endl << std::endl;
 
       T1[idx] = RR * pTang1[idx];
       T2[idx] = RR * pTang2[idx];

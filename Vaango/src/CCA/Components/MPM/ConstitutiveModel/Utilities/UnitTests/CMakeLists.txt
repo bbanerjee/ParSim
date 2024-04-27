@@ -1,7 +1,7 @@
 #
 # The MIT License
 #
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -22,6 +22,9 @@
 # IN THE SOFTWARE.
 #
 
+enable_testing()
+include(GoogleTest)
+
 #message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 #message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
@@ -38,11 +41,11 @@ configure_file(mlp_regression_keras_total_scaled.h5 mlp_regression_keras_total_s
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-        Vaango_Core_Thread       
+               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-        Vaango_Core_Labels      
+              
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
@@ -64,7 +67,7 @@ SET(VAANGO_LIBS
 # Google tests
 #------------------------
 set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
-set(GTEST_LIB gtest_main gtest)
+set(GTEST_LIB GTest::gtest_main)
 include_directories(${GTEST_INCLUDE_DIR})
 
 add_executable(testHDF5Reader testHDF5Reader.cc)
@@ -78,6 +81,7 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testTensorUtils testTensorUtils.cc)
 target_link_libraries(testTensorUtils
@@ -90,11 +94,14 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testYieldCondUtils testYieldCondUtils.cc)
 target_link_libraries(testYieldCondUtils
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango_CCA_Components_MPM
+  MPM_ConstitutiveModel
 )
 set(UNIT_TEST testYieldCondUtils)
 add_custom_command(
@@ -102,6 +109,7 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testEigen testEigen.cc)
 target_link_libraries(testEigen
@@ -114,6 +122,7 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testBoostAutodiff testBoostAutodiff.cc)
 target_link_libraries(testBoostAutodiff
@@ -127,6 +136,7 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testBoostClosestPoint testBoostClosestPoint.cc)
 target_link_libraries(testBoostClosestPoint
@@ -140,3 +150,5 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+gtest_discover_tests(${UNIT_TEST})
+

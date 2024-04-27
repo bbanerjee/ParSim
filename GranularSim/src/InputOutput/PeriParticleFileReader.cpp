@@ -114,8 +114,8 @@ PeriParticleFileReader::readPeriParticlesAbaqus(const std::string& fileName,
   std::ifstream file(fileName);
   std::string line;
   bool node_flag = false;
-  bool surf_elem_flag = false;
-  bool line_elem_flag = false;
+  [[maybe_unused]] bool surf_elem_flag = false;
+  [[maybe_unused]] bool line_elem_flag = false;
   bool vol_elem_flag = false;
   while (std::getline(file, line)) {
 

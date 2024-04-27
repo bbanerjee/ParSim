@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,48 +25,50 @@
  */
 
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreatorFactory.h>
+
+#include <CCA/Components/MPM/ParticleCreator/FractureParticleCreator.h>
 #include <CCA/Components/MPM/ParticleCreator/ImplicitParticleCreator.h>
 #include <CCA/Components/MPM/ParticleCreator/MembraneParticleCreator.h>
 #include <CCA/Components/MPM/ParticleCreator/ShellParticleCreator.h>
-#include <CCA/Components/MPM/ParticleCreator/FractureParticleCreator.h>
-#include <Core/Exceptions/ProblemSetupException.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/AMRMPMLabel.h>
+#include <CCA/Components/MPM/Core/HydroMPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
+
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Grid/SimulationState.h>
-#include <Core/Malloc/Allocator.h>
-#include <fstream>
-#include <iostream>
-#include <string>
-using std::cerr;
-using std::ifstream;
-using std::ofstream;
 
-using namespace Uintah;
+namespace Uintah {
 
-ParticleCreator* ParticleCreatorFactory::create(ProblemSpecP& ps, 
-                                                MPMMaterial* mat,
-                                                MPMFlags* flags)
+std::unique_ptr<ParticleCreator>
+ParticleCreatorFactory::create(ProblemSpecP& ps,
+                               MPMMaterial* mat,
+                               MPMFlags* flags)
 {
 
   ProblemSpecP cm_ps = ps->findBlock("constitutive_model");
   string mat_type;
-  cm_ps->getAttribute("type",mat_type);
+  cm_ps->getAttribute("type", mat_type);
 
-  if (flags->d_integratorType == "implicit") 
-    return scinew ImplicitParticleCreator(mat,flags);
+  if (flags->d_integratorType == "implicit") {
+    return std::make_unique<ImplicitParticleCreator>(mat, flags);
+  }
 
-  else if (flags->d_integratorType == "fracture") 
-    return scinew FractureParticleCreator(mat,flags);
+  else if (flags->d_integratorType == "fracture") {
+    return std::make_unique<FractureParticleCreator>(mat, flags);
+  }
 
-  else if (mat_type == "membrane")
-    return scinew MembraneParticleCreator(mat,flags);
+  else if (mat_type == "membrane") {
+    return std::make_unique<MembraneParticleCreator>(mat, flags);
+  }
 
-  else if (mat_type == "shell_CNH")
-    return scinew ShellParticleCreator(mat,flags);
-  
-  else
-    return scinew ParticleCreator(mat,flags);
+  else if (mat_type == "shell_CNH") {
+    return std::make_unique<ShellParticleCreator>(mat, flags);
+  }
 
+  else {
+    return std::make_unique<ParticleCreator>(mat, flags);
+  }
 }
 
-
+} // end namespace Uintah

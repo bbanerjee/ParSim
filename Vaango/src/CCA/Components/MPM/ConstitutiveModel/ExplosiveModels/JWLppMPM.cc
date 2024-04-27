@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 
 #define CHECK_ISFINITE
 
@@ -155,10 +155,10 @@ JWLppMPM::~JWLppMPM()
   VarLabel::destroy(pLocalizedLabel_preReloc);
 }
 
-JWLppMPM*
+std::unique_ptr<ConstitutiveModel>
 JWLppMPM::clone()
 {
-  return scinew JWLppMPM(*this);
+  return std::make_unique<JWLppMPM>(*this);
 }
 
 void
@@ -782,7 +782,7 @@ JWLppMPM::computeWithNewtonIterations(const double& J,
                                       double& p_new) const
 {
   // Initialize matrices
-  vector<double> G(2); // The vector [F_n+1 P_n+1]^T = 0
+  std::vector<double> G(2); // The vector [F_n+1 P_n+1]^T = 0
   FastMatrix JacobianG(2, 2);
 
   // Initial values of f and p
@@ -798,7 +798,7 @@ JWLppMPM::computeWithNewtonIterations(const double& J,
 
   // Do Newton iterations
   FastMatrix Jinv(2, 2);
-  vector<double> Finc(2);
+  std::vector<double> Finc(2);
   do {
 
     // Compute Jacobian of G
@@ -877,7 +877,7 @@ JWLppMPM::computeG(const double& J,
                    const double& pM,
                    const double& pJWL,
                    const double& delT,
-                   vector<double>& G) const
+                   std::vector<double>& G) const
 {
   double dfdt_new = computeBurnRate(f_new, p_new);
   double f_func   = f_new - f_old - dfdt_new * delT;

@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-using namespace std;
+
 
 bool isSphereInsideRVE(double partDia, double RVEsize,
                        double xCent, double yCent, double zCent);
@@ -41,14 +41,14 @@ bool isSphereCenterInsideRVE(double RVEsize,
 bool doesSphereIntersectOthers(double partDia, vector<double> diaLocs,
                                double &gap,
                                double &xCent, double &yCent, double &zCent,
-                               vector<double> xLocs, 
-                               vector<double> yLocs,
-                               vector<double> zLocs,
+                               std::vector<double> xLocs, 
+                               std::vector<double> yLocs,
+                               std::vector<double> zLocs,
                                int &i_this);
 
 #if 1
 void printSphereLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
-                     vector<vector<double> > zLocs, vector<vector<double> > diaLocs,
+                     std::vector<vector<double> > zLocs, vector<vector<double> > diaLocs,
                      int n_bins, int RVEsize, double diam_max);
 #endif
 
@@ -68,16 +68,16 @@ int main()
 
   //Store the locations in n_bins separate vectors, so we have a smaller region
   //to search for intersections
-  vector<double> xLocs;
-  vector<double> yLocs;
-  vector<double> zLocs;
-  vector<double> diaLocs;
+  std::vector<double> xLocs;
+  std::vector<double> yLocs;
+  std::vector<double> zLocs;
+  std::vector<double> diaLocs;
 
   //Open file to receive sphere descriptions
   string infile_name = "Position_Radius.txt";
   ifstream source(infile_name.c_str());
   if(!source){
-    cerr << "File " << infile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << infile_name << " can't be opened." << std::endl;
   }
   double x,y,z,r,d;
 
@@ -95,7 +95,7 @@ int main()
 
   double total_sphere_volume_orig = 0.0;
   double total_sphere_volume_new  = 0.0;
-  cout << xLocs.size() << endl;
+  std::cout << xLocs.size() << std::endl;
 
   int numInts=0;
   for(int i = 0;i<xLocs.size();i++){
@@ -108,14 +108,14 @@ int main()
                                                    xLocs, yLocs, zLocs, i_this);
 
     if(spheresIntersect){
-      //cout << "spheres intersect" << endl;
-      cout << xLocs[i] << " " << yLocs[i] << " " << zLocs[i] << " " << diaLocs[i] << endl;
-      cout << xLocs[i_this] << " " << yLocs[i_this] << " " << zLocs[i_this] << " " << diaLocs[i_this] << endl;
+      //cout << "spheres intersect" << std::endl;
+      std::cout << xLocs[i] << " " << yLocs[i] << " " << zLocs[i] << " " << diaLocs[i] << std::endl;
+      std::cout << xLocs[i_this] << " " << yLocs[i_this] << " " << zLocs[i_this] << " " << diaLocs[i_this] << std::endl;
       double rad1plusrad2 = 0.5*(diaLocs[i] + diaLocs[i_this]);
       double distCentSq = (xLocs[i_this]-xLocs[i])*(xLocs[i_this]-xLocs[i]) +
                           (yLocs[i_this]-yLocs[i])*(yLocs[i_this]-yLocs[i]) +
                           (zLocs[i_this]-zLocs[i])*(zLocs[i_this]-zLocs[i]);
-      cout << rad1plusrad2 << " " << sqrt(distCentSq) << endl;
+      std::cout << rad1plusrad2 << " " << sqrt(distCentSq) << std::endl;
       numInts++;
       //exit(1);
     }
@@ -127,15 +127,15 @@ int main()
     total_sphere_volume_new+=(1./6.)*M_PI*(d*d*d);
   }
 
-  cout << "numInts = " << numInts << endl;
-  cout << "Spheres out of RVE = " << outOfRVE << endl;
-  cout << "Total sphere volume orig = " << total_sphere_volume_orig << endl;
-  cout << "Total sphere volume new  = " << total_sphere_volume_new  << endl;
+  std::cout << "numInts = " << numInts << std::endl;
+  std::cout << "Spheres out of RVE = " << outOfRVE << std::endl;
+  std::cout << "Total sphere volume orig = " << total_sphere_volume_orig << std::endl;
+  std::cout << "Total sphere volume new  = " << total_sphere_volume_new  << std::endl;
 
-  vector<vector<double> > xbinLocs(n_bins);
-  vector<vector<double> > ybinLocs(n_bins);
-  vector<vector<double> > zbinLocs(n_bins);
-  vector<vector<double> > dbinLocs(n_bins);
+  std::vector<vector<double> > xbinLocs(n_bins);
+  std::vector<vector<double> > ybinLocs(n_bins);
+  std::vector<vector<double> > zbinLocs(n_bins);
+  std::vector<vector<double> > dbinLocs(n_bins);
 
   for(int i = 0; i<xLocs.size(); i++){
     int index = (xLocs[i]/RVEsize)*((double) n_bins);
@@ -187,9 +187,9 @@ bool isSphereCenterInsideRVE(double RVEsize,
 bool doesSphereIntersectOthers(double partDia, vector<double> diaLocs,
                                double &gap,
                                double &xCent, double &yCent, double &zCent,
-                               vector<double> xLocs, 
-                               vector<double> yLocs,
-                               vector<double> zLocs,
+                               std::vector<double> xLocs, 
+                               std::vector<double> yLocs,
+                               std::vector<double> zLocs,
                                int &i_this)
 {
   for(unsigned int i = i_this+1; i<xLocs.size(); i++){
@@ -233,7 +233,7 @@ bool doesSphereIntersectOthers(double partDia, vector<double> diaLocs,
       double sumRadSq = 0.25*(partDia + diaLocs[k][i])*(partDia + diaLocs[k][i]);
 
       if(sumRadSq > distCentSq){
-        //cout << "Still Intersected in second round :(" << endl;
+        //cout << "Still Intersected in second round :(" << std::endl;
         intersect = true;
         hitPart2 = i;
         hitIndex2 = k;
@@ -241,14 +241,14 @@ bool doesSphereIntersectOthers(double partDia, vector<double> diaLocs,
       }
      }
      if(intersect){
-       //cout << "Intersected in second round" << endl;
+       //cout << "Intersected in second round" << std::endl;
        break;
      }
     }
    }
    // None of the spheres intersected
    if(!intersect){
-      //cout << "Fixed intersection in second round!" << endl;
+      //cout << "Fixed intersection in second round!" << std::endl;
       return false;
    }
    else{
@@ -285,17 +285,17 @@ bool doesSphereIntersectOthers(double partDia, vector<double> diaLocs,
          double sumRadSq = 0.25*(partDia + diaLocs[k][i])*(partDia + diaLocs[k][i]);
 
          if(sumRadSq > distCentSq){
-           //cout << "STILL Intersected in third round :(" << endl;
+           //cout << "STILL Intersected in third round :(" << std::endl;
            return true;
          }
         }
        }
      }
      else{
-       //cout << "STILL Intersected in third round " << endl;
+       //cout << "STILL Intersected in third round " << std::endl;
        return true;
      }
-     //cout << " FIXED Intersection in third round" << endl;
+     //cout << " FIXED Intersection in third round" << std::endl;
      return false;
    }
 #endif
@@ -303,26 +303,26 @@ bool doesSphereIntersectOthers(double partDia, vector<double> diaLocs,
 
 #if 1
 void printSphereLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
-                     vector<vector<double> > zLocs, vector<vector<double> > diaLocs,
+                     std::vector<vector<double> > zLocs, vector<vector<double> > diaLocs,
                      int n_bins, int RVEsize, double diam_max)
 {
   //Open file to receive sphere descriptions
   string outfile_name = "Test3D.xml";
   ofstream dest(outfile_name.c_str());
   if(!dest){
-    cerr << "File " << outfile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
   }
 
-  dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << endl;
-  dest << "<Uintah_Include>" << endl;
+  dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << std::endl;
+  dest << "<Uintah_Include>" << std::endl;
   dest << "<union>\n\n";
 
   int spherecount = 0;
   for(int k=0;k<n_bins;k++){
     dest << " <intersection label = \"intersection" << k << "\">\n";
     dest << "  <box label = \"box" << k << "\">\n";
-    dest << "     <min>[" << ((double) k)*(RVEsize/((double) n_bins)) - diam_max/2.0 << ",0.0,0.0]</min>" << endl;
-    dest << "     <max>[" << ((double) k+1)*(RVEsize/((double) n_bins)) + diam_max/2.0 << "," << RVEsize << ", " << RVEsize << "]</max>" << endl;
+    dest << "     <min>[" << ((double) k)*(RVEsize/((double) n_bins)) - diam_max/2.0 << ",0.0,0.0]</min>" << std::endl;
+    dest << "     <max>[" << ((double) k+1)*(RVEsize/((double) n_bins)) + diam_max/2.0 << "," << RVEsize << ", " << RVEsize << "]</max>" << std::endl;
     dest << "  </box>\n";
     dest << "  <union>\n";
     for(unsigned int i = 0; i<xLocs[k].size(); i++){
@@ -336,12 +336,12 @@ void printSphereLocs(vector<vector<double> > xLocs, vector<vector<double> > yLoc
   }
 
   dest << "</union>\n\n";
-  dest << "</Uintah_Include>" << endl;
+  dest << "</Uintah_Include>" << std::endl;
 
   string outfile_name2 = "Position_Radius.txt";
   ofstream dest2(outfile_name2.c_str());
   if(!dest2){
-    cerr << "File " << outfile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
   }
 
   for(int k=0;k<n_bins;k++){

@@ -27,7 +27,7 @@
 
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 
 namespace Vaango {
 
@@ -41,7 +41,7 @@ namespace Vaango {
         
     static ContactModelBase* create(const Uintah::ProcessorGroup* myworld,
                                     const Uintah::ProblemSpecP& ps,
-                                    Uintah::SimulationStateP& ss,
+                                    Uintah::MaterialManagerP& ss,
                                     PeridynamicsLabel* labels, 
                                     PeridynamicsFlags* flags);
   };

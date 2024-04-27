@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,48 +26,56 @@
 #ifndef Uintah_AMR_CoarsenRefine_h
 #define Uintah_AMR_CoarsenRefine_h
 
+#include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
-#include <CCA/Ports/DataWarehouseP.h>
 
-namespace Uintah{ class IntVector; }
+namespace Uintah {
+class IntVector;
+}
 
 namespace Uintah {
 
-  class Level;
+class Level;
 
-  template<typename T>                                 
-    void coarsenDriver_std(const Uintah::IntVector& cl,
+namespace AMRCoarsenRefine {
+
+
+template<typename T>
+void
+coarsenDriver_std(const Uintah::IntVector& cl,
+                  const Uintah::IntVector& ch,
+                  const Uintah::IntVector& fl,
+                  const Uintah::IntVector& fh,
+                  const Uintah::IntVector& refinementRatio,
+                  const double ratio,
+                  const Level* coarseLevel,
+                  constCCVariable<T>& fine_q_CC,
+                  CCVariable<T>& coarse_q_CC);
+
+template<typename T>
+void
+coarsenDriver_massWeighted(const Uintah::IntVector& cl,
                            const Uintah::IntVector& ch,
                            const Uintah::IntVector& fl,
                            const Uintah::IntVector& fh,
                            const Uintah::IntVector& refinementRatio,
-                           const double ratio,
                            const Level* coarseLevel,
+                           constCCVariable<double>& cMass,
                            constCCVariable<T>& fine_q_CC,
-                           CCVariable<T>& coarse_q_CC );
+                           CCVariable<T>& coarse_q_CC);
+template<class T>
+void
+fineToCoarseOperator(CCVariable<T>& q_CC,
+                     const bool,
+                     const VarLabel* varLabel,
+                     const int indx,
+                     DataWarehouse* new_dw,
+                     const Patch* coarsePatch,
+                     const Level* coarseLevel,
+                     const Level* fineLevel);
 
-  template<typename T>
-    void coarsenDriver_massWeighted( const Uintah::IntVector & cl,
-                                     const Uintah::IntVector & ch,
-                                     const Uintah::IntVector & fl,
-                                     const Uintah::IntVector & fh,
-                                     const Uintah::IntVector & refinementRatio,
-                                     const Level* coarseLevel,
-                                     constCCVariable<double>& cMass,
-                                     constCCVariable<T>& fine_q_CC,
-                                     CCVariable<T>& coarse_q_CC );
-  template<class T>
-  void fineToCoarseOperator(CCVariable<T>& q_CC,
-                            const bool,
-                            const VarLabel* varLabel,
-                            const int indx,
-                            DataWarehouse* new_dw,
-                            const Patch* coarsePatch,
-                            const Level* coarseLevel,
-                            const Level* fineLevel);
-                                     
-
-}  // end namespace Uintah
+} // namespace AMRCoarsenRefine
+} // end namespace Uintah
 
 #endif // Uintah_AMR_CoarsenRefine_h

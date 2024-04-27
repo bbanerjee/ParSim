@@ -1,13 +1,8 @@
-#
-#  For more information, please see: http://software.sci.utah.edu
 # 
 #  The MIT License
 # 
-#  Copyright (c) 2004 Scientific Computing and Imaging Institute,
-#  University of Utah.
-# Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
-# 
+#  Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+#  Copyright (c) 2015-2023 Biswajit Banerjee
 #  
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -28,33 +23,28 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Vaango/src/CCA/Components/ICE
-
 SET(Vaango_CCA_Components_ICE_SRCS
   ICE.cc 
   AMRICE.cc 
-  ICEDebug.cc 
-  ICEMaterial.cc 
-  Diffusion.cc 
-  BoundaryCond.cc 
-  Turbulence.cc 
-  SmagorinskyModel.cc 
-  DynamicModel.cc 
-  TurbulenceFactory.cc 
   impICE.cc 
   impAMRICE.cc 
   customInitialize.cc   
-  ExchangeCoefficients.cc     
 )
 
-add_subdirectory(EOS)
+add_subdirectory(Core)
 add_subdirectory(Advection)
 add_subdirectory(CustomBCs)
+add_subdirectory(EOS)
+add_subdirectory(Materials)
 add_subdirectory(SpecificHeatModel)
+add_subdirectory(TurbulenceModel)
+add_subdirectory(WallShearStressModel)
 
-ADD_LIBRARY(Vaango_CCA_Components_ICE ${Vaango_CCA_Components_ICE_SRCS})
+add_library(Vaango_CCA_Components_ICE ${Vaango_CCA_Components_ICE_SRCS})
 
 SET(LIBS
+  ICE_Core
+  Vaango_CCA_Components_Models
   Vaango_CCA_Components_OnTheFlyAnalysis
   Vaango_CCA_Ports
   Vaango_Core_Grid
@@ -64,8 +54,6 @@ SET(LIBS
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  Vaango_Core_Math
-  Vaango_Core_Labels
   ${XML2_LIBRARY}
   ${MPI_LIBRARY}
   ${M_LIBRARY}
@@ -79,8 +67,8 @@ IF(HYPRE_LIBRARY)
   SET(LIBS ${LIBS} ${HYPRE_LIBRARY})
 ENDIF(HYPRE_LIBRARY)
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_ICE ${LIBS})
+target_link_libraries(Vaango_CCA_Components_ICE ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_ICE)
+  add_definitions(-DBUILD_Vaango_CCA_Components_ICE)
 ENDIF(BUILD_SHARED_LIBS)

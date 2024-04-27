@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,11 +31,11 @@
 
 #include <CCA/Components/MPM/Contact/Contact.h>
 #include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -45,39 +45,52 @@ namespace Uintah {
 class ApproachContact : public Contact
 {
 private:
-  // Prevent copying of this class
-  // copy constructor
-  ApproachContact(const ApproachContact& con);
-  ApproachContact& operator=(const ApproachContact& con);
-
-  SimulationStateP d_sharedState;
 
   // Coefficient of friction
-  double d_mu;
-  // Nodal volume fraction that must occur before contact is applied
-  double d_vol_const;
+  double d_mu{0.0};
 
-  int NGP;
-  int NGN;
+  // Nodal volume fraction that must occur before contact is applied
+  double d_vol_const{0.0};
 
 public:
   // Constructor
-  ApproachContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
-                  SimulationStateP& sS, MPMLabel* lb, MPMFlags* Mflag);
+  ApproachContact(const ProcessorGroup* myworld,
+                  const MaterialManagerP& mat_manager,
+                  const MPMLabel* labels,
+                  const MPMFlags* flags,
+                  ProblemSpecP& ps);
 
   // Destructor
-  virtual ~ApproachContact();
+  virtual ~ApproachContact() = default;
 
-  void outputProblemSpec(ProblemSpecP& ps) override;
+  // Prevent copying/move of this class
+  ApproachContact(const ApproachContact& con) = delete;
+  ApproachContact(ApproachContact&& con) = delete;
+  ApproachContact&
+  operator=(const ApproachContact& con) = delete;
+  ApproachContact&
+  operator=(ApproachContact&& con) = delete;
+
+  virtual void
+  setContactMaterialAttributes() override;
+
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
   // Basic contact methods
-  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
-                        const MaterialSubset* matls, DataWarehouse* old_dw,
-                        DataWarehouse* new_dw, const VarLabel* label) override;
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
 
-  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
-                              const MaterialSet* matls,
-                              const VarLabel* label) override;
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
 };
 } // End namespace Uintah
 

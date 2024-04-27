@@ -29,7 +29,7 @@
 
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>
 #include <CCA/Components/MPM/PhysicalBC/LoadCurve.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/Point.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -119,7 +119,7 @@ WARNING
                           const Matrix3& defGrad) const;
 
     // Get the force vector to be applied at 4 corners of the point
-    Vector getForceVectorCBDI(const Point& px, const Matrix3& psize,
+    Vector getForceVectorCBDI(const Point& px, const Matrix3& pSize,
 			      const Matrix3& pDeformationMeasure,
 			      double forcePerParticle, const double time,
 			      Point& pExternalForceCorner1,

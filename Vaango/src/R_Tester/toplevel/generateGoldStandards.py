@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -408,7 +408,7 @@ def generateGS() :
                 np = int( np )
                 mpirun = "%s -np %s  " % (MPIRUN,np)
 
-                command = mpirun + MALLOC_FLAG + vaango + " -mpi " + SVN_FLAGS + " " + vaango_options + " " + inputs + "/" + component + "/" + input( test )  #+ " >> vaango_log.txt " 
+                command = mpirun + MALLOC_FLAG + vaango + SVN_FLAGS + " " + vaango_options + " " + inputs + "/" + component + "/" + input( test )  #+ " >> vaango_log.txt " 
             else :
                 command = vaango + SVN_FLAGS + " " + vaango_options + " " + inputs + "/" + component + "/" + input( test )  #+ " >> vaango_log.txt " 
 

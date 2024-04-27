@@ -241,7 +241,7 @@ if strcmp(problem_type, 'mms')
   
   xp_initial = zeros(NP,1);
   xp_initial = xp;
-  [Fp]      = mms.deformationGradient(xp_initial, t_initial, NP,speedSound, bar_length);
+  [Fp]      = mms.pDefGrad(xp_initial, t_initial, NP,speedSound, bar_length);
   [dp]      = mms.displacement(       xp_initial, t_initial, NP, speedSound, bar_length);
   [velP]    = mms.velocity(           xp_initial, t_initial, NP, speedSound, bar_length);
   [stressP] = computeStress(E,Fp,NP);
@@ -655,7 +655,7 @@ end
 function plotResults(titleStr,t, tstep, xp, dp, massP, Fp, velP, stressP, nodePos, velG, massG, extForceG,intForceG)
   global dumpFrames;
   
-  % plot SimulationState
+  % plot MaterialManager
   fig1 = sfigure(1);
   set(fig1,'position',[50,100,700,700]);
   

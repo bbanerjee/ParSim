@@ -268,16 +268,16 @@ TEST(HDF5Tests, readTest)
 
     }
     
-  } catch (H5::FileIException error) {
-    error.printError();
-  } catch (H5::DataSetIException error) {
-    error.printError();
-  } catch (H5::DataSpaceIException error) {
-    error.printError();
-  } catch (H5::DataTypeIException error) {
-    error.printError();
-  } catch (H5::AttributeIException error) {
-    error.printError();
+  } catch (H5::FileIException& error) {
+    error.printErrorStack();
+  } catch (H5::DataSetIException& error) {
+    error.printErrorStack();
+  } catch (H5::DataSpaceIException& error) {
+    error.printErrorStack();
+  } catch (H5::DataTypeIException& error) {
+    error.printErrorStack();
+  } catch (H5::AttributeIException& error) {
+    error.printErrorStack();
   }
 
 

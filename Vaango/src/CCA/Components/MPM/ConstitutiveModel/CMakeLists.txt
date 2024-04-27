@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Reaserch Limited, New Zealand
+# Copyright (c) 2015-2023 Parresia Reaserch Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -28,7 +28,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ConstitutiveModelFactory.cc   
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
-  MPMMaterial.cc                
+  MPMMaterial.cc                 
 )
 
 #message(STATUS "Compiling FORTRAN code? ${FORTRAN}")
@@ -69,12 +69,14 @@ SET(LIBS
   Vaango_CCA_Ports
   Vaango_Core_Grid
   Vaango_Core_Util
-  Vaango_Core_Labels
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
+  MPM_Core
+  MPM_ParticleCreator
+  MPM_GradientComputer
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}
@@ -84,16 +86,16 @@ SET(LIBS
 
 #message(STATUS "Sources: ${MPM_ConstitutiveModel_SRCS}")
 
-ADD_LIBRARY(MPM_ConstitutiveModel ${MPM_ConstitutiveModel_SRCS})
+add_library(MPM_ConstitutiveModel ${MPM_ConstitutiveModel_SRCS})
 
-TARGET_LINK_LIBRARIES(MPM_ConstitutiveModel ${LIBS})
+target_link_libraries(MPM_ConstitutiveModel ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_MPM_ConstitutiveModel)
+  add_definitions(-DBUILD_MPM_ConstitutiveModel)
 ENDIF(BUILD_SHARED_LIBS)
 
-IF(NOT CMAKE_COMPILER_IS_GNUCXX) 
+#IF(NOT CMAKE_COMPILER_IS_GNUCXX) 
   add_subdirectory(UnitTests)
-ENDIF()
+#ENDIF()
 
 

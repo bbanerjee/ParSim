@@ -53,7 +53,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
-using namespace std;
+
 
 using namespace Uintah;
 
@@ -84,8 +84,8 @@ int main(int argc, char* argv[])
   if(argc == 2)
     max=atoi(argv[1]);
   for(int size=1;size<=max;size++){
-    cout << "\n\n___________________________" << endl;
-    cout << "Testing inverse and destructive solves functions for " << size << " X " << size;
+    std::cout << "\n\n___________________________" << std::endl;
+    std::cout << "Testing inverse and destructive solves functions for " << size << " X " << size;
     
     // form a matrix with random numbers
     FastMatrix m(size, size);
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
     }
     
     // compute the condition number
-    cout << "  Condition Number:" << m.conditionNumber() << endl;
+    std::cout << "  Condition Number:" << m.conditionNumber() << std::endl;
     
     // print out matrix
     cout.setf(ios::scientific,ios::floatfield);
@@ -113,17 +113,17 @@ int main(int argc, char* argv[])
     //__________________________________
     // Test 1: inverse matrix * matrix
     //  check if result is identity matrix
-    cout << "Test 1: inverse matrix * matrix" << endl;
+    std::cout << "Test 1: inverse matrix * matrix" << std::endl;
     FastMatrix product(size, size);
     product.multiply(minv, m);
     checkIdentity(product);  
-    //cout << "inverse matrix * matrix: should be the identity matrix" << endl;  
+    //cout << "inverse matrix * matrix: should be the identity matrix" << std::endl;  
     //product.print(cout);
     
     //__________________________________
     // Test 2: matrix * inverse matrix
     //  check if result is identity matrix
-    cout << "Test 2: matrix * inverse matrix" << endl;
+    std::cout << "Test 2: matrix * inverse matrix" << std::endl;
     product.multiply(m, minv);
     checkIdentity(product);
 
@@ -132,22 +132,22 @@ int main(int argc, char* argv[])
     // A_inverse * b = xx
     // destructiveSolve(A) = x
     // if (x - xx) > tolerance get mad
-    cout << "Test 3" << endl;
-    vector<double> v(size);
-    vector<double> vcopy(size);
+    std::cout << "Test 3" << std::endl;
+    std::vector<double> v(size);
+    std::vector<double> vcopy(size);
     for(int i=0;i<size;i++){
       v[i]=vcopy[i]=drand48();
     }
     FastMatrix m3(size, size);
     m3.copy(m);
     m3.destructiveSolve(&vcopy[0]);
-    vector<double> xx(size);
+    std::vector<double> xx(size);
     minv.multiply(v, xx);
     bool err=false;
     for(int i=0;i<size;i++){
       if(Abs(vcopy[i]-xx[i] > tolerance)){
 	if(!err)
-	  cerr << "size: " << size << '\n';
+	  std::cerr <<  "size: " << size << '\n';
 	cerr << "Error: rhs[" << i << "]=" << vcopy[i] << " vs. " << xx[i] << '\n';
 	err=true;
       }
@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
     //__________________________________
     //  Hilibert test for poorly conditioned matrices
     FastMatrix A(size, size), A_inverse(size,size);
-    vector<double> XX(size), B(size);
+    std::vector<double> XX(size), B(size);
     bool runTest = false;
     switch(size){
       case 3:
@@ -225,20 +225,20 @@ int main(int argc, char* argv[])
       break;
     }
     if(runTest){
-      cout << "\nHilbert matrix test " << endl;
-      cout << "Condition Number:" << A.conditionNumber() << endl;
+      std::cout << "\nHilbert matrix test " << std::endl;
+      std::cout << "Condition Number:" << A.conditionNumber() << std::endl;
       FastMatrix A2(size, size);
       A2.copy(A);
       
       A_inverse.destructiveInvert(A);
       A_inverse.multiply(B,XX);
-      cout << " A inverse " << endl;
+      std::cout << " A inverse " << std::endl;
       A_inverse.print(cout);
 
       
-      cout << "X should be 1.0" << endl;
+      std::cout << "X should be 1.0" << std::endl;
       for(int i = 0; i<size; i++){
-        cout << " X["<<i<<"]= " << XX[i] << "  % error " << fabs(XX[i] - 1.0) * 100<< endl;
+        std::cout << " X["<<i<<"]= " << XX[i] << "  % error " << fabs(XX[i] - 1.0) * 100<< std::endl;
       }
 
 
@@ -247,9 +247,9 @@ int main(int argc, char* argv[])
         XX2[i] = B[i];
       A2.destructiveSolve(XX2);
       
-      cout << "X2 should be 1.0" << endl;
+      std::cout << "X2 should be 1.0" << std::endl;
       for(int i = 0; i<size; i++){
-        cout << " X2["<<i<<"]= " << XX2[i] << "  % error " << fabs(XX2[i] - 1.0) * 100<< endl;
+        std::cout << " X2["<<i<<"]= " << XX2[i] << "  % error " << fabs(XX2[i] - 1.0) * 100<< std::endl;
       }
     }
   }

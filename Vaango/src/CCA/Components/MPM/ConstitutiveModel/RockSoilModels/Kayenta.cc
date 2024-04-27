@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -38,7 +38,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -92,7 +92,7 @@ void KAYENTA_RXV(double UI[], double GC[], double DC[], int& nx, char namea[],
 
 // End fortran functions.
 ////////////////////////////////////////////////////////////////////////////////
-using namespace std;
+
 using namespace Uintah;
 
 Kayenta::Kayenta(ProblemSpecP& ps, MPMFlags* Mflag)
@@ -130,17 +130,17 @@ Kayenta::Kayenta(ProblemSpecP& ps, MPMFlags* Mflag)
   // Check that model parameters are valid and allow model to change if needed
 
   // First, print out the UI values specified by the user
-  proc0cout << "Original UI values" << endl;
+  proc0cout << "Original UI values" << std::endl;
   for (int i = 0; i < d_NKMMPROP; i++) {
-    proc0cout << "UI[" << i << "] = " << UI[i] << endl;
+    proc0cout << "UI[" << i << "] = " << UI[i] << std::endl;
   }
 
   KAYENTA_CHK(UI, GC, DC);
 
   // Now, print out the UI values after alteration by KAYENTA_CHK
-  proc0cout << "Modified UI values" << endl;
+  proc0cout << "Modified UI values" << std::endl;
   for (int i = 0; i < d_NKMMPROP; i++) {
-    proc0cout << "UI[" << i << "] = " << UI[i] << endl;
+    proc0cout << "UI[" << i << "] = " << UI[i] << std::endl;
   }
 
   // Create VarLabels for Kayenta internal state variables (ISVs)
@@ -154,17 +154,17 @@ Kayenta::Kayenta(ProblemSpecP& ps, MPMFlags* Mflag)
   KAYENTA_RXV(UI, GC, DC, nx, namea, keya, rinit, rdim, iadvct, itype);
 
   // Print out the Derived Constants
-  //  proc0cout << "Derived Constants" << endl;
+  //  proc0cout << "Derived Constants" << std::endl;
   //  for(int i = 0; i<d_NKMMDC; i++){
-  //     proc0cout << "DC[" << i << "] = " << DC[i] << endl;
+  //     proc0cout << "DC[" << i << "] = " << DC[i] << std::endl;
   //  }
 
   // Print out Internal State Variables
   d_NINSV = nx;
-  proc0cout << "Internal State Variables" << endl;
-  proc0cout << "# ISVs = " << d_NINSV << endl;
+  proc0cout << "Internal State Variables" << std::endl;
+  proc0cout << "# ISVs = " << d_NINSV << std::endl;
   //  for(int i = 0;i<d_NINSV; i++){
-  //    proc0cout << "ISV[" << i << "] = " << rinit[i] << endl;
+  //    proc0cout << "ISV[" << i << "] = " << rinit[i] << std::endl;
   //  }
   setErosionAlgorithm();
   initializeLocalMPMLabels();
@@ -373,10 +373,10 @@ Kayenta::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("PEAKI1IDIST", wdist.WeibDist);
 }
 
-Kayenta*
+std::unique_ptr<ConstitutiveModel>
 Kayenta::clone()
 {
-  return scinew Kayenta(*this);
+  return std::make_unique<Kayenta>(*this);
 }
 
 void
@@ -391,7 +391,7 @@ Kayenta::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
   std::vector<ParticleVariable<double>> ISVs(d_NINSV + 1);
 
-  //  proc0cout << "In initializeCMData" << endl;
+  //  proc0cout << "In initializeCMData" << std::endl;
   for (int i = 0; i < d_NINSV; i++) {
     new_dw->allocateAndPut(ISVs[i], ISVLabels[i], pset);
     ParticleSubset::iterator iter = pset->begin();
@@ -549,12 +549,12 @@ Kayenta::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   Vector dx = patch->dCell();
   int dwi = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
 
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -563,10 +563,10 @@ Kayenta::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   double G = UI[5];
   for (int idx : *pset) {
     // Compute wave speed at each particle, store the maximum
-    c_dil = sqrt((bulk + 4. * G / 3.) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    c_dil = sqrt((bulk + 4. * G / 3.) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   UI[d_IEOSMGCT] = matl->getInitialDensity();            // RHO0
   UI[d_IEOSMGCT + 1] = matl->getRoomTemperature();       // TMPR0
@@ -637,9 +637,9 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Matrix3 pDefGradInc, Identity, zero(0.), One(1.);
     double c_dil = 0.0;
@@ -655,11 +655,11 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Point> px;
     constParticleVariable<Matrix3> pDefGrad, pstress;
     ParticleVariable<Matrix3> pstress_new;
-    constParticleVariable<double> pmass, pvolume, ptemperature, peakI1IDist;
+    constParticleVariable<double> pMass, pVolume, ptemperature, peakI1IDist;
     ParticleVariable<double> peakI1IDist_new;
-    constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
-    constNCVariable<Vector> gvelocity;
+    constParticleVariable<Vector> pVelocity;
+    constParticleVariable<Matrix3> pSize;
+    constNCVariable<Vector> gVelocity;
     delt_vartype delT;
     constParticleVariable<int> pLocalized;
     ParticleVariable<int> pLocalized_new;
@@ -673,10 +673,10 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
 
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pstress, lb->pStressLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(pvolume, lb->pVolumeLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
+    old_dw->get(pVolume, lb->pVolumeLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(ptemperature, lb->pTemperatureLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(peakI1IDist, peakI1IDistLabel, pset);
@@ -687,11 +687,11 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
       old_dw->get(ISVs[i], ISVLabels[i], pset);
     }
 
-    new_dw->get(gvelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
+    new_dw->get(gVelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
 
-    constParticleVariable<double> pvolume_new;
+    constParticleVariable<double> pVolume_new;
     constParticleVariable<Matrix3> velGrad;
-    new_dw->get(pvolume_new, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
     ParticleVariable<Matrix3> pDefGrad_new;
     new_dw->getModifiable(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
@@ -720,19 +720,19 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
 
       // get the volumetric part of the deformation
       double J = pDefGrad_new[idx].Determinant();
-      double Jold = pDefGrad[idx].Determinant();
+      [[maybe_unused]] double Jold = pDefGrad[idx].Determinant();
 
       // Check 1: Look at Jacobian
       if (J <= 0.0 || J > d_hugeJ) {
         double Jold = pDefGrad[idx].Determinant();
-        cout << "negative or huge J encountered J=" << J << ", Jold = " << Jold
-             << " deleting particle" << endl;
-        cout << "pos = " << px[idx] << endl;
+        std::cout << "negative or huge J encountered J=" << J << ", Jold = " << Jold
+             << " deleting particle" << std::endl;
+        std::cout << "pos = " << px[idx] << std::endl;
 
         pLocalized_new[idx] = -999;
-        cout << "localizing (deleting) particle " << pParticleID[idx] << endl;
-        cout << "material = " << dwi << endl
-             << "Momentum deleted = " << pvelocity[idx] * pmass[idx] << endl;
+        std::cout << "localizing (deleting) particle " << pParticleID[idx] << std::endl;
+        std::cout << "material = " << dwi << std::endl
+             << "Momentum deleted = " << pVelocity[idx] * pMass[idx] << std::endl;
         pDefGrad_new[idx] = Vaango::Util::Identity;
         D = Matrix3(0.);
       }
@@ -784,7 +784,7 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
       double TFAIL_tmp = UI[41];
 
       // Scale FAIL1 according to a characteristic particle length
-      UI[41] *= cbrt(pvolume_new[idx]);
+      UI[41] *= cbrt(pVolume_new[idx]);
       if (wdist.Perturb) {
         double tempVar = UI[51];
         // 'Hijack' PEAKI1I = UI[51] with perturbed value if desired
@@ -827,15 +827,15 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
                   D(2, 2) * AvgStress(2, 2) +
                   2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
                         D(1, 2) * AvgStress(1, 2))) *
-                 pvolume_new[idx] * delT;
+                 pVolume_new[idx] * delT;
 
       se += e;
 
       // Compute wave speed at each particle, store the maximum
-      Vector pvelocity_idx = pvelocity[idx];
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
+      Vector pVelocity_idx = pVelocity[idx];
+      WaveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pVelocity_idx.y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pVelocity_idx.z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {
@@ -967,7 +967,7 @@ Kayenta::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 1
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Kayenta" << endl;
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Kayenta" << std::endl;
 #endif
 }
 
@@ -986,7 +986,7 @@ Kayenta::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
   tmp = bulk / rho_cur; // speed of sound squared
 
 #if 1
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Kayenta" << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Kayenta" << std::endl;
 #endif
 }
 
@@ -1153,7 +1153,7 @@ Kayenta::initializeLocalMPMLabels()
     "p.localized", ParticleVariable<int>::getTypeDescription());
   pLocalizedLabel_preReloc = VarLabel::create(
     "p.localized+", ParticleVariable<int>::getTypeDescription());
-  vector<string> ISVNames;
+  std::vector<std::string> ISVNames;
 
   // These lines of code are added by KC to replace the currently hard-coded
   // internal variable allocation with a proper call to KMMRXV routine.
@@ -1171,13 +1171,13 @@ Kayenta::initializeLocalMPMLabels()
   char* ISV[d_NINSV];
   ISV[0] = strtok(keya, "|"); // Splits | between words in string
   ISVNames.push_back(ISV[0]);
-  proc0cout << "ISV[" << 0 << "] is called " << ISVNames[0] << endl;
+  proc0cout << "ISV[" << 0 << "] is called " << ISVNames[0] << std::endl;
   for (int i = 1; i < d_NINSV; i++) {
-    // If you specify NULL, by default it will start again from the previous
+    // If you specify nullptr, by default it will start again from the previous
     // stop.
     ISV[i] = strtok(nullptr, "|");
     ISVNames.push_back(ISV[i]);
-    proc0cout << "ISV[" << i << "] is called " << ISVNames[i] << endl;
+    proc0cout << "ISV[" << i << "] is called " << ISVNames[i] << std::endl;
   }
   // Code ends here.KC
 

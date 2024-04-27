@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -46,7 +46,7 @@ ElasticModuli_MetalIso::ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps)
     throw Uintah::ProblemSetupException(err.str(), __FILE__, __LINE__);
   }
 
-  d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos);
+  d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos.get());
 
   d_Km = d_eos->computeInitialBulkModulus();
   d_Gm = d_shear->computeInitialShearModulus();
@@ -71,8 +71,8 @@ ElasticModuli_MetalIso::ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps)
 ElasticModuli_MetalIso::ElasticModuli_MetalIso(MPMEquationOfState* eos, 
                                                ShearModulusModel* shear)
 {
-  d_eos = eos;
-  d_shear = shear;
+  d_eos = MPMEquationOfStateFactory::createCopy(eos);
+  d_shear = ShearModulusModelFactory::createCopy(shear);
   if (d_eos == nullptr || d_shear == nullptr) {
     std::ostringstream err;
     err << "**ERROR** The model state in the elastic modulus model"
@@ -104,8 +104,8 @@ ElasticModuli_MetalIso::ElasticModuli_MetalIso(MPMEquationOfState* eos,
 ElasticModuli_MetalIso::ElasticModuli_MetalIso(
   const ElasticModuli_MetalIso* model)
 {
-  d_eos = model->d_eos;
-  d_shear = model->d_shear;
+  d_eos = MPMEquationOfStateFactory::createCopy(model->d_eos.get());
+  d_shear = ShearModulusModelFactory::createCopy(model->d_shear.get());
   
   d_Km = model->d_Km;
   d_Gm = model->d_Gm;

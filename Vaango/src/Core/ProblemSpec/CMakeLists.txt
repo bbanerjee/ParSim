@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -29,18 +29,17 @@ SET(Vaango_Core_ProblemSpec_SRCS
   ProblemSpec.cc
 )
 
-ADD_LIBRARY(Vaango_Core_ProblemSpec ${Vaango_Core_ProblemSpec_SRCS})
+add_library(Vaango_Core_ProblemSpec ${Vaango_Core_ProblemSpec_SRCS})
 
 # message(STATUS "Core/ProblemSpec linking to xml library ${XML2_LIBRARY}")
 
-TARGET_LINK_LIBRARIES(Vaango_Core_ProblemSpec
+target_link_libraries(Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions
   Vaango_Core_Math
   Vaango_Core_Util
-  Vaango_Core_Thread
   ${XML2_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_ProblemSpec)
+  add_definitions(-DBUILD_Vaango_Core_ProblemSpec)
 ENDIF(BUILD_SHARED_LIBS)

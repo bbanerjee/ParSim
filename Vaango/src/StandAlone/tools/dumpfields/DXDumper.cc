@@ -55,10 +55,10 @@ DXDumper::DXDumper(DataArchive* da, string basedir, bool bin, bool onedim)
   string indexfilename = dirname_ + string("/") + string("index.dx");
   dxstrm_.open(indexfilename.c_str());
   if (!dxstrm_) {
-    cerr << "Can't open output file " << indexfilename << endl;
+    std::cerr <<  "Can't open output file " << indexfilename << endl;
     abort();
   }
-  cout << "     " << indexfilename << endl;
+  std::cout << "     " << indexfilename << endl;
 }
 
 DXDumper::~DXDumper()
@@ -69,7 +69,7 @@ DXDumper::~DXDumper()
   dxstrm_ << "default \"udadata\"" << endl;
   dxstrm_ << "end" << endl;
   
-  for(map<string,FldWriter*>::iterator fit(fldwriters_.begin());fit!=fldwriters_.end();fit++) {
+  for(map<std::string,FldWriter*>::iterator fit(fldwriters_.begin());fit!=fldwriters_.end();fit++) {
     delete fit->second;
   }
 }
@@ -101,10 +101,10 @@ DXDumper::FldWriter::FldWriter(string outdir, string fieldname)
   string outname = outdir+"/"+fieldname+".dx";
   strm_.open(outname.c_str());
   if(!strm_) {
-    cerr << "Can't open output file " << outname << endl;
+    std::cerr <<  "Can't open output file " << outname << endl;
     abort();
   }
-  cout << "     " << outname << endl;
+  std::cout << "     " << outname << endl;
 }
 
 DXDumper::FldWriter::~FldWriter()
@@ -123,7 +123,7 @@ DXDumper::FldWriter::~FldWriter()
 }
 
 DXDumper::Step::Step(DataArchive * da, string tsdir, int timestep, double time, int index, int fileindex, 
-		     const map<string,DXDumper::FldWriter*> & fldwriters, bool bin, bool onedim)
+		     const  std::map< string,DXDumper::FldWriter*> & fldwriters, bool bin, bool onedim)
   :
   Dumper::Step(tsdir, timestep, time, index),
   da_(da), 
@@ -177,13 +177,13 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
   int nparts(0);
   bool iscell(false);
   IntVector nnodes, strides, minind, midind, ncells;
-  if(td->getType()!=Uintah::TypeDescription::ParticleVariable) {
+  if(td->getType()!=Uintah::TypeDescription::Type::ParticleVariable) {
     IntVector indlow, indhigh;
     level->findNodeIndexRange(indlow, indhigh);
     Point x0 = level->getAnchor();
     Vector dx = level->dCell();
     
-    iscell = (td->getType()==Uintah::TypeDescription::CCVariable);
+    iscell = (td->getType()==Uintah::TypeDescription::Type::CCVariable);
     int celllen = iscell?1:0;
     nnodes  = IntVector(indhigh-indlow+IntVector(1,1,1));
     ncells  = IntVector(indhigh-indlow);
@@ -237,7 +237,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
     
   } else {
     nparts = 0;
-    for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+    for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
       const Patch* patch = *iter;
       
       ConsecutiveRangeSet matls = da_->queryMaterials("p.x", patch, index_);
@@ -257,7 +257,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
     os << "object " << ++fldwriter->dxobj_ << " class array rank 1 shape 3 items " << nparts;
     os << dmode << " data follows " << endl;;
     
-    for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+    for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
       const Patch* patch = *iter;
       
       ConsecutiveRangeSet matls = da_->queryMaterials("p.x", patch, index_);
@@ -290,26 +290,26 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
   
   int ncomps, rank;
   string shp, source;
-  vector<float> minval, maxval;
+  std::vector<float> minval, maxval;
   
   /*if(1)*/ { // FIXME: skip p.x
     int nvals;
     switch (td->getType()) { 
-    case Uintah::TypeDescription::NCVariable:
+    case Uintah::TypeDescription::Type::NCVariable:
       if(onedim_)
 	nvals = strides(0);
       else
 	nvals = strides(0)*strides(1)*strides(2);
       source = "nodes";
       break;
-    case Uintah::TypeDescription::CCVariable:
+    case Uintah::TypeDescription::Type::CCVariable:
       if(onedim_)
 	nvals = strides(0);
       else
 	nvals = strides(0)*strides(1)*strides(2);
       source = "cells";
       break;
-    case Uintah::TypeDescription::ParticleVariable:
+    case Uintah::TypeDescription::Type::ParticleVariable:
       nvals = nparts;
       source = "particles";
       break;
@@ -318,19 +318,19 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
       abort();
     }
     
-    cout << "     " << fieldname << endl;
+    std::cout << "     " << fieldname << endl;
     switch(subtype->getType()) {
-    case Uintah::TypeDescription::float_type:  rank = 0; ncomps = 1; shp = " "; break;
-    case Uintah::TypeDescription::double_type: rank = 0; ncomps = 1; shp = " "; break;
-    case Uintah::TypeDescription::Point:       rank = 1; ncomps = 3; shp = "shape 3"; break;
-    case Uintah::TypeDescription::Vector:      rank = 1; ncomps = 3; shp = "shape 3"; break;
-    case Uintah::TypeDescription::Matrix3:     rank = 2; ncomps = 9; shp = "shape 3 3"; break;
+    case Uintah::TypeDescription::Type::float_type:  rank = 0; ncomps = 1; shp = " "; break;
+    case Uintah::TypeDescription::Type::double_type: rank = 0; ncomps = 1; shp = " "; break;
+    case Uintah::TypeDescription::Type::Point:       rank = 1; ncomps = 3; shp = "shape 3"; break;
+    case Uintah::TypeDescription::Type::Vector:      rank = 1; ncomps = 3; shp = "shape 3"; break;
+    case Uintah::TypeDescription::Type::Matrix3:     rank = 2; ncomps = 9; shp = "shape 3 3"; break;
     default: 
       fprintf(stderr, "unexpected field sub-type\n");
       abort();
     };
   
-    vector<float> vals(nvals*ncomps);
+    std::vector<float> vals(nvals*ncomps);
     for(vector<float>::iterator vit(vals.begin());vit!=vals.end();vit++) *vit = 0.;
     
     minval.resize(ncomps);
@@ -341,7 +341,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
     }
 
     int ipart(0);
-    for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+    for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
       const Patch* patch = *iter;
       
       ConsecutiveRangeSet matls = da_->queryMaterials(fieldname, patch, index_);
@@ -352,9 +352,9 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
 	const int matl = *matlIter;
 	
 	switch(subtype->getType()) {
-	case Uintah::TypeDescription::float_type:
+	case Uintah::TypeDescription::Type::float_type:
 	  {
-	    if(td->getType()==Uintah::TypeDescription::ParticleVariable) {
+	    if(td->getType()==Uintah::TypeDescription::Type::ParticleVariable) {
 	      ParticleVariable<float> value;
 	      da_->query(value, fieldname, matl, patch, index_);
 	      ParticleSubset* pset = value.getParticleSubset();
@@ -364,7 +364,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
 		if(val<minval[0]) minval[0] = val;
 		if(val>maxval[0]) maxval[0] = val;
 	      }
-	    } else if(td->getType()==Uintah::TypeDescription::CCVariable) {
+	    } else if(td->getType()==Uintah::TypeDescription::Type::CCVariable) {
 	      CCVariable<float> value;
 	      da_->query(value, fieldname, matl, patch, index_);
 	      for(CellIterator iter = patch->getCellIterator();!iter.done(); iter++){
@@ -390,9 +390,9 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
 	      }
 	    }
 	  } break;
-	case Uintah::TypeDescription::double_type:
+	case Uintah::TypeDescription::Type::double_type:
 	  {
-	    if(td->getType()==Uintah::TypeDescription::ParticleVariable) {
+	    if(td->getType()==Uintah::TypeDescription::Type::ParticleVariable) {
 	      ParticleVariable<double> value;
 	      da_->query(value, fieldname, matl, patch, index_);
 	      ParticleSubset* pset = value.getParticleSubset();
@@ -402,7 +402,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
 		if(val<minval[0]) minval[0] = val;
 		if(val>maxval[0]) maxval[0] = val;
 	      }
-	    } else if(td->getType()==Uintah::TypeDescription::CCVariable) {
+	    } else if(td->getType()==Uintah::TypeDescription::Type::CCVariable) {
 	      CCVariable<double> value;
 	      da_->query(value, fieldname, matl, patch, index_);
 	      for(CellIterator iter = patch->getCellIterator();!iter.done(); iter++){
@@ -432,9 +432,9 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
 	      }
 	    }
 	  } break;
-	case Uintah::TypeDescription::Point:
+	case Uintah::TypeDescription::Type::Point:
 	  {
-	    if(td->getType()==Uintah::TypeDescription::ParticleVariable) {
+	    if(td->getType()==Uintah::TypeDescription::Type::ParticleVariable) {
 	      ParticleVariable<Point> value;
 	      da_->query(value, fieldname, matl, patch, index_);
 	      ParticleSubset* pset = value.getParticleSubset();
@@ -446,7 +446,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
 		  if(val>maxval[ic]) maxval[ic] = val;
 		}
 	      }
-	    } else if(td->getType()==Uintah::TypeDescription::CCVariable) {
+	    } else if(td->getType()==Uintah::TypeDescription::Type::CCVariable) {
 	      CCVariable<Point> value;
 	      da_->query(value, fieldname, matl, patch, index_);
 	      for(CellIterator iter = patch->getCellIterator();!iter.done(); iter++){
@@ -476,9 +476,9 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
 	      }
 	    }
 	  } break;
-	case Uintah::TypeDescription::Vector:
+	case Uintah::TypeDescription::Type::Vector:
 	  {
-	    if(td->getType()==Uintah::TypeDescription::ParticleVariable) {
+	    if(td->getType()==Uintah::TypeDescription::Type::ParticleVariable) {
 	      ParticleVariable<Vector> value;
 	      da_->query(value, fieldname, matl, patch, index_);
 	      ParticleSubset* pset = value.getParticleSubset();
@@ -490,7 +490,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
 		  if(val>maxval[ic]) maxval[ic] = val;
 		}
 	      }
-	    } else if(td->getType()==Uintah::TypeDescription::CCVariable) {
+	    } else if(td->getType()==Uintah::TypeDescription::Type::CCVariable) {
 	      CCVariable<Vector> value;
 	      da_->query(value, fieldname, matl, patch, index_);
 	      for(CellIterator iter = patch->getCellIterator();!iter.done(); iter++){
@@ -520,9 +520,9 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
 	      }
 	    }
 	  } break;
-	case Uintah::TypeDescription::Matrix3:
+	case Uintah::TypeDescription::Type::Matrix3:
 	  {
-	    if(td->getType()==Uintah::TypeDescription::ParticleVariable) {
+	    if(td->getType()==Uintah::TypeDescription::Type::ParticleVariable) {
 	      ParticleVariable<Matrix3> value;
 	      da_->query(value, fieldname, matl, patch, index_);
 	      ParticleSubset* pset = value.getParticleSubset();
@@ -535,7 +535,7 @@ DXDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
 		    if(val>maxval[ic+jc*3]) maxval[ic+jc*3] = val;
 		  }
 	      }
-	    } else if(td->getType()==Uintah::TypeDescription::CCVariable) {
+	    } else if(td->getType()==Uintah::TypeDescription::Type::CCVariable) {
 	      CCVariable<Matrix3> value;
 	      da_->query(value, fieldname, matl, patch, index_);
 	      for(NodeIterator iter = patch->getNodeIterator();!iter.done(); iter++){

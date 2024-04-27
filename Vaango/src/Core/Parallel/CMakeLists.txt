@@ -63,9 +63,9 @@ SET(Vaango_Core_Parallel_SRCS
   Vampir.cc
 )
 
-ADD_LIBRARY(Vaango_Core_Parallel ${Vaango_Core_Parallel_SRCS})
+add_library(Vaango_Core_Parallel ${Vaango_Core_Parallel_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_Core_Parallel
+target_link_libraries(Vaango_Core_Parallel
   Vaango_Core_Exceptions
   Vaango_Core_ProblemSpec
   Vaango_Core_Util
@@ -75,5 +75,5 @@ TARGET_LINK_LIBRARIES(Vaango_Core_Parallel
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Parallel)
+  add_definitions(-DBUILD_Vaango_Core_Parallel)
 ENDIF(BUILD_SHARED_LIBS)

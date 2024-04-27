@@ -27,7 +27,7 @@ def main(argv):
 
   # Parse comman line arguments
   parser = argparse.ArgumentParser(
-    usage="extract_centrifuge_fext --plane <x0> <y0> <z0> <x1> <y1> <z1> <x2> <y2> <z2> --surf_area <area> --mat <mat id> --tlo <int timestep low> --thi <int timestep hi> --tstep <int stepsize> --uda <uda file_name_prefix>")
+    usage="extract_centrifuge_fext --plane <x0> <y0> <z0> <x1> <y1> <z1> <x2> <y2> <z2> --surf_area <area> --mat <mat id> --tlo <int timestep low> --thi <int timestep hi> --tstep <int stepSize> --uda <uda file_name_prefix>")
   parser.add_argument('--plane', nargs=9, help = 'x0 y0 z0 x1 y1 z1 x2 y2 z2', type=float, required=True)
   parser.add_argument('--surf_area', default=0, type=float, required=True)
   parser.add_argument('--mat', default=0, type=int, required=True)

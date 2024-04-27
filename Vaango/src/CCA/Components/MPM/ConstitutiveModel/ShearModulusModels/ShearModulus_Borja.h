@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -68,6 +68,7 @@ private:
   double d_alpha;      // Coupling constant (shear-pressure)
   double d_p0;         // Reference pressure
   double d_kappatilde; // Reference compressibility
+  double d_kappahat;   // Large deformation compressibility
   double d_epse_v0;    // Reference volume strain
 
   ShearModulus_Borja&
@@ -153,6 +154,6 @@ private:
   double
   evalDqDepse_s(const double& epse_v, const double& epse_s) const;
 };
-} // End namespace Uintah
+} // namespace Vaango
 
 #endif // __BORJA_SHEAR_MODEL_H__

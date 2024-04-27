@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022    Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -30,9 +28,9 @@
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/ComputeSet.h>
-#include <vector>
+#include <Core/Parallel/UintahMPI.h>
 
-#include <sci_defs/mpi_defs.h> // For MPIPP_H on SGI
+#include <vector>
 
 namespace Uintah {
   class DataWarehouse;
@@ -71,40 +69,44 @@ WARNING
 
   class MPIScatterRecords; // defined in .cc
 
-  class Relocate {
+class Relocate {
+
   public:
-    Relocate();
+
+    Relocate(){};
+
     virtual ~Relocate();
     
     //////////
     // Insert Documentation Here:
-    void scheduleParticleRelocation(Scheduler*,
-                                    const ProcessorGroup* pg,
-                                    LoadBalancer* lb,
-                                    const LevelP& level,
-                                    const VarLabel* old_posLabel,
-                                    const std::vector<std::vector<const VarLabel*> >& old_labels,
-                                    const VarLabel* new_posLabel,
-                                    const std::vector<std::vector<const VarLabel*> >& new_labels,
-                                    const VarLabel* particleIDLabel,
-                                    const MaterialSet* matls);
+    void scheduleParticleRelocation( Scheduler                                        *,
+                                     const ProcessorGroup                             * pg,
+                                     LoadBalancer                                     * lb,
+                                     const LevelP                                     & level,
+                                     const VarLabel                                   * old_posLabel,
+                                     const std::vector<std::vector<const VarLabel*> > & old_labels,
+                                     const VarLabel                                   * new_posLabel,
+                                     const std::vector<std::vector<const VarLabel*> > & new_labels,
+                                     const VarLabel                                   * particleIDLabel,
+                                     const MaterialSet                                * matls );
     //////////
     // Schedule particle relocation without the need to provide pre-relocation labels. Warning: This
     // is experimental and has not been fully tested yet. Use with caution (tsaad).
-    void scheduleParticleRelocation(Scheduler*,
-                                    const ProcessorGroup* pg,
-                                    LoadBalancer* lb,
-                                    const LevelP& level,
-                                    const VarLabel* posLabel,
-                                    const std::vector<std::vector<const VarLabel*> >& otherLabels,
-                                    const MaterialSet* matls);
-    
-    const MaterialSet* getMaterialSet() const { return reloc_matls;}
+    void scheduleParticleRelocation(Scheduler                                        *,
+                                    const ProcessorGroup                             * pg,
+                                    LoadBalancer                                 * lb,
+                                    const LevelP                                     & level,
+                                    const VarLabel                                   * posLabel,
+                                    const std::vector<std::vector<const VarLabel*> > & otherLabels,
+                                    const MaterialSet                                * matls);
+
+    const MaterialSet* getMaterialSet() const { return m_reloc_matls;}
+
 
   private:
 
     // varlabels created for the modifies version of relocation
-    std::vector<const Uintah::VarLabel*> destroyMe_;
+    std::vector<const Uintah::VarLabel*> m_destroyMe;
     
     //////////
     // Callback function for particle relocation that doesn't use pre-Relocation variables.
@@ -121,33 +123,36 @@ WARNING
                            DataWarehouse* old_dw,
                            DataWarehouse* new_dw,
                            const Level* coarsestLevelwithParticles);
-    void exchangeParticles(const ProcessorGroup*, 
-                           const PatchSubset* patches,
-                           const MaterialSubset* matls,
-                           DataWarehouse* old_dw,
-                           DataWarehouse* new_dw, MPIScatterRecords* scatter_records, 
-                           int total_reloc[3]);
+
+    void exchangeParticles( const ProcessorGroup    *, 
+                            const PatchSubset       * patches,
+                            const MaterialSubset    * matls,
+                                  DataWarehouse     * old_dw,
+                                  DataWarehouse     * new_dw,
+                                  MPIScatterRecords * scatter_records, 
+                                  int                 total_reloc[3] );
     
-    void findNeighboringPatches(const Patch* patch,
-                                const Level* level,
-                                const bool findFiner,
-                                const bool findCoarser,
-                                Patch::selectType& AllNeighborPatches);
+    void findNeighboringPatches( const Patch       * patch,
+                                 const Level       * level,
+                                 const bool          findFiner,
+                                 const bool          findCoarser,
+                                 Patch::selectType & AllNeighborPatches);
    
     void finalizeCommunication();
-    const VarLabel* reloc_old_posLabel;
-    std::vector<std::vector<const VarLabel*> > reloc_old_labels;
-    const VarLabel* reloc_new_posLabel;
-    std::vector<std::vector<const VarLabel*> > reloc_new_labels;
-    const VarLabel* particleIDLabel_;
-    const MaterialSet* reloc_matls;
-    LoadBalancer* lb;
-    std::vector<char*> recvbuffers;
-    std::vector<char*> sendbuffers;
-    std::vector<MPI_Request> sendrequests;
 
+    const VarLabel                             * m_reloc_old_posLabel{ nullptr };
+    std::vector<std::vector<const VarLabel*> >   m_reloc_old_labels;
+    const VarLabel                             * m_reloc_new_posLabel{ nullptr };
+    std::vector<std::vector<const VarLabel*> >   m_reloc_new_labels;
+    const VarLabel                             * m_particleIDLabel{   nullptr };
+    const MaterialSet                          * m_reloc_matls{       nullptr };
+    LoadBalancer                               * m_lb{                nullptr };
+    std::vector<char*>                          m_recv_buffers;
+    std::vector<char*>                          m_send_buffers;
+    std::vector<MPI_Request>                    m_send_requests;
 
-  };
+};
+
 } // End namespace Uintah
    
 #endif

@@ -209,7 +209,7 @@ TEST_F(YieldCondTabularTest, df_dsigma)
   try {
     state_circle.stressTensor = Matrix3(3, 0, 0, 0, 3, 0, 0, 0, 3);
     std::cout << "df_dsigma = " << df_dsigma << std::endl;
-  } catch (Uintah::InvalidValue e)  {
+  } catch (const Uintah::InvalidValue& e)  {
     std::cout <<  e.message() << std::endl;
   }
   */

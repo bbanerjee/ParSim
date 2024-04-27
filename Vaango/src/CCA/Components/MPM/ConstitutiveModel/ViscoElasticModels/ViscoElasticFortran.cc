@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,9 +23,11 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoElasticFortran.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
@@ -35,7 +37,6 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -51,17 +52,30 @@
 ////////////////////////////////////////////////////////////////////////////////
 // The following functions are found in fortran/visco.F90
 
-extern "C" {
+extern "C"
+{
 
 #define PROPCHECK propcheck_
 #define VISCOINI viscoini_
 #define VISCORELAX viscorelax_
 
-void PROPCHECK(int* nprop, double* props);
-void VISCOINI(int* nprop, double* props, int* nstatev, double* statev);
-void VISCORELAX(double* dtime, double* time, double* tempold, double* dtemp,
-                int* nprop, double* props, double* F, int* nstatev,
-                double* statev, double* sigo, double* sig, double* cfac);
+  void
+  PROPCHECK(int* nprop, double* props);
+  void
+  VISCOINI(int* nprop, double* props, int* nstatev, double* statev);
+  void
+  VISCORELAX(double* dtime,
+             double* time,
+             double* tempold,
+             double* dtemp,
+             int* nprop,
+             double* props,
+             double* F,
+             int* nstatev,
+             double* statev,
+             double* sigo,
+             double* sig,
+             double* cfac);
 }
 
 // End fortran functions.
@@ -180,8 +194,8 @@ ViscoElasticFortran::ViscoElasticFortran(const ViscoElasticFortran* cm)
   d_param.Tau09 = cm->d_param.Tau09;
   d_param.Tau10 = cm->d_param.Tau10;
 
-  d_param.C1_WLF = cm->d_param.C1_WLF;
-  d_param.C2_WLF = cm->d_param.C2_WLF;
+  d_param.C1_WLF   = cm->d_param.C1_WLF;
+  d_param.C2_WLF   = cm->d_param.C2_WLF;
   d_param.Tref_WLF = cm->d_param.Tref_WLF;
 
   d_nStateV = cm->d_nStateV;
@@ -232,10 +246,18 @@ ViscoElasticFortran::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("Tref_WLF", d_param.Tref_WLF);
 }
 
+/*
 ViscoElasticFortran*
 ViscoElasticFortran::clone()
 {
   return scinew ViscoElasticFortran(*this);
+}
+*/
+
+std::unique_ptr<ConstitutiveModel>
+ViscoElasticFortran::clone()
+{
+  return std::make_unique<ViscoElasticFortran>(*this);
 }
 
 void
@@ -323,10 +345,12 @@ ViscoElasticFortran::initializeLocalMPMLabels()
   stateVNames.push_back("DEVPK2_ZX_10");
 
   for (int i = 0; i < d_nStateV; i++) {
-    stateVLabels.push_back(VarLabel::create(
-      stateVNames[i], ParticleVariable<double>::getTypeDescription()));
-    stateVLabels_preReloc.push_back(VarLabel::create(
-      stateVNames[i] + "+", ParticleVariable<double>::getTypeDescription()));
+    stateVLabels.push_back(
+      VarLabel::create(stateVNames[i],
+                       ParticleVariable<double>::getTypeDescription()));
+    stateVLabels_preReloc.push_back(
+      VarLabel::create(stateVNames[i] + "+",
+                       ParticleVariable<double>::getTypeDescription()));
   }
 }
 
@@ -396,7 +420,8 @@ void
 ViscoElasticFortran::allocateCMDataAdd(DataWarehouse* new_dw,
                                        ParticleSubset* addset,
                                        ParticleLabelVariableMap* newState,
-                                       ParticleSubset* delset, DataWarehouse*)
+                                       ParticleSubset* delset,
+                                       DataWarehouse*)
 {
   // Copy the data common to all constitutive models from the particle to be
   // deleted to the particle to be added.
@@ -435,29 +460,29 @@ ViscoElasticFortran::computeStableTimestep(const Patch* patch,
 {
   // This is only called for the initial timestep - all other timesteps
   // are computed as a side-effect of computeStressTensor
-  Vector dx = patch->dCell();
-  int matID = matl->getDWIndex();
+  Vector dx            = patch->dCell();
+  int matID            = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
 
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
 
-  double G = d_param.G;
+  double G    = d_param.G;
   double bulk = d_param.K;
   for (int idx : *pset) {
     // Compute wave speed at each particle, store the maximum
-    c_dil = sqrt((bulk + 4. * G / 3.) * pvolume[idx] / pmass[idx]);
-    waveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), waveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), waveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), waveSpeed.z()));
+    c_dil     = sqrt((bulk + 4. * G / 3.) * pVolume[idx] / pMass[idx]);
+    waveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), waveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), waveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), waveSpeed.z()));
   }
-  waveSpeed = dx / waveSpeed;
+  waveSpeed       = dx / waveSpeed;
   double delT_new = waveSpeed.minComponent();
   new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 }
@@ -468,7 +493,10 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
                                          DataWarehouse* old_dw,
                                          DataWarehouse* new_dw)
 {
-  double time = d_sharedState->getElapsedTime();
+  simTime_vartype simTimeVar;
+  old_dw->get(simTimeVar, lb->simulationTimeLabel);
+  double time = simTimeVar;
+
   double rho_0 = matl->getInitialDensity();
   Matrix3 Identity, zero(0.), One(1.);
   Identity.Identity();
@@ -482,7 +510,7 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
 
     Vector dx = patch->dCell();
 
-    int matID = matl->getDWIndex();
+    int matID            = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
     // Get the deformation gradient (F) and velocity gradient (L)
@@ -493,10 +521,10 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
 
     // Get the particle location, particle size, particle mass, particle volume
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
     constParticleVariable<double> pMass, pVol_new, pTemp;
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pMass, lb->pMassLabel, pset);
     old_dw->get(pTemp, lb->pTemperatureLabel, pset);
     new_dw->get(pVol_new, lb->pVolumeLabel_preReloc, pset);
@@ -539,22 +567,22 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
       // Calculate the current mass density
       //-----------------------------------------------------------------------
       Matrix3 defGrad_new = pDefGrad_new[idx];
-      double J_new = defGrad_new.Determinant();
-      double rho_cur = rho_0 / J_new;
+      double J_new        = defGrad_new.Determinant();
+      double rho_cur      = rho_0 / J_new;
 
       //-----------------------------------------------------------------------
       // Compute left Cauchy-Green deformation tensor (B) and its invariants
       //-----------------------------------------------------------------------
-      Matrix3 B_new = defGrad_new * defGrad_new.Transpose();
+      Matrix3 B_new    = defGrad_new * defGrad_new.Transpose();
       Matrix3 devB_new = B_new - Identity * (B_new.Trace() / 3.0);
-      double cbrt_J = std::cbrt(J_new);
+      double cbrt_J    = std::cbrt(J_new);
 
       //-----------------------------------------------------------------------
       // Compute Cauchy stress (using Compressible neo-Hookean model cf
       // Wikipedia)
       //-----------------------------------------------------------------------
-      double mu = d_param.G;
-      double kappa = d_param.K;
+      double mu     = d_param.G;
+      double kappa  = d_param.K;
       Matrix3 sigma = Identity * (kappa * (J_new - 1.0)) +
                       devB_new * (mu / (cbrt_J * cbrt_J * J_new));
       // std::cout << " Stress = " << sigma << std::endl;
@@ -565,7 +593,7 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
       double dt = delT;
       time += dt;
       double temp_new = pTemp[idx];
-      double dtemp = 0.0;
+      double dtemp    = 0.0;
 
       std::vector<double> F;
       F.push_back(defGrad_new(0, 0));
@@ -584,15 +612,15 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
       }
 
       double sig_old[6] = { 0 };
-      sig_old[0] = sigma(0, 0);
-      sig_old[1] = sigma(1, 1);
-      sig_old[2] = sigma(2, 2);
-      sig_old[3] = sigma(0, 1);
-      sig_old[4] = sigma(1, 2);
-      sig_old[5] = sigma(2, 0);
+      sig_old[0]        = sigma(0, 0);
+      sig_old[1]        = sigma(1, 1);
+      sig_old[2]        = sigma(2, 2);
+      sig_old[3]        = sigma(0, 1);
+      sig_old[4]        = sigma(1, 2);
+      sig_old[5]        = sigma(2, 0);
 
       double sig_new[6] = { 0 };
-      double cfac[2] = { 0 };
+      double cfac[2]    = { 0 };
       /*
       std::cout << "Inputs to viscorelax:" << std::endl;
       std::cout << "dt = " << dt << " time = " << time
@@ -605,8 +633,18 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
       std::cout << std::endl;
       */
 
-      VISCORELAX(&dt, &time, &temp_new, &dtemp, &d_nProp, &d_props[0], &F[0],
-                 &d_nStateV, &statev[0], &sig_old[0], &sig_new[0], &cfac[0]);
+      VISCORELAX(&dt,
+                 &time,
+                 &temp_new,
+                 &dtemp,
+                 &d_nProp,
+                 &d_props[0],
+                 &F[0],
+                 &d_nStateV,
+                 &statev[0],
+                 &sig_old[0],
+                 &sig_new[0],
+                 &cfac[0]);
 
       pStress_new[idx](0, 0) = sig_new[0];
       pStress_new[idx](1, 1) = sig_new[1];
@@ -653,9 +691,9 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
       if (flag->d_artificialViscosity) {
         // Compute rate of deformation (D)
         Matrix3 velGrad_new = pVelGrad_new[idx];
-        Matrix3 D_new = (velGrad_new + velGrad_new.Transpose()) * 0.5;
-        double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
-        double c_bulk = sqrt(kappa / rho_cur);
+        Matrix3 D_new       = (velGrad_new + velGrad_new.Transpose()) * 0.5;
+        double dx_ave       = (dx.x() + dx.y() + dx.z()) / 3.0;
+        double c_bulk       = sqrt(kappa / rho_cur);
         p_q[idx] =
           artificialBulkViscosity(D_new.Trace(), c_bulk, rho_cur, dx_ave);
       } else {
@@ -663,7 +701,7 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
       }
     } // end loop over particles
 
-    waveSpeed = dx / waveSpeed;
+    waveSpeed       = dx / waveSpeed;
     double delT_new = waveSpeed.minComponent();
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 
@@ -677,11 +715,12 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
 void
 ViscoElasticFortran::carryForward(const PatchSubset* patches,
                                   const MPMMaterial* matl,
-                                  DataWarehouse* old_dw, DataWarehouse* new_dw)
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-    int matID = matl->getDWIndex();
+    const Patch* patch   = patches->get(p);
+    int matID            = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
     // Carry forward the data common to all constitutive models
@@ -709,7 +748,8 @@ ViscoElasticFortran::carryForward(const PatchSubset* patches,
 }
 
 void
-ViscoElasticFortran::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+ViscoElasticFortran::addComputesAndRequires(Task* task,
+                                            const MPMMaterial* matl,
                                             const PatchSet* patches) const
 {
   // Add the computes and requires that are common to all explicit
@@ -726,19 +766,23 @@ ViscoElasticFortran::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-ViscoElasticFortran::addComputesAndRequires(Task*, const MPMMaterial*,
-                                            const PatchSet*, const bool,
+ViscoElasticFortran::addComputesAndRequires(Task*,
+                                            const MPMMaterial*,
+                                            const PatchSet*,
+                                            const bool,
                                             const bool) const
 {
 }
 
 double
-ViscoElasticFortran::computeRhoMicroCM(double pressure, const double p_ref,
+ViscoElasticFortran::computeRhoMicroCM(double pressure,
+                                       const double p_ref,
                                        const MPMMaterial* matl,
-                                       double temperature, double rho_guess)
+                                       double temperature,
+                                       double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
-  double p_gauge = pressure - p_ref;
+  double p_gauge  = pressure - p_ref;
   double rho_cur;
   double bulk = d_param.K;
 
@@ -747,28 +791,31 @@ ViscoElasticFortran::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 0
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR ViscoElasticFortran"
-       << endl;
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR ViscoElasticFortran"
+       << std::endl;
 #endif
 }
 
 void
-ViscoElasticFortran::computePressEOSCM(double rho_cur, double& pressure,
-                                       double p_ref, double& dp_drho,
-                                       double& tmp, const MPMMaterial* matl,
+ViscoElasticFortran::computePressEOSCM(double rho_cur,
+                                       double& pressure,
+                                       double p_ref,
+                                       double& dp_drho,
+                                       double& tmp,
+                                       const MPMMaterial* matl,
                                        double temperature)
 {
-  double bulk = d_param.K;
+  double bulk     = d_param.K;
   double rho_orig = matl->getInitialDensity();
 
   double p_g = bulk * (1.0 - rho_orig / rho_cur);
-  pressure = p_ref + p_g;
-  dp_drho = bulk * rho_orig / (rho_cur * rho_cur);
-  tmp = bulk / rho_cur; // speed of sound squared
+  pressure   = p_ref + p_g;
+  dp_drho    = bulk * rho_orig / (rho_cur * rho_cur);
+  tmp        = bulk / rho_cur; // speed of sound squared
 
 #if 0
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR ViscoElasticFortran"
-       << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR ViscoElasticFortran"
+       << std::endl;
 #endif
 }
 

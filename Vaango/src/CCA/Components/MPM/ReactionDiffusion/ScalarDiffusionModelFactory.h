@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2014 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,26 +26,23 @@
 #ifndef _SCALARDIFFUSIONMODELFACTORY_H_
 #define _SCALARDIFFUSIONMODELFACTORY_H_
 
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <memory>
 #include <string>
 
 namespace Uintah {
 
-  class ScalarDiffusionModel;
-  class MPMLabel;
-  class MPMFlags;
+class ScalarDiffusionModel;
+class MPMFlags;
 
-  class ScalarDiffusionModelFactory
-  {
-  public:
-    // this function has a switch for all known mat_types
-    
-    static ScalarDiffusionModel* create(ProblemSpecP& ps,
-                                        SimulationStateP& ss,
-                                        MPMFlags* flags);
-
-  };
+class ScalarDiffusionModelFactory
+{
+public:
+  // Dispatch based on diffusion model.
+  static std::unique_ptr<ScalarDiffusionModel>
+  create(ProblemSpecP& ps, MaterialManagerP& ss, MPMFlags* flags);
+};
 } // End namespace Uintah
-      
-#endif /* _CONSTITUTIVEMODELFACTORY_H_ */
+
+#endif /* _SCALARDIFFUSIONMODELFACTORY_H_ */

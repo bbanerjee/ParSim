@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,7 +28,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PorousModels/P_Alpha.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 
 using namespace Uintah;
 
@@ -101,10 +101,10 @@ P_Alpha::~P_Alpha()
   VarLabel::destroy(pTempAlpha1Label_preReloc);
 }
 
-P_Alpha*
+std::unique_ptr<ConstitutiveModel>
 P_Alpha::clone()
 {
-  return scinew P_Alpha(*this);
+  return std::make_unique<P_Alpha>(*this);
 }
 
 void
@@ -365,7 +365,7 @@ P_Alpha::computeStressTensor(const PatchSubset* patches,
           double denom = 1.0 / zeta - (S_alpha - 1.0);
           if (denom == 0.0) {
             std::cout << "rho_0 = " << rhoS << " zeta = " << zeta
-                      << " numer = " << numer << endl;
+                      << " numer = " << numer << std::endl;
             denom = 1.0e-5;
           }
           p += numer / (denom * denom);
@@ -386,9 +386,9 @@ P_Alpha::computeStressTensor(const PatchSubset* patches,
         p              = Ku * (1. - rho_max / rhoM);
       }
 
-      //      double etime = d_sharedState->getElapsedTime();
+      //      double etime = d_mat_manager->getElapsedTime();
       //      std::cout << "12345 " << " " << etime << " " << alpha << " " <<
-      //      pTemperature[idx] << " " << p << endl;
+      //      pTemperature[idx] << " " << p << std::endl;
 
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {

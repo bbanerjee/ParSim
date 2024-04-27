@@ -56,7 +56,7 @@
 
 // Find the current location of a set of points whose initial
 // position is known (from puda) (for the Taylor impact test)
-using namespace std;
+
 
 bool inbox(double px, double py, double pz, double xmin, double xmax,
 	   double ymin, double ymax, double zmin, double zmax)
@@ -70,8 +70,8 @@ int main(int argc, char** argv)
 {
    // Check if the number of arguments is correct
    if (argc != 3) {
-     cerr << "Usage: extractTaylor <int_pos_file> <final_pos_file>" 
-          << endl;
+     std::cerr <<  "Usage: extractTaylor <int_pos_file> <final_pos_file>" 
+          << std::endl;
      exit(0);
    }
 
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
    // Open the files
    ifstream posFile(posFileName.c_str());
    if(!posFile) {
-     cerr << "File " << posFileName << " can't be opened." << endl;
+     std::cerr <<  "File " << posFileName << " can't be opened." << std::endl;
      exit(0);
    }
    string pidFileName = posFileName+".pid";
@@ -90,16 +90,16 @@ int main(int argc, char** argv)
 
    // Read in the initial particle location
    double rad, height;
-   cout << "\n Enter radius and height ";
+   std::cout << "\n Enter radius and height ";
    cin >> rad >> height;
-   cout << rad << " " << height << endl;
+   std::cout << rad << " " << height << std::endl;
    double dx;
-   cout << "\n Enter width of search box ";
+   std::cout << "\n Enter width of search box ";
    cin >> dx;
-   cout << dx << endl;
+   std::cout << dx << std::endl;
 
    // Create an array for storing the PIDs
-   vector<int64_t> pidVec;
+   std::vector<int64_t> pidVec;
 
    // Read the header 
    posFile.ignore(1000,'\n');
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
      xmax = rad + dx; ymax = height + dx; zmax = dx;
      if (inbox(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax)){
        //cout << " pID = " << pID << " [" << x <<","<<y<<","<<z<<"]\n";
-       pidFile << pID << " " << x << " " << y << " " << z << endl;
+       pidFile << pID << " " << x << " " << y << " " << z << std::endl;
        pidVec.push_back(pID);
      }
 
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
      xmax = rad + dx; ymax = height + dx; zmax = dx;
      if (inbox(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax)){
        //cout << " pID = " << pID << " [" << x <<","<<y<<","<<z<<"]\n";
-       pidFile << pID << " " << x << " " << y << " " << z << endl;
+       pidFile << pID << " " << x << " " << y << " " << z << std::endl;
        pidVec.push_back(pID);
      }
 
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
      xmax = rad + dx; ymax = dx; zmax = dx;
      if (inbox(x, y, z, xmin, xmax, ymin, ymax, zmin, zmax)){
        //cout << " pID = " << pID << " [" << x <<","<<y<<","<<z<<"]\n";
-       pidFile << pID << " " << x << " " << y << " " << z << endl;
+       pidFile << pID << " " << x << " " << y << " " << z << std::endl;
        pidVec.push_back(pID);
      }
 
@@ -143,7 +143,7 @@ int main(int argc, char** argv)
    // Open the files
    ifstream finposFile(finposFileName.c_str());
    if(!finposFile) {
-     cerr << "File " << finposFileName << " can't be opened." << endl;
+     std::cerr <<  "File " << finposFileName << " can't be opened." << std::endl;
      exit(0);
    }
    string finpidFileName = finposFileName+".pid";
@@ -156,7 +156,7 @@ int main(int argc, char** argv)
      for (int ii = 0; ii < numPID; ++ii) {
        if (pID == pidVec[ii])
          //cout << " pID = " << pID << " [" << x <<","<<y<<","<<z<<"]\n";
-         finpidFile << pID << " " << x << " " << y << " " << z << endl;
+         finpidFile << pID << " " << x << " " << y << " " << z << std::endl;
      } 
    }
    finposFile.close();

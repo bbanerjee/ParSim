@@ -66,7 +66,7 @@
 #include <string>
 #include <vector>
 
-using namespace std;
+
 
 struct Info_S {
   string name;
@@ -105,7 +105,7 @@ findLocation( int value )
     return infoVector[ low-1 ];
   }
 
-  return NULL;
+  return nullptr;
 }
 
 void
@@ -113,7 +113,7 @@ readSymbolLocations( char * filename )
 {
   FILE * fp = fopen( filename, "r" );
 
-  if( fp == NULL ) {
+  if( fp == nullptr ) {
     printf( "Error reading file '%s'.  Goodbye.\n\n", filename );
     exit( 1 );
   }
@@ -178,12 +178,12 @@ printStackTrace( char * filename )
 {
   FILE * fp = fopen( filename, "r" );
 
-  if( fp == NULL ) {
+  if( fp == nullptr ) {
     printf( "Error reading file '%s'.  Goodbye.\n\n", filename );
     exit( 1 );
   }
 
-  vector< string > stacktrace;
+  std::vector< string > stacktrace;
 
   printf("stack trace (raw):\n\n");
 
@@ -193,7 +193,7 @@ printStackTrace( char * filename )
 
     char * result = fgets( line, LINE_SIZE, fp );
 
-    if( result == NULL ) { 
+    if( result == nullptr ) { 
       break;
     }
     printf("%s", line);
@@ -296,7 +296,7 @@ void
 test() 
 {
   printf( "\n\n" );
-  vector<int> addresses;
+  std::vector<int> addresses;
   
   addresses.push_back( 0x400bbf );
   addresses.push_back( 0x400bc0 );

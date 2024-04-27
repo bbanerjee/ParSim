@@ -72,10 +72,10 @@ FamilyComputer::findNeighbors(PeridynamicsMaterial* matl,
 
     // For getting particle velocities (if they exist)   // gcd adds
     std::vector<Uintah::Vector>::const_iterator velocityiter;
-    geomvecs::key_type pvelocitykey(patch,*obj);
+    geomvecs::key_type pVelocitykey(patch,*obj);
     if (pvelocities) {                             // new change name
       if (!pvelocities->empty()) velocityiter =
-              d_object_velocity[pvelocitykey].begin();  // new change name
+              d_object_velocity[pVelocitykey].begin();  // new change name
     }                                                    // end gcd adds
     
     std::vector<Uintah::Point>::const_iterator itr;
@@ -93,15 +93,15 @@ FamilyComputer::findNeighbors(PeridynamicsMaterial* matl,
       
       if (volumes) {
         if (!volumes->empty()) {
-          pvolume[pidx] = *voliter;
-          pmass[pidx] = matl->getInitialDensity()*pvolume[pidx];
+          pVolume[pidx] = *voliter;
+          pMass[pidx] = matl->getInitialDensity()*pVolume[pidx];
           ++voliter;
         }
       }
 
       if (pvelocities) {                           // gcd adds and change name 
         if (!pvelocities->empty()) {               // and change name
-          pvelocity[pidx] = *velocityiter;
+          pVelocity[pidx] = *velocityiter;
           ++velocityiter;
         }
       }                                         // end gcd adds
@@ -122,13 +122,13 @@ FamilyComputer::allocateVariables(particleIndex numParticles,
 
   Uintah::ParticleSubset* subset = new_dw->createParticleSubset(numParticles,dwi,
                                                         patch);
-  new_dw->allocateAndPut(pparticleID,    d_varLabel->pParticleIDLabel,    subset);
+  new_dw->allocateAndPut(pParticleID,    d_varLabel->pParticleIDLabel,    subset);
   new_dw->allocateAndPut(position,       d_varLabel->pPositionLabel,      subset);
-  new_dw->allocateAndPut(pmass,          d_varLabel->pMassLabel,          subset);
-  new_dw->allocateAndPut(psize,          d_varLabel->pSizeLabel,          subset);
-  new_dw->allocateAndPut(pvolume,        d_varLabel->pVolumeLabel,        subset);
-  new_dw->allocateAndPut(pdisp,          d_varLabel->pDispLabel,          subset);
-  new_dw->allocateAndPut(pvelocity,      d_varLabel->pVelocityLabel,      subset); 
+  new_dw->allocateAndPut(pMass,          d_varLabel->pMassLabel,          subset);
+  new_dw->allocateAndPut(pSize,          d_varLabel->pSizeLabel,          subset);
+  new_dw->allocateAndPut(pVolume,        d_varLabel->pVolumeLabel,        subset);
+  new_dw->allocateAndPut(pDisplacement,          d_varLabel->pDispLabel,          subset);
+  new_dw->allocateAndPut(pVelocity,      d_varLabel->pVelocityLabel,      subset); 
   return subset;
 }
 
@@ -172,11 +172,11 @@ FamilyComputer::initializeParticle(const Uintah::Patch* patch,
                        0.,0.,1./((double) ppc.z()));
 
   position[i] = p;
-  pvolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
-  psize[i]      = size;
-  pvelocity[i]  = (*obj)->getInitialData_Vector("velocity");
-  pmass[i]      = matl->getInitialDensity()*pvolume[i];
-  pdisp[i]      = Uintah::Vector(0.,0.,0.);
+  pVolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+  pSize[i]      = size;
+  pVelocity[i]  = (*obj)->getInitialData_Vector("velocity");
+  pMass[i]      = matl->getInitialDensity()*pVolume[i];
+  pDisplacement[i]      = Uintah::Vector(0.,0.,0.);
   
   ASSERT(cell_idx.x() <= 0xffff && 
          cell_idx.y() <= 0xffff && 
@@ -187,7 +187,7 @@ FamilyComputer::initializeParticle(const Uintah::Patch* patch,
                   ((Uintah::long64)cell_idx.z() << 48);
                   
   short int& myCellNAPID = cellNAPID[cell_idx];
-  pparticleID[i] = (cellID | (Uintah::long64) myCellNAPID);
+  pParticleID[i] = (cellID | (Uintah::long64) myCellNAPID);
   ASSERT(myCellNAPID < 0x7fff);
   myCellNAPID++;
 }
@@ -214,7 +214,7 @@ FamilyComputer::countAndCreateParticles(const Uintah::Patch* patch,
 {
   geompoints::key_type key(patch,obj);
   geomvols::key_type   volkey(patch,obj);
-  geomvecs::key_type   pvelocitykey(patch,obj);
+  geomvecs::key_type   pVelocitykey(patch,obj);
   Uintah::GeometryPieceP piece = obj->getPiece();
   Uintah::Box b1 = piece->getBoundingBox();
   Uintah::Box b2 = patch->getExtraBox();
@@ -247,7 +247,7 @@ FamilyComputer::countAndCreateParticles(const Uintah::Patch* patch,
           }
           if (!pvelocities->empty()) {
 	    Uintah::Vector pvel = pvelocities->at(ii); 
-            d_object_velocity[pvelocitykey].push_back(pvel);
+            d_object_velocity[pVelocitykey].push_back(pvel);
           }
         }  // patch contains cell
       }

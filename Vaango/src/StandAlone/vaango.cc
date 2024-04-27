@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,607 +24,413 @@
  * IN THE SOFTWARE.
  */
 
-
 /*
  *  vaango.cc: Vaango - an extension of the uintah simulation system
  *
  */
 
-#include <Core/Disclosure/TypeDescription.h>
-#include <Core/Exceptions/InvalidGrid.h>
-#include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/Parallel/Parallel.h>
-#include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Tracker/TrackerClient.h>
+#include <StandAlone/Utils/vaango_options.h>
+#include <StandAlone/Utils/vaango_utils.h>
 
-#include <CCA/Components/ProblemSpecification/ProblemSpecReader.h>
-#include <CCA/Components/SimulationController/AMRSimulationController.h>
+#include <CCA/Components/DataArchiver/DataArchiver.h>
+#include <CCA/Components/LoadBalancers/LoadBalancerFactory.h>
 #include <CCA/Components/Models/ModelFactory.h>
-#include <CCA/Components/Solvers/CGSolver.h>
-#include <CCA/Components/Solvers/DirectSolve.h>
+#include <CCA/Components/Parent/ComponentFactory.h>
+#include <CCA/Components/ProblemSpecification/ProblemSpecReader.h>
+#include <CCA/Components/Regridder/RegridderFactory.h>
+#include <CCA/Components/Schedulers/SchedulerFactory.h>
+#include <CCA/Components/SimulationController/AMRSimulationController.h>
+#include <CCA/Components/Solvers/SolverFactory.h>
 
-#ifdef HAVE_HYPRE
-#include <CCA/Components/Solvers/HypreSolver.h>
+#ifdef HAVE_CUDA
+#include <CCA/Components/Schedulers/UnifiedScheduler.h>
 #endif
 
-#include <CCA/Components/ReduceUda/UdaReducer.h>
-#include <CCA/Components/DataArchiver/DataArchiver.h>
-#include <CCA/Components/Solvers/SolverFactory.h>
-#include <CCA/Components/Regridder/RegridderFactory.h>
-#include <CCA/Components/LoadBalancers/LoadBalancerFactory.h>
-#include <CCA/Components/Schedulers/SchedulerFactory.h>
-#include <CCA/Components/Parent/ComponentFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
 
 #include <Core/Exceptions/Exception.h>
 #include <Core/Exceptions/InternalError.h>
-#include <Core/Thread/Mutex.h>
-#include <Core/Thread/Time.h>
-#include <Core/Thread/Thread.h>
+#include <Core/Exceptions/InvalidGrid.h>
+#include <Core/Exceptions/ProblemSetupException.h>
+
+#include <Core/Parallel/Parallel.h>
+#include <Core/Parallel/ProcessorGroup.h>
+
+#include <Core/Util/DOUT.hpp>
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/Environment.h>
 #include <Core/Util/FileUtils.h>
+#include <Core/Util/StringUtil.h>
+#include <Core/Util/Timers/Timers.hpp>
 
+#include <sci_defs/cuda_defs.h>
 #include <sci_defs/hypre_defs.h>
 #include <sci_defs/malloc_defs.h>
-#include <sci_defs/mpi_defs.h>
 #include <sci_defs/uintah_defs.h>
-#include <sci_defs/cuda_defs.h>
 
-#include <Core/Malloc/Allocator.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #if HAVE_IEEEFP_H
-#  include <ieeefp.h>
+#include <ieeefp.h>
 #endif
 #if 0
-#  include <fenv.h>
+#include <fenv.h>
 #endif
 
-#include <iostream>
 #include <cstdio>
-#include <string>
-#include <vector>
-#include <stdexcept>
-#include <sys/stat.h>
-
-#include <time.h>
-
-using namespace Uintah;
-
-// Debug: Used to sync std::cerr so it is readable (when output by
-// multiple threads at the same time)
-// Mutex cerrLock( "cerr lock" );
-// DebugStream mixedDebug( "MixedScheduler Debug Output Stream", false );
-// DebugStream fullDebug( "MixedScheduler Full Debug", false );
-
-extern Mutex cerrLock;
-extern DebugStream mixedDebug;
-extern DebugStream fullDebug;
-static DebugStream stackDebug("ExceptionStack", true);
-static DebugStream dbgwait("WaitForDebugger", false);
-
-static
-void
-quit( const std::string & msg = "" )
-{
-  if (msg != "") {
-    std::cerr << msg << "\n";
-  }
-  Uintah::Parallel::finalizeManager();
-  Thread::exitAll( 2 );
-}
-
-static
-void
-usage( const std::string & message,
-       const std::string& badarg,
-       const std::string& progname)
-{
-#ifndef HAVE_MPICH_OLD
-  int argc = 0;
-  char **argv;
-  argv = 0;
-
-  // Initialize MPI so that "usage" is only printed by proc 0.
-  // (If we are using MPICH, then MPI_Init() has already been called.)
-  Uintah::Parallel::initializeManager( argc, argv );
-#endif
-
-  if( Uintah::Parallel::getMPIRank() == 0 ) {
-    std::cerr << "\n";
-    if(badarg != "") {
-      std::cerr << "Error parsing argument: " << badarg << '\n';
-    }
-    std::cerr << "\n";
-    std::cerr << message << "\n";
-    std::cerr << "\n";
-    std::cerr << "Usage: " << progname << " [options] <input_file_name>\n\n";
-    std::cerr << "Valid options are:\n";
-    std::cerr << "-h[elp]              : This usage information.\n";
-    std::cerr << "-AMR                 : use AMR simulation controller\n";
-    std::cerr << "-nthreads <#>        : number of threads per MPI process, requires a multi-threaded scheduler\n";
-    std::cerr << "-layout NxMxO        : Eg: 2x1x1.  MxNxO must equal number\n";
-    std::cerr << "                           of boxes you are using.\n";
-    std::cerr << "-emit_taskgraphs     : Output taskgraph information\n";
-    std::cerr << "-restart             : Give the checkpointed uda directory as the input file\n";
-    std::cerr << "-combine_patches     : Give a uda directory as the input file\n";  
-    std::cerr << "-reduce_uda          : Reads <uda-dir>/input.xml file and removes unwanted labels (see FAQ).\n";
-    std::cerr << "-uda_suffix <number> : Make a new uda dir with <number> as the default suffix\n";      
-    std::cerr << "-t <timestep>        : Restart timestep (last checkpoint is default,\n\t\t\tyou can use -t 0 for the first checkpoint)\n";
-    std::cerr << "-copy                : Copy from old uda when restarting\n";
-    std::cerr << "-move                : Move from old uda when restarting\n";
-    std::cerr << "-nocopy              : Default: Don't copy or move old uda timestep when\n\t\t\trestarting\n";
-    std::cerr << "-validate            : Verifies the .ups file is valid and quits!\n";
-    std::cerr << "-do_not_validate     : Skips .ups file validation! Please avoid this flag if at all possible.\n";
-    std::cerr << "\n\n";
-  }
-  quit();
-}
-
-void
-sanityChecks()
-{
-#if defined( DISABLE_SCI_MALLOC )
-  if( getenv("MALLOC_STATS") ) {
-    printf( "\nERROR:\n" );
-    printf( "ERROR: Environment variable MALLOC_STATS set, but SCI Malloc was not configured...\n" );
-    printf( "ERROR:\n\n" );
-    Thread::exitAll( 1 );
-  }
-  if( getenv("MALLOC_TRACE") ) {
-    printf( "\nERROR:\n" );
-    printf( "ERROR: Environment variable MALLOC_TRACE set, but SCI Malloc was not configured...\n" );
-    printf( "ERROR:\n\n" );
-    Thread::exitAll( 1 );
-  }
-  if( getenv("MALLOC_STRICT") ) {
-    printf( "\nERROR:\n" );
-    printf( "ERROR: Environment variable MALLOC_STRICT set, but SCI Malloc was not configured...\n" );
-    printf( "ERROR:\n\n" );
-    Thread::exitAll( 1 );
-  }
-#endif
-}
-
-void
-abortCleanupFunc()
-{
-  Uintah::Parallel::finalizeManager( Uintah::Parallel::Abort );
-}
-
 #include <iomanip>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <unistd.h>
+#include <vector>
+
+namespace {
+
+Uintah::MasterLock cerr_mutex{};
+
+Uintah::Dout g_stack_debug("ExceptionStack",
+                           "vaango",
+                           "vaango exception stack debug stream",
+                           true);
+Uintah::Dout g_wait_for_debugger(
+  "WaitForDebugger",
+  "vaango",
+  "halt program, print out pid and attach a debugger",
+  false);
+Uintah::Dout g_show_env(
+  "ShowEnv",
+  "vaango",
+  "vaango show environment (the SCI env that was built up)",
+  false);
+
+} // namespace
+
 int
-main( int argc, char *argv[], char *env[] )
+main(int argc, char* argv[], char* env[])
 {
-  sanityChecks();
+  // sanity check
+  Vaango::Utils::check_malloc();
 
-  string oldTag;
-  MALLOC_TRACE_TAG_SCOPE("main()");
-
-  // Turn off Thread asking so vaango can cleanly exit on abortive behavior.  
-  // Can override this behavior with the environment variable SCI_SIGNALMODE
-  Thread::setDefaultAbortMode("exit");
-  Thread::self()->setCleanupFunction( &abortCleanupFunc );
+  std::string oldTag;
 
 #if HAVE_IEEEFP_H
-  fpsetmask(FP_X_OFL|FP_X_DZ|FP_X_INV);
+  fpsetmask(FP_X_OFL | FP_X_DZ | FP_X_INV);
 #endif
 #if 0
   feenableexcept(FE_INVALID|FE_OVERFLOW|FE_DIVBYZERO);
 #endif
 
-  /*
-   * Default values
-   */
-  bool   do_AMR=false;
-  bool   emit_graphs=false;
-  bool   restart=false;
-  bool   combine_patches=false;
-  bool   reduce_uda=false;
-  int    restartTimestep = -1;
-  int    udaSuffix = -1;
-  string udaDir; // for restart or combine_patches
-  bool   restartFromScratch = true;
-  bool   restartRemoveOldDir = false;
-//bool   useScheduler3 = false;
-  int    numThreads = 0;
-  string filename;
-  string solver;
-  IntVector layout(1,1,1);
-  bool   validateUps = true, onlyValidateUps = false;
-    
-  // Checks to see if user is running an MPI version of vaango.
-  Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
+  // Parse arguments
+  Vaango::Utils::Options::parse(argc, argv);
 
-#ifdef HAVE_MPICH_OLD
-  /*
-   * Initialize MPI
-   */
-  //
-  // When using old verison of MPICH, initializeManager() uses the arg list to
-  // determine whether vaango is running with MPI before calling MPI_Init())
-  //
-  // NOTE: The main problem with calling initializeManager() before
-  // parsing the args is that we don't know if thread MPI is going to
-  // However, MPICH veriosn 1 does not support Thread safety, so we will just dis-allow that.
-  
-  Uintah::Parallel::initializeManager( argc, argv );
-#endif
-  /*
-   * Parse arguments
-   */
-  for(int i=1;i<argc;i++){
-    string arg = argv[i];
-    if( (arg == "-help") || (arg == "-h") ) {
-      usage( "", "", argv[0]);
-    } else if(arg == "-AMR" || arg == "-amr"){
-      do_AMR=true;
-    } else if(arg == "-nthreads"){
-#ifdef HAVE_MPICH_OLD
-      usage ("This MPICH version does not support Thread safety! Please recompile with thread-safe MPI library for -nthreads.", arg, argv[0]) ;
-#endif
-      if(++i == argc){
-        usage("You must provide a number of threads for -nthreads",
-              arg, argv[0]);
-      }
-      numThreads = atoi(argv[i]);
-      if ( numThreads< 1) {
-        usage("Number of threads is too small", arg, argv[0]);
-      } else if (numThreads>MAX_THREADS ) {
-        usage("Number of threads is out of range. Try to increase MAX_THREADS and recompile", arg, argv[0]);
-      }
-      Uintah::Parallel::setNumThreads(numThreads);
-    } else if(arg == "-threadmpi"){
-      //used threaded mpi (this option is handled in MPI_Communicator.cc  MPI_Init_thread
-    } else if(arg == "-solver") {
-      if(++i == argc) {
-        usage("You must provide a solver name for -solver", arg, argv[0]);
-      }
-      solver = argv[i];
-    } else if(arg == "-mpi") {
-      Uintah::Parallel::forceMPI();
-    } else if(arg == "-nompi") {
-      Uintah::Parallel::forceNoMPI();
-    } else if (arg == "-emit_taskgraphs") {
-      emit_graphs = true;
-    } else if(arg == "-restart") {
-      restart=true;
-    } else if(arg == "-handle_mpi_errors") {
-      // handled in Parallel.cc
-    } else if(arg == "-uda_suffix") {
-      if (i < argc-1) {
-        udaSuffix = atoi(argv[++i]);
-      } else {
-        usage("You must provide a suffix number for -uda_suffix", arg, argv[0]);
-      }
-    } else if(arg == "-nocopy") { // default anyway, but that's fine
-      restartFromScratch = true;
-    } else if(arg == "-copy") {
-      restartFromScratch = false;
-      restartRemoveOldDir = false;
-    } else if(arg == "-move") {
-      restartFromScratch = false;
-      restartRemoveOldDir = true;
-    } else if(arg == "-t") {
-      if (i < argc-1) {
-        restartTimestep = atoi(argv[++i]);
-      }
-    } else if(arg == "-layout") {
-      if(++i == argc) {
-        usage("You must provide a vector arg for -layout", arg, argv[0]);
-      }
-      int ii, jj, kk;
-      if(sscanf(argv[i], "%dx%dx%d", &ii, &jj, &kk) != 3) {
-        usage("Error parsing -layout", argv[i], argv[0]);
-      }
-      layout = IntVector(ii,jj,kk);
-    } else if(arg == "-validate") {
-      onlyValidateUps = true;
-    } else if(arg == "-do_not_validate") {
-      validateUps = false;
-    } else if (arg=="-reduce_uda")
-    {
-      reduce_uda=true;
-    } else if(arg == "-combine_patches") {
-      combine_patches = true;
-    } else {
-      if( filename != "" ) {
-        usage("", arg, argv[0]);
-      }
-      else if( argv[i][0] == '-' ) { // Don't allow 'filename' to begin with '-'.
-        usage("Error!  It appears that the filename you specified begins with a '-'.\n"
-              "        This is not allowed.  Most likely there is problem with your\n"
-              "        command line.",
-              argv[i], argv[0]);        
-      } 
-      else {
-        filename = argv[i];
-      }
-    }
+  // Set threads
+  Uintah::Parallel::setNumThreads(Vaango::Utils::Options::num_threads());
+  Uintah::Parallel::setNumPartitions(Vaango::Utils::Options::num_partitions());
+  Uintah::Parallel::setThreadsPerPartition(
+    Vaango::Utils::Options::threads_per_partition());
+
+#ifdef HAVE_CUDA
+  // Set gpus
+  if (Vaango::Utils::Options::use_gpu()) {
+    Uintah::Parallel::setUsingDevice(true);
   }
- 
+#endif
+
   // Pass the env into the sci env so it can be used there...
-  create_sci_environment( env, 0, true );
+  Uintah::create_sci_environment(env, nullptr, true);
 
-  if( filename == "" ) {
-    usage("No input file specified", "", argv[0]);
+  if (g_wait_for_debugger) {
+    Uintah::TURN_ON_WAIT_FOR_DEBUGGER();
   }
 
-  if(dbgwait.active()) {
-    TURN_ON_WAIT_FOR_DEBUGGER();
-  }
-
-  if (restart || combine_patches || reduce_uda) {
-    // check if state.xml is present
-    // if not do normal
-    udaDir = filename;
-    filename = filename + "/input.xml";
-
-    // If restarting (etc), make sure that the uda specified is not a symbolic link to an Uda.
-    // This is because the sym link can (will) be updated to point to a new uda, thus creating
-    // an inconsistency.  Therefore it is just better not to use the sym link in the first place.
-    if( isSymLink( udaDir.c_str() ) ) {
-      std::cout << "\n";
-      std::cout << "Error: " + udaDir + " is a symbolic link.  Please use the full name of the UDA.\n";
-      std::cout << "\n";
-      Uintah::Parallel::finalizeManager();
-      Thread::exitAll( 1 );
-    }
-  }
-
-  char * start_addr = (char*)sbrk(0);
+  char* start_addr     = (char*)sbrk(0);
   bool thrownException = false;
 
   try {
 
-#ifndef HAVE_MPICH_OLD
-    // If regular MPI, then initialize after parsing the args...
-    Uintah::Parallel::initializeManager( argc, argv );
-#endif
-
-    // Uncomment the following to see what the environment is... this is useful to figure out
-    // what environment variable can be checked for (in Uintah/Core/Parallel/Parallel.cc)
-    // to automatically determine that vaango is running under MPI (instead of having to
-    // be explicit with the "-mpi" arg):
-    //
-    //if( Uintah::Parallel::getMPIRank() == 0 ) {
-    //  show_env();
-    //}
-
-    if( !validateUps ) {
-      // Print out warning message here (after Parallel::initializeManager()), so that
-      // proc0cout works correctly.
-      proc0cout << "\n";
-      proc0cout << "WARNING: You have turned OFF .ups file validation... this may cause many unforeseen problems\n";
-      proc0cout << "         with your simulation run.  It is strongly suggested that you leave validation on!\n";
-      proc0cout << "\n";
-    }
+    // Initialize after parsing the args
+    Uintah::Parallel::initializeManager(argc, argv);
 
 #if defined(MALLOC_TRACE)
-    ostringstream traceFilename;
+    std::ostringstream traceFilename;
     traceFilename << "mallocTrace-" << Uintah::Parallel::getMPIRank();
-    MALLOC_TRACE_LOG_FILE( traceFilename.str().c_str() );
-    //mallocTraceInfo.setTracingState( false );
+    MALLOC_TRACE_LOG_FILE(traceFilename.str().c_str());
+    // mallocTraceInfo.setTracingState( false );
 #endif
 
-    if( Uintah::Parallel::getMPIRank() == 0 ) {
-      // helpful for cleaning out old stale udas
-      time_t t = time(NULL) ;
-      string time_string(ctime(&t));
+    char* st = getenv("INITIAL_SLEEP_TIME");
+    if (st != nullptr) {
       char name[256];
       gethostname(name, 256);
-    
-      std::cout << "Date:    " << time_string; // has its own newline
-      std::cout << "Machine: " << name << "\n";
+      int sleepTime = atoi(st);
+      if (Uintah::Parallel::getMPIRank() == 0) {
+        std::cout << "SLEEPING FOR " << sleepTime
+                  << " SECONDS TO ALLOW DEBUGGER ATTACHMENT\n";
+      }
+      std::cout << "PID for rank " << Uintah::Parallel::getMPIRank() << " ("
+                << name << ") is " << getpid() << "\n";
+      std::cout.flush();
 
-      std::cout << "Assertion level: " << SCI_ASSERTION_LEVEL << "\n";
-      std::cout << "CFLAGS: " << CFLAGS << "\n";
+      struct timespec ts;
+      ts.tv_sec  = (int)sleepTime;
+      ts.tv_nsec = (int)(1.e9 * (sleepTime - ts.tv_sec));
+
+      nanosleep(&ts, &ts);
     }
 
-    //__________________________________
     // Read input file
-    ProblemSpecP ups = ProblemSpecReader().readInputFile( filename, validateUps );
+    Uintah::ProblemSpecP ups = nullptr;
 
-    if( onlyValidateUps ) {
+    auto filename = Vaango::Utils::Options::uda_filename();
+    Vaango::Utils::set_input_ups_path(filename);
+
+    try {
+      ups = Uintah::ProblemSpecReader().readInputFile(
+        filename, Vaango::Utils::Options::validate_ups());
+    } catch (const Uintah::ProblemSetupException& err) {
+      proc0cout << "\nERROR caught while parsing UPS file: "
+                << Vaango::Utils::Options::uda_filename()
+                << "\nDetails follow.\n"
+                << err.message() << "\n";
+      Vaango::Utils::stop_mpi_and_exit(0);
+    } catch (...) {
+      // Bulletproofing.  Catches the case where a user accidentally specifies a
+      // UDA directory instead of a UPS file.
+      proc0cout << "\n";
+      proc0cout << "ERROR - Failed to parse UPS file: " << filename << ".\n";
+
+      if (Uintah::validDir(filename)) {
+        proc0cout << "ERROR - Note: '" << filename
+                  << "' is a directory! Did you mistakenly specify a UDA "
+                     "instead of an UPS file?\n";
+      }
+      proc0cout << "\n";
+      Vaango::Utils::stop_mpi_and_exit(0);
+    }
+
+    if (Vaango::Utils::Options::only_validate_ups()) {
       std::cout << "\nValidation of .ups File finished... good bye.\n\n";
-      ups = 0; // This cleans up memory held by the 'ups'.
-      Uintah::Parallel::finalizeManager();
-      Thread::exitAll( 0 );
+      ups = nullptr; // This cleans up memory held by the 'ups'.
+      Vaango::Utils::stop_mpi_and_exit(0);
     }
 
-    //if the AMR block is defined default to turning amr on
-    if (!do_AMR) {
-      do_AMR = (bool) ups->findBlock("AMR");
+    const Uintah::ProcessorGroup* world =
+      Uintah::Parallel::getRootProcessorGroup();
+
+    std::unique_ptr<Uintah::SimulationController> simController =
+      std::make_unique<Uintah::AMRSimulationController>(
+        world, ups, Vaango::Utils::get_input_ups_path());
+
+    if (Vaango::Utils::Options::postprocess_uda()) {
+      simController->setPostProcessFlags();
     }
 
-    //if doAMR is defined set do_AMR.
-    if(do_AMR) {
-      ups->get("doAMR",do_AMR);
+    std::unique_ptr<Uintah::UintahParallelComponent> simComponent =
+      Uintah::ComponentFactory::create(
+        ups, world, nullptr, Vaango::Utils::Options::uda_dir());
+
+    Uintah::SimulationInterface* simulator =
+      dynamic_cast<Uintah::SimulationInterface*>(simComponent.get());
+
+    // Read the UPS file to get the general application details.
+    simulator->problemSetup(ups);
+
+    simController->attachPort("simulator", simulator);
+
+    // Can not do a postProcess uda with AMR
+    if (Vaango::Utils::Options::postprocess_uda() && simulator->isAMR()) {
+      Vaango::Utils::Options::usage(
+        "You cannot use '-postprocess_uda' for an AMR simulation",
+        "-postprocess_uda",
+        argv[0]);
     }
 
-    if(reduce_uda){
-      do_AMR = false;
+    // Solver
+    std::shared_ptr<Uintah::SolverInterface> solver =
+      Uintah::SolverFactory::create(
+        ups, world, Vaango::Utils::Options::solver_name());
+
+    Uintah::UintahParallelComponent* solverComponent =
+      dynamic_cast<Uintah::UintahParallelComponent*>(solver.get());
+
+    simComponent->attachPort("solver", solver.get());
+    solverComponent->attachPort("simulator", simulator);
+
+    // Load balancer
+    std::unique_ptr<Uintah::LoadBalancerCommon> loadBalancer =
+      Uintah::LoadBalancerFactory::create(ups, world);
+
+    loadBalancer->attachPort("simulator", simulator);
+    simController->attachPort("load balancer", loadBalancer.get());
+    simComponent->attachPort("load balancer", loadBalancer.get());
+
+    // Scheduler
+    Uintah::SchedulerCommon* scheduler =
+      Uintah::SchedulerFactory::create(ups, world);
+
+    scheduler->attachPort("load balancer", loadBalancer.get());
+    scheduler->attachPort("simulator", simulator);
+
+    simComponent->attachPort("scheduler", scheduler);
+    simController->attachPort("scheduler", scheduler);
+    loadBalancer->attachPort("scheduler", scheduler);
+
+    scheduler->setStartAddr(start_addr);
+    scheduler->addReference();
+
+    if (Vaango::Utils::Options::emit_graphs()) {
+      scheduler->doEmitTaskGraphDocs();
     }
 
-    const ProcessorGroup* world = Uintah::Parallel::getRootProcessorGroup();
+    // Output
+    std::unique_ptr<Uintah::DataArchiver> dataArchiver =
+      std::make_unique<Uintah::DataArchiver>(
+        world, Vaango::Utils::Options::uda_suffix());
 
-    SimulationController* ctl = 
-      scinew AMRSimulationController(world, do_AMR, ups);
+    dataArchiver->attachPort("simulator", simulator);
+    dataArchiver->attachPort("load balancer", loadBalancer.get());
 
-    RegridderCommon* reg = 0;
-    if(do_AMR) {
-      reg = RegridderFactory::create(ups, world);
-      if (reg) {
-        ctl->attachPort("regridder", reg);
+    dataArchiver->setUseLocalFileSystems(
+      Vaango::Utils::Options::local_filesystem());
+
+    simController->attachPort("output", dataArchiver.get());
+    simComponent->attachPort("output", dataArchiver.get());
+    scheduler->attachPort("output", dataArchiver.get());
+
+    // Regridder - optional
+    std::unique_ptr<Uintah::RegridderCommon> regridder = nullptr;
+
+    if (simulator->isAMR()) {
+      regridder = Uintah::RegridderFactory::create(ups, world);
+
+      if (regridder) {
+        regridder->attachPort("scheduler", scheduler);
+        regridder->attachPort("load balancer", loadBalancer.get());
+        regridder->attachPort("simulator", simulator);
+
+        simController->attachPort("regridder", regridder.get());
+        simComponent->attachPort("regridder", regridder.get());
+
+        loadBalancer->attachPort("regridder", regridder.get());
       }
     }
 
-    //__________________________________
-    // Solver
-    SolverInterface* solve = 0;
-    solve = SolverFactory::create(ups, world, solver);
-    if(Uintah::Parallel::getMPIRank() == 0 && solve!=0) {
-      std::cout << "Implicit Solver: \t" << solve->getName() << endl;
+    // Get all the components.
+    if (regridder) {
+      regridder->getComponents();
     }
 
-    MALLOC_TRACE_TAG("main():create components");
-    //______________________________________________________________________
-    // Create the components
+    scheduler->getComponents();
+    loadBalancer->getComponents();
+    solverComponent->getComponents();
+    dataArchiver->getComponents();
 
-    //__________________________________
-    // Component
-    // try to make it from the command line first, then look in ups file
-    UintahParallelComponent* comp = ComponentFactory::create(ups, world, do_AMR, udaDir);
-    SimulationInterface* sim = dynamic_cast<SimulationInterface*>(comp);
+    simComponent->getComponents();
+    simController->getComponents();
 
-    if (combine_patches || reduce_uda) {
-      // the ctl will do nearly the same thing for combinePatches and reduceUda
-      ctl->setReduceUdaFlags(udaDir); // true for reduce_uda, false for combine_patches
-    }
-    
-    ctl->attachPort("sim", sim);
-    comp->attachPort("solver", solve);
-    comp->attachPort("regridder", reg);
-    
-#ifndef NO_ICE
-    //__________________________________
-    //  Model
-    ModelMaker* modelmaker = scinew ModelFactory(world);
-    comp->attachPort("modelmaker", modelmaker);
-#endif
-
-    //__________________________________
-    // Load balancer
-    LoadBalancerCommon* lbc = LoadBalancerFactory::create(ups, world);
-    lbc->attachPort("sim", sim);
-    if(reg) {
-      reg->attachPort("load balancer", lbc);
-      lbc->attachPort("regridder",reg);
-    }
-    
-    //__________________________________
-    // Output
-    DataArchiver* dataarchiver = scinew DataArchiver(world, udaSuffix);
-    Output* output = dataarchiver;
-    ctl->attachPort("output", dataarchiver);
-    dataarchiver->attachPort("load balancer", lbc);
-    comp->attachPort("output", dataarchiver);
-    dataarchiver->attachPort("sim", sim);
-    
-    //__________________________________
-    // Scheduler
-    SchedulerCommon* sched = SchedulerFactory::create(ups, world, output);
-    sched->attachPort("load balancer", lbc);
-    ctl->attachPort("scheduler", sched);
-    lbc->attachPort("scheduler", sched);
-    comp->attachPort("scheduler", sched);
-
-    sched->setStartAddr( start_addr );
-    
-    if (reg) {
-      reg->attachPort("scheduler", sched);
-    }
-    sched->addReference();
-    
-    if (emit_graphs) {
-      sched->doEmitTaskGraphDocs();
-    }
-    
-    MALLOC_TRACE_TAG(oldTag);
     /*
      * Start the simulation controller
      */
-    if (restart) {
-      ctl->doRestart(udaDir, restartTimestep, restartFromScratch, restartRemoveOldDir);
+    if (Vaango::Utils::Options::restart()) {
+      simController->doRestart(
+        Vaango::Utils::Options::uda_dir(),
+        Vaango::Utils::Options::restart_checkpoint_index(),
+        Vaango::Utils::Options::restart_from_scratch(),
+        Vaango::Utils::Options::restart_remove_old_dir());
     }
-    
-    // This gives memory held by the 'ups' back before the simulation starts... Assuming
-    // no one else is holding on to it...
-    ups = 0;
 
-    ctl->run();
-    delete ctl;
+    // This gives memory held by the 'ups' back before the simulation
+    // starts... Assuming no one else is holding on to it...
+    ups = nullptr;
 
-    sched->removeReference();
-    delete sched;
-    if (reg) {
-      delete reg;
+    simController->run();
+
+    // Clean up release all the components.
+    if (regridder) {
+      regridder->releaseComponents();
     }
-    delete lbc;
-    delete sim;
-    delete solve;
-    delete output;
 
-#ifndef NO_ICE
-    delete modelmaker;
-#endif
-  } catch (ProblemSetupException& e) {
+    dataArchiver->releaseComponents();
+    scheduler->releaseComponents();
+    loadBalancer->releaseComponents();
+    solverComponent->releaseComponents();
+    simComponent->releaseComponents();
+    simController->releaseComponents();
+
+    scheduler->removeReference();
+    delete scheduler;
+  } catch (const Uintah::ProblemSetupException& e) {
     // Don't show a stack trace in the case of ProblemSetupException.
-    cerrLock.lock();
-    std::cout << "\n\n" << Uintah::Parallel::getMPIRank() << " Caught exception: " << e.message() << "\n\n";
-    cerrLock.unlock();
+    std::lock_guard<Uintah::MasterLock> cerr_guard(cerr_mutex);
+    std::cerr << "\n\n(Proc: " << Uintah::Parallel::getMPIRank()
+              << ") Caught: " << e.message() << "\n\n";
     thrownException = true;
-  } catch (Exception& e) {
-    cerrLock.lock();
-    std::cout << "\n\n" << Uintah::Parallel::getMPIRank() << " Caught exception: " << e.message() << "\n\n";
-    if(e.stackTrace())
-      stackDebug << "Stack trace: " << e.stackTrace() << '\n';
-    cerrLock.unlock();
+  } catch (const Uintah::Exception& e) {
+    std::lock_guard<Uintah::MasterLock> cerr_guard(cerr_mutex);
+    std::cerr << "\n\n(Proc " << Uintah::Parallel::getMPIRank()
+              << ") Caught exception: " << e.message() << "\n\n";
+    if (e.stackTrace()) {
+      DOUT(g_stack_debug, "Stack trace: " << e.stackTrace());
+    }
     thrownException = true;
-  } catch (std::bad_alloc& e) {
-    cerrLock.lock();
-    std::cerr << Uintah::Parallel::getMPIRank() << " Caught std exception 'bad_alloc': " << e.what() << '\n';
-    cerrLock.unlock();
+  } catch (const std::bad_alloc& e) {
+    std::lock_guard<Uintah::MasterLock> cerr_guard(cerr_mutex);
+    std::cerr << Uintah::Parallel::getMPIRank()
+              << " Caught std exception 'bad_alloc': " << e.what() << '\n';
     thrownException = true;
-  } catch (std::bad_exception& e) {
-    cerrLock.lock();
-    std::cerr << Uintah::Parallel::getMPIRank() << " Caught std exception: 'bad_exception'" << e.what() << '\n';
-    cerrLock.unlock();
+  } catch (const std::bad_exception& e) {
+    std::lock_guard<Uintah::MasterLock> cerr_guard(cerr_mutex);
+    std::cerr << Uintah::Parallel::getMPIRank()
+              << " Caught std exception: 'bad_exception'" << e.what() << '\n';
     thrownException = true;
-  } catch (std::ios_base::failure& e) {
-    cerrLock.lock();
-    std::cerr << Uintah::Parallel::getMPIRank() << " Caught std exception 'ios_base::failure': " << e.what() << '\n';
-    cerrLock.unlock();
+  } catch (const std::ios_base::failure& e) {
+    std::lock_guard<Uintah::MasterLock> cerr_guard(cerr_mutex);
+    std::cerr << Uintah::Parallel::getMPIRank()
+              << " Caught std exception 'ios_base::failure': " << e.what()
+              << '\n';
     thrownException = true;
-  } catch (std::runtime_error& e) {
-    cerrLock.lock();
-    std::cerr << Uintah::Parallel::getMPIRank() << " Caught std exception 'runtime_error': " << e.what() << '\n';
-    cerrLock.unlock();
+  } catch (const std::runtime_error& e) {
+    std::lock_guard<Uintah::MasterLock> cerr_guard(cerr_mutex);
+    std::cerr << Uintah::Parallel::getMPIRank()
+              << " Caught std exception 'runtime_error': " << e.what() << '\n';
     thrownException = true;
-  } catch (std::exception& e) {
-    cerrLock.lock();
-    std::cerr << Uintah::Parallel::getMPIRank() << " Caught std exception: " << e.what() << '\n';
-    cerrLock.unlock();
+  } catch (const std::exception& e) {
+    std::lock_guard<Uintah::MasterLock> cerr_guard(cerr_mutex);
+    std::cerr << Uintah::Parallel::getMPIRank()
+              << " Caught std exception: " << e.what() << '\n';
     thrownException = true;
-  } catch(...) {
-    cerrLock.lock();
-    std::cerr << Uintah::Parallel::getMPIRank() << " Caught unknown exception\n";
-    cerrLock.unlock();
+  } catch (...) {
+    std::lock_guard<Uintah::MasterLock> cerr_guard(cerr_mutex);
+    std::cerr << Uintah::Parallel::getMPIRank()
+              << " Caught unknown exception\n";
     thrownException = true;
   }
-  
+
   Uintah::TypeDescription::deleteAll();
-  
+
   /*
    * Finalize MPI
    */
-  Uintah::Parallel::finalizeManager( thrownException ?
-                                     Uintah::Parallel::Abort : Uintah::Parallel::NormalShutdown);
+  Uintah::Parallel::finalizeManager(thrownException
+                                      ? Uintah::Parallel::Abort
+                                      : Uintah::Parallel::NormalShutdown);
 
   if (thrownException) {
-    if( Uintah::Parallel::getMPIRank() == 0 ) {
+    if (Uintah::Parallel::getMPIRank() == 0) {
       std::cout << "\n\nAN EXCEPTION WAS THROWN... Goodbye.\n\n";
     }
-    Thread::exitAll(1);
+    Uintah::Parallel::exitAll(1);
   }
-  
-  if( Uintah::Parallel::getMPIRank() == 0 ) {
-    std::cout << "Sus: going down successfully\n";
+
+  if (Uintah::Parallel::getMPIRank() == 0) {
+    std::cout << "Vaango: going down successfully\n";
   }
 
   // use exitAll(0) since return does not work
-  Thread::exitAll(0);
+  Uintah::Parallel::exitAll(0);
   return 0;
 
 } // end main()
-

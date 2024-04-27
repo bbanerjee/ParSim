@@ -58,7 +58,7 @@
 #endif
 #include <climits>
 
-using namespace std;
+
 using namespace Uintah;
 
 list<int> getRandomList(int size, int min, int max);
@@ -70,7 +70,7 @@ void doUnionTests(Suite* suite);
 
 bool equalSets(ConsecutiveRangeSet& set, const int* array, int arraySize,
 	       bool& sameSize);
-bool equalSets(ConsecutiveRangeSet& set, list<int>& intList, bool& sameSize);
+bool equalSets(ConsecutiveRangeSet& set,  std::list<int>& intList, bool& sameSize);
 
 SuiteTree* ConsecutiveRangeSetTestTree()
 {
@@ -88,7 +88,7 @@ SuiteTree* ConsecutiveRangeSetTestTree()
 
 list<int> getRandomList(int size, int min, int max)
 {
-  list<int> result;
+   std::list<int> result;
   for (int i = 0; i < size; i++)
     result.push_back(rand() % (max - min) + min);
   return result;
@@ -97,7 +97,7 @@ list<int> getRandomList(int size, int min, int max)
 void doListInitTests(Suite* suite)
 {
   int i;
-  list<int> intList;
+   std::list<int> intList;
   bool sameSize;
   Test* sizeTest = suite->addTest("Set size");
   Test* compareTest = suite->addTest("Compared items");
@@ -127,8 +127,8 @@ void doListInitTests(Suite* suite)
 void doAddInOrderTests(Suite* suite)
 {
   int i;
-  list<int> intList;
-  list<int>::iterator it;
+   std::list<int> intList;
+   std::list<int>::iterator it;
   bool sameSize;
   Test* sizeTest = suite->addTest("Set size");
   Test* compareTest = suite->addTest("Compared items");
@@ -158,7 +158,7 @@ void doAddInOrderTests(Suite* suite)
 	set.addInOrder(*it);
      suite->addTest("Not in order", false);
   }
-  catch (ConsecutiveRangeSetException) {
+  catch (const ConsecutiveRangeSetException& e) {
      suite->addTest("Not in order", true);
   }
 
@@ -210,14 +210,14 @@ void doStringInitTests(Suite* suite)
     ConsecutiveRangeSet set("1-,3-9");
     exceptionTest->setResults(false);
   }
-  catch (ConsecutiveRangeSetException) {
+  catch (const ConsecutiveRangeSetException& e) {
     exceptionTest->setResults(true);
   }
   try {
     ConsecutiveRangeSet set("#$%");
     exceptionTest->setResults(false);
   }
-  catch (ConsecutiveRangeSetException) {
+  catch (const ConsecutiveRangeSetException& e) {
     exceptionTest->setResults(true);
   }
 }
@@ -316,7 +316,7 @@ bool equalSets(ConsecutiveRangeSet& set, const int* array, int arraySize,
   return true;
 }
 
-bool equalSets(ConsecutiveRangeSet& set, list<int>& intList, bool& sameSize)
+bool equalSets(ConsecutiveRangeSet& set,  std::list<int>& intList, bool& sameSize)
 {
   intList.sort();
   intList.unique();
@@ -328,7 +328,7 @@ bool equalSets(ConsecutiveRangeSet& set, list<int>& intList, bool& sameSize)
   sameSize = true;
   
   ConsecutiveRangeSet::iterator setIt = set.begin();
-  list<int>::iterator listIt = intList.begin();
+   std::list<int>::iterator listIt = intList.begin();
   
   for ( ; setIt != set.end(); setIt++, listIt++)
     if (*setIt != *listIt)

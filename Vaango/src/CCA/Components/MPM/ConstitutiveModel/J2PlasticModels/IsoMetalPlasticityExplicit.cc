@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -42,9 +42,10 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/LinearInterpolator.h>
+#include <Core/Grid/MPMInterpolators/LinearInterpolator.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
@@ -52,7 +53,6 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Gaussian.h>
@@ -64,6 +64,7 @@
 #include <cmath>
 #include <iostream>
 
+#include <Core/Exceptions/ConvergenceFailure.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -76,10 +77,12 @@ static DebugStream cout_EP1("SSEP1", false);
 static DebugStream CSTi("SSEPi", false);
 static DebugStream CSTir("SSEPir", false);
 
+const double IsoMetalPlasticityExplicit::sqrtThreeTwo = sqrt(1.5);
+const double IsoMetalPlasticityExplicit::sqrtTwoThird = 1.0 / sqrtThreeTwo;
+
 IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
-                                                       MPMFlags* Mflag)
-  : ConstitutiveModel(Mflag)
-  , ImplicitCM()
+                                                       MPMFlags* flags)
+  : ConstitutiveModel(flags)
 {
   ps->require("bulk_modulus", d_initialData.Bulk);
   ps->require("shear_modulus", d_initialData.Shear);
@@ -94,8 +97,9 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
   d_doIsothermal = false;
   d_isothermal   = 1.0;
   ps->get("isothermal", d_doIsothermal);
-  if (d_doIsothermal)
+  if (d_doIsothermal) {
     d_isothermal = 0.0;
+  }
 
   d_tol = 1.0e-10;
   ps->get("tolerance", d_tol);
@@ -118,7 +122,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
   d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    ostringstream desc;
+    std::ostringstream desc;
     desc << "An error occured in the MPMEOSFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -126,19 +130,20 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos);
+  d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos.get());
   if (!d_shear) {
-    ostringstream desc;
+    std::ostringstream desc;
     desc << "IsoMetalPlasticityExplicit::Error in shear modulus model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_elastic = std::make_unique<ElasticModuli_MetalIso>(d_eos, d_shear);
+  d_elastic =
+    std::make_unique<ElasticModuli_MetalIso>(d_eos.get(), d_shear.get());
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
-    ostringstream desc;
+    std::ostringstream desc;
     desc << "IsoMetalPlasticityExplicit::Error in melting temp model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
@@ -150,7 +155,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   d_flow = FlowStressModelFactory::create(ps);
   if (!d_flow) {
-    ostringstream desc;
+    std::ostringstream desc;
     desc << "An error occured in the FlowStressModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -160,7 +165,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   d_kinematic = Vaango::KinematicHardeningModelFactory::create(ps);
   if (!d_kinematic) {
-    ostringstream desc;
+    std::ostringstream desc;
     desc << "An error occured in the KinematicHardeningModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -170,7 +175,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   ProblemSpecP intvar_ps = ps->findBlock("internal_variable_model");
   if (!intvar_ps) {
-    ostringstream err;
+    std::ostringstream err;
     err << "**ERROR** Please add an 'internal_variable_model' tag to the\n"
         << " 'elastic_plastic_hp' block in the input .ups file.  The\n"
         << " default type is 'metal_internal_var'.\n";
@@ -178,16 +183,16 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
   }
   d_intvar = std::make_unique<Vaango::IntVar_Metal>(intvar_ps);
   if (!d_intvar) {
-    ostringstream err;
+    std::ostringstream err;
     err << "**ERROR** An error occured while creating the internal variable \n"
         << " model. Please file a bug report.\n";
     throw InternalError(err.str(), __FILE__, __LINE__);
   }
 
   d_yield = Vaango::YieldConditionFactory::create(
-    ps, d_intvar.get(), const_cast<const FlowStressModel*>(d_flow));
+    ps, d_intvar.get(), const_cast<const FlowStressModel*>(d_flow.get()));
   if (!d_yield) {
-    ostringstream desc;
+    std::ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.\n";
@@ -196,7 +201,7 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 
   d_damage = DamageModelFactory::create(ps);
   if (!d_damage) {
-    ostringstream desc;
+    std::ostringstream desc;
     desc << "An error occured in the DamageModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -205,8 +210,9 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
   }
 
   d_stable = StabilityCheckFactory::create(ps);
-  if (!d_stable)
+  if (!d_stable) {
     std::cerr << "Stability check disabled\n";
+  }
 
   setErosionAlgorithm();
   getInitialPorosityData(ps);
@@ -217,7 +223,6 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(ProblemSpecP& ps,
 IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(
   const IsoMetalPlasticityExplicit* cm)
   : ConstitutiveModel(cm)
-  , ImplicitCM(cm)
 {
   d_initialData.Bulk       = cm->d_initialData.Bulk;
   d_initialData.Shear      = cm->d_initialData.Shear;
@@ -252,22 +257,23 @@ IsoMetalPlasticityExplicit::IsoMetalPlasticityExplicit(
   d_scalarDam.Dc               = cm->d_scalarDam.Dc;
   d_scalarDam.scalarDamageDist = cm->d_scalarDam.scalarDamageDist;
 
-  d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
+  d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos.get());
   d_eos->setBulkModulus(d_initialData.Bulk);
-  d_shear   = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
-  d_elastic = std::make_unique<ElasticModuli_MetalIso>(d_eos, d_shear);
+  d_shear = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear.get());
+  d_elastic =
+    std::make_unique<ElasticModuli_MetalIso>(d_eos.get(), d_shear.get());
 
-  d_melt                = MeltingTempModelFactory::createCopy(cm->d_melt);
+  d_melt                = MeltingTempModelFactory::createCopy(cm->d_melt.get());
   d_computeSpecificHeat = cm->d_computeSpecificHeat;
-  d_Cp                  = SpecificHeatModelFactory::createCopy(cm->d_Cp);
+  d_Cp                  = SpecificHeatModelFactory::createCopy(cm->d_Cp.get());
 
   d_intvar = std::make_unique<Vaango::IntVar_Metal>(cm->d_intvar.get());
-  d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
-  d_flow   = FlowStressModelFactory::createCopy(cm->d_flow);
+  d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield.get());
+  d_flow   = FlowStressModelFactory::createCopy(cm->d_flow.get());
   d_kinematic =
-    Vaango::KinematicHardeningModelFactory::createCopy(cm->d_kinematic);
-  d_damage = DamageModelFactory::createCopy(cm->d_damage);
-  d_stable = StabilityCheckFactory::createCopy(cm->d_stable);
+    Vaango::KinematicHardeningModelFactory::createCopy(cm->d_kinematic.get());
+  d_damage = DamageModelFactory::createCopy(cm->d_damage.get());
+  d_stable = StabilityCheckFactory::createCopy(cm->d_stable.get());
 
   initializeLocalMPMLabels();
 }
@@ -278,6 +284,9 @@ IsoMetalPlasticityExplicit::~IsoMetalPlasticityExplicit()
   VarLabel::destroy(pStrainRateLabel);
   VarLabel::destroy(pPlasticStrainLabel);
   VarLabel::destroy(pPlasticStrainRateLabel);
+  VarLabel::destroy(pEqStrainRateLabel);
+  VarLabel::destroy(pEqPlasticStrainLabel);
+  VarLabel::destroy(pEqPlasticStrainRateLabel);
   VarLabel::destroy(pDamageLabel);
   VarLabel::destroy(pPorosityLabel);
   VarLabel::destroy(pLocalizedLabel);
@@ -287,21 +296,14 @@ IsoMetalPlasticityExplicit::~IsoMetalPlasticityExplicit()
   VarLabel::destroy(pStrainRateLabel_preReloc);
   VarLabel::destroy(pPlasticStrainLabel_preReloc);
   VarLabel::destroy(pPlasticStrainRateLabel_preReloc);
+  VarLabel::destroy(pEqStrainRateLabel_preReloc);
+  VarLabel::destroy(pEqPlasticStrainLabel_preReloc);
+  VarLabel::destroy(pEqPlasticStrainRateLabel_preReloc);
   VarLabel::destroy(pDamageLabel_preReloc);
   VarLabel::destroy(pPorosityLabel_preReloc);
   VarLabel::destroy(pLocalizedLabel_preReloc);
   VarLabel::destroy(pIntVarLabel_preReloc);
   VarLabel::destroy(pDStressDIntVarLabel_preReloc);
-
-  delete d_eos;
-  delete d_shear;
-  delete d_melt;
-  delete d_Cp;
-  delete d_yield;
-  delete d_flow;
-  delete d_kinematic;
-  delete d_damage;
-  delete d_stable;
 }
 
 void
@@ -357,21 +359,27 @@ IsoMetalPlasticityExplicit::outputProblemSpec(ProblemSpecP& ps,
                        d_scalarDam.scalarDamageDist);
 }
 
-IsoMetalPlasticityExplicit*
+std::unique_ptr<ConstitutiveModel>
 IsoMetalPlasticityExplicit::clone()
 {
-  return scinew IsoMetalPlasticityExplicit(this);
+  return std::make_unique<IsoMetalPlasticityExplicit>(this);
 }
 
 void
 IsoMetalPlasticityExplicit::initializeLocalMPMLabels()
 {
   pStrainRateLabel = VarLabel::create(
-    "p.strainRate", ParticleVariable<double>::getTypeDescription());
+    "p.strainRate", ParticleVariable<Matrix3>::getTypeDescription());
   pPlasticStrainLabel = VarLabel::create(
-    "p.plasticStrain", ParticleVariable<double>::getTypeDescription());
+    "p.plasticStrain", ParticleVariable<Matrix3>::getTypeDescription());
   pPlasticStrainRateLabel = VarLabel::create(
-    "p.plasticStrainRate", ParticleVariable<double>::getTypeDescription());
+    "p.plasticStrainRate", ParticleVariable<Matrix3>::getTypeDescription());
+  pEqStrainRateLabel = VarLabel::create(
+    "p.eqStrainRate", ParticleVariable<double>::getTypeDescription());
+  pEqPlasticStrainLabel = VarLabel::create(
+    "p.eqPlasticStrain", ParticleVariable<double>::getTypeDescription());
+  pEqPlasticStrainRateLabel = VarLabel::create(
+    "p.eqPlasticStrainRate", ParticleVariable<double>::getTypeDescription());
   pDamageLabel = VarLabel::create(
     "p.damage", ParticleVariable<double>::getTypeDescription());
   pPorosityLabel = VarLabel::create(
@@ -385,11 +393,17 @@ IsoMetalPlasticityExplicit::initializeLocalMPMLabels()
     ParticleVariable<DStressDMetalIntVar>::getTypeDescription());
 
   pStrainRateLabel_preReloc = VarLabel::create(
-    "p.strainRate+", ParticleVariable<double>::getTypeDescription());
+    "p.strainRate+", ParticleVariable<Matrix3>::getTypeDescription());
   pPlasticStrainLabel_preReloc = VarLabel::create(
-    "p.plasticStrain+", ParticleVariable<double>::getTypeDescription());
+    "p.plasticStrain+", ParticleVariable<Matrix3>::getTypeDescription());
   pPlasticStrainRateLabel_preReloc = VarLabel::create(
-    "p.plasticStrainRate+", ParticleVariable<double>::getTypeDescription());
+    "p.plasticStrainRate+", ParticleVariable<Matrix3>::getTypeDescription());
+  pEqStrainRateLabel_preReloc = VarLabel::create(
+    "p.eqStrainRate+", ParticleVariable<double>::getTypeDescription());
+  pEqPlasticStrainLabel_preReloc = VarLabel::create(
+    "p.eqPlasticStrain+", ParticleVariable<double>::getTypeDescription());
+  pEqPlasticStrainRateLabel_preReloc = VarLabel::create(
+    "p.eqPlasticStrainRate+", ParticleVariable<double>::getTypeDescription());
   pDamageLabel_preReloc = VarLabel::create(
     "p.damage+", ParticleVariable<double>::getTypeDescription());
   pPorosityLabel_preReloc = VarLabel::create(
@@ -445,10 +459,11 @@ IsoMetalPlasticityExplicit::setErosionAlgorithm()
   d_setStressToZero = false;
   d_allowNoTension  = false;
   if (flag->d_doErosion) {
-    if (flag->d_erosionAlgorithm == "AllowNoTension")
+    if (flag->d_erosionAlgorithm == "AllowNoTension") {
       d_allowNoTension = true;
-    else if (flag->d_erosionAlgorithm == "ZeroStress")
+    } else if (flag->d_erosionAlgorithm == "ZeroStress") {
       d_setStressToZero = true;
+    }
   }
 }
 
@@ -460,6 +475,9 @@ IsoMetalPlasticityExplicit::addParticleState(std::vector<const VarLabel*>& from,
   from.push_back(pStrainRateLabel);
   from.push_back(pPlasticStrainLabel);
   from.push_back(pPlasticStrainRateLabel);
+  from.push_back(pEqStrainRateLabel);
+  from.push_back(pEqPlasticStrainLabel);
+  from.push_back(pEqPlasticStrainRateLabel);
   from.push_back(pDamageLabel);
   from.push_back(pPorosityLabel);
   from.push_back(pLocalizedLabel);
@@ -469,6 +487,9 @@ IsoMetalPlasticityExplicit::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(pStrainRateLabel_preReloc);
   to.push_back(pPlasticStrainLabel_preReloc);
   to.push_back(pPlasticStrainRateLabel_preReloc);
+  to.push_back(pEqStrainRateLabel_preReloc);
+  to.push_back(pEqPlasticStrainLabel_preReloc);
+  to.push_back(pEqPlasticStrainRateLabel_preReloc);
   to.push_back(pDamageLabel_preReloc);
   to.push_back(pPorosityLabel_preReloc);
   to.push_back(pLocalizedLabel_preReloc);
@@ -491,6 +512,9 @@ IsoMetalPlasticityExplicit::addInitialComputesAndRequires(
   task->computes(pStrainRateLabel, matlset);
   task->computes(pPlasticStrainLabel, matlset);
   task->computes(pPlasticStrainRateLabel, matlset);
+  task->computes(pEqStrainRateLabel, matlset);
+  task->computes(pEqPlasticStrainLabel, matlset);
+  task->computes(pEqPlasticStrainRateLabel, matlset);
   task->computes(pDamageLabel, matlset);
   task->computes(pPorosityLabel, matlset);
   task->computes(pLocalizedLabel, matlset);
@@ -509,23 +533,18 @@ IsoMetalPlasticityExplicit::initializeCMData(const Patch* patch,
 {
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
-  if (flag->d_integrator == MPMFlags::Implicit)
-    initSharedDataForImplicit(patch, matl, new_dw);
-  else {
-    initSharedDataForExplicit(patch, matl, new_dw);
-    computeStableTimestep(patch, matl, new_dw);
-  }
+  initSharedDataForExplicit(patch, matl, new_dw);
+  computeStableTimestep(patch, matl, new_dw);
 
   // Put stuff in here to initialize each particle's
   // constitutive model parameters and deformationMeasure
   // std::cout << "Initialize CM Data in IsoMetalPlasticityExplicit" << "\n";
-  Matrix3 one, zero(0.);
-  one.Identity();
-
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
-  ParticleVariable<double> pPlasticStrain, pDamage, pPorosity,
-    pPlasticStrainRate, pStrainRate;
+  ParticleVariable<Matrix3> pPlasticStrain, pPlasticStrainRate, pStrainRate;
+  ParticleVariable<double> pEqPlasticStrain, pEqPlasticStrainRate,
+    pEqStrainRate;
+  ParticleVariable<double> pDamage, pPorosity;
   ParticleVariable<int> pLocalized;
   ParticleVariable<MetalIntVar> pIntVar;
   ParticleVariable<DStressDMetalIntVar> pDStressDIntVar;
@@ -533,6 +552,9 @@ IsoMetalPlasticityExplicit::initializeCMData(const Patch* patch,
   new_dw->allocateAndPut(pStrainRate, pStrainRateLabel, pset);
   new_dw->allocateAndPut(pPlasticStrain, pPlasticStrainLabel, pset);
   new_dw->allocateAndPut(pPlasticStrainRate, pPlasticStrainRateLabel, pset);
+  new_dw->allocateAndPut(pEqStrainRate, pEqStrainRateLabel, pset);
+  new_dw->allocateAndPut(pEqPlasticStrain, pEqPlasticStrainLabel, pset);
+  new_dw->allocateAndPut(pEqPlasticStrainRate, pEqPlasticStrainRateLabel, pset);
   new_dw->allocateAndPut(pDamage, pDamageLabel, pset);
   new_dw->allocateAndPut(pPorosity, pPorosityLabel, pset);
   new_dw->allocateAndPut(pLocalized, pLocalizedLabel, pset);
@@ -541,14 +563,17 @@ IsoMetalPlasticityExplicit::initializeCMData(const Patch* patch,
 
   for (auto idx : *pset) {
 
-    pStrainRate[idx]        = 0.0;
-    pPlasticStrain[idx]     = 0.0;
-    pPlasticStrainRate[idx] = 0.0;
-    pDamage[idx]            = d_damage->initialize();
-    pPorosity[idx]          = d_porosity.f0;
-    pLocalized[idx]         = 0;
-    pIntVar[idx]            = { 0.0, 0.0 };
-    pDStressDIntVar[idx]    = { Matrix3(0.0), Matrix3(0.0) };
+    pStrainRate[idx]          = zero;
+    pPlasticStrain[idx]       = zero;
+    pPlasticStrainRate[idx]   = zero;
+    pEqStrainRate[idx]        = 0.0;
+    pEqPlasticStrain[idx]     = 0.0;
+    pEqPlasticStrainRate[idx] = 0.0;
+    pDamage[idx]              = d_damage->initialize();
+    pPorosity[idx]            = d_porosity.f0;
+    pLocalized[idx]           = 0;
+    pIntVar[idx]              = { 0.0, 0.0 };
+    pDStressDIntVar[idx]      = { Matrix3(0.0), Matrix3(0.0) };
   }
 
   // Do some extra things if the porosity or the damage distribution
@@ -610,16 +635,16 @@ IsoMetalPlasticityExplicit::computeStableTimestep(const Patch* patch,
   for (auto idx : *pset) {
 
     // Compute wave speed at each particle, store the maximum
-    Vector pvelocity_idx = pVelocity[idx];
+    Vector pVelocity_idx = pVelocity[idx];
     if (pMass[idx] > 0) {
       c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pVol_new[idx] / pMass[idx]);
     } else {
       c_dil         = 0.0;
-      pvelocity_idx = Vector(0.0, 0.0, 0.0);
+      pVelocity_idx = Vector(0.0, 0.0, 0.0);
     }
-    waveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), waveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity_idx.y()), waveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity_idx.z()), waveSpeed.z()));
+    waveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), waveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity_idx.y()), waveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity_idx.z()), waveSpeed.z()));
   }
 
   waveSpeed       = dx / waveSpeed;
@@ -638,11 +663,7 @@ IsoMetalPlasticityExplicit::addComputesAndRequires(
   // base class.
   Ghost::GhostType gnone        = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
-  if (flag->d_integrator == MPMFlags::Implicit) {
-    addSharedCRForImplicit(task, matlset, patches);
-  } else {
-    addSharedCRForHypoExplicit(task, matlset, patches);
-  }
+  addSharedCRForHypoExplicit(task, matlset, patches);
 
   // Other constitutive model and input dependent computes and requires
   task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
@@ -650,6 +671,9 @@ IsoMetalPlasticityExplicit::addComputesAndRequires(
   task->requires(Task::OldDW, pStrainRateLabel, matlset, gnone);
   task->requires(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
   task->requires(Task::OldDW, pPlasticStrainRateLabel, matlset, gnone);
+  task->requires(Task::OldDW, pEqStrainRateLabel, matlset, gnone);
+  task->requires(Task::OldDW, pEqPlasticStrainLabel, matlset, gnone);
+  task->requires(Task::OldDW, pEqPlasticStrainRateLabel, matlset, gnone);
   task->requires(Task::OldDW, pDamageLabel, matlset, gnone);
   task->requires(Task::OldDW, pPorosityLabel, matlset, gnone);
   task->requires(Task::OldDW, pLocalizedLabel, matlset, gnone);
@@ -659,6 +683,9 @@ IsoMetalPlasticityExplicit::addComputesAndRequires(
   task->computes(pStrainRateLabel_preReloc, matlset);
   task->computes(pPlasticStrainLabel_preReloc, matlset);
   task->computes(pPlasticStrainRateLabel_preReloc, matlset);
+  task->computes(pEqStrainRateLabel_preReloc, matlset);
+  task->computes(pEqPlasticStrainLabel_preReloc, matlset);
+  task->computes(pEqPlasticStrainRateLabel_preReloc, matlset);
   task->computes(pDamageLabel_preReloc, matlset);
   task->computes(pPorosityLabel_preReloc, matlset);
   task->computes(pLocalizedLabel_preReloc, matlset);
@@ -676,11 +703,7 @@ IsoMetalPlasticityExplicit::computeStressTensor(const PatchSubset* patches,
                                                 DataWarehouse* old_dw,
                                                 DataWarehouse* new_dw)
 {
-  if (flag->d_integrator == MPMFlags::Implicit) {
-    computeStressTensorImplicit(patches, matl, old_dw, new_dw);
-  } else {
-    computeStressTensorExplicit(patches, matl, old_dw, new_dw);
-  }
+  computeStressTensorExplicit(patches, matl, old_dw, new_dw);
 }
 
 void
@@ -691,49 +714,24 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
   DataWarehouse* new_dw)
 {
   // General stuff
-  Matrix3 one;
-  one.Identity();
-  Matrix3 zero(0.0);
-  Matrix3 defGrad_new;
-  defGrad_new.Identity();
-  Matrix3 rightStretch;
-  rightStretch.Identity();
-  Matrix3 rotation;
-  rotation.Identity();
-  Matrix3 rateOfDef_new(0.0);
-  Matrix3 rateOfDef_dev_new(0.0);
-  Matrix3 sigma_old(0.0);
-  Matrix3 sigma_new(0.0);
-  Matrix3 backStress_old(0.0);
-  Matrix3 backStress_new(0.0);
-  std::vector<Matrix3> sigma_eta_new;
-
   Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
 
   double bulk              = d_initialData.Bulk;
   double shear             = d_initialData.Shear;
-  double CTE               = d_initialData.CTE;
   double rho_0             = matl->getInitialDensity();
   double Tm                = matl->getMeltTemperature();
   double sqrtThreeTwo      = sqrt(1.5);
   double sqrtTwoThird      = 1.0 / sqrtThreeTwo;
   double totalStrainEnergy = 0.0;
 
-  // Ghost::GhostType  gac = Ghost::AroundCells;
-
-  // Do thermal expansion?
-  if (!flag->d_doThermalExpansion) {
-    CTE = 0.0;
-  }
-
   // Loop thru patches
   for (int patchIndex = 0; patchIndex < patches->size(); patchIndex++) {
     const Patch* patch = patches->get(patchIndex);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     // Get grid size
     Vector dx = patch->dCell();
@@ -757,10 +755,10 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
 
     // Get the particle location, particle size, particle mass, particle volume
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
     constParticleVariable<double> pMass, pVol_old;
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pMass, lb->pMassLabel, pset);
     old_dw->get(pVol_old, lb->pVolumeLabel, pset);
 
@@ -780,12 +778,18 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
     // GET LOCAL DATA
-    constParticleVariable<double> pPlasticStrain_old, pDamage_old,
-      pPorosity_old, pStrainRate_old, pPlasticStrainRate_old;
+    constParticleVariable<Matrix3> pPlasticStrain_old, pStrainRate_old,
+      pPlasticStrainRate_old;
+    constParticleVariable<double> pEqPlasticStrain_old, pEqStrainRate_old,
+      pEqPlasticStrainRate_old;
+    constParticleVariable<double> pDamage_old, pPorosity_old;
     old_dw->get(pPlasticStrain_old, pPlasticStrainLabel, pset);
-    old_dw->get(pDamage_old, pDamageLabel, pset);
     old_dw->get(pStrainRate_old, pStrainRateLabel, pset);
     old_dw->get(pPlasticStrainRate_old, pPlasticStrainRateLabel, pset);
+    old_dw->get(pEqPlasticStrain_old, pEqPlasticStrainLabel, pset);
+    old_dw->get(pEqStrainRate_old, pEqStrainRateLabel, pset);
+    old_dw->get(pEqPlasticStrainRate_old, pEqPlasticStrainRateLabel, pset);
+    old_dw->get(pDamage_old, pDamageLabel, pset);
     old_dw->get(pPorosity_old, pPorosityLabel, pset);
 
     constParticleVariable<int> pLocalized_old;
@@ -807,14 +811,23 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
     new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
 
     // LOCAL
-    ParticleVariable<double> pPlasticStrain_new, pDamage_new, pPorosity_new,
-      pStrainRate_new, pPlasticStrainRate_new;
+    ParticleVariable<Matrix3> pPlasticStrain_new, pStrainRate_new,
+      pPlasticStrainRate_new;
+    ParticleVariable<double> pEqPlasticStrain_new, pEqStrainRate_new,
+      pEqPlasticStrainRate_new;
+    ParticleVariable<double> pDamage_new, pPorosity_new;
     ParticleVariable<int> pLocalized_new;
     new_dw->allocateAndPut(pStrainRate_new, pStrainRateLabel_preReloc, pset);
     new_dw->allocateAndPut(
       pPlasticStrain_new, pPlasticStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(
       pPlasticStrainRate_new, pPlasticStrainRateLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pEqStrainRate_new, pEqStrainRateLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pEqPlasticStrain_new, pEqPlasticStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pEqPlasticStrainRate_new, pEqPlasticStrainRateLabel_preReloc, pset);
     new_dw->allocateAndPut(pDamage_new, pDamageLabel_preReloc, pset);
     new_dw->allocateAndPut(pPorosity_new, pPorosityLabel_preReloc, pset);
     new_dw->allocateAndPut(pLocalized_new, pLocalizedLabel_preReloc, pset);
@@ -850,9 +863,9 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       // Compute the deformation gradient increment using the time_step
       // velocity gradient F_n^np1 = dudx * dt + Identity
       // Update the deformation gradient tensor to its time n+1 value.
-      defGrad_new    = pDefGrad_new[idx];
-      double J_new   = defGrad_new.Determinant();
-      double rho_cur = rho_0 / J_new;
+      auto defGrad_new = pDefGrad_new[idx];
+      double J_new     = defGrad_new.Determinant();
+      double rho_cur   = rho_0 / J_new;
 
       // If the erosion algorithm sets the stress to zero then don't allow
       // any deformation.
@@ -863,23 +876,26 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       }
 
       // Compute polar decomposition of F (F = RU)
+      Matrix3 rightStretch{ 0.0 }, rotation{ 0.0 };
       pDefGrad[idx].polarDecompositionRMB(rightStretch, rotation);
 
       // Calculate rate of deformation tensor (D)
-      rateOfDef_new = (velGrad + velGrad.Transpose()) * 0.5;
+      auto rateOfDef_new = (velGrad + velGrad.Transpose()) * 0.5;
 
       // Rotate the total rate of deformation tensor back to the
       // material configuration
       rateOfDef_new = (rotation.Transpose()) * (rateOfDef_new * rotation);
-      pStrainRate_new[idx] = sqrtTwoThird * rateOfDef_new.Norm();
+      pStrainRate_new[idx]   = rateOfDef_new;
+      pEqStrainRate_new[idx] = sqrtTwoThird * rateOfDef_new.Norm();
 
       // Calculate the deviatoric part of the non-thermal part
       // of the rate of deformation tensor
-      rateOfDef_dev_new = rateOfDef_new - one * (rateOfDef_new.Trace() / 3.0);
+      auto rateOfDef_dev_new =
+        rateOfDef_new - one * (rateOfDef_new.Trace() / 3.0);
 
       // Rotate the Cauchy stress back to the
       // material configuration and calculate the deviatoric part
-      sigma_old           = pStress_old[idx];
+      auto sigma_old      = pStress_old[idx];
       sigma_old           = (rotation.Transpose()) * (sigma_old * rotation);
       double pressure_old = sigma_old.Trace() / 3.0;
 
@@ -893,20 +909,23 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
         (pDStressDIntVar_old[idx].plasticPorosity * rotation));
 
       // Get the back stress from the kinematic hardening model and rotate
-      backStress_old =
+      auto backStress_old =
         (rotation.Transpose()) * (pBackStress_old[idx] * rotation);
-      backStress_new = backStress_old;
+
+      // Internal vars
+      auto intvar_old = pIntVar_old[idx];
 
       // Set up the deformation state
       DeformationState defState_new;
       defState_new.D    = rateOfDef_new;
       defState_new.devD = rateOfDef_dev_new;
+      defState_new.J    = J_new;
 
       // Set up the ModelState (for t_n)
       Vaango::ModelStateBase state_old;
-      state_old.eqStrainRate        = pStrainRate_old[idx];
-      state_old.eqPlasticStrainRate = pPlasticStrainRate_old[idx];
-      state_old.eqPlasticStrain     = pPlasticStrain_old[idx];
+      state_old.eqStrainRate        = pEqStrainRate_old[idx];
+      state_old.eqPlasticStrainRate = pEqPlasticStrainRate_old[idx];
+      state_old.eqPlasticStrain     = pEqPlasticStrain_old[idx];
       state_old.pressure            = pressure_old;
       state_old.temperature         = pTemp_old[idx];
       state_old.initialTemperature  = d_initialMaterialTemperature;
@@ -925,8 +944,15 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       state_old.backStress          = backStress_old;
 
       Vaango::ModelStateBase state(state_old);
-      state.eqStrainRate = pStrainRate_old[idx];
+      state.eqStrainRate = pEqStrainRate_old[idx];
       state.volume       = pVol_new[idx];
+
+      auto plasticStrain_old     = pPlasticStrain_old[idx];
+      auto plasticStrainRate_old = pPlasticStrainRate_old[idx];
+      auto ep_old                = state_old.eqPlasticStrain;
+      auto phi_old               = pPorosity_old[idx];
+      auto D_old                 = pDamage_old[idx];
+      auto T_old                 = pTemp_old[idx];
 
       // Set up the nonlinear elastic model
       IsoNonlinHypoelastic elasticityModel(d_elastic.get(), d_intvar.get());
@@ -955,6 +981,8 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       //-----------------------------------------------------------------------
       // Stage 2: Elastic-plastic stress update
       //-----------------------------------------------------------------------
+      std::vector<Matrix3> sigma_eta_new{ 0.0, 0.0 };
+
       // Keep the temperature constant over the time step
       double T_new = state.temperature;
 
@@ -969,282 +997,218 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       if (T_new > Tm_cur || flowStress <= 0.0) {
 
         melted = true;
-
-        // Set the deviatoric stress to zero
-        if (d_doMelting) {
-          sigma_new = elasticityModel.computeStress(
-            delT, sigma_old, &defState_new, &state);
-          sigma_new = Vaango::Util::Identity * sigma_new.Trace();
-        }
-
-        d_flow->updateElastic(idx);
-        pBackStress_new[idx].set(0.0);
-
-      } else {
-
-        plastic = true;
-
-        // Integrate the stress rate equation to get a trial stress
-        Matrix3 sigma_trial =
-          elasticityModel.computeStress(delT, sigma_old, &defState_new, &state);
-
-        // Check whether the step is elastic or plastic
-        auto f_0 = d_yield->evalYieldCondition(sigma_trial, &state);
-        if (std::isnan(f_0)) {
-          std::cout << "idx = " << idx
-                    << " epdot = " << state.eqPlasticStrainRate
-                    << " ep = " << state.eqPlasticStrain
-                    << " T = " << state.temperature << " p = " << state.pressure
-                    << " sigy = " << state.yieldStress << "\n";
-          throw InvalidValue("**ERROR**:IsoMetalPlasticityExplicit: f_0 = nan.",
-                             __FILE__,
-                             __LINE__);
-        }
-
-        if (f_0 < 0.0) {
-
-          // Set the elastic stress to the trial stress
-          sigma_new = sigma_trial;
-
-          // Update the internal variables
-          d_flow->updateElastic(idx);
-          pBackStress_new[idx] = backStress_old;
-
-        } else {
-
-          // Initialize dsigma_dintvar
-          Matrix3 sigma_alpha_k = sigma_eta_old[0];
-          Matrix3 sigma_phi_k   = sigma_eta_old[1];
-          Matrix3 sigma_beta_k(0.0);
-
-          // Compute r_k, h_k
-          Matrix3 sigma_k = sigma_trial;
-          Matrix3 r_k     = d_yield->df_dsigma(sigma_k, &state);
-
-          MetalIntVar h_eta;
-          d_intvar->computeHardeningModulus(&state, h_eta);
-          double h_alpha_k = h_eta.eqPlasticStrain;
-          double h_phi_k   = h_eta.plasticPorosity;
-          Matrix3 h_beta_k(0.0);
-          d_kinematic->eval_h_beta(r_k, &state, h_beta_k);
-          Matrix3 r_k_dev      = r_k - one * (r_k.Trace() / 3.0);
-          Matrix3 h_beta_k_dev = h_beta_k - one * (h_beta_k.Trace() / 3.0);
-          Matrix3 term1_k      = r_k_dev * (2.0 * mu_cur) + h_beta_k_dev;
-
-          // Iterate to find DeltaGamma
-          int count          = 0;
-          double Delta_gamma = 0.0;
-          double f_k         = f_0;
-
-          while (f_k > d_tol) {
-
-            // Get the elastic-plastic coupling derivatives
-            std::vector<Matrix3> sigma_eta_k =
-              elasticityModel.computeDStressDIntVar(
-                delT, sigma_eta_old, &defState_new, &state);
-            sigma_alpha_k = sigma_eta_k[0];
-            sigma_phi_k   = sigma_eta_k[1];
-
-            // Get the derivatives of the yield function
-            Matrix3 df_dxi_k = d_yield->df_dxi(sigma_k, &state);
-            MetalIntVar f_eta_k;
-            d_yield->df_dintvar(&state, f_eta_k);
-            double df_dep_k  = f_eta_k.eqPlasticStrain;
-            double df_dphi_k = f_eta_k.plasticPorosity;
-
-            // compute delta gamma (k)
-            double denom = df_dxi_k.Contract(term1_k) - h_alpha_k * df_dep_k -
-                           h_phi_k * df_dphi_k;
-            double delta_gamma_k = f_k / denom;
-            if (std::isnan(f_k) || std::isnan(delta_gamma_k)) {
-              std::cout << "idx = " << idx << " iter = " << count
-                        << " f_k = " << f_k
-                        << " delta_gamma_k = " << delta_gamma_k
-                        << " sigy = " << state.yieldStress
-                        << " df_dep_k = " << df_dep_k
-                        << " epdot = " << state.eqPlasticStrainRate
-                        << " ep = " << state.eqPlasticStrain << "\n";
-              std::cout << "df_dxi = \n"
-                        << df_dxi_k << "\n term1 = " << term1_k
-                        << "\n h_alpha = " << h_alpha_k
-                        << " df_dep = " << df_dep_k << "\n h_phi = " << h_phi_k
-                        << " df_dphi = " << df_dphi_k << " denom = " << denom
-                        << "\n";
-              throw InvalidValue(
-                "**ERROR**:IsoMetalPlasticityExplicit: Found nan.",
-                __FILE__,
-                __LINE__);
-            }
-
-            // Update Delta_gamma
-            double Delta_gamma_old = Delta_gamma;
-            Delta_gamma += delta_gamma_k;
-
-            if (Delta_gamma < 0.0) {
-              std::cout << "Delta_gamma = " << Delta_gamma << "\n";
-              std::cout << "h_alpha = " << h_alpha_k
-                        << " delta_gamma = " << delta_gamma_k
-                        << " ep = " << state.eqPlasticStrain << "\n";
-              std::cout << "idx = " << idx << " iter = " << count
-                        << " f_k = " << f_k
-                        << " delta_gamma_k = " << delta_gamma_k
-                        << " sigy = " << state.yieldStress
-                        << " df_dep_k = " << df_dep_k
-                        << " epdot = " << state.eqPlasticStrainRate
-                        << " ep = " << state.eqPlasticStrain << "\n";
-              std::cout << "sigma = \n"
-                        << sigma_k
-                        << "\n df_dxi:term1 = " << df_dxi_k.Contract(term1_k)
-                        << "\n df_dxi = \n"
-                        << df_dxi_k << "\n term1 = " << term1_k
-                        << "\n h_alpha = " << h_alpha_k
-                        << " df_dep = " << df_dep_k << "\n h_phi = " << h_phi_k
-                        << " df_dphi = " << df_dphi_k << " denom = " << denom
-                        << "\n";
-              std::cout << "r_n_dev = \n"
-                        << r_k_dev << "\n mu_cur = " << mu_cur
-                        << "\n h_bet_n_dev = \n"
-                        << h_beta_k_dev << "\n";
-            }
-
-            /* Updated algorithm - use value of sigma_k */
-            // Compute r_k, h_k
-            r_k = d_yield->df_dsigma(sigma_k, &state);
-            // MetalIntVar h_eta;
-            // d_intvar->computeHardeningModulus(&state, h_eta);
-            // double h_alpha_k = h_eta.eqPlasticStrain;
-            // double h_phi_k   = h_eta.plasticPorosity;
-            d_kinematic->eval_h_beta(r_k, &state, h_beta_k);
-            r_k_dev      = r_k - one * (r_k.Trace() / 3.0);
-            h_beta_k_dev = h_beta_k - one * (h_beta_k.Trace() / 3.0);
-            term1_k      = r_k_dev * (2.0 * mu_cur) + h_beta_k_dev;
-
-            // Update plastic consistency parameter increment
-            state.lambdaIncPlastic = Delta_gamma;
-
-            // Update ep, phi, sigma
-            state.eqPlasticStrain = d_intvar->computeInternalVariable(
-              "eqPlasticStrain", &state_old, &state);
-            state.porosity =
-              d_intvar->computeInternalVariable("porosity", &state_old, &state);
-            sigma_k = sigma_trial - term1_k * Delta_gamma;
-
-            if (fabs(Delta_gamma - Delta_gamma_old) < d_tol || count > 100)
-              break;
-
-            // Update the flow stress
-            state.yieldStress =
-              d_flow->computeFlowStress(&state, delT, d_tol, matl, idx);
-
-            // Check yield condition.  The state variable contains
-            // ep_k, phi_k, beta_k
-            f_k = d_yield->evalYieldCondition(sigma_k, &state);
-
-            ++count;
-          }
-
-          // Update the back stress and deviatoric stress
-          Matrix3 r_new = d_yield->df_dsigma(sigma_k, &state);
-          Matrix3 h_beta_new(0.0);
-          d_kinematic->eval_h_beta(r_new, &state, h_beta_new);
-          backStress_new   = backStress_old + h_beta_new * Delta_gamma;
-          state.backStress = backStress_new;
-          sigma_new        = sigma_k + backStress_new;
-
-          // Update the elastic-plastic coupling derivatives
-          sigma_eta_new = elasticityModel.computeDStressDIntVar(
-            delT, sigma_eta_old, &defState_new, &state);
-
-          // Update the plastic strain rate
-          d_intvar->computeHardeningModulus(&state, h_eta);
-          double h_alpha_new        = h_eta.eqPlasticStrain;
-          state.eqPlasticStrainRate = Delta_gamma / delT * h_alpha_new;
-
-          // Update internal variables
-          d_flow->updatePlastic(idx, Delta_gamma);
-
-          // Calculate rate of temperature increase due to plastic strain
-          double taylorQuinney = d_initialData.Chi;
-          double fac           = taylorQuinney / (rho_cur * state.specificHeat);
-
-          // Calculate Tdot (internal plastic heating rate).  This
-          // is used during the solution of the heat equation.
-          double Tdot = state.yieldStress * state.eqPlasticStrainRate * fac;
-          pdTdt[idx]  = Tdot * d_isothermal;
-
-          // Calculate a local change in temperature due to adiabatic
-          // heating for the purpose of thermal expansion corrections.
-          // If isothermal conditions exist then d_isothermal = 0.
-          T_new += (Tdot * delT * d_isothermal);
-
-        } // end of Phi if
-
-      } // end of temperature if
-
-      // Calculate the total stress
-      double T_0       = state.initialTemperature;
-      double kappa_new = d_eos->eval_dp_dJ(matl, J_new, &state);
-      kappa_new *= J_new;
-      // Matrix3 sigma_new =
-      //  sigma_dev_new +
-      //  one * (pressure_new - 3.0 * kappa_new * CTE * (T_new - T_0));
-      sigma_new -= one * (-3.0 * kappa_new * CTE * (T_new - T_0));
-
-      // If the particle has already failed, apply various erosion algorithms
-      if (flag->d_doErosion) {
-        if (pLocalized_old[idx]) {
-          if (d_allowNoTension) {
-            if (pressure_new > 0.0)
-              sigma_new = zero;
-            else
-              sigma_new = one * pressure_new;
-          } else if (d_setStressToZero)
-            sigma_new = zero;
-        }
-      }
-
-      //-----------------------------------------------------------------------
-      // Stage 3: Compute damage
-      //-----------------------------------------------------------------------
-      if (!plastic) {
+        updateAsFluid(idx,
+                      matl,
+                      delT,
+                      defState_new,
+                      state,
+                      sigma_old,
+                      pStress_new[idx],
+                      pBackStress_new[idx]);
 
         // Save the updated data
-        pIntVar_new[idx]            = pIntVar_old[idx];
-        pPlasticStrain_new[idx]     = pPlasticStrain_old[idx];
-        pPlasticStrainRate_new[idx] = 0.0;
-        pPorosity_new[idx]          = pPorosity_old[idx];
-        pDamage_new[idx]            = pDamage_old[idx];
+        pIntVar_new[idx]              = { 0.0, 0.0 };
+        pPlasticStrain_new[idx]       = zero;
+        pPlasticStrainRate_new[idx]   = zero;
+        pEqPlasticStrain_new[idx]     = 0.0;
+        pEqPlasticStrainRate_new[idx] = 0.0;
+        pPorosity_new[idx]            = 0.0;
+        pDamage_new[idx]              = 0.0;
 
       } else {
 
-        // Update the plastic strain, plastic strain rate, porosity
-        pIntVar_new[idx]            = { state.eqPlasticStrain, state.porosity };
-        pPlasticStrain_new[idx]     = state.eqPlasticStrain;
-        pPlasticStrainRate_new[idx] = state.eqPlasticStrainRate;
-        if (d_evolvePorosity) {
-          pPorosity_new[idx] = state.porosity;
-        } else {
-          pPorosity_new[idx] = pPorosity_old[idx];
-        }
+        // The substeps are only used to make sure that the trial stress is
+        // not too far from the yield surface.  Everything else from the
+        // momentum solve algorithm remains constant during the substeps.
+        double delT_substep                     = delT;
+        auto sigma_old_substep                  = sigma_old;
+        auto backStress_old_substep             = backStress_old;
+        auto state_old_substep                  = state;
+        auto intvar_old_substep                 = intvar_old;
+        auto plasticStrain_old_substep          = plasticStrain_old;
+        auto plasticStrainRate_old_substep      = plasticStrainRate_old;
+        auto ep_old_substep                     = ep_old;
+        [[maybe_unused]] auto epdot_old_substep = 0.0;
+        auto phi_old_substep                    = phi_old;
+        auto D_old_substep                      = D_old;
+        auto sigma_eta_old_substep              = sigma_eta_old;
+        [[maybe_unused]] auto dTdt_old_substep  = 0.0;
+        auto T_old_substep                      = T_old;
 
-        // Calculate the updated scalar damage parameter
-        if (d_evolveDamage) {
-          pDamage_new[idx] =
-            d_damage->computeScalarDamage(state.eqPlasticStrainRate,
-                                          sigma_new,
-                                          T_new,
-                                          delT,
-                                          matl,
-                                          d_tol,
-                                          pDamage_old[idx]);
-        } else {
-          pDamage_new[idx] = pDamage_old[idx];
-        }
-      }
+        Matrix3 sigma_new_substep{ 0.0 };
+        Matrix3 backStress_new_substep{ 0.0 };
+        MetalIntVar intvar_new_substep{ 0.0, 0.0 };
+        Matrix3 plasticStrain_new_substep{ 0.0 };
+        Matrix3 plasticStrainRate_new_substep{ 0.0 };
+        double ep_new_substep{ 0.0 };
+        double epdot_new_substep{ 0.0 };
+        double phi_new_substep{ 0.0 };
+        double D_new_substep{ 0.0 };
+        ModelStateBase state_new_substep(state_old_substep);
+        std::vector<Matrix3> sigma_eta_new_substep{ 0.0, 0.0 };
+        double dTdt_new_substep{ 0.0 };
+        double T_new_substep{ 0.0 };
+
+        int num_substeps = 1;
+        for (int step = 0; step < num_substeps; step++) {
+
+          // Integrate the stress rate equation to get a trial stress
+          Matrix3 sigma_trial = elasticityModel.computeStress(
+            delT_substep, sigma_old_substep, &defState_new, &state_old_substep);
+
+          // Check whether the step is elastic or plastic
+          auto f_0 =
+            d_yield->evalYieldCondition(sigma_trial, &state_old_substep);
+          if (std::isnan(f_0)) {
+            std::cout << "idx = " << idx
+                      << " epdot = " << state_old_substep.eqPlasticStrainRate
+                      << " ep = " << state_old_substep.eqPlasticStrain
+                      << " T = " << state_old_substep.temperature
+                      << " p = " << state_old_substep.pressure
+                      << " sigy = " << state_old_substep.yieldStress << "\n";
+            throw InvalidValue(
+              "**ERROR**:IsoMetalPlasticityExplicit: f_0 = nan.",
+              __FILE__,
+              __LINE__);
+          }
+
+          std::cout << "step = (" << step << ", " << f_0 << ", " << sigma_trial
+                    << ", " << delT_substep << ")\n ";
+
+          if (f_0 < 0.0) {
+
+            updateAsElastic(idx,
+                            matl,
+                            state_old_substep,
+                            defState_new,
+                            sigma_trial,
+                            backStress_old_substep,
+                            sigma_new_substep,
+                            backStress_new_substep);
+
+            intvar_new_substep            = intvar_old_substep;
+            plasticStrain_new_substep     = plasticStrain_old_substep;
+            plasticStrainRate_new_substep = zero;
+            ep_new_substep                = ep_old_substep;
+            epdot_new_substep             = 0.0;
+            phi_new_substep               = phi_old_substep;
+            D_new_substep                 = D_old_substep;
+            state_new_substep             = state_old_substep;
+            state_new_substep.pressure    = sigma_new_substep.Trace()/3.0;
+            sigma_eta_new_substep         = sigma_eta_old_substep;
+            dTdt_new_substep              = 0.0;
+            T_new_substep                 = T_old_substep;
+
+          } else {
+
+            plastic = true;
+
+            T_new_substep = T_old_substep;
+            state_old_substep.meltingTemp =
+              d_melt->computeMeltingTemp(&state_old_substep);
+            state_old_substep.shearModulus =
+              d_shear->computeShearModulus(&state_old_substep);
+
+            auto [status, err_msg, iters, f_k, Delta_Gamma] =
+              updateAsPlastic(idx,
+                              matl,
+                              delT_substep,
+                              sigma_eta_old,
+                              state_old_substep,
+                              backStress_old_substep,
+                              defState_new,
+                              f_0,
+                              sigma_trial,
+                              rho_cur,
+                              sigma_eta_new_substep,
+                              state_new_substep,
+                              sigma_new_substep,
+                              backStress_new_substep,
+                              dTdt_new_substep);
+            if (status == Status::INVALID_VALUE) {
+              throw InvalidValue(err_msg, __FILE__, __LINE__);
+            } else if (status == Status::CONVERGENCE_FAILURE) {
+              num_substeps *= 2;
+              if (num_substeps > 1028) {
+                throw ConvergenceFailure(
+                  err_msg, iters, f_k, Delta_Gamma, __FILE__, __LINE__);
+              } else {
+                std::cout << "**WARNING** " << err_msg << "\n";
+                std::cout << "Increasing substeps to " << num_substeps << "\n";
+                step         = -1;
+                delT_substep = delT / num_substeps;
+                continue;
+              }
+            }
+
+            state_new_substep.pressure = sigma_new_substep.Trace()/3.0;
+
+            T_new_substep = state_new_substep.temperature;
+            T_new         = T_new_substep;
+
+            // Compute the direction of the plastic strain rate
+            Matrix3 df_dxi =
+              d_yield->df_dxi(sigma_new_substep, &state_new_substep);
+
+            // Calculate the updated scalar damage parameter
+            D_new_substep = D_old_substep;
+            if (d_evolveDamage) {
+              D_new_substep = d_damage->computeScalarDamage(
+                state_new_substep.eqPlasticStrainRate,
+                sigma_new_substep,
+                T_new,
+                delT_substep,
+                matl,
+                d_tol,
+                D_old_substep);
+            }
+
+            intvar_new_substep = { state_new_substep.eqPlasticStrain,
+                                   state_new_substep.porosity };
+            plasticStrain_new_substep =
+              plasticStrain_old_substep + df_dxi * Delta_Gamma;
+            plasticStrainRate_new_substep =
+              df_dxi * state_new_substep.eqPlasticStrainRate;
+            ep_new_substep    = state_new_substep.eqPlasticStrain;
+            epdot_new_substep = state_new_substep.eqPlasticStrainRate;
+            phi_new_substep   = state_new_substep.porosity;
+
+          } // end of Phi if
+
+          sigma_old_substep             = sigma_new_substep;
+          backStress_old_substep        = backStress_new_substep;
+          state_old_substep             = state_new_substep;
+          intvar_old_substep            = intvar_new_substep;
+          plasticStrain_old_substep     = plasticStrain_new_substep;
+          plasticStrainRate_old_substep = plasticStrainRate_new_substep;
+          ep_old_substep                = ep_new_substep;
+          epdot_old_substep             = epdot_new_substep;
+          phi_old_substep               = phi_new_substep;
+          D_old_substep                 = D_new_substep;
+          sigma_eta_old_substep         = sigma_eta_new_substep;
+          dTdt_old_substep              = dTdt_new_substep;
+          T_old_substep                 = T_new_substep;
+
+        } // end loop over substeps
+
+        // Save the updated data
+        pStress_new[idx]              = sigma_new_substep;
+        pBackStress_new[idx]          = backStress_new_substep;
+        pIntVar_new[idx]              = intvar_new_substep;
+        pPlasticStrain_new[idx]       = plasticStrain_new_substep;
+        pPlasticStrainRate_new[idx]   = plasticStrainRate_new_substep;
+        pEqPlasticStrain_new[idx]     = ep_new_substep;
+        pEqPlasticStrainRate_new[idx] = epdot_new_substep;
+        pPorosity_new[idx]            = phi_new_substep;
+        pDamage_new[idx]              = D_new_substep;
+        pdTdt[idx]                    = dTdt_new_substep;
+
+      } // end of temperature if
 
       //-----------------------------------------------------------------------
       // Stage 4:
       //-----------------------------------------------------------------------
+
       // Find if the particle has failed/localized
       pLocalized_new[idx] = pLocalized_old[idx];
       bool isLocalized    = false;
@@ -1252,9 +1216,23 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
 
       if (flag->d_doErosion) {
 
+        // If the particle has already failed, apply various erosion algorithms
+        if (pLocalized_new[idx]) {
+          if (d_allowNoTension) {
+            if (pressure_new > 0.0) {
+              pStress_new[idx] = zero;
+            } else {
+              pStress_new[idx] = one * pressure_new;
+            }
+          } else if (d_setStressToZero) {
+            pStress_new[idx] = zero;
+          }
+        }
+
         // Check 1: Look at the temperature
-        if (melted)
+        if (melted) {
           isLocalized = true;
+        }
 
         // Check 2 and 3: Look at TEPLA and stability
         else if (plastic) {
@@ -1263,8 +1241,9 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
           if (d_checkTeplaFailureCriterion) {
             tepla = pow(pPorosity_new[idx] / d_porosity.fc, 2.0) +
                     pow(pDamage_new[idx], 2.0);
-            if (tepla > 1.0)
+            if (tepla > 1.0) {
               isLocalized = true;
+            }
           }
 
           // Check 3: Stability criterion (only if material is plastic)
@@ -1279,14 +1258,14 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
 
             state.yieldStress =
               d_flow->computeFlowStress(&state, delT, d_tol, matl, idx);
-            if (!(state.yieldStress > 0.0))
+            if (!(state.yieldStress > 0.0)) {
               isLocalized = true;
-            else {
+            } else {
 
               // Create an updated state
               ModelStateBase state_new(state);
-              state_new.setStress(sigma_new);
-              state_new.backStress = backStress_new;
+              state_new.setStress(pStress_new[idx]);
+              state_new.backStress = pBackStress_new[idx];
 
               // Get elastic tangent modulus
               auto C_e = elasticityModel.computeElasticTangentModulus(&state);
@@ -1303,49 +1282,15 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
               std::tie(C_ep, P_vec, N_vec, H) =
                 computeElasPlasTangentModulus(C_e, sigma_eta, &state_new);
 
-              /*
-              // Get the derivatives of the yield function
-              Matrix3 xi_hat = sigma_new - backStress_new;
-              Matrix3 xi     = xi_hat - one * (xi_hat.Trace() / 3.0);
-              Matrix3 rr = d_yield->df_dsigma(xi, &state_new);
-              auto df = d_yield->df_dsigmaDev_dbeta(xi, &state_new);
-              Matrix3 df_ds = df.first;
-              Matrix3 df_dbeta = df.second;
-              Matrix3 h_beta(0.0);
-              d_kinematic->eval_h_beta(rr, &state_new, h_beta);
-              Matrix3 r_dev      = rr - one * (rr.Trace() / 3.0);
-              Matrix3 h_beta_dev = h_beta - one * (h_beta.Trace() / 3.0);
-
-              MetalIntVar df_dintvar;
-              d_yield->df_dintvar(&state_new, df_dintvar);
-              double df_dep = df_dintvar.eqPlasticStrain;
-              double df_dphi = df_dintvar.plasticPorosity;
-
-              MetalIntVar h_eta;
-              d_intvar->computeHardeningModulus(&state_new, h_eta);
-              double h_alpha = h_eta.eqPlasticStrain;
-              double h_phi   = h_eta.plasticPorosity;
-              double dp_dJ   = d_eos->eval_dp_dJ(matl, J_new, &state_new);
-
-              TangentModulusTensor Cep;
-              d_yield->computeElasPlasTangentModulus(rr,
-                                                     df_ds,
-                                                     h_beta,
-                                                     df_dbeta,
-                                                     h_alpha,
-                                                     df_dep,
-                                                     h_phi,
-                                                     df_dphi,
-                                                     J_new,
-                                                     dp_dJ,
-                                                     &state,
-                                                     Cep);
-              */
-
               // Initialize localization direction
               Vector direction(0.0, 0.0, 0.0);
-              isLocalized = d_stable->checkStability(
-                sigma_new, rateOfDef_new, C_e, P_vec, N_vec, H, direction);
+              isLocalized = d_stable->checkStability(pStress_new[idx],
+                                                     rateOfDef_new,
+                                                     C_e,
+                                                     P_vec,
+                                                     N_vec,
+                                                     H,
+                                                     direction);
             }
           }
         }
@@ -1354,7 +1299,7 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
         if (d_checkStressTriax) {
 
           // Compute eigenvalues of the stress tensor
-          SymmMatrix3 stress(sigma_new);
+          SymmMatrix3 stress(pStress_new[idx]);
           Vector eigVal(0.0, 0.0, 0.0);
           Matrix3 eigVec;
           stress.eigen(eigVal, eigVec);
@@ -1371,7 +1316,7 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
           if (pLocalized_old[idx]) {
             pDamage_new[idx]   = 0.0;
             pPorosity_new[idx] = 0.0;
-            sigma_new          = zero;
+            pStress_new[idx]   = zero;
           } else {
 
             // set the particle localization flag to true
@@ -1381,12 +1326,14 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
 
             // Apply various erosion algorithms
             if (d_allowNoTension) {
-              if (pressure_new > 0.0)
-                sigma_new = zero;
-              else
-                sigma_new = one * pressure_new;
-            } else if (d_setStressToZero)
-              sigma_new = zero;
+              if (pressure_new > 0.0) {
+                pStress_new[idx] = zero;
+              } else {
+                pStress_new[idx] = one * pressure_new;
+              }
+            } else if (d_setStressToZero) {
+              pStress_new[idx] = zero;
+            }
           }
         }
       }
@@ -1400,12 +1347,11 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
       // Use new rotation
       defGrad_new.polarDecompositionRMB(rightStretch, rotation);
 
-      backStress_new   = (rotation * backStress_new) * (rotation.Transpose());
-      sigma_new        = (rotation * sigma_new) * (rotation.Transpose());
+      pBackStress_new[idx] =
+        (rotation * pBackStress_new[idx]) * (rotation.Transpose());
+      pStress_new[idx] = (rotation * pStress_new[idx]) * (rotation.Transpose());
       sigma_eta_new[0] = (rotation * sigma_eta_new[0]) * (rotation.Transpose());
       sigma_eta_new[1] = (rotation * sigma_eta_new[1]) * (rotation.Transpose());
-      pBackStress_new[idx]     = backStress_new;
-      pStress_new[idx]         = sigma_new;
       pDStressDIntVar_new[idx] = { sigma_eta_new[0], sigma_eta_new[1] };
 
       // Rotate the deformation rate back to the laboratory coordinates
@@ -1460,9 +1406,400 @@ IsoMetalPlasticityExplicit::computeStressTensorExplicit(
     // delete interpolator;
   }
 
-  if (cout_EP.active())
+  if (cout_EP.active()) {
     cout_EP << getpid() << "... End."
             << "\n";
+  }
+}
+
+void
+IsoMetalPlasticityExplicit::computeSubstep()
+{
+}
+
+void
+IsoMetalPlasticityExplicit::updateAsFluid(particleIndex idx,
+                                          const MPMMaterial* matl,
+                                          double delT,
+                                          const DeformationState& defState_new,
+                                          const ModelStateBase& state,
+                                          const Matrix3& sigma_old,
+                                          Matrix3& pStress_new,
+                                          Matrix3& pBackStress_new)
+{
+  if (d_doMelting) {
+    IsoNonlinHypoelastic elasticityModel(d_elastic.get(), d_intvar.get());
+    auto sigma_new =
+      elasticityModel.computeStress(delT, sigma_old, &defState_new, &state);
+
+    // Only use the hydrostatic part for now
+    pStress_new = Vaango::Util::Identity * sigma_new.Trace();
+  } else {
+    pStress_new = sigma_old;
+  }
+  d_flow->updateElastic(idx);
+  pBackStress_new.set(0.0);
+
+  // Do stress correction due to thermal expansion
+  if (flag->d_doThermalExpansion) {
+    double T_0       = state.initialTemperature;
+    double kappa_new = d_eos->eval_dp_dJ(matl, defState_new.J, &state);
+    kappa_new *= defState_new.J;
+    pStress_new -=
+      one * (-3.0 * kappa_new * d_initialData.CTE * (state.temperature - T_0));
+  }
+}
+
+void
+IsoMetalPlasticityExplicit::updateAsElastic(
+  particleIndex idx,
+  const MPMMaterial* matl,
+  const ModelStateBase& state,
+  const DeformationState& defState_new,
+  const Matrix3& sigma_trial,
+  const Matrix3& backStress_old,
+  Matrix3& pStress_new,
+  Matrix3& pBackStress_new)
+{
+
+  // Set the elastic stress to the trial stress
+  pStress_new = sigma_trial;
+
+  // Update the internal variables
+  d_flow->updateElastic(idx);
+  pBackStress_new = backStress_old;
+
+  // Do stress correction due to thermal expansion
+  if (flag->d_doThermalExpansion) {
+    double T_0       = state.initialTemperature;
+    double kappa_new = d_eos->eval_dp_dJ(matl, defState_new.J, &state);
+    kappa_new *= defState_new.J;
+    pStress_new -=
+      one * (-3.0 * kappa_new * d_initialData.CTE * (state.temperature - T_0));
+  }
+}
+
+std::tuple<IsoMetalPlasticityExplicit::Status, std::string, int, double, double>
+IsoMetalPlasticityExplicit::updateAsPlastic(
+  particleIndex idx,
+  const MPMMaterial* matl,
+  double delT,
+  const std::vector<Matrix3>& sigma_eta_old,
+  const ModelStateBase& state_old,
+  const Matrix3& backStress_old,
+  const DeformationState& defState_new,
+  double f_0,
+  const Matrix3& sigma_trial,
+  double rho_cur,
+  std::vector<Matrix3>& sigma_eta_new,
+  ModelStateBase& state_new,
+  Matrix3& pStress_new,
+  Matrix3& pBackStress_new,
+  double& pdTdt_new)
+{
+  auto [f_k, sigma_k, DeltaGamma, status, err_msg, iters] =
+    doNewtonSolve(idx,
+                  matl,
+                  delT,
+                  f_0,
+                  sigma_trial,
+                  defState_new,
+                  sigma_eta_old,
+                  state_old,
+                  state_new);
+  if (status == Status::INVALID_VALUE) {
+    return std::make_tuple(status, err_msg, iters, f_k, DeltaGamma);
+    // throw InvalidValue(err_msg, __FILE__, __LINE__);
+  } else if (status == Status::CONVERGENCE_FAILURE) {
+    return std::make_tuple(status, err_msg, iters, f_k, DeltaGamma);
+    // throw ConvergenceFailure(err_msg, iters, f_k, 0.0, __FILE__, __LINE__);
+  }
+
+  // Update the back stress and deviatoric stress
+  Matrix3 r_new = d_yield->df_dsigma(sigma_k, &state_new);
+  Matrix3 h_beta_new(0.0);
+  d_kinematic->eval_h_beta(r_new, &state_new, h_beta_new);
+  pBackStress_new      = backStress_old + h_beta_new * DeltaGamma;
+  state_new.backStress = pBackStress_new;
+  pStress_new          = sigma_k + pBackStress_new;
+
+  // Update the elastic-plastic coupling derivatives
+  IsoNonlinHypoelastic elasticityModel(d_elastic.get(), d_intvar.get());
+  sigma_eta_new = elasticityModel.computeDStressDIntVar(
+    delT, sigma_eta_old, &defState_new, &state_new);
+
+  // Update the plastic strain rate
+  MetalIntVar h_eta;
+  d_intvar->computeHardeningModulus(&state_new, h_eta);
+  double h_alpha_new            = h_eta.eqPlasticStrain;
+  state_new.eqPlasticStrainRate = DeltaGamma / delT * h_alpha_new;
+
+  // Update internal variables
+  d_flow->updatePlastic(idx, DeltaGamma);
+
+  // Update Tm and mu
+  state_new.meltingTemp  = d_melt->computeMeltingTemp(&state_new);
+  state_new.shearModulus = d_shear->computeShearModulus(&state_new);
+
+  if (state_old.temperature < state_old.meltingTemp) {
+
+    // Calculate rate of temperature increase due to plastic strain
+    double taylorQuinney = d_initialData.Chi;
+    double fac           = taylorQuinney / (rho_cur * state_new.specificHeat);
+
+    // Calculate Tdot (internal plastic heating rate).  This
+    // is used during the solution of the heat equation.
+    double Tdot = state_new.yieldStress * state_new.eqPlasticStrainRate * fac;
+    pdTdt_new   = Tdot * d_isothermal;
+
+    // Calculate a local change in temperature due to adiabatic
+    // heating for the purpose of thermal expansion corrections.
+    // If isothermal conditions exist then d_isothermal = 0.
+    state_new.temperature =
+      state_old.temperature + (Tdot * delT * d_isothermal);
+
+    #if 0
+    std::cout << "T_new = " << state_new.temperature
+              << "(T_melt = " << state_new.meltingTemp << ")"
+              << " dT/dt = " << Tdot << " sigma_y = " << state_new.yieldStress
+              << " ep = " << state_new.eqPlasticStrain
+              << " epdot = " << state_new.eqPlasticStrainRate
+              << " fac = " << fac << " d_isothermal = " << d_isothermal << "\n";
+    #endif
+  } 
+
+  // Do stress correction due to thermal expansion
+  if (flag->d_doThermalExpansion) {
+    double T_0       = state_old.initialTemperature;
+    double kappa_new = d_eos->eval_dp_dJ(matl, defState_new.J, &state_old);
+    kappa_new *= defState_new.J;
+    pStress_new -= one * (-3.0 * kappa_new * d_initialData.CTE *
+                          (state_new.temperature - T_0));
+  }
+
+  return std::make_tuple(status, err_msg, iters, f_k, DeltaGamma);
+}
+
+std::tuple<double,
+           Matrix3,
+           double,
+           IsoMetalPlasticityExplicit::Status,
+           std::string,
+           int>
+IsoMetalPlasticityExplicit::doNewtonSolve(
+  particleIndex idx,
+  const MPMMaterial* matl,
+  double delT,
+  double f_0,
+  const Matrix3& sigma_trial,
+  const DeformationState& defState_new,
+  const std::vector<Matrix3>& sigma_eta_old,
+  const ModelStateBase& state_old,
+  ModelStateBase& state) const
+{
+
+  // Initialize dsigma_dintvar
+  Matrix3 sigma_alpha_k = sigma_eta_old[0];
+  Matrix3 sigma_phi_k   = sigma_eta_old[1];
+  Matrix3 sigma_beta_k(0.0);
+
+  Matrix3 sigma_k = sigma_trial;
+
+  // Newton iterations to find DeltaGamma
+  int count          = 0;
+  double Delta_gamma = 0.0;
+  double f_k         = f_0;
+
+  while (std::abs(f_k) > d_tol) {
+
+    auto Delta_gamma_old = Delta_gamma;
+    auto [Delta_gamma_new, sigma_corr, status, err_msg] =
+      computeDeltaGamma(idx,
+                        count,
+                        delT,
+                        sigma_eta_old,
+                        defState_new,
+                        state,
+                        sigma_k,
+                        f_k,
+                        Delta_gamma_old);
+    Delta_gamma = Delta_gamma_new;
+    if (status == Status::INVALID_VALUE) {
+      std::ostringstream msg;
+      msg << "**ERROR**:IsoMetalPlasticityExplicit: Found nan.\n";
+      msg << err_msg;
+      // throw InvalidValue(msg.str(), __FILE__, __LINE__);
+      return std::make_tuple(
+        f_k, sigma_k, Delta_gamma, status, msg.str(), count);
+    } else if (status == Status::CONVERGENCE_FAILURE) {
+      std::ostringstream msg;
+      msg << "**ERROR**:IsoMetalPlasticityExplicit: Convergence "
+             "failure.\n";
+      msg << err_msg;
+      // throw ConvergenceFailure(msg.str(), count, f_k, 0.0, __FILE__,
+      // __LINE__);
+      return std::make_tuple(
+        f_k, sigma_k, Delta_gamma, status, msg.str(), count);
+    }
+
+    // Update plastic consistency parameter increment
+    state.lambdaIncPlastic = Delta_gamma;
+
+    // Update ep, phi
+    state.eqPlasticStrain =
+      d_intvar->computeInternalVariable("eqPlasticStrain", &state_old, &state);
+    state.porosity =
+      d_intvar->computeInternalVariable("porosity", &state_old, &state);
+    state.eqPlasticStrainRate = Delta_gamma / delT * state.eqPlasticStrain;
+
+    // Update epdot
+    MetalIntVar h_eta;
+    d_intvar->computeHardeningModulus(&state, h_eta);
+    double h_alpha_new        = h_eta.eqPlasticStrain;
+    state.eqPlasticStrainRate = Delta_gamma / delT * h_alpha_new;
+
+    // Update the flow stress
+    state.yieldStress =
+      d_flow->computeFlowStress(&state, delT, d_tol, matl, idx);
+
+    // Check yield condition.  The state variable contains
+    // ep_k, phi_k, beta_k
+    sigma_k = sigma_trial - sigma_corr;
+    f_k     = d_yield->evalYieldCondition(sigma_k, &state);
+
+    std::cout << "iter = " << count << " f_k = " << f_k << "\n";
+
+    if (status == Status::CONVERGED_IN_DELTA_GAMMA) {
+      return std::make_tuple(
+        f_k, sigma_k, Delta_gamma, status, "Converged in delta gamma", count);
+    }
+
+    ++count;
+  }
+
+  return std::make_tuple(
+    f_k, sigma_k, Delta_gamma, Status::CONVERGED_IN_F, "Converged in f", count);
+}
+
+std::tuple<double, Matrix3, IsoMetalPlasticityExplicit::Status, std::string>
+IsoMetalPlasticityExplicit::computeDeltaGamma(
+  particleIndex idx,
+  int iter,
+  double delT,
+  const std::vector<Matrix3>& sigma_eta_old,
+  const DeformationState& defState_new,
+  const ModelStateBase& state,
+  const Matrix3& sigma_k,
+  double f_k,
+  double Delta_gamma_old) const
+{
+  // Compute r_k, h_k
+  Matrix3 r_k = d_yield->df_dsigma(sigma_k, &state);
+
+  MetalIntVar h_eta;
+  d_intvar->computeHardeningModulus(&state, h_eta);
+  double h_alpha_k = h_eta.eqPlasticStrain;
+  double h_phi_k   = h_eta.plasticPorosity;
+
+  Matrix3 h_beta_k(0.0);
+  d_kinematic->eval_h_beta(r_k, &state, h_beta_k);
+
+  Matrix3 r_k_dev       = r_k - one * (r_k.Trace() / 3.0);
+  Matrix3 h_beta_k_dev  = h_beta_k - one * (h_beta_k.Trace() / 3.0);
+  Matrix3 denom_term1_k = r_k_dev * (2.0 * state.shearModulus) + h_beta_k_dev;
+
+  // Set up the nonlinear elastic model
+  IsoNonlinHypoelastic elasticityModel(d_elastic.get(), d_intvar.get());
+
+  // Get the elastic-plastic coupling derivatives
+  auto sigma_eta_k = elasticityModel.computeDStressDIntVar(
+    delT, sigma_eta_old, &defState_new, &state);
+  auto sigma_alpha_k = sigma_eta_k[0];
+  auto sigma_phi_k   = sigma_eta_k[1];
+
+  // Get the derivatives of the yield function
+  auto df_dxi_k = d_yield->df_dxi(sigma_k, &state);
+  MetalIntVar f_eta_k;
+  d_yield->df_dintvar(&state, f_eta_k);
+  double df_dep_k  = f_eta_k.eqPlasticStrain;
+  double df_dphi_k = f_eta_k.plasticPorosity;
+
+  // compute delta gamma (k)
+  double denom = df_dxi_k.Contract(denom_term1_k) - h_alpha_k * df_dep_k -
+                 h_phi_k * df_dphi_k;
+  double delta_gamma_k = f_k / denom;
+  if (std::isnan(f_k) || std::isnan(delta_gamma_k)) {
+    std::ostringstream msg;
+    msg << "idx = " << idx << " iter = " << iter << " f_k = " << f_k
+        << " delta_gamma_k = " << delta_gamma_k
+        << " sigy = " << state.yieldStress << " df_dep_k = " << df_dep_k
+        << " epdot = " << state.eqPlasticStrainRate
+        << " ep = " << state.eqPlasticStrain << "\n";
+    msg << "df_dxi = \n"
+        << df_dxi_k << "\n denom_term1 = " << denom_term1_k
+        << "\n h_alpha = " << h_alpha_k << " df_dep = " << df_dep_k
+        << "\n h_phi = " << h_phi_k << " df_dphi = " << df_dphi_k
+        << " denom = " << denom << "\n";
+    msg << "Origin: " << __FILE__ << ":" << __LINE__ << "\n";
+    // throw InvalidValue(
+    //   "**ERROR**:IsoMetalPlasticityExplicit: Found nan.", __FILE__,
+    //   __LINE__);
+    return std::make_tuple(
+      delta_gamma_k, sigma_k, Status::INVALID_VALUE, msg.str());
+  }
+
+  // Update Delta_gamma
+  double Delta_gamma = Delta_gamma_old + delta_gamma_k;
+  auto sigma_corr = denom_term1_k * Delta_gamma;
+
+  if (Delta_gamma < 0.0 || Delta_gamma > 10.0 || delta_gamma_k > 1.0 || iter > 100) {
+    std::ostringstream msg;
+    msg << "Delta_gamma = " << Delta_gamma
+        << " Delta_gamma_old = " << Delta_gamma_old 
+        << " delta_gamma_k = " << delta_gamma_k << "\n ";
+    msg << "idx = " << idx << " iter = " << iter << " f_k = " << f_k
+        << " delta_gamma_k = " << delta_gamma_k
+        << " sigy = " << state.yieldStress << " df_dep_k = " << df_dep_k
+        << " epdot = " << state.eqPlasticStrainRate
+        << " ep = " << state.eqPlasticStrain << "\n";
+    msg << "df_dxi = \n"
+        << df_dxi_k << "\n denom_term1 = " << denom_term1_k
+        << "\n h_alpha = " << h_alpha_k << " df_dep = " << df_dep_k
+        << "\n h_phi = " << h_phi_k << " df_dphi = " << df_dphi_k
+        << " denom = " << denom << "\n";
+    msg << " sigma_corr = " << sigma_corr << "\n ";
+    msg << "h_alpha = " << h_alpha_k << " delta_gamma = " << delta_gamma_k
+        << " ep = " << state.eqPlasticStrain << "\n";
+    msg << "idx = " << idx << " iter = " << iter << " f_k = " << f_k
+        << " delta_gamma_k = " << delta_gamma_k
+        << " sigy = " << state.yieldStress << " df_dep_k = " << df_dep_k
+        << " epdot = " << state.eqPlasticStrainRate
+        << " ep = " << state.eqPlasticStrain << "\n";
+    msg << "sigma = \n"
+        << sigma_k << "\n df_dxi:term1 = " << df_dxi_k.Contract(denom_term1_k)
+        << "\n df_dxi = \n"
+        << df_dxi_k << "\n term1 = " << denom_term1_k
+        << "\n h_alpha = " << h_alpha_k << " df_dep = " << df_dep_k
+        << "\n h_phi = " << h_phi_k << " df_dphi = " << df_dphi_k
+        << " denom = " << denom << "\n";
+    msg << "r_n_dev = \n"
+        << r_k_dev << "\n mu_cur = " << state.shearModulus
+        << "\n h_bet_n_dev = \n"
+        << h_beta_k_dev << "\n";
+    msg << "Origin: " << __FILE__ << ":" << __LINE__ << "\n";
+    return std::make_tuple(
+      Delta_gamma, sigma_k, Status::CONVERGENCE_FAILURE, msg.str());
+  }
+
+  if (std::abs(Delta_gamma - Delta_gamma_old) < d_tol) {
+    return std::make_tuple(Delta_gamma,
+                           sigma_corr,
+                           Status::CONVERGED_IN_DELTA_GAMMA,
+                           "Converged in delta gamma");
+  }
+
+  return std::make_tuple(
+    Delta_gamma, sigma_corr, Status::CONVERGED_IN_K, "Converged OK");
 }
 
 std::tuple<Vaango::Tensor::Matrix6Mandel,
@@ -1523,92 +1860,6 @@ IsoMetalPlasticityExplicit::computeElasPlasTangentModulus(
   // Compute C_ep
   auto C_ep = C_e - P_CN / PN_H;
   return std::make_tuple(C_ep, P_vec, N_vec, H);
-}
-
-void
-IsoMetalPlasticityExplicit::computeStressTensorImplicit(
-  const PatchSubset* patches,
-  const MPMMaterial* matl,
-  DataWarehouse* old_dw,
-  DataWarehouse* new_dw)
-{
-  throw InvalidValue(
-    "**ERROR**:IsoMetalPlasticityExplicit: No implicit stress update available",
-    __FILE__,
-    __LINE__);
-}
-
-void
-IsoMetalPlasticityExplicit::addComputesAndRequires(Task* task,
-                                                   const MPMMaterial* matl,
-                                                   const PatchSet* patches,
-                                                   const bool recurse,
-                                                   const bool SchedParent) const
-{
-  const MaterialSubset* matlset = matl->thisMaterial();
-  addSharedCRForImplicit(task, matlset, patches, recurse, SchedParent);
-
-  // Local stuff
-  Ghost::GhostType gnone = Ghost::None;
-  if (SchedParent) {
-    task->requires(Task::ParentOldDW, lb->pTempPreviousLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pTemperatureLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, pPlasticStrainLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, pPlasticStrainRateLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, pPorosityLabel, matlset, gnone);
-  } else {
-    task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
-    task->requires(Task::OldDW, lb->pTemperatureLabel, matlset, gnone);
-    task->requires(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
-    task->requires(Task::OldDW, pPlasticStrainRateLabel, matlset, gnone);
-    task->requires(Task::OldDW, pPorosityLabel, matlset, gnone);
-  }
-
-  // Add internal evolution variables computed by plasticity model
-  d_flow->addComputesAndRequires(task, matl, patches, recurse, SchedParent);
-  d_kinematic->addComputesAndRequires(task, matl, patches, recurse);
-}
-
-void
-IsoMetalPlasticityExplicit::computeStressTensorImplicit(
-  const PatchSubset* patches,
-  const MPMMaterial* matl,
-  DataWarehouse* old_dw,
-  DataWarehouse* new_dw,
-  Solver* solver,
-  const bool)
-{
-  throw InvalidValue(
-    "**ERROR**:IsoMetalPlasticityExplicit: No implicit stress update available",
-    __FILE__,
-    __LINE__);
-}
-
-/*! Compute K matrix */
-void
-IsoMetalPlasticityExplicit::computeStiffnessMatrix(const double B[6][24],
-                                                   const double Bnl[3][24],
-                                                   const double D[6][6],
-                                                   const Matrix3& sig,
-                                                   const double& vol_old,
-                                                   const double& vol_new,
-                                                   double Kmatrix[24][24])
-{
-  throw InvalidValue(
-    "**ERROR**:IsoMetalPlasticityExplicit: No stiffness matrix available",
-    __FILE__,
-    __LINE__);
-}
-
-void
-IsoMetalPlasticityExplicit::BnlTSigBnl(const Matrix3& sig,
-                                       const double Bnl[3][24],
-                                       double Kgeo[24][24]) const
-{
-  throw InvalidValue("**ERROR**:IsoMetalPlasticityExplicit: No geometric "
-                     "stiffness matrix available",
-                     __FILE__,
-                     __LINE__);
 }
 
 void
@@ -1676,92 +1927,6 @@ IsoMetalPlasticityExplicit::carryForward(const PatchSubset* patches,
       new_dw->put(sum_vartype(0.), lb->StrainEnergyLabel);
     }
   }
-}
-
-void
-IsoMetalPlasticityExplicit::allocateCMDataAddRequires(Task* task,
-                                                      const MPMMaterial* matl,
-                                                      const PatchSet* patch,
-                                                      MPMLabel* lb) const
-{
-  const MaterialSubset* matlset = matl->thisMaterial();
-
-  // Allocate the variables shared by all constitutive models
-  // for the particle convert operation
-  // This method is defined in the ConstitutiveModel base class.
-  addSharedRForConvertExplicit(task, matlset, patch);
-
-  // Add requires local to this model
-  Ghost::GhostType gnone = Ghost::None;
-  task->requires(Task::NewDW, pStrainRateLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pPlasticStrainLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pPlasticStrainRateLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pDamageLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pPorosityLabel_preReloc, matlset, gnone);
-  d_flow->allocateCMDataAddRequires(task, matl, patch, lb);
-  d_kinematic->allocateCMDataAddRequires(task, matl, patch, lb);
-}
-
-void
-IsoMetalPlasticityExplicit::allocateCMDataAdd(
-  DataWarehouse* new_dw,
-  ParticleSubset* addset,
-  ParticleLabelVariableMap* newState,
-  ParticleSubset* delset,
-  DataWarehouse* old_dw)
-{
-  // Copy the data common to all constitutive models from the particle to be
-  // deleted to the particle to be added.
-  // This method is defined in the ConstitutiveModel base class.
-  copyDelToAddSetForConvertExplicit(new_dw, delset, addset, newState);
-
-  // Copy the data local to this constitutive model from the particles to
-  // be deleted to the particles to be added
-  ParticleSubset::iterator n, o;
-
-  ParticleVariable<double> pPlasticStrain, pDamage, pPorosity, pStrainRate,
-    pPlasticStrainRate;
-  ParticleVariable<int> pLocalized;
-
-  constParticleVariable<double> o_PlasticStrain, o_Damage, o_Porosity,
-    o_StrainRate, o_PlasticStrainRate;
-  constParticleVariable<int> o_Localized;
-
-  new_dw->allocateTemporary(pPlasticStrain, addset);
-  new_dw->allocateTemporary(pPlasticStrainRate, addset);
-  new_dw->allocateTemporary(pDamage, addset);
-  new_dw->allocateTemporary(pStrainRate, addset);
-  new_dw->allocateTemporary(pLocalized, addset);
-  new_dw->allocateTemporary(pPorosity, addset);
-
-  new_dw->get(o_StrainRate, pStrainRateLabel_preReloc, delset);
-  new_dw->get(o_PlasticStrain, pPlasticStrainLabel_preReloc, delset);
-  new_dw->get(o_PlasticStrainRate, pPlasticStrainRateLabel_preReloc, delset);
-  new_dw->get(o_Damage, pDamageLabel_preReloc, delset);
-  new_dw->get(o_Localized, pLocalizedLabel_preReloc, delset);
-  new_dw->get(o_Porosity, pPorosityLabel_preReloc, delset);
-
-  n = addset->begin();
-  for (o = delset->begin(); o != delset->end(); o++, n++) {
-    pStrainRate[*n]        = o_StrainRate[*o];
-    pPlasticStrain[*n]     = o_PlasticStrain[*o];
-    pPlasticStrainRate[*n] = o_PlasticStrainRate[*o];
-    pDamage[*n]            = o_Damage[*o];
-    pLocalized[*n]         = o_Localized[*o];
-    pPorosity[*n]          = o_Porosity[*o];
-  }
-
-  (*newState)[pStrainRateLabel]        = pStrainRate.clone();
-  (*newState)[pPlasticStrainLabel]     = pPlasticStrain.clone();
-  (*newState)[pPlasticStrainRateLabel] = pPlasticStrainRate.clone();
-  (*newState)[pDamageLabel]            = pDamage.clone();
-  (*newState)[pLocalizedLabel]         = pLocalized.clone();
-  (*newState)[pPorosityLabel]          = pPorosity.clone();
-
-  // Initialize the data for the plasticity model
-  d_flow->allocateCMDataAdd(new_dw, addset, newState, delset, old_dw);
-  d_kinematic->allocateCMDataAdd(new_dw, addset, newState, delset, old_dw);
 }
 
 void
@@ -1850,30 +2015,4 @@ double
 IsoMetalPlasticityExplicit::getCompressibility()
 {
   return 1.0 / d_initialData.Bulk;
-}
-
-void
-IsoMetalPlasticityExplicit::scheduleCheckNeedAddMPMMaterial(
-  Task* task,
-  const MPMMaterial*,
-  const PatchSet*) const
-{
-  task->computes(lb->NeedAddMPMMaterialLabel);
-}
-
-void
-IsoMetalPlasticityExplicit::checkNeedAddMPMMaterial(const PatchSubset* patches,
-                                                    const MPMMaterial* matl,
-                                                    DataWarehouse*,
-                                                    DataWarehouse* new_dw)
-{
-  if (cout_EP.active()) {
-    cout_EP << getpid() << "checkNeedAddMPMMaterial: In : Matl = " << matl
-            << " id = " << matl->getDWIndex()
-            << " patch = " << (patches->get(0))->getID();
-  }
-
-  double need_add = 0.;
-
-  new_dw->put(sum_vartype(need_add), lb->NeedAddMPMMaterialLabel);
 }

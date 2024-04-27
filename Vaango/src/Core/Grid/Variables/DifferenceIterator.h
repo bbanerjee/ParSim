@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,9 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-
-#ifndef UINTAH_HOMEBREW_DifferenceIterator_H
-#define UINTAH_HOMEBREW_DifferenceIterator_H
+#ifndef __CORE_GRID_VARIABLES_DifferenceIterator_H__
+#define __CORE_GRID_VARIABLES_DifferenceIterator_H__
 
 #include <Core/Geometry/IntVector.h>
 
@@ -35,54 +35,56 @@
 
 namespace Uintah {
 
-  using Uintah::IntVector;
+using Uintah::IntVector;
 
-  /**************************************
+/**************************************
 
-    CLASS
-    DifferenceIterator
+  CLASS
+  DifferenceIterator
 
-    This iterator will iterator over the difference between two iterators
+  This iterator will iterator over the difference between two iterators
 
-    GENERAL INFORMATION
+  GENERAL INFORMATION
 
-    DifferenceIterator.h
+  DifferenceIterator.h
 
-    Justin Luitjens
-    Department of Computer Science
-    University of Utah
+  Justin Luitjens
+  Department of Computer Science
+  University of Utah
 
-    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-
-
-    KEYWORDS
-    DifferenceIterator
-
-    DESCRIPTION
-    This iterator will iterator over the difference between two iterators
-
-    WARNING
-
-   ****************************************/
-
-  class DifferenceIterator : public ListOfCellsIterator {
-    friend std::ostream& operator<<(std::ostream& out, const Uintah::DifferenceIterator& b);
-    public:
-
-    DifferenceIterator(Iterator iter1, Iterator iter2);
+  Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
 
 
-    std::ostream& put(std::ostream& out) const
-    {
-      out << *this;
-      return out;
-    }
+  KEYWORDS
+  DifferenceIterator
 
-    private:
-    DifferenceIterator() : ListOfCellsIterator() {}
+  DESCRIPTION
+  This iterator will iterator over the difference between two iterators
 
-    }; // end class DifferenceIterator
+  WARNING
+
+ ****************************************/
+
+class DifferenceIterator : public ListOfCellsIterator
+{
+  friend std::ostream&
+  operator<<(std::ostream& out, const Uintah::DifferenceIterator& b);
+
+public:
+  DifferenceIterator(Iterator iter1, Iterator iter2);
+
+  std::ostream&
+  put(std::ostream& out) const
+  {
+    out << *this;
+    return out;
+  }
+
+private:
+  DifferenceIterator() = delete;
+
+}; // end class DifferenceIterator
 
 } // End namespace Uintah
-  
-#endif
+
+#endif // __CORE_GRID_VARIABLES_DifferenceIterator_H__

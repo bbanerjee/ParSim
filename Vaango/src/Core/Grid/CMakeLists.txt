@@ -1,6 +1,7 @@
 #  The MIT License
 # 
 #  Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+#  Copyright (c) 2015-2023 Biswajit Banerjee
 # 
 #  
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,49 +25,52 @@
 
 # CMakeLists.txt for Vaango/src/Core/Grid
 
+SET(Vaango_Core_Grid_MPMInterpolator_SRCS
+    MPMInterpolators/AxiCPDIInterpolator.cc
+    MPMInterpolators/AxiGIMPInterpolator.cc
+    MPMInterpolators/BSplineInterpolator.cc
+    MPMInterpolators/CPDIInterpolator.cc
+    MPMInterpolators/CPTIInterpolator.cc
+    MPMInterpolators/FastAxiCPDIInterpolator.cc
+    MPMInterpolators/FastCPDIInterpolator.cc
+    MPMInterpolators/GIMPInterpolator.cc
+    MPMInterpolators/LinearInterpolator.cc
+    MPMInterpolators/AxiLinearInterpolator.cc
+    MPMInterpolators/ParticleInterpolator.cc
+    MPMInterpolators/TOBSplineInterpolator.cc
+)
+
 SET(Vaango_Core_Grid_SRCS
   Box.h
   AMR.cc
   AMR_CoarsenRefine.cc
-  axiCpdiInterpolator.cc
-  AxiGIMPInterpolator.cc
   Box.cc
-  BSplineInterpolator.cc
-  cpdiInterpolator.cc
-  cptiInterpolator.cc
   DbgOutput.cc
-  fastAxiCpdiInterpolator.cc
-  fastCpdiInterpolator.cc
   Ghost.cc
-  GIMPInterpolator.cc
   Grid.cc
   Level.cc
-  LinearInterpolator.cc
-  AxiLinearInterpolator.cc
   Material.cc
-  ParticleInterpolator.cc
+  MaterialManager.cc
   Patch.cc
   PatchRangeTree.cc
   Region.cc
-  SimpleMaterial.cc
-  SimulationState.cc
-  SimulationTime.cc
+  EmptyMaterial.cc
   Task.cc
-  TOBSplineInterpolator.cc
   UnknownVariable.cc
+  ${Vaango_Core_Grid_MPMInterpolator_SRCS}
 )
 
 add_subdirectory(BoundaryConditions)
 add_subdirectory(Variables)
 add_subdirectory(PatchBVH)
+add_subdirectory(UnitTests)
 
 #message(STATUS "Core/Grid sources are ${Vaango_Core_Grid_SRCS}")
 
-ADD_LIBRARY(Vaango_Core_Grid ${Vaango_Core_Grid_SRCS})
+add_library(Vaango_Core_Grid ${Vaango_Core_Grid_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_Core_Grid
+target_link_libraries(Vaango_Core_Grid
   Vaango_Core_Exceptions
-  Vaango_Core_Thread
   Vaango_Core_Util
   Vaango_Core_Containers
   Vaango_Core_Parallel
@@ -77,6 +81,6 @@ TARGET_LINK_LIBRARIES(Vaango_Core_Grid
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Grid)
+  add_definitions(-DBUILD_Vaango_Core_Grid)
 ENDIF(BUILD_SHARED_LIBS)
 

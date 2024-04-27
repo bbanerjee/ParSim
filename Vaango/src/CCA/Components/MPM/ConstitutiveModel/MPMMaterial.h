@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,23 +24,22 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MPM_MATERIAL_H__
-#define __MPM_MATERIAL_H__
+#ifndef __CCA_COMPONENTS_MPM_MPMMATERIAL_H__
+#define __CCA_COMPONENTS_MPM_MPMMATERIAL_H__
 
 // Do not EVER put a #include for anything in another CCA/Components in here.
 // (#includes of other MPM files is ok.  However, if you #include'd ARCHES
 // or something, then a circular dependency would be created.)
 
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <Core/Geometry/Point.h>
+#include <Core/Geometry/Vector.h>
 #include <Core/Grid/Material.h>
-#include <Core/Grid/SimulationState.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-
-#include <Core/Geometry/Point.h>
-#include <Core/Geometry/Vector.h>
 
 #include <vector>
 
@@ -62,141 +62,250 @@ class MPMLabel;
 class ParticleCreator;
 class ScalarDiffusionModel;
 
-/**************************************
-
-CLASS
-   MPMMaterial
-
-   Short description...
-
-GENERAL INFORMATION
-
-   MPMMaterial.h
-
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
-
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-
-
-KEYWORDS
-   MPM_Material
-
-DESCRIPTION
-   Long description...
-
-WARNING
-
-****************************************/
-
-class MPMMaterial : public Material
+class MPMMaterial final : public Material
 {
 public:
   // Default Constructor
   MPMMaterial();
 
   // Standard MPM Material Constructor
-  MPMMaterial(ProblemSpecP& ps, const GridP grid, SimulationStateP& ss,
-              MPMFlags* flags);
+  explicit MPMMaterial(ProblemSpecP& ps,
+                       MaterialManagerP& mats,
+                       MPMFlags* flags,
+                       bool isRestart,
+                       const std::string& input_ups_dir = "");
 
   ~MPMMaterial() override;
 
-  void registerParticleState(SimulationState* ss) override;
+  // Prevent copying of this class
+  MPMMaterial(const MPMMaterial& mpmm) = delete;
+  auto
+  operator=(const MPMMaterial& mpmm) -> MPMMaterial& = delete;
 
-  ProblemSpecP outputProblemSpec(ProblemSpecP& ps) override;
+  // void registerParticleState(MaterialManager* ss) override;
+  using VarLabelVector = std::vector<const VarLabel*>;
+  void
+  registerParticleState(std::vector<VarLabelVector>& state,
+                        std::vector<VarLabelVector>& state_preReloc);
+
+  auto
+  outputProblemSpec(ProblemSpecP& ps) -> ProblemSpecP override;
 
   /*!  Create a copy of the material without the associated geometry */
-  void copyWithoutGeom(ProblemSpecP& ps, const MPMMaterial* mat,
-                       MPMFlags* flags);
+  void
+  copyWithoutGeom(ProblemSpecP& ps, const MPMMaterial* mat, MPMFlags* flags);
 
-  //////////
-  // Return correct constitutive model pointer for this material
-  ConstitutiveModel* getConstitutiveModel() const;
+  void
+  deleteGeomObjects()
+  {
+    d_geom_objs.clear();
+  }
 
-  //////////
-  // Return correct basic damage model pointer for this material
-  Vaango::BasicDamageModel* getBasicDamageModel() const;
+  [[nodiscard]] auto
+  nullGeomObject() const -> int;
 
-  ScalarDiffusionModel* getScalarDiffusionModel() const;
+  [[nodiscard]] auto
+  getConstitutiveModel() const -> ConstitutiveModel*;
 
-  particleIndex createParticles(CCVariable<short int>& cellNAPID, const Patch*,
-                                DataWarehouse* new_dw);
+  [[nodiscard]] auto
+  getBasicDamageModel() const -> Vaango::BasicDamageModel*;
 
-  ParticleCreator* getParticleCreator();
+  [[nodiscard]] auto
+  getScalarDiffusionModel() const -> ScalarDiffusionModel*;
 
-  double getInitialDensity() const;
+  auto
+  createParticles(CCVariable<short int>& cellNAPID,
+                  const Patch*,
+                  DataWarehouse* new_dw) -> particleIndex;
+
+  auto
+  getParticleCreator() -> ParticleCreator*;
+
+  [[nodiscard]] auto
+  getInitialDensity() const -> double;
 
   // Get the specific heats at room temperature
-  double getInitialCp() const;
-  double getInitialCv() const;
+  [[nodiscard]] auto
+  getInitialCp() const -> double;
+  [[nodiscard]] auto
+  getInitialCv() const -> double;
 
   // for temperature dependent plasticity models
-  double getRoomTemperature() const;
-  double getMeltTemperature() const;
+  [[nodiscard]] auto
+  getRoomTemperature() const -> double;
+  [[nodiscard]] auto
+  getMeltTemperature() const -> double;
 
-  bool getIsRigid() const;
+  [[nodiscard]] auto
+  getIsRigid() const -> bool
+  {
+    return d_is_rigid;
+  }
+  void
+  setIsRigid(bool is_rigid)
+  {
+    d_is_rigid = is_rigid;
+  }
 
-  bool getIncludeFlowWork() const;
-  double getSpecificHeat() const;
-  double getThermalConductivity() const;
+  [[nodiscard]] auto
+  doBasicDamage() const -> bool
+  {
+    return d_doBasicDamage;
+  }
 
-  int nullGeomObject() const;
+  [[nodiscard]] auto
+  getIncludeFlowWork() const -> bool
+  {
+    return d_includeFlowWork;
+  }
+
+  [[nodiscard]] auto
+  getSpecificHeat() const -> double
+  {
+    return d_specificHeat;
+  }
+  [[nodiscard]] auto
+  getThermalConductivity() const -> double
+  {
+    return d_thermalConductivity;
+  }
+
+  // For scalar diffusion
+  auto
+  doConcReduction() -> bool
+  {
+    return d_doConcReduction;
+  };
+
+  // For activating particle insertion
+  [[nodiscard]] auto
+  getActivationTime() const -> double
+  {
+    return d_activation_time;
+  }
+
+  [[nodiscard]] auto
+  isActive() const -> bool
+  {
+    return d_is_active;
+  }
+
+  void
+  setActive(bool flag)
+  {
+    d_is_active = flag;
+  }
+
+  // Rigid material that transmitss force
+  [[nodiscard]] auto
+  isRigidForceTransmittingMaterial() const -> bool
+  {
+    return d_is_force_transmitting_material;
+  }
+
+  void
+  setAsRigidForceTransmittingMaterial(bool flag)
+  {
+    d_is_force_transmitting_material = flag;
+  }
+
+  // For hydromechanical coupling
+  [[nodiscard]] auto
+  getWaterDensity() const -> double
+  {
+    return d_waterdensity;
+  }
+
+  [[nodiscard]] auto
+  getPorosity() const -> double
+  {
+    return d_porosity;
+  }
+
+  [[nodiscard]] auto
+  getPermeability() const -> double
+  {
+    return d_permeability;
+  }
+
+  [[nodiscard]] auto
+  getInitialPorePressure() const -> double
+  {
+    return d_initial_porepressure;
+  }
 
   // For MPMICE
-  double getGamma() const;
-  void initializeCCVariables(CCVariable<double>& rhom, CCVariable<double>& rhC,
-                             CCVariable<double>& temp, CCVariable<Vector>& vCC,
-                             CCVariable<double>& vfCC, const Patch* patch);
+  [[nodiscard]] auto
+  getGamma() const -> double;
 
-  void initializeDummyCCVariables(CCVariable<double>& rhom,
-                                  CCVariable<double>& rhC,
-                                  CCVariable<double>& temp,
-                                  CCVariable<Vector>& vCC,
-                                  CCVariable<double>& vfCC, const Patch* patch);
+  void
+  initializeCCVariables(CCVariable<double>& rhom,
+                        CCVariable<double>& rhC,
+                        CCVariable<double>& temp,
+                        CCVariable<Vector>& vCC,
+                        CCVariable<double>& vfCC,
+                        const Patch* patch);
 
-  bool d_doBasicDamage;
+  void
+  initializeDummyCCVariables(CCVariable<double>& rhom,
+                             CCVariable<double>& rhC,
+                             CCVariable<double>& temp,
+                             CCVariable<Vector>& vCC,
+                             CCVariable<double>& vfCC,
+                             const Patch* patch);
 
 private:
-  MPMLabel* d_lb;
-  ConstitutiveModel* d_cm;
-  ParticleCreator* d_particle_creator;
-  ScalarDiffusionModel* d_sdm;
+  // The standard set of initialization actions except particlecreator
+  void
+  standardInitialization(ProblemSpecP& ps,
+                         MaterialManagerP& mats,
+                         MPMFlags* flags,
+                         const bool isRestart,
+                         const std::string& input_ups_dir = "");
 
-  double d_density;
-  bool d_includeFlowWork;
-  double d_specificHeat;
-  double d_thermalConductivity;
+private:
+  const MPMFlags* d_flags{ nullptr };
+  std::unique_ptr<MPMLabel> d_lb{ nullptr };
+  std::unique_ptr<ConstitutiveModel> d_cm{ nullptr };
+  std::unique_ptr<ParticleCreator> d_particle_creator{ nullptr };
+  std::unique_ptr<ScalarDiffusionModel> d_sdm{ nullptr };
+  std::unique_ptr<Vaango::BasicDamageModel> d_basicDamageModel{ nullptr };
+  std::vector<std::shared_ptr<GeometryObject>> d_geom_objs;
+
+  bool d_doBasicDamage{ false };
+  bool d_is_rigid{ false }; // for implicit rigid body contact
+  bool d_includeFlowWork{ false };
+
+  double d_density{ 0.0 };
+  double d_specificHeat{ 0.0 };
+  double d_thermalConductivity{ 0.0 };
 
   // Specific heats at constant pressure and constant volume
   // (values at room temperature - [273.15 + 20] K)
-  double d_Cp, d_Cv;
+  double d_Cp{ 0.0 }, d_Cv{ 0.0 };
 
   // for temperature dependent plasticity models
-  double d_troom;
-  double d_tmelt;
+  double d_troom{ 0.0 };
+  double d_tmelt{ 0.0 };
 
-  // for implicit rigid body contact
-  bool d_is_rigid;
+  // For scalar diffusion
+  bool d_doConcReduction{ false };
 
-  // For basic damage computations
-  Vaango::BasicDamageModel* d_basicDamageModel;
+  // For rigid-body force transmission
+  bool d_is_force_transmitting_material{ false };
 
-  std::vector<GeometryObject*> d_geom_objs;
+  // For activating inserted particles
+  bool d_is_active{ true };
+  double d_activation_time{ 0.0 };
 
-  // Prevent copying of this class
-  // copy constructor
-  MPMMaterial(const MPMMaterial& mpmm);
-  MPMMaterial& operator=(const MPMMaterial& mpmm);
+  // For hydromechanical coupling
+  double d_waterdensity{ 0.0 }, d_porosity{ 0.0 }, d_permeability{ 0.0 },
+    d_initial_porepressure{ 0.0 };
 
-  ///////////////////////////////////////////////////////////////////////////
-  //
-  // The standard set of initialization actions except particlecreator
-  //
-  void standardInitialization(ProblemSpecP& ps, const GridP grid,
-                              SimulationStateP& ss, MPMFlags* flags);
+  // For triangulated surfaces
+  bool d_all_triangle_geometry{ true };
 };
 
 } // End namespace Uintah
 
-#endif // __MPM_MATERIAL_H__
+#endif // __CCA_COMPONENTS_MPM_MPMMATERIAL_H__

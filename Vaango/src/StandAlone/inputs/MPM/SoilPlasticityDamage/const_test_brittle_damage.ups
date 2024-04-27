@@ -31,7 +31,7 @@
        <save label = "p.velocity"/>
        <save label = "p.volume"/>
        <save label = "p.mass"/>
-       <save label = "p.damage"/>
+       <save label = "p.damageBD"/>
        <save label = "p.stress"/>
        <save label = "p.particleID"/>
        <save label = "g.mass"/>

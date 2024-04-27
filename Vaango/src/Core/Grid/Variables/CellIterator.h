@@ -1,8 +1,9 @@
 /*
  * The MIT License
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -73,11 +74,11 @@ WARNING
 
      //////////
      // Insert Documentation Here:
-     inline void operator++(int) {
+     inline void operator++(int) override {
        this->operator++();
      }
 
-     inline CellIterator& operator++() {
+     inline CellIterator& operator++() override {
        if(++d_cur.modifiable_x() >= d_e.x()){
          d_cur.modifiable_x() = d_s.x();
          if(++d_cur.modifiable_y() >= d_e.y()){
@@ -113,11 +114,11 @@ WARNING
 
      //////////
      // Insert Documentation Here:
-     inline bool done() const {
+     inline bool done() const override {
        return d_done;
      }
 
-     IntVector operator*() const {
+     IntVector operator*() const override {
        ASSERT(!d_done);
        return d_cur;
      }
@@ -125,16 +126,16 @@ WARNING
        : d_s(s), d_e(e){
        reset();
      }
-     inline IntVector begin() const {
+     inline IntVector begin() const override {
        return d_s;
      }
-     inline IntVector end() const {
+     inline IntVector end() const override {
        return d_e;
      }
      /**
      * Return the number of cells in the iterator
      */
-     inline unsigned int size() const
+     inline unsigned int size() const override
      {
        IntVector size=d_e-d_s;
        if(size.x()<=0 || size.y()<=0 || size.z()<=0)
@@ -166,13 +167,13 @@ WARNING
 
      friend class GridIterator;
 
-     inline void reset()
+     inline void reset() override
      {
        d_cur=d_s;
        d_done=d_s.x() >= d_e.x() || d_s.y() >= d_e.y() || d_s.z() >= d_e.z();
      }
 
-     ostream& limits(ostream& out) const
+     ostream& limits(std::ostream& out) const override
      {
        out << begin() << " " << end() - IntVector(1,1,1);
        return out;
@@ -180,12 +181,12 @@ WARNING
    private:
      CellIterator();
 
-     CellIterator* clone() const
+     CellIterator* clone() const override
      {
        return scinew CellIterator(*this);
      }
 
-     ostream& put(ostream& out) const
+     ostream& put(std::ostream& out) const override
      {
        out << *this;
        return out;

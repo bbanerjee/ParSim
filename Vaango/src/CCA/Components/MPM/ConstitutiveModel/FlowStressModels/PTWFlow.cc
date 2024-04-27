@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -293,6 +293,9 @@ PTWFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
   // Check if temperature is correct
   double T = state->temperature;
   double Tm = state->meltingTemp;
+  if (T > Tm) {
+    T = Tm;
+  }
   ASSERT(T > 0.0);
   ASSERT(!(T > Tm));
 

@@ -79,20 +79,20 @@
 #include <Core/Malloc/Allocator.h>
 #include <fstream>
 #include <iostream>
-using namespace std;
+
 using namespace Uintah;
 
 HyperElasticDamage::HyperElasticDamage(ProblemSpecP& ps)
 {
   // Constructor
-  // Initialize deformationGradient
+  // Initialize pDefGrad
   ps->require("bulk_modulus", d_Bulk);
   ps->require("shear_modulus", d_Shear);
   ps->require("alpha", d_Alpha);
   ps->require("beta", d_Beta);
   ps->require("max_equiv_strain", maxEquivStrain);
 
-  deformationGradient.Identity();
+  pDefGrad.Identity();
   bElBar.Identity();
   damageG = 1.0; // No damage at beginning
   E_bar.set(0.0);
@@ -107,16 +107,16 @@ HyperElasticDamage::HyperElasticDamage(double bulk, double shear, double alpha,
   , maxEquivStrain(strainmax)
 {
   // Main constructor
-  // Initialize deformationGradient
+  // Initialize pDefGrad
 
-  deformationGradient.Identity();
+  pDefGrad.Identity();
   bElBar.Identity();
   damageG = 1.0; // No damage at beginning
   E_bar.set(0.0);
 }
 
 HyperElasticDamage::HyperElasticDamage(const HyperElasticDamage& cm)
-  : deformationGradient(cm.deformationGradient)
+  : pDefGrad(cm.pDefGrad)
   , bElBar(cm.bElBar)
   , E_bar(cm.E_bar)
   , current_E_bar(cm.current_E_bar)
@@ -183,7 +183,7 @@ HyperElasticDamage::setDeformationMeasure(Matrix3 dg)
 {
   // Assign the deformation gradient tensor (3 x 3 Matrix)
 
-  deformationGradient = dg;
+  pDefGrad = dg;
 }
 
 Matrix3
@@ -199,7 +199,7 @@ HyperElasticDamage::getDeformationMeasure() const
 {
   // Return the strain tensor (3 x 3 Matrix)
 
-  return deformationGradient;
+  return pDefGrad;
 }
 
 std::vector<double>
@@ -237,7 +237,7 @@ HyperElasticDamage::computeStressTensor(const PatchSubset* patches,
   Matrix3 bElBarTrial, shearTrial, fbar, F_bar, C_bar;
   double J, p;
   double equiv_strain;
-  Matrix3 damage_normal, deformationGradientInc;
+  Matrix3 damage_normal, pDefGradInc;
   Matrix3 Ebar_increament;
   double onethird = (1.0 / 3.0);
   double damage_flag = 0.0;
@@ -251,16 +251,16 @@ HyperElasticDamage::computeStressTensor(const PatchSubset* patches,
   // Compute the deformation gradient increment using the time_step
   // velocity gradient
   // F_n^np1 = dudx * dt + Identity
-  deformationGradientInc = velocityGradient * time_step + Identity;
+  pDefGradInc = velocityGradient * time_step + Identity;
 
   // Update the deformation gradient tensor to its time n+1 value.
-  deformationGradient = deformationGradientInc * deformationGradient;
+  pDefGrad = pDefGradInc * pDefGrad;
 
-  fbar = deformationGradientInc *
-         pow(deformationGradientInc.Determinant(), -onethird);
+  fbar = pDefGradInc *
+         pow(pDefGradInc.Determinant(), -onethird);
 
   F_bar =
-    deformationGradient * pow(deformationGradient.Determinant(), -onethird);
+    pDefGrad * pow(pDefGrad.Determinant(), -onethird);
 
   C_bar = F_bar * F_bar.Transpose();
 
@@ -302,7 +302,7 @@ HyperElasticDamage::computeStressTensor(const PatchSubset* patches,
                d_Shear * damageG;
 
   // get the volumetric part of the deformation
-  J = deformationGradient.Determinant();
+  J = pDefGrad.Determinant();
 
   // get the hydrostatic part of the stress
   p = 0.5 * d_Bulk * (J - 1.0 / J);
@@ -338,7 +338,7 @@ void
 HyperElasticDamage::addComputesAndRequires(Task* task, const MPMMaterial* matl,
                                            const PatchSet* patches) const
 {
-  cerr << "HyperElasticDamage::addComputesAndRequires needs to be filled in\n";
+  std::cerr <<  "HyperElasticDamage::addComputesAndRequires needs to be filled in\n";
 }
 
 double
@@ -403,7 +403,7 @@ HyperElasticDamage::writeRestartParameters(ofstream& out) const
       << (getDeformationMeasure())(2, 3) << " "
       << (getDeformationMeasure())(3, 1) << " "
       << (getDeformationMeasure())(3, 2) << " "
-      << (getDeformationMeasure())(3, 3) << endl;
+      << (getDeformationMeasure())(3, 3) << std::endl;
 }
 
 ConstitutiveModel*
@@ -450,11 +450,11 @@ HyperElasticDamage::getNumParameters() const
 void
 HyperElasticDamage::printParameterNames(ofstream& out) const
 {
-  out << "bulk" << endl
-      << "shear" << endl
-      << "d_Alpha" << endl
-      << "d_Beta" << endl
-      << "maxEquivStrain" << endl;
+  out << "bulk" << std::endl
+      << "shear" << std::endl
+      << "d_Alpha" << std::endl
+      << "d_Beta" << std::endl
+      << "maxEquivStrain" << std::endl;
 }
 
 ConstitutiveModel*

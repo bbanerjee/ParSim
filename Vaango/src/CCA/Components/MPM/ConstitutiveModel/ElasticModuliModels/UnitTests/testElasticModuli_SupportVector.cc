@@ -92,7 +92,7 @@ TEST(ElasticModuliSVRTest, constructorTest)
     EXPECT_DOUBLE_EQ(KG.shearModulus, 457221869.02119869);
     EXPECT_DOUBLE_EQ(dKdG.bulkModulus, -8507910775.3945036);
     ASSERT_DOUBLE_EQ(dKdG.shearModulus, -6380933081.5458775);
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
   }
 
@@ -104,7 +104,7 @@ TEST(ElasticModuliSVRTest, constructorTest)
     EXPECT_DOUBLE_EQ(moduli.shearModulus, 457220718.14903975);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
   }
 
@@ -140,7 +140,7 @@ TEST(ElasticModuliSVRTest, constructorTest)
     ASSERT_DOUBLE_EQ(tangent(1,2), K23G);
     ASSERT_DOUBLE_EQ(tangent(4,4), G);
 
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
   }
   

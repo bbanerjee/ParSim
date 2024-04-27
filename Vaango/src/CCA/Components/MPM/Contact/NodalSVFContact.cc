@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -41,59 +41,52 @@
 // simple Coulomb friction or viscous fluid interaction models can be
 // substituted.
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/NodalSVFContact.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
+#include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationState.h>
-#include <Core/Grid/SimulationStateP.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
 #include <fstream>
 #include <iostream>
-#include <vector>
 #include <vector>
 
 using namespace Uintah;
 using std::vector;
 
 NodalSVFContact::NodalSVFContact(const ProcessorGroup* myworld,
-                                 ProblemSpecP& ps, SimulationStateP& d_sS,
-                                 MPMLabel* Mlb, MPMFlags* MFlag)
-  : Contact(myworld, Mlb, MFlag, ps)
-{ // Constructor
-  d_sharedState = d_sS;
-
+                                 const MaterialManagerP& mat_manager,
+                                 const MPMLabel* labels,
+                                 const MPMFlags* flags,
+                                 ProblemSpecP& ps)
+  : Contact(myworld, mat_manager, labels, flags, ps)
+{
   ps->require("myu", d_myu);
-  ps->require("use_svf", b_svf);
+  ps->require("use_svf", d_svf);
 
-  vector<int> materials;
-  ps->get("materials", materials);
+  ps->get("materials", d_materials);
 
-  int numMatlsUPS = 0;
-  for (vector<int>::const_iterator mit(materials.begin());
-       mit != materials.end(); mit++) {
-    numMatlsUPS++;
-  }
-  if (numMatlsUPS > 2) {
+  if (d_materials.size() > 2) {
     throw ProblemSetupException(" You may only specify two materials in the "
                                 "input file per contact block for Nodal SVF.",
-                                __FILE__, __LINE__);
+                                __FILE__,
+                                __LINE__);
   }
-
-  lb = Mlb;
-  flag = MFlag;
 }
 
-NodalSVFContact::~NodalSVFContact()
+void
+NodalSVFContact::setContactMaterialAttributes()
 {
 }
 
@@ -103,7 +96,7 @@ NodalSVFContact::outputProblemSpec(ProblemSpecP& ps)
   ProblemSpecP contact_ps = ps->appendChild("contact");
   contact_ps->appendElement("type", "nodal_svf");
   contact_ps->appendElement("myu", d_myu);
-  contact_ps->appendElement("use_svf", b_svf);
+  contact_ps->appendElement("use_svf", d_svf);
   d_matls.outputProblemSpec(contact_ps);
 }
 
@@ -111,13 +104,14 @@ void
 NodalSVFContact::exchangeMomentum(const ProcessorGroup*,
                                   const PatchSubset* patches,
                                   const MaterialSubset* matls,
-                                  DataWarehouse* old_dw, DataWarehouse* new_dw,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw,
                                   const VarLabel* gVelocity_label)
 {
   int numMatls = matls->size();
-  int alpha = 0;
-  int beta = 0;
-  int n = 0;
+  int alpha    = 0;
+  int beta     = 0;
+  int n        = 0;
   for (int m = 0; m < numMatls; m++) {
     if ((d_matls.requested(m)) && (n == 0)) {
       alpha = matls->get(m);
@@ -129,52 +123,54 @@ NodalSVFContact::exchangeMomentum(const ProcessorGroup*,
 
   for (int p = 0; p < patches->size(); p++) {
 
-    const Patch* patch = patches->get(p);
+    const Patch* patch     = patches->get(p);
     Ghost::GhostType gnone = Ghost::None;
     delt_vartype delT;
 
-    double dx = patch->dCell().x();
-    double dy = patch->dCell().y();
-    double dz = patch->dCell().z();
+    double dx      = patch->dCell().x();
+    double dy      = patch->dCell().y();
+    double dz      = patch->dCell().z();
     double cellVol = dx * dy * dz;
-    double coeff = cellVol * d_myu;
+    double coeff   = cellVol * d_myu;
     double factor;
 
     constNCVariable<double> NC_CCweight;
-    std::vector<constNCVariable<double>> gmass(numMatls);
-    std::vector<constNCVariable<double>> gvolume(numMatls);
+    std::vector<constNCVariable<double>> gMass(numMatls);
+    std::vector<constNCVariable<double>> gVolume(numMatls);
     std::vector<NCVariable<double>> gSVF(numMatls);
-    std::vector<NCVariable<Vector>> gvelocity_star(numMatls);
-    std::vector<NCVariable<Vector>> gvelocity_old(numMatls);
+    std::vector<NCVariable<Vector>> gVelocity_star(numMatls);
+    std::vector<NCVariable<Vector>> gVelocity_old(numMatls);
     std::vector<NCVariable<Vector>> gForce(numMatls);
 
     //---------- Retrieve necessary data from DataWarehouse
     //------------------------------------------------
-    old_dw->get(delT, lb->delTLabel, getLevel(patches));
-    old_dw->get(NC_CCweight, lb->NC_CCweightLabel, 0, patch, gnone, 0);
+    old_dw->get(delT, d_mpm_labels->delTLabel, getLevel(patches));
+    old_dw->get(
+      NC_CCweight, d_mpm_labels->NC_CCweightLabel, 0, patch, gnone, 0);
 
     for (int m = 0; m < numMatls; m++) {
-      int dwi = matls->get(m);
-      new_dw->get(gmass[dwi], lb->gMassLabel, dwi, patch, gnone, 0);
-      new_dw->get(gvolume[dwi], lb->gVolumeLabel, dwi, patch, gnone, 0);
-      new_dw->getModifiable(gvelocity_star[dwi], gVelocity_label, dwi, patch);
+      int dwi = d_mat_manager->getMaterial("MPM", m)->getDWIndex();
+      new_dw->get(gMass[dwi], d_mpm_labels->gMassLabel, dwi, patch, gnone, 0);
+      new_dw->get(
+        gVolume[dwi], d_mpm_labels->gVolumeLabel, dwi, patch, gnone, 0);
+      new_dw->getModifiable(gVelocity_star[dwi], gVelocity_label, dwi, patch);
       new_dw->allocateTemporary(gSVF[dwi], patch, gnone, 0);
-      new_dw->allocateTemporary(gvelocity_old[dwi], patch, gnone, 0);
+      new_dw->allocateTemporary(gVelocity_old[dwi], patch, gnone, 0);
       new_dw->allocateTemporary(gForce[dwi], patch, gnone, 0);
     } // for m=0:numMatls
 
     //----------- Calculate Interaction Force
     //-----------------------------------
-    for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+    for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
 
-      IntVector c = *iter;
-      gvelocity_old[beta][c] = gvelocity_star[beta][c];
-      gvelocity_old[alpha][c] = gvelocity_star[alpha][c];
-      gSVF[beta][c] = 8.0 * NC_CCweight[c] * gvolume[beta][c] / cellVol;
-      gSVF[alpha][c] = 8.0 * NC_CCweight[c] * gvolume[alpha][c] / cellVol;
+      IntVector c             = *iter;
+      gVelocity_old[beta][c]  = gVelocity_star[beta][c];
+      gVelocity_old[alpha][c] = gVelocity_star[alpha][c];
+      gSVF[beta][c]  = 8.0 * NC_CCweight[c] * gVolume[beta][c] / cellVol;
+      gSVF[alpha][c] = 8.0 * NC_CCweight[c] * gVolume[alpha][c] / cellVol;
 
       // Calculate the appropriate value of "factor" based on whether using SVF.
-      if (b_svf == 1) {
+      if (d_svf) {
         factor = coeff * gSVF[beta][c] * gSVF[alpha][c];
       } else {
         factor = coeff;
@@ -183,23 +179,23 @@ NodalSVFContact::exchangeMomentum(const ProcessorGroup*,
       // "If using the model with svf calculation," or "if mass is present on
       // both nodes," calculate a non-zero interaction force based on velocity
       // difference and the appropriate value of "factor".
-      if ((b_svf == 1) ||
-          (gmass[beta][c] > 1.0e-100 && gmass[alpha][c] > 1.0e-100)) {
+      if ((d_svf) ||
+          (gMass[beta][c] > 1.0e-100 && gMass[alpha][c] > 1.0e-100)) {
         gForce[beta][c] =
-          factor * (gvelocity_old[alpha][c] - gvelocity_old[beta][c]);
+          factor * (gVelocity_old[alpha][c] - gVelocity_old[beta][c]);
         gForce[alpha][c] =
-          factor * (gvelocity_old[beta][c] - gvelocity_old[alpha][c]);
+          factor * (gVelocity_old[beta][c] - gVelocity_old[alpha][c]);
 
       } else {
-        gForce[beta][c] = Vector(0.0, 0.0, 0.0);
+        gForce[beta][c]  = Vector(0.0, 0.0, 0.0);
         gForce[alpha][c] = Vector(0.0, 0.0, 0.0);
       }
 
       //-- Calculate Updated Velocity ------------------------------------
-      gvelocity_star[beta][c] +=
-        (gForce[beta][c] / (8.0 * NC_CCweight[c] * gmass[beta][c])) * delT;
-      gvelocity_star[alpha][c] +=
-        (gForce[alpha][c] / (8.0 * NC_CCweight[c] * gmass[alpha][c])) * delT;
+      gVelocity_star[beta][c] +=
+        (gForce[beta][c] / (8.0 * NC_CCweight[c] * gMass[beta][c])) * delT;
+      gVelocity_star[alpha][c] +=
+        (gForce[alpha][c] / (8.0 * NC_CCweight[c] * gMass[alpha][c])) * delT;
 
     } // for nodes
   }   // for patches
@@ -211,13 +207,14 @@ NodalSVFContact::addComputesAndRequires(SchedulerP& sched,
                                         const MaterialSet* matls,
                                         const VarLabel* gVelocity_label)
 {
-  Task* t = scinew Task("NodalSVFContact::exchangeMomentum", this,
+  Task* t = scinew Task("NodalSVFContact::exchangeMomentum",
+                        this,
                         &NodalSVFContact::exchangeMomentum,
                         gVelocity_label);
 
   const MaterialSubset* mss = matls->getUnion();
-  t->requires(Task::OldDW, lb->delTLabel);
-  t->requires(Task::NewDW, lb->gMassLabel, Ghost::None);
+  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
   t->modifies(gVelocity_label, mss);
   sched->addTask(t, patches, matls);
 }

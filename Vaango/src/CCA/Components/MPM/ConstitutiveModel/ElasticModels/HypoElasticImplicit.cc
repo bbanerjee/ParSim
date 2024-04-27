@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,7 +27,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticImplicit.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
-#include <CCA/Components/MPM/MPMUtils.h>
+#include <CCA/Components/MPM/Core/MPMUtils.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Grid/Level.h>
@@ -37,7 +37,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/FastMatrix.h>
@@ -62,10 +62,10 @@ HypoElasticImplicit::HypoElasticImplicit(const HypoElasticImplicit* cm)
 {
 }
 
-HypoElasticImplicit*
+std::unique_ptr<ConstitutiveModel>
 HypoElasticImplicit::clone()
 {
-  return scinew HypoElasticImplicit(*this);
+  return std::make_unique<HypoElasticImplicit>(*this);
 }
 
 void 
@@ -135,8 +135,8 @@ HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     solver->copyL2G(l2g, patch);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     constParticleVariable<Point> pX;
     constParticleVariable<double> pMass, pVolume_new;

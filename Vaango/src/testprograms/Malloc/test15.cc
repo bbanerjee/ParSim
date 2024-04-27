@@ -52,7 +52,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <Core/Thread/Runnable.h>
-#include <Core/Thread/Thread.h>
+
 #include <Core/Malloc/Allocator.h>
 #include <cstdio>
 #include <cstddef>
@@ -171,11 +171,11 @@ public:
 	new_argv[1] = "-c";
 	new_argv[2] = buf;
 	//new_argv[2] = "printf \%c '*'";
-	new_argv[3] = NULL;
+	new_argv[3] = nullptr;
 
 	/* Restore the signals.  */
-	//	(void) __sigaction (SIGINT, &intr, (struct sigaction *) NULL);
-	//	(void) __sigaction (SIGQUIT, &quit, (struct sigaction *) NULL);
+	//	(void) __sigaction (SIGINT, &intr, (struct sigaction *) nullptr);
+	//	(void) __sigaction (SIGQUIT, &quit, (struct sigaction *) nullptr);
 	//	(void) UNBLOCK;
 	
 	/* Exec the shell.  */

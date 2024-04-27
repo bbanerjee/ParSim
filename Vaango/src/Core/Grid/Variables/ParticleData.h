@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Bnaerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,18 +26,19 @@
 #ifndef UINTAH_HOMEBREW_PARTICLEDATA_H
 #define UINTAH_HOMEBREW_PARTICLEDATA_H
 
+#include <Core/Grid/Variables/ParticleSubset.h> // For particleIndex
 #include <Core/Util/RefCounted.h>
 
 namespace Uintah {
 
 template<class T>
-   class ParticleVariable;
+class ParticleVariable;
 
 /**************************************
 
 CLASS
    ParticleData
-   
+
 GENERAL INFORMATION
 
    ParticleData.h
@@ -46,76 +48,84 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    ParticleData
 
 DESCRIPTION
    Long description...
-  
+
 WARNING
-  
+
 ****************************************/
 
-   template<class T> class ParticleData : public RefCounted {
-   public:
-      ParticleData();
-      ParticleData(particleIndex size);
-      virtual ~ParticleData();
+template<class T>
+class ParticleData : public RefCounted
+{
+public:
+  ParticleData();
+  ParticleData(particleIndex size);
+  virtual ~ParticleData();
 
-      //////////
-      // Insert Documentation Here:
-      void resize(int newSize) {
-        T* newdata = scinew T[newSize];
-        if(data){
-          int smaller = ((newSize < size ) ? newSize:size);
-          for(int i = 0; i < smaller; i++)
-            newdata[i] = data[i];
-          delete[] data;
-        }
-        data = newdata;
-        size = newSize;
+  //////////
+  void
+  resize(int newSize)
+  {
+    T* newdata = scinew T[newSize];
+    if (data) {
+      int smaller = ((newSize < size) ? newSize : size);
+      for (int i = 0; i < smaller; i++) {
+        newdata[i] = data[i];
       }
+      delete[] data;
+    }
+    data = newdata;
+    size = newSize;
+  }
 
-   private:
-      ParticleData(const ParticleData<T>&);
-      ParticleData<T>& operator=(const ParticleData<T>&);
-      friend class ParticleVariable<T>;
-      
-      //////////
-      // Insert Documentation Here:
-      T* data;
-      particleIndex size;
-   };
-   
-   template<class T>
-      ParticleData<T>::ParticleData()
-      {
-        data=0;
-      }
-   
-   template<class T>
-     ParticleData<T>::ParticleData(particleIndex size)
-     : size(size)
-      {
-        data = scinew T[size];
-      }
-      
-   template<class T>
-      ParticleData<T>::~ParticleData()
-      {
-        if(data)
-          delete[] data;
-      }
+private:
+  ParticleData(const ParticleData<T>&);
+  ParticleData<T>&
+  operator=(const ParticleData<T>&);
+  friend class ParticleVariable<T>;
 
-   template<class T>
-     ParticleData<T>& ParticleData<T>::operator=(const ParticleData<T>& copy)
-     {
-       for(particleIndex i=0;i<size;i++)
-         data[i] = copy.data[i];
-       return *this;
-     }
+  //////////
+  // Insert Documentation Here:
+  T* data;
+  particleIndex size;
+};
+
+template<class T>
+ParticleData<T>::ParticleData()
+{
+  data = 0;
+}
+
+template<class T>
+ParticleData<T>::ParticleData(particleIndex size)
+  : size(size)
+{
+  data = scinew T[size];
+}
+
+template<class T>
+ParticleData<T>::~ParticleData()
+{
+  if (data) {
+    delete[] data;
+  }
+}
+
+template<class T>
+ParticleData<T>&
+ParticleData<T>::operator=(const ParticleData<T>& copy)
+{
+  for (particleIndex i = 0; i < size; i++) {
+    data[i] = copy.data[i];
+  }
+  return *this;
+}
 } // End namespace Uintah
-   
+
 #endif

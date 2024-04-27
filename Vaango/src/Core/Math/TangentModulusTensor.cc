@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,10 +23,8 @@
  * IN THE SOFTWARE.
  */
 
-// Implementation of TangentModulusTensor
 #include <Core/Math/TangentModulusTensor.h>
 
-using namespace std;
 using namespace Uintah;
 
 // Default constructor 
@@ -162,7 +161,7 @@ void TangentModulusTensor::transformBy2ndOrderTensor(const Matrix3& F, double J)
         for (int KK = 0; KK < 3; ++KK) {
          for (int LL = 0; LL < 3; ++LL) {
           c_ijkl(ii,jj,kk,ll) += F(ii,II)*F(jj,JJ)
-                                *F(kk,KK)*F(ll,LL)*(*this)(II,JJ,KK,LL);
+                                *F(kk,KK)*F(ll,LL)*(*this)(II,JJ,KK,LL)/J;
         }
        }
       }
@@ -175,7 +174,7 @@ void TangentModulusTensor::transformBy2ndOrderTensor(const Matrix3& F, double J)
  (*this) = c_ijkl;
 }
 
-ostream& operator<<(ostream& out, const TangentModulusTensor& C)
+std::ostream& operator<<(std::ostream& out, const TangentModulusTensor& C)
 {
   int index[6][2];
 
@@ -194,7 +193,7 @@ ostream& operator<<(ostream& out, const TangentModulusTensor& C)
           << ' ';
     }
   }
-  out << endl;
+  out << std::endl;
 
   return out;
 }

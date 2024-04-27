@@ -48,7 +48,7 @@
 
 #include "SuiteTree.h"
 #include <iostream>
-using namespace std;
+
 
 SuiteTreeNode::~SuiteTreeNode()
 {
@@ -125,6 +125,6 @@ void SuiteTreeLeaf::appendFailedSuites(list<Suite*>& failedSuiteList)
 void SuiteTreeLeaf::reportAllSuites()
 {
   mySuite->report();
-  cout << endl;
+  std::cout << std::endl;
 }
 

@@ -25,7 +25,7 @@ add_custom_target(
         -config=''
         -export-fixes='clang-tidy-fixes.dat'
         --
-        -std=c++14
+        -std=c++17
         -I${BASEPATH}
         -I${MPI_INCLUDE_PATH_CONV}
         -I${Boost_INCLUDE_DIR}

@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -22,30 +23,31 @@
 # IN THE SOFTWARE.
 #
 
+add_subdirectory(SimulationCommon)
+add_subdirectory(Schedulers)
+add_subdirectory(Regridder)
+add_subdirectory(SimulationController)
+add_subdirectory(SwitchingCriteria)
+add_subdirectory(DataArchiver)
+add_subdirectory(Examples)
+add_subdirectory(LoadBalancers)
+add_subdirectory(Parent)
+add_subdirectory(ProblemSpecification)
+add_subdirectory(Solvers)
+add_subdirectory(PostProcessUda)
 
 IF(MPM)
-  ADD_SUBDIRECTORY(MPM)
+  add_subdirectory(MPM)
 ENDIF(MPM)
 IF(ICE)
-  ADD_SUBDIRECTORY(ICE)
+  add_subdirectory(ICE)
   # only do Models with ICE
-  ADD_SUBDIRECTORY(Models)
+  add_subdirectory(Models)
 ENDIF(ICE)
 IF(MPM AND ICE)
-  ADD_SUBDIRECTORY(MPMICE)
+  add_subdirectory(MPMICE)
 ENDIF(MPM AND ICE)
 
-ADD_SUBDIRECTORY(Peridynamics)
+add_subdirectory(Peridynamics)
 
-ADD_SUBDIRECTORY(OnTheFlyAnalysis)
-ADD_SUBDIRECTORY(Regridder)
-ADD_SUBDIRECTORY(SimulationController)
-ADD_SUBDIRECTORY(SwitchingCriteria)
-ADD_SUBDIRECTORY(DataArchiver)
-ADD_SUBDIRECTORY(Examples)
-ADD_SUBDIRECTORY(LoadBalancers)
-ADD_SUBDIRECTORY(Parent)
-ADD_SUBDIRECTORY(ProblemSpecification)
-ADD_SUBDIRECTORY(Schedulers)
-ADD_SUBDIRECTORY(Solvers)
-ADD_SUBDIRECTORY(ReduceUda)
+add_subdirectory(OnTheFlyAnalysis)

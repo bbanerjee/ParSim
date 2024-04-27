@@ -25,8 +25,8 @@
        <save label = "CenterOfMassPosition"/>
        <save label = "TotalMomentum"/>
        <save label = "p.x" levels = "-1"/>
-       <save label = "p.epsf" levels = "-1"/>
-       <save label = "p.localized" levels = "-1"/>
+       <save label = "p.epsfBD" levels = "-1"/>
+       <save label = "p.localizedBD" levels = "-1"/>
        <save label = "p.volume" levels = "-1"/>
        <save label = "p.color" levels = "-1"/>
        <save label = "p.particleID" levels = "-1"/>
@@ -96,7 +96,7 @@
            <material name = "cnhd">
               <density>1000.0</density>
               <do_basic_damage> true </do_basic_damage>
-                 <failure_criteria>MaximumPrincipalStress</failure_criteria>
+                 <failure_criterion>MaximumPrincipalStress</failure_criterion>
                  <!-- <failure_by_stress>  true         </failure_by_stress> -->
                  <failure_mean> 2.0e5       </failure_mean>
                  <failure_std>  1.0e5       </failure_std>

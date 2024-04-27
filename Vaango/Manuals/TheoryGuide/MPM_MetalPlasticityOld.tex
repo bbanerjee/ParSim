@@ -1,0 +1,1000 @@
+\chapter{Metal plasticity : traditional approach}
+
+\section{Preamble}
+Let $\boldsymbol{F}$ be the deformation gradient, $\boldsymbol{\sigma}$ be the 
+Cauchy stress, and $\boldsymbol{d}$ be the rate of deformation tensor.  We
+first decompose the deformation gradient into a stretch and a rotations using
+$\BF = \BR\cdot\BU$.  The rotation $\BR$ is then used to rotate the stress and
+the rate of deformation into the material configuration to give us
+\Beq
+  \widehat{\Bsig} = \BR^T\cdot\Bsig\cdot\BR ~;~~
+  \widehat{\BdT} = \BR^T\cdot\BdT\cdot\BR 
+\Eeq
+This is equivalent to using a Green-Naghdi objective stress rate.  In the 
+following all equations are with respect to the hatted quantities and we 
+drop the hats for convenience.
+
+Let us split the Cauchy stress into a mean (isotropic) and a deviatoric part
+\Beq
+  \Bsig = \Bsig_\Tiso + \Bsig_\Tdev = \sigma_m~\Bone + \Bsig_{\Tdev} ~;~~ \sigma_m = \Third~\Tr(\Bsig) ~.
+\Eeq
+Taking the time derivative gives us the rate-form of the stress
+\Beq
+  \dot{\Bsig} = \dot{\sigma}_m~\Bone + \dot{\Bsig}_{\Tdev} ~.
+\Eeq
+Similarly, we can split the rate of deformation (symmetric part of the spatial
+velocity gradient) into volumetric ($d_v$) and isochoric distortional ($\BdT_{\Tdis}$) parts:
+\Beq
+  \BdT = \BdT_\Tvol + \BdT_\Tdis = \Third\,d_v\,\Bone + \BdT_\Tdis ~.
+\Eeq
+The rate of deformation is additively decomposed into an elastic ($\BdT^e$) and a plastic 
+part ($\BdT^p$):
+\[
+  \BdT = \BdT^e + \BdT^p \,.
+\]
+We may also split $\BdT^e$ into volumetric ($d_v^e$) and isochoric ($\BdT_\Tdis^e$) parts as
+\Beq
+  \BdT^e = \Third d_v^e~\Bone + \BdT_\Tdis^e~;~~ d_v^e = \Tr(\BdT^e) \,.
+\Eeq
+Similarly, we can split $\BdT^p$ into a volumetric part ($d_v^p$) and a
+trace-free part ($\BdT_\Tdis^p$) , i.e.,
+\Beq
+  \BdT^p = \Third~d_v^p~\Bone + \BdT_\Tdis^p ~;~~ d_v^p = \Tr(\BdT^p) \,.
+\Eeq
+Therefore,
+\Beq
+  d_v = d_v^e + d_v^p ~,~~ \BdT_\Tdis = \BdT_\Tdis^e + \BdT_\Tdis^p \,.
+\Eeq
+
+\section{Elastic relation}
+We assume that the elastic response of the material is isotropic.  The constitutive 
+relation for a hypoelastic material of grade 0 can be expressed as
+\Beq
+  \dot{\Bsig}^e = 
+    \left[\lambda~\Tr(\BdT^e) - 3~\kappa~\alpha~\Deriv{}{t}(T-T_0)\right]~\Bone + 2~\mu~\BdT^e = 
+    \left[\lambda~\Tr(\BdT^e) - 3~\kappa~\alpha~\dot{T}\right]~\Bone + 2~\mu~\BdT^e  
+\Eeq
+where $\BdT^e$ is the elastic part of the rate of deformation 
+tensor, $\lambda, \mu$ are the Lame tangent moduli, $\kappa$ is the bulk modulus, $\alpha$
+is the coefficient of thermal expansion, $T_0$ is the reference temperature, and $T$ is the
+current temperature. In terms of the volumetric and deviatoric parts of the rate of deformation,
+we can write
+\Beq
+  \dot{\Bsig}^e = \left[\left(\lambda + \cfrac{2}{3}~\mu\right)~d_v^e 
+     - 3~\kappa~\alpha~\dot{T}\right]~\Bone + 2~\mu~\BdT_\Tdis^e  =
+  \kappa~\left[d_v^e - 3~\alpha~\dot{T}\right]~\Bone + 2~\mu~\BdT_\Tdis^e  
+\Eeq
+Therefore, we have
+\Beq
+  \dot{\Bsig}^e_\Tdev = 2~\mu~\BdT_\Tdis^e ~.
+\Eeq
+and
+\Beq
+  \dot{\sigma}_m^e = \kappa~\left[d_v^e - 3~\alpha~\dot{T}\right] ~.
+\Eeq
+We will use a standard elastic-plastic stress update algorithm to integrate the rate 
+equation for the deviatoric stress.  However, we will assume that the volumetric part 
+of the Cauchy stress of the intact metal (excluding voids) can be computed using 
+an equation of state.  Then the final
+Cauchy stress will be given by
+\Beq
+  \Bsig^e = \left[\sigma_m^e(J^e) - 3~\kappa~\alpha~(T-T_0)\right]~\Bone + \Bsig^e_\Tdev ~;~~ 
+  J^e = \det(\BF^e) \,; \kappa := J^e~\Deriv{\sigma_m^e(J^e)}{J^e}~.
+\Eeq
+We assume that the plastic part of the deformation of the intact metal is volume preserving.
+For Gurson-type models, a separate algorithm is needed, and the use of the algorithm discussed
+in this chapter will lead to a small error in the computed value of $\Bsig$.
+
+The moduli $\kappa$ and $\mu$ may depend on the deformation gradient,
+temperature, and strain rate.  Since the temperature and porosity depend on the
+amount of plastic deformation, this implies that the elastic and plastic
+responses are coupled.  However, in this algorithm we ignore that coupling with
+the assumption that the errors will be small.  The consequence of this
+assumption is that the moduli are computed only at the beginning of each time
+step on the basis of the mean stress and temperature at that point in the
+simulation.
+
+\section{Flow rule}
+We assume that the flow rule is given by
+\Beq
+  \BdT^p = \dot{\gamma}~\hat{\BM}
+\Eeq
+where $\hat{\BM}$ is a \textbf{unit} tensor ($\hat{\BM}:\hat{\BM} = 1$) in the direction of the plastic flow
+rate, and $\dot{\gamma}$ is the plastic multiplier.
+Then, using the flow rule, we have the volumetric part:
+\[
+  d_v^p = \Tr(\BdT^p) = \dot{\gamma}\,\Tr(\hat{\BM}) =: \dot{\gamma}\,M_v
+\]
+or,
+\Beq
+ \BdT_\Tvol^p = \Third\,\dot{\gamma}\,M_v\,\Bone =: \dot{\gamma} \BM_\Tiso\,.
+\Eeq
+In the same way, we can write the deviatoric part of the flow rule as
+\Beq
+  \BdT_\Tdis^p = \dot{\gamma}~\left(\hat{\BM} - \Third~\Tr(\hat{\BM})~\Bone\right)
+          =: \dot{\gamma}\,\BM_\Tdev ~.
+\Eeq
+Note that $\BM_\Tdev$ is \textit{not} a unit tensor and an
+appropriate normalizing factor is needed to make it a unit tensor.
+
+\section{Hardening, porosity evolution, and plastic dissipation}
+We could assume that the strain rate, temperature, and porosity can be fixed at the
+beginning of a time step and consider only the evolution of plastic strain and
+the back stress while calculating the current stress.  However, that causes
+problems of convergence and it is probably more appropriate to simultaneously
+consider all the ordinary differential equations that contain rates of change.
+
+We assume that the equivalent plastic strain evolves according to the relation
+\Beq
+  \dot{\Ve^p} = \dot{\gamma}~h^{\alpha}
+\Eeq
+
+We also assume that the back stress evolves according to the relation
+\Beq
+  \dot{\Bbeta} = \dot{\gamma}~\Bh^{\beta}
+\Eeq
+where $\Bbeta$ is the back stress.  If $\Bbeta_\Tiso$ and $\Bbeta_\Tdev$ are the 
+volumetric and deviatoric parts of $\Bbeta$, respectively, we can write
+\Beq
+  \dot{\Bbeta}_\Tiso = \dot{\gamma}~\Bh^{\beta}_\Tiso  \qquad
+  \dot{\Bbeta}_\Tdev = \dot{\gamma}~\Bh^{\beta}_\Tdev ~.
+\Eeq
+
+The porosity $\phi$ is assumed to evolve according to the relation
+\Beq
+  \dot{\phi} = \dot{\gamma}~h^{\phi} ~.
+\Eeq
+
+The temperature change due to plastic dissipation is assumed to be
+given by the rate equation
+\Beq
+  \dot{T} = \cfrac{\chi}{\rho~C_p}~\sigma_y~\dot{\Ve^p} = \dot{\gamma}\,h^T \,.
+\Eeq
+
+\section{Yield condition}
+The yield condition is assumed to be of the form
+\Beq
+  f(\Bsig_\Tiso, \Bsig_\Tdev, \Bbeta_\Tiso, \Bbeta_\Tdev, \Ve^p, \phi, T, \dot{\Ve}, \dots) 
+    = f(\Bxi_\Tiso, \Bxi_\Tdev, \Ve^p, \phi, T, \dot{\Ve}, \dots) = 0
+\Eeq
+where $\Bxi_\Tiso := \Bsig_\Tiso - \Bbeta_\Tiso$ and $\Bxi_\Tdev := \Bsig_\Tdev - \Bbeta_\Tdev$.
+The Kuhn-Tucker loading-unloading conditions are
+\Beq
+  \dot{\gamma} \ge 0 ~;~~  f \le 0 ~;~~ \dot{\gamma}~f = 0
+\Eeq
+and the consistency condition is $\dot{f} = 0$.
+
+%\section{Temperature increase due to plastic dissipation}
+%The temperature is updated using
+%\Beq
+%  T_{n+1} = T_n + 
+%   \cfrac{\chi_{n+1}~\Delta t}{\rho_{n+1}~C_p}~\sigma^{n+1}_y~\dot{\Ve^p}_{n+1} ~.
+%\Eeq
+
+\section{Continuum elastic-plastic tangent modulus}
+To determine whether the material has undergone a loss of stability we need to compute
+the acoustic tensor which needs the computation of the continuum elastic-plastic tangent
+modulus.
+
+Recall that
+\Beq
+  \Bsig = \Bsig_\Tiso + \Bsig_\Tdev = \sigma_m~\Bone + \Bsig_\Tdev \quad \implies \quad \dot{\Bsig} =
+     \dot{\Bsig}_\Tiso + \dot{\Bsig}_\Tdev = \dot{\sigma}_m~\Bone + \dot{\Bsig}_\Tdev~.
+\Eeq
+We assume that 
+\Beq
+  \dot{\sigma}_m^e = J^e~\Partial{\sigma_m^e}{J^e}~\Tr(\BdT^e) = \kappa\,\Tr(\BdT^e) \qquad \Tand \quad
+  \dot{\Bsig}^e_\Tdev = 2~\mu~\BdT_\Tdis^e ~.
+\Eeq
+The Kuhn-Tucker and consistency conditions require that the stress state is on the boundary
+of the elastic domain and therefore is directly related to the elastic part of
+the rate of deformation tensor.  However, we don't know the fraction of the
+total deformation tensor that is elastic, and that is what we have to determine.
+Therefore, the consistency condition can be expressed as
+\Beq
+  \dot{f}(\Bsig^e_\Tiso, \Bsig^e_\Tdev, \Bbeta_\Tiso, \Bbeta_\Tdev, \Ve^p, \phi, T, \dot{\Ve}, \dots) = 0 ~.
+\Eeq
+Keeping $\dot{\Ve}$ fixed over the time interval, we can use the chain rule
+to get
+\Beq
+  \dot{f} = \Partial{f}{\Bsig^e_\Tiso}:\dot{\Bsig}^e_\Tiso +
+            \Partial{f}{\Bsig^e_\Tdev}:\dot{\Bsig}^e_\Tdev +
+            \Partial{f}{\Bbeta_\Tiso}:\dot{\Bbeta}_\Tiso + 
+            \Partial{f}{\Bbeta_\Tdev}:\dot{\Bbeta}_\Tdev + 
+            \Partial{f}{\Ve^p}~\dot{\Ve^p} + \Partial{f}{\phi}~\dot{\phi} 
+            + \Partial{f}{T}~\dot{T} = 0~.
+\Eeq
+The associated rate equations are
+\Beq
+  \Bal
+    \dot{\Bsig}^e_\Tiso & = \kappa~\BdT_\Tvol^e  = \kappa~(\BdT_\Tvol - \BdT_\Tvol^p)   
+      = \kappa\,[\BdT_\Tvol - \dot{\gamma}~\BM_\Tiso] \\
+    \dot{\Bsig}^e_\Tdev & = 2~\mu~\BdT_\Tdis^e = 2~\mu~(\BdT_\Tdis - \BdT_\Tdis^p) = 
+      2\mu~[\BdT_\Tdis - \dot{\gamma}~\BM_\Tdev] \\
+    \dot{\Bbeta}_\Tiso & = \dot{\gamma}~\Bh^{\beta}_\Tiso \\
+    \dot{\Bbeta}_\Tdev & = \dot{\gamma}~\Bh^{\beta}_\Tdev \\
+    \dot{\Ve^p} & = \dot{\gamma}~h^{\alpha} \\
+    \dot{\phi} & = \dot{\gamma}~h^{\phi} \\
+    \dot{T} & = \dot{\gamma}~h^{T} \\
+  \Eal
+\Eeq
+Plugging these into the expression for $\dot{f}$ gives
+\Beq
+  \kappa\,\Partial{f}{\Bsig^e_\Tiso}: [\BdT_\Tvol - \dot{\gamma}~\BM_\Tiso] +
+  2~\mu~\Partial{f}{\Bsig^e_\Tdev}:[\BdT_\Tdis - \dot{\gamma}~\BM_\Tdev] 
+    + \dot{\gamma}~\Partial{f}{\Bbeta_\Tiso}:\Bh^{\beta}_\Tiso 
+    + \dot{\gamma}~\Partial{f}{\Bbeta_\Tdev}:\Bh^{\beta}_\Tdev 
+    + \dot{\gamma}~\Partial{f}{\Ve^p}~h^{\alpha} 
+    + \dot{\gamma}~\Partial{f}{\phi}~h^{\phi}
+    + \dot{\gamma}~\Partial{f}{T}~h^{T}  = 0
+\Eeq
+or,
+\Beq
+  \dot{\gamma} = \frac{\kappa\,\BF_{\sigma_v} : \BdT_\Tvol + 2\mu\, \BF_{\sigma_d} : \BdT_\Tdis}{H}
+\Eeq
+where 
+\[
+  \BF_{\sigma_v} := \Partial{f}{\Bsig^e_\Tiso} ~;~~
+  \BF_{\sigma_d} := \Partial{f}{\Bsig^e_\Tdev} ~;~~
+  H := \kappa\,\Partial{f}{\Bsig^e_\Tiso}:\BM_\Tiso + 2~\mu~\Partial{f}{\Bsig^e_\Tdev}:\BM_\Tdev 
+     - \Partial{f}{\Bbeta_\Tiso}:\Bh^{\beta}_\Tiso
+     - \Partial{f}{\Bbeta_\Tdev}:\Bh^{\beta}_\Tdev
+     - \Partial{f}{\Ve^p}~h^{\alpha} - \Partial{f}{\phi}~h^{\phi}
+     - \Partial{f}{T}~h^{T} \,.
+\]
+Plugging this expression for $\dot{\gamma}$ into the equations for
+$\dot{\Bsig}_\Tiso$ and $\dot{\Bsig}_\Tdev$, we get
+\Beq
+  \dot{\Bsig}^e_\Tiso = \kappa~\left[\BdT_\Tvol - 
+     \left(\frac{\kappa\,\BF_{\sigma_v} : \BdT_\Tvol + 2\mu\, \BF_{\sigma_d} : \BdT_\Tdis}{H} \right)~\BM_\Tiso\right] 
+  \quad
+  \dot{\Bsig}^e_\Tdev = 2~\mu~\left[\BdT_\Tdis - 
+     \left(\frac{\kappa\,\BF_{\sigma_v} : \BdT_\Tvol + 2\mu\, \BF_{\sigma_d} : \BdT_\Tdis}{H} \right)~\BM_\Tdev\right]~.
+\Eeq
+
+\textit{These equations clearly indicate that the volumetric and deviatoric responses cannot be
+uncoupled unless the yield function depends only on the deviatoric stress. Since that assumption
+limits us to J2-plasticity and does not allow us to include Gurson-type models, we will not separate
+out the deviatoric and volumetric components of stress (or volumetric/isochoric deformation rates) 
+in this model even though plastic deformation in the metal matrix is volume-preserving.}
+
+\subsection{J2 plasticity}
+At this stage, note that a symmetric $\Bsig$ implies a symmetric $\Bsig_\Tdev$ and hence a 
+symmetric $\BdT_\Tdis$.  Also, $\BM_\Tdev$ is symmetric, since we assume that the
+the flow rule is associated, i.e.,
+\Beq
+  \hat{\BM} = \frac{\BN}{\Norm{\BN}{}} ~,~~ \BN := \Partial{f}{\Bsig} \,.
+\Eeq  
+Then we can write,
+\Beq
+  \BdT_\Tdis = \SfI^{4s}:\BdT_\Tdis \qquad \Tand \qquad \BM_\Tdev =
+     \SfI^{4s}:\BM_\Tdev
+\Eeq
+where $\SfI^{4s}$ is the fourth-order symmetric identity tensor.  Also note that
+if $\BA$, $\BC$, $\BD$ are second order tensors and $\SfB$ is a fourth order tensor,
+then
+\Beq
+  (\BA:\SfB:\BC)~(\SfB:\BD) \equiv A_{ij}~B_{ijkl}~C_{kl}~B_{mnpq}~D_{pq}
+     = (B_{mnpq}~D_{pq})~(A_{ij}~B_{ijkl})~C_{kl} \equiv [(\SfB:\BD)\otimes(\BA:\SfB)]:\BC ~.
+\Eeq
+Therefore, we have,
+\Beq
+  \dot{\Bsig}^e_\Tdev = 2~\mu~\left[\SfI^{4s}:\BdT_\Tdis - \left( 
+    \cfrac{2~\mu~[\SfI^{4s}:\BM_\Tdev]\otimes[\BF_\sigma:\SfI^{4s}]}
+    {H}\right):\BdT_\Tdis\right]~.
+\Eeq
+Also,
+\Beq
+  \SfI^{4s}:\BM_\Tdev = \BM_\Tdev \qquad \Tand \qquad
+  \BF_\sigma:\SfI^{4s} = \BF_\sigma ~.
+\Eeq
+Hence we can write
+\Beq
+  \dot{\Bsig}^e_\Tdev = 2~\mu~\left[\SfI^{4s} - \left( 
+    \cfrac{2~\mu~\BM_\Tdev\otimes\BF_\sigma}{H}\right)\right]:\BdT_\Tdis
+\Eeq
+or,
+\Beq
+  \Bal
+   \dot{\Bsig}^e_\Tdev & = \SfB^{ep}:\BdT_\Tdis = \SfB^{ep}:\left[\BdT - \Third~\Tr(\BdT)~\Bone\right]
+     = \SfB^{ep}:\BdT - \Third~\left[\SfB^{ep}:
+          (\Bone\otimes\Bone)\right]:\BdT\\
+     & =: \SfB^{ep}_\Tdev:\BdT
+  \Eal
+\Eeq
+where
+\Beq
+  \SfB^{ep} := 
+    2~\mu~\left[\SfI^{4s} - \left( 
+    \cfrac{2~\mu~\BM_\Tdev\otimes\BF_\sigma}{H}\right)\right] ~,~~
+     \SfB_\Tdev^{ep} := \SfB^{ep} - \Third~\left[\SfB^{ep}:
+          (\Bone\otimes\Bone)\right]
+\Eeq
+For the mean stress component, we have
+\[
+  \Bal
+  \dot{\Bsig}^e_\Tiso  & = \dot{\sigma}^e_m~\Bone
+    = J^e~\Partial{\sigma_m^e}{J^e}~\left[\Tr(\BdT) -\dot{\gamma} \Tr(\hat{\BM})\right] ~\Bone \\
+    & = \kappa ~\left[\Tr(\BdT) -\frac{2\mu\, \BF_\sigma : \BdT_\Tdis}{H}
+           \Tr(\hat{\BM})\right] ~\Bone  \\
+    & = \kappa ~\left[\Tr(\BdT) - \frac{2\mu\, \Tr(\Hat{\BM})}{H} \BF_\sigma : \left(\BdT -
+           \Third\Tr(\BdT)\Bone\right)\right] ~\Bone  \\
+    & = \kappa (\Bone\otimes\Bone):\BdT - \frac{2\mu\kappa\,
+          \Tr(\Hat{\BM})}{H} \left[(\Bone \otimes \BF_\sigma) : \BdT -
+            \Third \Tr(\BF_\sigma) (\Bone\otimes\Bone) : \BdT\right]  \\
+    & =: \SfB_\Tiso^{ep} : \BdT
+  \Eal
+\]
+where,
+\[
+  \SfB_\Tiso^{ep} = \kappa (\Bone\otimes\Bone) - \frac{2\mu\kappa\,
+          \Tr(\Hat{\BM})}{H} \left[(\Bone \otimes \BF_\sigma) -
+            \Third \Tr(\BF_\sigma) (\Bone\otimes\Bone)\right]  \,.
+\]
+
+Adding the volumetric and deviatoric  components gives
+\Beq
+  \Bal
+  \dot{\Bsig}^e & = \dot{\Bsig}^e_\Tiso + \dot{\Bsig}^e_\Tdev \\
+   & = \SfB_\Tiso^{ep} : \BdT  
+       + \SfB_\Tdev^{ep}:\BdT =: \SfC^{ep}:\BdT \,.
+  \Eal
+\Eeq
+The quantity $\SfC^{ep}$ is the continuum elastic-plastic tangent modulus.  We also use the 
+continuum elastic-plastic tangent modulus in the implicit version of the code.  However,
+for improved accuracy and faster convergence, an algorithmically  consistent tangent modulus 
+should be used instead.  That tangent modulus can be calculated in the usual manner and 
+is left for development and implementation as an additional feature in the future.
+
+\subsection{J2-I1 plasticity}
+For J2-I1 plasticity, there is little advantage to be gained if we split the stress into 
+volumetric and deviatoric components.  Therefore, we use the total stress and the total rate
+of deformation:
+\[
+  \dot{\Bsig}^e = \left(\kappa-\tfrac{2}{3}\mu\right)\,\Tr(\BdT^e)\,\Bone + 2\mu\,\BdT^e 
+\]
+and
+\[
+  \BdT^e = \BdT - \BdT^p = \BdT - \dot{\gamma}\,\hat{\BM} \,.
+\]
+Then,
+\[
+  \dot{f} = \Partial{f}{\Bsig^e}:\dot{\Bsig}^e +
+            \Partial{f}{\Bbeta}:\dot{\Bbeta} + 
+            \Partial{f}{\Ve^p}~\dot{\Ve^p} + \Partial{f}{\phi}~\dot{\phi} 
+            + \Partial{f}{T}~\dot{T} = 0
+\]
+and we have
+\[
+  \dot{\gamma} = \frac{[(\kappa-\tfrac{2}{3}\mu)\,\Tr(\BF_\sigma)\,\Bone + 2\mu\BF_\sigma]:\BdT}{H}
+\]
+where
+\[
+  H = (\kappa-\tfrac{2}{3}\mu)\,\Tr(\BF_\sigma)\,\Tr(\hat{\BM}) + 2\mu\BF_\sigma:\hat{\BM}
+     - \Partial{f}{\Bbeta}:\Bh^{\beta}
+     - \Partial{f}{\Ve^p}~h^{\alpha} - \Partial{f}{\phi}~h^{\phi}
+     - \Partial{f}{T}~h^{T} \,.
+\]
+Therefore,
+\[
+  \BdT^e =  \left[\SfI^{4s} - \frac{(\kappa-\tfrac{2}{3}\mu)\,\Tr(\BF_\sigma)\,\hat{\BM}\otimes\Bone +
+      2\mu\hat{\BM}\otimes\BF_\sigma}{H}\right]:\BdT =: \SfD^e :\BdT 
+\]
+and
+\[
+  \dot{\Bsig}^e = \left[\left(\kappa-\tfrac{2}{3}\mu\right)\,[(\Bone\otimes\Bone):\SfD^e +
+2\mu\,\SfI^{4s}\right]:\BdT  =: \SfC^{ep}:\BdT \,.
+\]
+
+\section{Stress update}
+A standard return algorithm is used to compute the updated Cauchy stress.  
+
+\subsection{Integrating the rate equations}
+\subsubsection{J2 plasticity}
+Recall that the rate equation for the deviatoric stress is given by
+\Beq
+  \dot{\Bsig}^e_\Tdev = 2~\mu~\BdT_\Tdis^e ~.
+\Eeq
+Integration of the rate equation using a Backward Euler scheme gives
+\Beq
+  (\Bsig^e_\Tdev)_{n+1} - (\Bsig^e_\Tdev)_n = 2~\mu_{n+1}~\Delta t~(\BdT_\Tdis^e)_{n+1}
+    = 2~\mu_{n+1}~\Delta t~[(\BdT_\Tdis)_{n+1} - (\BdT_\Tdis^p)_{n+1}]
+\Eeq
+Now, from the flow rule, we have
+\Beq
+  \BdT_\Tdis^p = \dot{\gamma}~\left(\hat{\BM} -\Third~\Tr(\hat{\BM})~\Bone\right) 
+    = \dot{\gamma} \BM_\Tdev~.
+\Eeq
+Identifying $\dot{\BVeps}_\Tdis^p = \BdT_\Tdis^p$, we can write the integrated strain as
+\Beq
+  (\BVeps_\Tdis^p)_{n+1} = (\BVeps_\Tdis^p)_{n} + \Delta\gamma_{n+1} (\BM_\Tdev)_{n+1}\,.
+\Eeq
+Therefore, 
+\Beq
+  (\Bsig^e_\Tdev)_{n+1} - (\Bsig^e_\Tdev)_n 
+    = 2~\mu_{n+1}~\Delta t~(\BdT_\Tdis)_{n+1} - 2~\mu_{n+1}~\Delta\gamma_{n+1}~(\BM_\Tdev)_{n+1} ~.
+\Eeq
+where $\Delta\gamma := \dot{\gamma}~\Delta t$.  At this stage we ignore 
+elastic-plastic coupling and assume that $\mu_{n+1} = \mu_n$.  Define the trial stress
+\Beq
+  \Bsig_\Tdev^{\Trial} := (\Bsig^e_\Tdev)_n + 2~\mu_n~\Delta t~(\BdT_\Tdis)_{n+1} ~.
+\Eeq
+Then
+\Beq
+  (\Bsig^e_\Tdev)_{n+1} = \Bsig_\Tdev^{\Trial} - 2~\mu_n~\Delta\gamma_{n+1}~(\BM_\Tdev)_{n+1} ~.
+\Eeq
+Also recall that the back stress is given by
+\Beq
+  \dot{\Bbeta}_\Tdev = \dot{\gamma}~\Bh_\Tdev^{\beta}
+\Eeq
+The evolution equation for the back stress can be integrated to get
+\Beq
+  (\Bbeta_\Tdev)_{n+1} - (\Bbeta_\Tdev)_n = \Delta\gamma_{n+1}~(\Bh_\Tdev^{\beta})_{n+1} ~.
+\Eeq
+Define
+\Beq
+  \Bxi_{n+1} := (\Bsig^e_\Tdev)_{n+1} - (\Bbeta_\Tdev)_{n+1} ~.
+\Eeq
+Plugging in the expressions for $(\Bsig^e_\Tdev)_{n+1}$ and $(\Bbeta_\Tdev)_{n+1}$, we get
+\Beq
+  \Bxi_{n+1} = \Bsig_\Tdev^{\Trial} - 2~\mu_n~\Delta\gamma_{n+1}~(\BM_\Tdev)_{n+1} 
+     - (\Bbeta_\Tdev)_n - \Delta\gamma_{n+1}~(\Bh_\Tdev^{\beta})_{n+1} ~.
+\Eeq
+Define
+\Beq
+  \Bxi^{\Trial} := \Bsig_\Tdev^{\Trial} - (\Bbeta_\Tdev)_n ~.
+\Eeq
+Then
+\Beq
+  \Bxi_{n+1} = \Bxi^{\Trial} - \Delta\gamma_{n+1}\left[2~\mu_n~(\BM_\Tdev)_{n+1} +
+     (\Bh_\Tdev^{\beta})_{n+1}\right] ~.
+\Eeq
+Similarly, the evolution of the plastic strain is given by
+\Beq
+  \Ve^p_{n+1} = \Ve^p_{n} + \Delta\gamma_{n+1}~h^{\alpha}_{n+1} \,.
+\Eeq
+The porosity evolves as
+\Beq
+  \phi_{n+1} = \phi_n + \Delta\gamma_{n+1}~h^{\phi}_{n+1} ~.
+\Eeq
+The temperature evolves as
+\Beq
+  T_{n+1} = T_n + \Delta\gamma_{n+1}~h^T_{n+1} ~.
+\Eeq
+The yield condition is discretized as
+\Beq
+  f((\Bsig_\Tdev)_{n+1}, (\Bbeta_\Tdev)_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, T_{n+1}, \dot{\Ve}_{n+1}, \dots) = 
+  f(\Bxi_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, T_{n+1}, \dot{\Ve}_{n+1}, \dots) = 0 ~.
+\Eeq
+
+\subsubsection{J2-I1 plasticity}
+In this case, we use the rate equation for the total stress is given by
+\Beq
+  \dot{\Bsig}^e = \left(k - \tfrac{2}{3}\mu\right) \BdT^e:\Bone + 2~\mu~\BdT^e ~.
+\Eeq
+Backward Euler gives
+\Beq
+  \Bal
+  \Bsig^e_{n+1} - \Bsig^e_n & = 
+    \Delta t\,\left(\kappa_{n+1} - \tfrac{2}{3}\mu_{n+1}\right) \BdT^e_{n+1}:\Bone +
+      2~\Delta t\,\mu_{n+1}~\BdT^e_{n+1} \\
+    & = \left(\kappa_{n+1} - \tfrac{2}{3}\mu_{n+1}\right) (\Delta t\,\BdT_{n+1}-\Delta t\,\BdT^p_{n+1}):\Bone +
+      2\mu_{n+1}~(\Delta t\,\BdT_{n+1}-\Delta t\,\BdT^p_{n+1})
+  \Eal
+\Eeq
+Flow rule:
+\Beq
+  \BdT^p = \dot{\gamma}~\hat{\BM}
+\Eeq
+Set $\dot{\BVeps}^p := \BdT^p$, to write the integrated strain:
+\Beq
+  \BVeps^p_{n+1} = \BVeps^p_{n} + \Delta\gamma_{n+1} \hat{\BM}_{n+1}
+  \quad \leftrightarrow \quad \Delta t\,\BdT^p_{n+1} = \Delta\gamma_{n+1} \hat{\BM}_{n+1}\,.
+\Eeq
+Then, 
+\Beq
+  \Bsig^e_{n+1} = \Bsig^e_n  +
+    \left(\kappa_{n+1} - \tfrac{2}{3}\mu_{n+1}\right) (\Delta
+t\,\BdT_{n+1}-\Delta\gamma_{n+1}\,\hat{\BM}_{n+1}):\Bone +
+      2\mu_{n+1}~(\Delta t\,\BdT_{n+1}-\Delta\gamma_{n+1}\,\hat{\BM}_{n+1}) 
+\Eeq
+where $\Delta\gamma := \dot{\gamma}~\Delta t$.  Ignore 
+elastic-plastic coupling and assume $\kappa_{n+1} = \kappa_n$ and $\mu_{n+1} = \mu_n$.  The trial stress is
+\Beq
+  \Bsig^{\Trial} := \Bsig^e_n + \left(\kappa_n - \tfrac{2}{3}\mu_n\right)\Delta t\,\BdT_{n+1}:\Bone
+    + 2~\mu_n~\Delta t~\BdT_{n+1} ~.
+\Eeq
+Then
+\Beq
+  \Bsig^e_{n+1} = \Bsig^{\Trial} - \left(\kappa_{n+1} - \tfrac{2}{3}\mu_{n+1}\right) 
+    \Delta\gamma_{n+1}\,\hat{\BM}_{n+1}:\Bone -
+      2\mu_{n+1} \,\Delta\gamma_{n+1}\,\hat{\BM}_{n+1}  \,.
+\Eeq
+For the back stress, 
+\Beq
+  \Bbeta_{n+1} - \Bbeta_n = \Delta\gamma_{n+1}~\Bh^{\beta}_{n+1} ~.
+\Eeq
+Define
+\Beq
+  \Bxi_{n+1} := \Bsig^e_{n+1} - \Bbeta_{n+1} 
+\Eeq
+to arrive at the combined stress equation
+\Beq
+  \Bxi_{n+1}  = \Bsig^{\Trial} - \left(\kappa_{n+1} - \tfrac{2}{3}\mu_{n+1}\right) 
+    \Delta\gamma_{n+1}\,\hat{\BM}_{n+1}:\Bone -
+      2\mu_{n+1} \,\Delta\gamma_{n+1}\,\hat{\BM}_{n+1}  
+     - \Bbeta_n - \Delta\gamma_{n+1}~\Bh^{\beta}_{n+1} ~.
+\Eeq
+Define
+\Beq
+  \Bxi^{\Trial} := \Bsig^{\Trial} - \Bbeta_n 
+\Eeq
+to get
+\Beq
+  \Bxi_{n+1}  = \Bxi^{\Trial} - \Delta\gamma_{n+1}\left[\left(\kappa_{n+1} - \tfrac{2}{3}\mu_{n+1}\right) 
+    \hat{\BM}_{n+1}:\Bone - 2\mu_{n+1} \,\hat{\BM}_{n+1}  - \Bh^{\beta}_{n+1}\right] ~.
+\Eeq
+The other rate equations are integrated as before:
+\Beq
+  \Bal
+  \Ve^p_{n+1} & = \Ve^p_{n} + \Delta\gamma_{n+1}~h^{\alpha}_{n+1} \\
+  \phi_{n+1} &= \phi_n + \Delta\gamma_{n+1}~h^{\phi}_{n+1} \\
+  T_{n+1} &= T_n + \Delta\gamma_{n+1}~h^T_{n+1} ~.
+  \Eal
+\Eeq
+The yield condition is discretized as
+\Beq
+  f(\Bsig^e_{n+1}, \Bbeta_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, T_{n+1}, \dot{\Ve}_{n+1}, \dots) = 
+  f(\Bxi_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, T_{n+1}, \dot{\Ve}_{n+1}, \dots) = 0 ~.
+\Eeq
+
+\subsection{Newton iterations}
+\subsubsection{J2 plasticity}
+The following coupled equations have to be solved for the unknowns at $t_{n+1}$:
+\Beq
+  \Bal
+  & (\Bsig^e_\Tdev)_{n+1} = \Bsig_\Tdev^{\Trial} - 2~\mu_n~\Delta\gamma_{n+1}~(\BM_\Tdev)_{n+1} \\
+  & (\BVeps_\Tdis^p)_{n+1} = (\BVeps_\Tdis^p)_{n} + \Delta\gamma_{n+1} (\BM_\Tdev)_{n+1} \\
+  & (\Bbeta_\Tdev)_{n+1} = (\Bbeta_\Tdev)_n + \Delta\gamma_{n+1}~(\Bh_\Tdev^{\beta})_{n+1} \\
+  & \Ve^p_{n+1}  = \Ve^p_{n} + \Delta\gamma_{n+1}~h^{\alpha}_{n+1} \\
+  & \phi_{n+1}  = \phi_n + \Delta\gamma_{n+1}~h^{\phi}_{n+1}  \\
+  & T_{n+1}  = T_n + \Delta\gamma_{n+1}~h^{T}_{n+1}  \\
+  & f_{n+1}(\Bxi_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, T_{n+1}, \dot{\Ve}_{n+1}, \dots)  = 0 ~.
+  \Eal
+\Eeq
+Note that, for associated plasticity, the first two equations depend on $f_{n+1}$.  
+Recognizing that the second equation is alreday incorporated into the first, and combining the
+stress and backstress equations, we can express the above equations in terms of residuals as,
+\Beq
+  \Bal
+  \Br_\xi  &= \Bxi_{n+1} - \Bxi^{\Trial} + \Delta\gamma_{n+1}[2\mu_n\,(\BM_\Tdev)_{n+1} +
+    (\Bh_\Tdev^{\beta})_{n+1}] = \Bzero \\
+  r_{\Ve^p} & =  \Ve^p_{n+1}  - \Ve^p_{n} - \Delta\gamma_{n+1}~h^{\alpha}_{n+1} = 0 \\
+  r_{\phi} & =  \phi_{n+1}  - \phi_n - \Delta\gamma_{n+1}~h^{\phi}_{n+1} = 0  \\
+  r_T & =  T_{n+1}  - T_n - \Delta\gamma_{n+1}~h^{T}_{n+1} = 0  \\
+  r_f & = f_{n+1}(\Bxi_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, T_{n+1}, \dot{\Ve}_{n+1}, \dots)  = 0 ~.
+  \Eal
+\Eeq
+or, if $\Bx = (\Bxi_{n+1}, \Ve^p_{n+1}, \phi_{n+1}, T_{n+1}, \Delta\gamma_{n+1})$ is 
+the vector of \textit{independent} unknowns in the above equations, 
+\Beq
+  \Br(\Bx) = \Bzero \,.
+\Eeq
+An iterative Newton method can be used to find the solution:
+\Beq
+  \Bx^{(k+1)} = \Bx^{(k)} - \left[\Partial{\Br}{\Bx}\right]^{-1}_{(k)}~\Br^{(k)} 
+  \quad \Tor \quad
+  -\BJv^{k)} \, \delta\Bx^{(k)} = \Br^{(k)} \,.
+\Eeq
+To simplify the notation, we drop the subscripts $(n+1)$ and ``$\Tdev$'', and 
+set $\Bx \equiv (\BsT, \BbT, \Ve^p, \phi, T, \Delta\gamma)$. 
+Also, for metal plasticity, we assume that $\hat{\BM} = f_{\Bsig}/\Norm{f_{\Bsig}}{}$ where
+$f_{\Bsig} := \Partial{f}{\Bsig}$.  Now, with the isotropic-deviatoric split, and since
+$f$ does not depend on the isotropic component of stress, 
+\[
+  f_{\Bsig} = f_{\BsT}:\Partial{\BsT}{\Bsig} + f_{p} \Partial{p}{\Bsig}
+   = f_{\BsT}:\Partial{\BsT}{\Bsig} = f_{\BsT} - \Third \Tr(f_{\BsT})\,\Bone = f_{\BsT}
+\]
+(with $p := \Bsig_\Tiso : \Bone = \Tr(\Bsig)$ and $\BsT := \Bsig_\Tdev = \Bsig - \Third\Tr(\Bsig)\Bone$).  
+Therefore, 
+\[
+  \BM := \BM_\Tdev = \hat{\BM} \,.
+\]
+
+Let us now compute the derivatives.
+\[
+  \Bal
+  \Partial{\Br_\xi}{\Bxi} &= \SfI^{4s} +
+     \Delta\gamma\left[2\mu_n\,\Partial{\BM}{\Bxi} + \Partial{\Bh^\beta}{\Bxi}\right] \,,
+  \Partial{\Br_\xi}{\Ve^p} = 
+     \Delta\gamma\left[2\mu_n\,\Partial{\BM}{\Ve^p} + \Partial{\Bh^\beta}{\Ve^p}\right] \,,
+  \Partial{\Br_\xi}{\phi} = 
+     \Delta\gamma\left[2\mu_n\,\Partial{\BM}{\phi} + \Partial{\Bh^\beta}{\phi}\right] \\
+  \Partial{\Br_\xi}{T} &= 
+     \Delta\gamma\left[2\mu_n\,\Partial{\BM}{T} + \Partial{\Bh^\beta}{T}\right] \,,
+  \Partial{\Br_\xi}{\Delta\gamma} = 2\mu_n\,\BM + \Bh^{\beta}
+  \Eal
+\]
+\[
+  \Bal
+  \Partial{r_{\Ve^p}}{\Bxi} &=  -\Delta\gamma\,\Partial{h^\alpha}{\Bxi} \,,
+  \Partial{r_{\Ve^p}}{\Ve^p} = 1 -\Delta\gamma\,\Partial{h^\alpha}{\Ve^p} \,,
+  \Partial{r_{\Ve^p}}{\phi} = -\Delta\gamma\,\Partial{h^\alpha}{\phi} \,, 
+  \Partial{r_{\Ve^p}}{T} = -\Delta\gamma\,\Partial{h^\alpha}{T} \,,
+  \Partial{r_{\Ve^p}}{\Delta\gamma} = -h^\alpha
+  \Eal
+\]
+\[
+  \Bal
+  \Partial{r_{\phi}}{\Bxi} &=  -\Delta\gamma\,\Partial{h^\phi}{\Bxi} \,,
+  \Partial{r_{\phi}}{\Ve^p} = -\Delta\gamma\,\Partial{h^\phi}{\Ve^p} \,,
+  \Partial{r_{\phi}}{\phi} = 1 -\Delta\gamma\,\Partial{h^\phi}{\phi} \,, 
+  \Partial{r_{\phi}}{T} = -\Delta\gamma\,\Partial{h^\phi}{T} \,,
+  \Partial{r_{\phi}}{\Delta\gamma} = -h^\phi
+  \Eal
+\]
+\[
+  \Bal
+  \Partial{r_{T}}{\Bxi} &=  -\Delta\gamma\,\Partial{h^T}{\Bxi} \,,
+  \Partial{r_{T}}{\Ve^p} = -\Delta\gamma\,\Partial{h^T}{\Ve^p} \,,
+  \Partial{r_{T}}{\phi} = -\Delta\gamma\,\Partial{h^T}{\phi} \,, 
+  \Partial{r_{T}}{T} = 1 -\Delta\gamma\,\Partial{h^T}{T} \,,
+  \Partial{r_{T}}{\Delta\gamma} = -h^T
+  \Eal
+\]
+\[
+  \Bal
+  \Partial{r_{f}}{\Bxi} &=  \Partial{f}{\Bxi} =: f_{\Bxi} \,,
+  \Partial{r_{f}}{\Ve^p} = \Partial{f}{\Ve^p} =: f_{\Ve} \,,
+  \Partial{r_{f}}{\phi} = \Partial{f}{\phi} =: f_{\phi} \,, 
+  \Partial{r_{f}}{T} = \Partial{f}{T} =: f_{T} \,,
+  \Partial{r_{f}}{\Delta\gamma} = 0
+  \Eal
+\]
+
+The system of equations can be expressed as
+\[
+  -\begin{bmatrix}
+    \Partial{\Br_\xi}{\Bxi} & \Partial{\Br_\xi}{\Ve^p} & 
+      \Partial{\Br_\xi}{\phi} & \Partial{\Br_\xi}{T} & \Partial{\Br_\xi}{\Delta\gamma} \\
+    \Partial{r_{\Ve^p}}{\Bxi} & \Partial{r_{\Ve^p}}{\Ve^p} & 
+      \Partial{r_{\Ve^p}}{\phi} & \Partial{r_{\Ve^p}}{T} & \Partial{r_{\Ve^p}}{\Delta\gamma} \\
+    \Partial{r_{\phi}}{\Bxi} & \Partial{r_{\phi}}{\Ve^p} & 
+      \Partial{r_{\phi}}{\phi} & \Partial{r_{\phi}}{T} & \Partial{r_\phi}{\Delta\gamma} \\
+    \Partial{r_{T}}{\Bxi} & \Partial{r_{T}}{\Ve^p} & 
+      \Partial{r_{T}}{\phi} & \Partial{r_{T}}{T} & \Partial{r_T}{\Delta\gamma} \\
+    f_{\Bxi} & f_{\Ve} & f_\phi & f_T & 0 
+  \end{bmatrix}^{(k)}
+  \begin{bmatrix}
+    \delta\Bxi \\ \delta\Ve^p \\ \delta\phi \\ \delta T \\ \delta\Delta\gamma  
+  \end{bmatrix}^{(k)} = 
+  \begin{bmatrix}
+    \Br_\xi \\ r_{\Ve^p} \\ r_\phi \\ r_T \\ r_f  
+  \end{bmatrix}^{(k)}  
+\]
+We can statically condense the system by defining
+\[
+  \MA = \begin{bmatrix}
+    \Partial{\Br_\xi}{\Bxi} & \Partial{\Br_\xi}{\Ve^p} & 
+      \Partial{\Br_\xi}{\phi} & \Partial{\Br_\xi}{T} \\
+    \Partial{r_{\Ve^p}}{\Bxi} & \Partial{r_{\Ve^p}}{\Ve^p} & 
+      \Partial{r_{\Ve^p}}{\phi} & \Partial{r_{\Ve^p}}{T} \\
+    \Partial{r_{\phi}}{\Bxi} & \Partial{r_{\phi}}{\Ve^p} & 
+      \Partial{r_{\phi}}{\phi} & \Partial{r_{\phi}}{T} \\
+    \Partial{r_{T}}{\Bxi} & \Partial{r_{T}}{\Ve^p} & 
+      \Partial{r_{T}}{\phi} & \Partial{r_{T}}{T} 
+  \end{bmatrix} ~,~~
+  \MB = \begin{bmatrix}
+    \Partial{\Br_\xi}{\Delta\gamma} \\
+    \Partial{r_{\Ve^p}}{\Delta\gamma} \\
+    \Partial{r_\phi}{\Delta\gamma} \\
+    \Partial{r_T}{\Delta\gamma} 
+  \end{bmatrix} ~,~~
+  \MC = \begin{bmatrix}  f_{\Bxi} & f_{\Ve} & f_\phi & f_T \end{bmatrix}
+\]
+and
+\[
+  \MX = \begin{bmatrix}
+    \delta\Bxi \\ \delta\Ve^p \\ \delta\phi \\ \delta T 
+    \end{bmatrix} ~,~~
+  \MR = \begin{bmatrix}
+    \Br_\xi \\ r_{\Ve^p} \\ r_\phi \\ r_T 
+  \end{bmatrix}
+\]
+to get
+\[
+  \begin{bmatrix}
+    \MA & \MB \\ \MC & 0 
+  \end{bmatrix}^{(k)}
+  \begin{bmatrix}
+    \MX \\ \delta\Delta\gamma
+  \end{bmatrix}^{(k)} = 
+  \begin{bmatrix}
+    \MR \\ r_f
+  \end{bmatrix}^{(k)}
+\]
+We can eliminate $\delta\Delta\gamma$, to get the new system of equations
+\[
+  \MA^{(k)} \MX^{(k)} = \MR^{(k)} - \left[\frac{\MC^{(k)} \MA^{-1}_{(k)} \MR^{(k)} - r_f^{(k)}}{\MC^{(k)} \MA^{-1}_{(k)} \MB^{(k)}}\right] \MB^{(k)}
+  ~,~~
+  \delta\Delta\gamma^{(k)} = \frac{\MC^{(k)} \MA^{-1}_{(k)} \MR^{(k)} - r_f^{(k)}}{\MC^{(k)} \MA^{-1}_{(k)} \MB^{(k)}} \,.
+\]
+The matrix $\MA$ may be difficult to invert because of its conditioning.  
+
+\subsection{Algorithm - J2 plasticity}
+The following stress update algorithm is used for each (plastic) time step:
+\begin{enumerate}
+  \item Initialize:
+  \Beq
+    k = 0 ~;~~ (\Ve^p)^{(k)} = \Ve^p_n ~;~~ \phi^{(k)} = \phi_n ~;~~ T^{(k)} = T_n ~;~~
+    \Bbeta^{(k)} = \Bbeta_n ~;~~ \Delta\gamma^{(k)} = 0 ~;~~
+    \Bxi^{(k)} = \Bxi^{\Trial}~.
+  \Eeq
+  \item Check yield condition:
+  \Beq
+    r_f^{(k)} := f(\Bxi^{(k)}, (\Ve^p)^{(k)}, \phi^{(k)}, \dot{\Ve}_n, T^{(k)}, \dots)
+  \Eeq
+  If $r_f^{(k)} < \text{tolerance}$ then 
+  go to step 5 else go to step 3.
+  \item Compute updated $\Delta\gamma^{(k+1)}$ using
+  \Beq
+    \Delta\gamma^{(k+1)} = \Delta\gamma^{(k)} + 
+      \frac{\MC^{(k)} \MA^{-1}_{(k)} \MR^{(k)} - r_f^{(k)}}{\MC^{(k)} \MA^{-1}_{(k)} \MB^{(k)}} \,.
+  \Eeq
+  \item Update variables:
+  \Beq
+    \Bal
+      \Bxi^{(k+1)} &= \Bxi^{\Trial} - \Delta\gamma^{k+1}[2\mu_n\,(\BM_\Tdev)^{(k+1)} +
+         (\Bh_\Tdev^{\beta})^{(k+1)}] \\
+      \Bbeta^{(k+1)} &= \Bbeta_n + (\Bh_\Tdev^{\beta})^{(k+1)} \\
+      (\Ve^p)^{(k+1)}  & = \Ve^p_{n} + \Delta\gamma^{(k+1)}~(h^{\alpha})^{(k+1)} \\
+      \phi^{(k+1)}  & = \phi_n + \Delta\gamma^{(k+1)}~(h^{\phi})^{(k+1)} \\
+      T^{(k+1)}  & = T_n + \Delta\gamma^{(k+1)}~(h^{T})^{(k+1)} \\
+    \Eal
+  \Eeq
+  Set $k \leftarrow k+1$ and go to step 2.
+  \item Update and calculate back stress and the deviatoric part of Cauchy stress:
+  \Beq
+    \Bbeta_{n+1} = \Bbeta^{(k)} ~;~~
+    \Ve^p_{n+1} = (\Ve^p)^{(k)} ~;~~
+    \phi_{n+1} = \phi^{(k)} ~;~~
+    \Bxi_{n+1} = \Bxi^{(k)} ~;~~
+    T_{n+1} = T^{(k)} ~;~~
+    \Delta\gamma_{n+1} = \Delta\gamma^{(k)}
+  \Eeq
+  and
+  \Beq
+    (\Bsig_\Tdev)_{n+1} = \Bxi_{n+1} + \Bbeta_{n+1} \,.
+  \Eeq
+  \item Update the Cauchy stress
+  \Beq
+    \Bal
+    p_{n+1} & = p(J_{n+1}) \\ 
+    \kappa_{n+1} & = J_{n+1}~\left[\Deriv{p(J)}{J}\right]_{n+1} \\
+    \Bsig_{n+1} & = \left[p_{n+1} -
+3~\kappa_{n+1}~\alpha~(T_{n+1}-T_0)\right]~\Bone + (\Bsig_\Tdev)_{n+1}
+    \Eal
+  \Eeq
+\end{enumerate}
+
+\section{Examples}
+Let us now look at a few examples.
+\subsection{Example 1}
+Consider the case of $J_2$ plasticity with the yield condition
+\Beq
+  f := \sqrt{\frac{3}{2}} \Norm{\Bsig_\Tdev-\Bbeta}{} - \sigma_y(\Ve^p, \dot{\Ve}, T, \dots) = 
+       \sqrt{\frac{3}{2}} \Norm{\Bxi}{} - \sigma_y(\Ve^p, \dot{\Ve}, T, \dots) \le 0 
+\Eeq
+where $\Norm{\Bxi} = \sqrt{\Bxi:\Bxi}$. Assume the associated flow rule
+\Beq
+  \BdT^p = \dot{\gamma}~\Br = \dot{\gamma}~\Partial{f}{\Bsig} = \dot{\gamma}~\Partial{f}{\Bxi} ~.
+\Eeq
+Then
+\Beq
+  \Br = \Partial{f}{\Bxi} = \sqrt{\frac{3}{2}}~\cfrac{\Bxi}{\Norm{\Bxi}{}} 
+\Eeq
+and
+\Beq
+  \BdT^p = \sqrt{\frac{3}{2}}~\dot{\gamma}~\cfrac{\Bxi}{\Norm{\Bxi}{}} ~;~~
+  \Norm{\BdT^p}{} = \sqrt{\frac{3}{2}}~\dot\gamma ~.
+\Eeq
+The evolution of the equivalent plastic strain is given by
+\Beq
+  \dot{\Ve^p} = \dot{\gamma}~h^{\alpha} = \sqrt{\cfrac{2}{3}}~\Norm{\BdT^p}{} = \dot{\gamma}~.
+\Eeq
+This definition is consistent with the definition of equivalent plastic strain
+\Beq
+  \Ve^p = \int_0^t \dot{\Ve}^p~d\tau = 
+   \int_0^t \sqrt{\cfrac{2}{3}}~\Norm{\BdT^p}{}~d\tau ~.
+\Eeq
+The evolution of porosity is given by (there is no evolution of porosity)
+\Beq
+  \dot{\phi} = \dot{\gamma}~h^{\phi} = 0
+\Eeq
+The evolution of the back stress is given by the Prager kinematic hardening rule
+\Beq
+  \dot{\widehat{\Bbeta}} = \dot{\gamma}~\Bh^{\beta} = \frac{2}{3}~H'~\BdT^p 
+\Eeq
+where $\widehat{\Bbeta}$ is the back stress and
+$H'$ is a constant hardening modulus.  Also, the trace of $\BdT^p$ is 
+\Beq
+  \Tr(\BdT^p) = \sqrt{\frac{3}{2}}~\dot{\gamma}~\cfrac{\Tr(\Bxi)}{\Norm{\Bxi}{}}~.
+\Eeq
+Since $\Bxi$ is deviatoric, $\Tr(\Bxi) = 0$ and hence $\BdT^p = \BdT_\Tdis^p$.
+Hence, $\widehat{\Bbeta} = \Bbeta$ (where $\Bbeta$ is the deviatoric part of $\widehat{\Bbeta}$), and
+\Beq
+  \dot{\Bbeta} = \sqrt{\frac{2}{3}}~H'~\dot{\gamma}~\cfrac{\Bxi}{\Norm{\Bxi}{}} ~.
+\Eeq
+
+These relation imply that
+\Beq
+  \boxed{
+  \Bal
+    \Br & = \sqrt{\frac{3}{2}}~\cfrac{\Bxi}{\Norm{\Bxi}{}} \\
+     h^{\alpha} & = 1 \\
+     h^{\phi} & = 0 \\
+    \Bh^{\beta} & = \sqrt{\frac{2}{3}}~H'~\cfrac{\Bxi}{\Norm{\Bxi}{}} ~.
+  \Eal
+  }
+\Eeq
+We also need some derivatives of the yield function.  These are
+\Beq
+  \Bal
+  \Partial{f}{\Bxi} & = \Br \\
+  \Partial{f}{\Ve^p} & = -\Partial{\sigma_y}{\Ve^p} \\
+  \Partial{f}{\phi} & = 0 ~.
+  \Eal
+\Eeq
+
+Let us change the kinematic hardening model and use the Armstrong-Frederick
+model instead, i.e.,
+\Beq
+  \dot{\Bbeta} = \dot{\gamma}~\Bh^{\beta} = \frac{2}{3}~H_1~\BdT^p - H_2~\Bbeta~\Norm{\BdT^p}{} ~.
+\Eeq
+Since
+\Beq
+  \BdT^p = \sqrt{\frac{3}{2}}~\dot{\gamma}~\cfrac{\Bxi}{\Norm{\Bxi}{}}
+\Eeq
+we have
+\Beq
+  \Norm{\BdT^p}{} = 
+   \sqrt{\frac{3}{2}}~\dot{\gamma}~\cfrac{\Norm{\Bxi}{}}{\Norm{\Bxi}{}} = 
+   \sqrt{\frac{3}{2}}~\dot{\gamma} ~.
+\Eeq
+Therefore,
+\Beq
+  \dot{\Bbeta} = \sqrt{\frac{2}{3}}~H_1~\dot{\gamma}~\cfrac{\Bxi}{\Norm{\Bxi}{}} 
+    - \sqrt{\frac{3}{2}}~H_2~\dot{\gamma}~\Bbeta ~.
+\Eeq
+Hence we have
+\Beq
+  \boxed{
+  \Bh^{\beta} = \sqrt{\frac{2}{3}}~H_1~\cfrac{\Bxi}{\Norm{\Bxi}{}} 
+    - \sqrt{\frac{3}{2}}~H_2~\Bbeta ~.
+   }
+\Eeq
+
+\subsection{Example 2}
+Let us now consider a Gurson type yield condition with kinematic hardening.  In this
+case the yield condition can be written as
+\Beq
+  f := \cfrac{3~\Bxi:\Bxi}{2~\sigma_y^2} + 
+     2~q_1~\phi^{*}~\cosh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)
+     - [1 + q_3~(\phi^*)^2]
+\Eeq
+where $\phi$ is the porosity and
+\Beq
+  \phi^* = \begin{cases}
+             \phi & \text{for}~ \phi \le \phi_c \\
+             \phi_c - \cfrac{\phi_u^* - \phi_c}{\phi_f - \phi_c}~(\phi - \phi_c) & 
+              \text{for}~ \phi > \phi_c
+           \end{cases}
+\Eeq
+Final fracture occurs for $\phi = \phi_f$ or when $\phi_u^* = 1/q_1$.  
+
+Let us use an associated flow rule
+\Beq
+  \BdT^p = \dot{\gamma}~\Br = \dot{\gamma}~\Partial{f}{\Bsig} ~.
+\Eeq
+Then
+\Beq
+  \Br = \Partial{f}{\Bsig} = \cfrac{3~\Bxi}{\sigma_y^2} + \cfrac{q_1~q_2~\phi^{*}}{\sigma_y}~
+   \sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)~\Bone ~.
+\Eeq
+In this case
+\Beq
+  \Tr(\Br) = \cfrac{3~q_1~q_2~\phi^{*}}{\sigma_y}~\sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)
+  \ne 0 
+\Eeq
+Therefore,
+\Beq
+  \BdT^p \ne \BdT_\Tdis^p ~.
+\Eeq
+
+For the evolution equation for the plastic strain we use
+\Beq
+  (\Bsig-\widehat{\Bbeta}):\BdT^p = (1 - \phi)~\sigma_y~\dot{\Ve}^p
+\Eeq
+where $\dot{\Ve}^p$ is the effective plastic strain rate in the matrix material.  Hence,
+\Beq
+  \dot{\Ve}^p = \dot{\gamma}~h^{\alpha}
+    = \dot{\gamma}~\cfrac{(\Bsig - \widehat{\Bbeta}):\Br}{(1 - \phi)~\sigma_y} ~.
+\Eeq
+
+The evolution equation for the porosity is given by
+\Beq
+  \dot{\phi} = (1 - \phi)~\Tr(\BdT^p) + A~\dot{\Ve^p}
+\Eeq
+where
+\Beq
+A = \cfrac{f_n}{s_n \sqrt{2\pi}} \exp [-1/2 (\Ve^p - \Ve_n)^2/s_n^2]
+\Eeq
+and $ f_n $ is the volume fraction of void nucleating particles, 
+$ \Ve_n $ is the mean of the normal distribution of nucleation strains, and 
+$ s_n $ is the standard deviation of the distribution.
+
+Therefore,
+\Beq
+  \dot{\phi} = \dot{\gamma}~h^{\phi} =
+    \dot{\gamma}~\left[(1 - \phi)~\Tr(\Br) + A~
+    \cfrac{(\Bsig - \widehat{\Bbeta}):\Br}{(1 - \phi)~\sigma_y}\right] ~.
+\Eeq
+
+If the evolution of the back stress is given by the Prager kinematic hardening rule
+\Beq
+  \dot{\widehat{\Bbeta}} = \dot{\gamma}~\Bh^{\beta} = \frac{2}{3}~H'~\BdT^p 
+\Eeq
+where $\widehat{\Bbeta}$ is the back stress, then
+\Beq
+  \dot{\widehat{\Bbeta}} = \frac{2}{3}~H'~\dot{\gamma}~\Br ~.
+\Eeq
+Alternatively, if we use the Armstrong-Frederick model, then
+\Beq
+  \dot{\widehat{\Bbeta}} = \dot{\gamma}~\Bh^{\beta} = 
+   \frac{2}{3}~H_1~\BdT^p - H_2~\widehat{\Bbeta}~\Norm{\BdT^p}{} ~.
+\Eeq
+Plugging in the expression for $\BdT^p$, we have
+\Beq
+  \dot{\widehat{\Bbeta}} = \dot{\gamma}~
+  \left[\frac{2}{3}~H_1~\Br - H_2~\widehat{\Bbeta}~\Norm{\Br}{}\right] ~.
+\Eeq
+Therefore, for this model,
+\Beq
+  \boxed{
+  \Bal
+  \Br & = \cfrac{3~\Bxi}{\sigma_y^2} + \cfrac{q_1~q_2~\phi^{*}}{\sigma_y}~
+   \sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)~\Bone  \\
+  h^{\alpha} &  
+    = \cfrac{(\Bsig - \Bbeta):\Br}{(1 - \phi)~\sigma_y} \\
+  h^{\phi} & = 
+    (1 - \phi)~\Tr(\Br) + A~
+    \cfrac{(\Bsig - \widehat{\Bbeta}):\Br}{(1 - \phi)~\sigma_y}  \\
+  \Bh^{\beta} & = 
+   \frac{2}{3}~H_1~\Br - H_2~\widehat{\Bbeta}~\Norm{\Br}{}
+  \Eal
+  }
+\Eeq
+The other derivatives of the yield function that we need are
+\Beq
+  \Bal
+  \Partial{f}{\Bxi} & = \cfrac{3~\Bxi}{\sigma_y^2} \\
+  \Partial{f}{\Ve^p} & = \Partial{f}{\sigma_y}~\Partial{\sigma_y}{\Ve^p} 
+   = -\left[\cfrac{3~\Bxi:\Bxi}{\sigma_y^3} +
+     \cfrac{q_1~q_2~\phi^*~\Tr(\Bsig)}{\sigma_y^2}~
+     \sinh\left(\cfrac{q_2~\Tr(\Bsig)}{2~\sigma_y}\right)\right]~
+     \Partial{\sigma_y}{\Ve^p}\\
+  \Partial{f}{\phi} & = 2~q_1~\Deriv{\phi^*}{\phi}~
+    \cosh\left(\cfrac{q_2~\Tr(\sigma)}{2~\sigma_y}\right) 
+    - 2~q_3~\phi^*~\Deriv{\phi^*}{\phi} ~.
+  \Eal
+\Eeq
+
+
+
+
+
+
+
+
+
+

@@ -40,26 +40,26 @@
 #include <Core/Exceptions/Exception.h>
 #include <string>
 
-#include <Core/Exceptions/share.h>
-
 namespace Uintah {
-  class SCISHARE PapiInitializationError : public Exception {
+class PapiInitializationError : public Exception
+{
 
-  public:
-    PapiInitializationError(const std::string&, const char* file, int line);
-    PapiInitializationError(const PapiInitializationError&);
-    virtual ~PapiInitializationError();
-    virtual const char* message() const;
-    virtual const char* type() const;
+public:
+  PapiInitializationError(const std::string&, const char* file, int line);
+  PapiInitializationError(const PapiInitializationError&);
+  virtual ~PapiInitializationError();
 
-  protected:
+  virtual const char*
+  message() const override;
+  virtual const char*
+  type() const override;
 
-  private:
-    std::string message_;
-    PapiInitializationError& operator=(const PapiInitializationError&);
-  };
+protected:
+private:
+  std::string message_;
+  PapiInitializationError&
+  operator=(const PapiInitializationError&);
+};
 } // End namespace Uintah
 
 #endif
-
-

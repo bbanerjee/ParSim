@@ -36,7 +36,7 @@
 #include <iostream>
 #include <string>
 
-using namespace std;
+
 using namespace Uintah;
 
 ShearStressModel*
@@ -44,16 +44,16 @@ ShearStressModelFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("shear_stress_model");
   if (!child) {
-    ostringstream msg;
-    msg << "No <shear_stress_model> tag in input file." << endl;
+     std::ostringstream msg;
+    msg << "No <shear_stress_model> tag in input file." << std::endl;
     throw ProblemSetupException(msg.str(), _FILE__, __LINE__);
   }
   string model_type;
   if (!child->getAttribute("type", model_type)) {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "No type has been specified for <shear_stress_model type=?> in "
            "input file."
-        << endl;
+        << std::endl;
     throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
   }
 
@@ -68,9 +68,9 @@ ShearStressModelFactory::create(ProblemSpecP& ps)
   else if (model_type == "borja")
     return (scinew BorjaHyperelasticShear(child));
   else {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "Unknown type in <shear_stress_model type=" << model_type
-        << "> in input file." << endl;
+        << "> in input file." << std::endl;
     throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
   }
 }
@@ -92,9 +92,9 @@ ShearStressModelFactory::createCopy(const ShearStressModel* smm)
     return (scinew BorjaHyperelasticShear(
       dynamic_cast<const BorjaHyperelasticShear*>(smm)));
   else {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "The type in <shear_stress_model type=" << model_type
-        << "> does not exist." << endl;
+        << "> does not exist." << std::endl;
     throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
   }
 }

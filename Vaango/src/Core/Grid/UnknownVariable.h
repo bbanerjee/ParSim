@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,9 +23,8 @@
  * IN THE SOFTWARE.
  */
 
-
 /*
- *  UnknownVariable.h: 
+ *  UnknownVariable.h:
  *
  *  Written by:
  *   Steven G. Parker
@@ -42,28 +42,43 @@
 
 namespace Uintah {
 
-  using Uintah::Exception;
+using Uintah::Exception;
 
-  class Level; 
-  class Patch;
+class Level;
+class Patch;
 
-  class UnknownVariable : public Exception {
-  public:
-    UnknownVariable(const std::string& varname, int dwid, const Patch* patch,
-                    int matlIndex, const std::string& extramsg, 
-                    const char* file, int line);
-    UnknownVariable(const std::string& varname, int dwid, const Level* level,
-                    int matlIndex, const std::string& extramsg,
-                    const char* file, int line);
-    UnknownVariable(const UnknownVariable&);
-    virtual ~UnknownVariable();
-    virtual const char* message() const;
-    virtual const char* type() const;
-  protected:
-  private:
-    std::string d_msg;
-    UnknownVariable& operator=(const UnknownVariable&);
-  };
+class UnknownVariable : public Exception
+{
+public:
+  UnknownVariable(const std::string& varname,
+                  int dwid,
+                  const Patch* patch,
+                  int matlIndex,
+                  const std::string& extramsg,
+                  const char* file,
+                  int line);
+  UnknownVariable(const std::string& varname,
+                  int dwid,
+                  const Level* level,
+                  int matlIndex,
+                  const std::string& extramsg,
+                  const char* file,
+                  int line);
+  UnknownVariable(const UnknownVariable&);
+  virtual ~UnknownVariable();
+
+  virtual const char*
+  message() const override;
+
+  virtual const char*
+  type() const override;
+
+protected:
+private:
+  std::string d_msg;
+  UnknownVariable&
+  operator=(const UnknownVariable&);
+};
 } // End namespace Uintah
 
 #endif

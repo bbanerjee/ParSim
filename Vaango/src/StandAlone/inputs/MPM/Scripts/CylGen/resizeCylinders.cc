@@ -43,7 +43,7 @@
 // Specification (ups) file.
 
 
-using namespace std;
+
 
 bool isCylInsideRVE(double partDia, double RVEsize,
                        double xCent, double yCent);
@@ -54,12 +54,12 @@ bool isCylCenterInsideRVE(double RVEsize,
 bool doesCylIntersectOthers(double partDia, vector<double> diaLocs,
                             double &gap,
                             double &xCent, double &yCent,
-                            vector<double> xLocs,
-                            vector<double> yLocs, int &i_this);
+                            std::vector<double> xLocs,
+                            std::vector<double> yLocs, int &i_this);
 
 void printCylLocs(vector<vector<double> > xLocs,
-                     vector<vector<double> > yLocs,
-                     vector<vector<double> > diaLocs,
+                     std::vector<vector<double> > yLocs,
+                     std::vector<vector<double> > diaLocs,
                      int n_bins, const double RVEsize, double diam_max);
 
 int main()
@@ -81,7 +81,7 @@ int main()
 
   // Part of optimizing the search for intersections
   int n_bins = RVEsize/diam_max;
-  cout << "n_bins = " << n_bins << endl;
+  std::cout << "n_bins = " << n_bins << std::endl;
 
   double bin_width = RVEsize/((double) n_bins);
 
@@ -89,15 +89,15 @@ int main()
 
   //Store the locations in n_bins separate vectors, so we have a smaller region
   //to search for intersections
-  vector<double> xLocs;
-  vector<double> yLocs;
-  vector<double> diaLocs;
+  std::vector<double> xLocs;
+  std::vector<double> yLocs;
+  std::vector<double> diaLocs;
 
   //Open file to receive cylinder descriptions
   string infile_name = "Position_Radius.txt";
   ifstream source(infile_name.c_str());
   if(!source){
-    cerr << "File " << infile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << infile_name << " can't be opened." << std::endl;
   }
   double x,y,r,d;
 
@@ -115,7 +115,7 @@ int main()
 
   double total_cyl_area_orig = 0.0;
   double total_cyl_area_new  = 0.0;
-  cout << xLocs.size() << endl;
+  std::cout << xLocs.size() << std::endl;
 
   int numInts=0;
   for(int i = 0;i<xLocs.size();i++){
@@ -140,15 +140,15 @@ int main()
     total_cyl_area_new+= 0.25*M_PI*(d*d);;
   }
 
-  cout << "numInts = " << numInts << endl;
-  cout << "Spheres out of RVE = " << outOfRVE << endl;
-  cout << "Total cylinder area orig = " << total_cyl_area_orig << endl;
-  cout << "Total cylinder area new  = " << total_cyl_area_new  << endl;
-  cout << "New Maximum Diameter = " << diam_max << endl;
+  std::cout << "numInts = " << numInts << std::endl;
+  std::cout << "Spheres out of RVE = " << outOfRVE << std::endl;
+  std::cout << "Total cylinder area orig = " << total_cyl_area_orig << std::endl;
+  std::cout << "Total cylinder area new  = " << total_cyl_area_new  << std::endl;
+  std::cout << "New Maximum Diameter = " << diam_max << std::endl;
 
-  vector<vector<double> > xbinLocs(n_bins);
-  vector<vector<double> > ybinLocs(n_bins);
-  vector<vector<double> > dbinLocs(n_bins);
+  std::vector<vector<double> > xbinLocs(n_bins);
+  std::vector<vector<double> > ybinLocs(n_bins);
+  std::vector<vector<double> > dbinLocs(n_bins);
 
   for(int i = 0; i<xLocs.size(); i++){
     int index = (xLocs[i]/RVEsize)*((double) n_bins);
@@ -193,8 +193,8 @@ bool isCylCenterInsideRVE(double RVEsize,
 bool doesCylIntersectOthers(double partDia, vector<double> diaLocs,
                             double &gap,
                             double &xCent, double &yCent,
-                            vector<double> xLocs,
-                            vector<double> yLocs, int &i_this)
+                            std::vector<double> xLocs,
+                            std::vector<double> yLocs, int &i_this)
 {
   for(unsigned int i = 0; i<xLocs.size(); i++){
    if(i!=i_this){
@@ -218,18 +218,18 @@ bool doesCylIntersectOthers(double partDia, vector<double> diaLocs,
 }
 
 void printCylLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
-                  vector<vector<double> > diaLocs,
+                  std::vector<vector<double> > diaLocs,
                   int n_bins, const double RVEsize, double diam_max)
 {
   //Open file to receive cyl descriptions
   string outfile_name = "Test2D.RS.xml";
   ofstream dest(outfile_name.c_str());
   if(!dest){
-    cerr << "File " << outfile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
   }
 
-  dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << endl;
-  dest << "<Uintah_Include>" << endl;
+  dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << std::endl;
+  dest << "<Uintah_Include>" << std::endl;
   dest << "<union>\n\n";
 
   int cylcount = 0;
@@ -244,12 +244,12 @@ void printCylLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
   }
 
   dest << "</union>\n\n";
-  dest << "</Uintah_Include>" << endl;
+  dest << "</Uintah_Include>" << std::endl;
 
   string outfile_name2 = "Position_Radius.RS.txt";
   ofstream dest2(outfile_name2.c_str());
   if(!dest2){
-    cerr << "File " << outfile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
   }
 
   dest2.precision(15);

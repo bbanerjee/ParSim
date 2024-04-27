@@ -89,7 +89,7 @@ using std::cerr;
 int
 main(int,char **)
 {
-    cerr << "This test not available\n";
+    std::cerr <<  "This test not available\n";
     return 0;
 }
 

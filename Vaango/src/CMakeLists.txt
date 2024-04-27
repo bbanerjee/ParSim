@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2014-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2014-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -42,11 +42,20 @@ cmake_minimum_required(VERSION 3.21.0 FATAL_ERROR)
 #----------------------------------------------------------------------------
 # C/C++ compiler 
 #----------------------------------------------------------------------------
+enable_language(C)
+enable_language(CXX)
+enable_language(Fortran)
+
 if (USE_CLANG)
   set(CMAKE_C_COMPILER "clang")
   set(CMAKE_CXX_COMPILER "clang++")
   set(CMAKE_Fortran_COMPILER "/usr/bin/gfortran")
 endif ()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
 #----------------------------------------------------------------------------
 # Set the project
@@ -223,24 +232,26 @@ endif(CXX_FLAGS)
 #------
 # For C++14
 #------
-if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall")
-elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++14 -Wall")
-elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -shared")
-endif ()
+#if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall")
+#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++14 -Wall")
+#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -shared")
+#endif ()
 
 #------
 # For C++17
 #------
-#if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
-#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=c++17 -Wall")
-#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -shared")
-#endif ()
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+  #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=c++17 -Wall -Wextra")
+  #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=c++17 -Wall -Wsuggest-override")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=c++17 -Wall")
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -shared")
+endif ()
 
 #SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
 #SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-rdynamic")
@@ -383,7 +394,7 @@ elseif(HAVE_XLF)
 elseif(HAVE_PGF77)
   set(F_LIBRARY pgftnrtl CACHE STRING "fortran library")
   find_library(F_LIBRARY NAMES pgftnrtl)
-  set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
+  set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
 elseif(HAVE_G77)
   set(F_LIBRARY g2c CACHE STRING "fortran library")
@@ -399,13 +410,13 @@ elseif(HAVE_ifort)
 elseif(HAVE_F77)
   # sgi needs ftn fortran
   #if(CMAKE_SYSTEM MATCHES "IRIX.*")
-  #set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
+  #set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
   # dec needs for Ufor
   #if(CMAKE_SYSTEM MATCHES "OSF.*")
   # find_library(F_LIBRARY NAMES ........)
-  #set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
-  set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
-  set(FORTRAN_LIBRARY "" CACHE string "fortran library")
+  #set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
+  set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
+  set(FORTRAN_LIBRARY "" CACHE STRING "fortran library")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
 else()
   message(FATAL_ERROR "Cannot find fortran library")
@@ -432,11 +443,15 @@ if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
   set(MPI_DIR "" CACHE PATH "Path to MPI")
   set(MPI_LIBRARY ${MPI_LIBRARIES})
+  set(DEF_MPI_CONST_WORKS "#define MPICONST const")
+  set(DEF_MPI_MAX_THREADS "#define MPI_MAX_THREADS 64")
+  set(DEF_MPI3_ENABLED "#define UINTAH_ENABLE_MPI3 false")
 else()
   message(STATUS "No mpi found")
   set(MPI_DIR "")
   set(MPI_LIBRARY "")
 endif()
+
 
 #----------------------------------------------------------------------------------
 # Find the LibXML2 package to use
@@ -626,6 +641,9 @@ if (HYPRE)
   find_package(HYPRE REQUIRED)
   set(HAVE_HYPRE "yes")
   set(DEF_HYPRE "#define HAVE_HYPRE 1")
+  set(DEF_HYPRE_VERSION_MAJOR "#define HYPRE_VERSION_MAJOR ${HYPRE_VERSION_MAJOR}")
+  set(DEF_HYPRE_VERSION_MINOR "#define HYPRE_VERSION_MINOR ${HYPRE_VERSION_MINOR}")
+  set(DEF_HYPRE_VERSION_PATCH "#define HYPRE_VERSION_PATCH ${HYPRE_VERSION_PATCH}")
 endif()
 
 #-----------------------------------------------------------------------------
@@ -676,16 +694,6 @@ endif()
 message(STATUS "STDC_HEADERS ${STDC_HEADERS}")
 
 #-----------------------------------------------------------------------------
-# Package info for config_defs.h
-#-----------------------------------------------------------------------------
-set(PACKAGE_BUGREPORT "")
-set(PACKAGE_NAME "Vaango")
-set(PACKAGE_STRING "Vaango 1.0")
-set(PACKAGE_TARNAME "vaango")
-set(PACKAGE_URL "")
-set(PACKAGE_VERSION "1.0")
-
-#-----------------------------------------------------------------------------
 # Check for location of hash_map for hashmap_defs.h
 #-----------------------------------------------------------------------------
 message(STATUS "Looking for hash_map")
@@ -698,7 +706,7 @@ int main() { std::unordered_map<int, int> xx; return 0; }
 if(DEF_HASHMAP)
   message(STATUS "C11 hash_map found")
   set(HAVE_HASHMAP "HAVE_C11_HASHMAP")
-  ADD_DEFINITIONS(-DHAVE_C11_HASHMAP)
+  add_definitions(-DHAVE_C11_HASHMAP)
 endif()
 
 if (HAVE_HASHMAP STREQUAL "None")
@@ -709,7 +717,7 @@ if (HAVE_HASHMAP STREQUAL "None")
   if(DEF_HASHMAP)
     message(STATUS "tr1/unordered_map compiles")
     set(HAVE_HASHMAP "HAVE_TR1_HASHMAP")
-    ADD_DEFINITIONS(-DHAVE_TR1_HASHMAP)
+    add_definitions(-DHAVE_TR1_HASHMAP)
   endif()
 endif()
 
@@ -722,7 +730,7 @@ if (HAVE_HASHMAP STREQUAL "None")
   if(DEF_HASHMAP)
     message(STATUS "__gnu_cxx ext/hash_map found")
     set(HAVE_HASHMAP "HAVE_GNU_HASHMAP")
-    ADD_DEFINITIONS(-DHAVE_GNU_HASHMAP)
+    add_definitions(-DHAVE_GNU_HASHMAP)
   endif()
 endif()
 
@@ -735,7 +743,7 @@ if (HAVE_HASHMAP STREQUAL "None")
   if(DEF_HASHMAP)
     message(STATUS "ext/hash_map found")
     set(HAVE_HASHMAP "HAVE_EXT_HASHMAP")
-    ADD_DEFINITIONS(-DHAVE_EXT_HASHMAP)
+    add_definitions(-DHAVE_EXT_HASHMAP)
   else()
     message(STATUS "ext/hash_map not found. Trying stdext/hash_map.")
     CHECK_CXX_SOURCE_COMPILES("
@@ -745,7 +753,7 @@ if (HAVE_HASHMAP STREQUAL "None")
     if(DEF_HASHMAP)
       message(STATUS "stdext/hash_map found")
       set(HAVE_HASHMAP "HAVE_STDEXT_HASHMAP")
-      ADD_DEFINITIONS(-DHAVE_STDEXT_HASHMAP)
+      add_definitions(-DHAVE_STDEXT_HASHMAP)
     else()
       message(STATUS "stdext/hash_map not found. Trying tr1/unordered_map.")
     endif()
@@ -803,6 +811,7 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/git_info.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/git_info.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/config_cmakedefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/config_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/audio_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/audio_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/babel_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/babel_defs.h)
@@ -828,6 +837,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/hypre_testdefs.h.in 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ieeefp_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/ieeefp_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/image_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/image_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/kepler_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/kepler_defs.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/kokkos_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/kokkos_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/lapack_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/lapack_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/loki_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/loki_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/malloc_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/malloc_defs.h)
@@ -836,6 +846,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/mpi_testdefs.h.in ${
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/osx_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/osx_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/papi_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/papi_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/petsc_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/petsc_defs.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/pidx_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/pidx_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ptolemy_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/ptolemy_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ruby_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/ruby_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/scisock_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/scisock_defs.h)
@@ -922,6 +933,17 @@ if (USE_CLANG)
   set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
   set(CMAKE_CXX_FLAGS "-std=c++11")
 endif ()
+
+#include(FetchContent)
+#FetchContent_Declare(
+#  googletest
+#  GIT_REPOSITORY https://github.com/google/googletest.git
+#  GIT_TAG release-1.12.1
+#)
+
+# For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+#FetchContent_MakeAvailable(googletest)
+
 add_subdirectory(submodules)
 

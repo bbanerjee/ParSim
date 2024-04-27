@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,22 +23,24 @@
  */
 
 
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
+#include <CCA/Components/ICE/Core/BoundaryCond.h>
 #include <CCA/Components/Models/HEChem/JWLpp.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+
 #include <CCA/Ports/Scheduler.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Grid/Variables/CellIterator.h>
-#include <Core/Grid/Variables/CCVariable.h>
+
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Material.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/Variables/CellIterator.h>
+#include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/ICELabel.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
-#include <CCA/Components/ICE/BoundaryCond.h>
-#include <iostream>
+#include <CCA/Components/ICE/Core/ICELabel.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Util/DebugStream.h>
+
+#include <iostream>
 
 using namespace Uintah;
 using namespace std;
@@ -50,12 +50,14 @@ using namespace std;
 static DebugStream cout_doing("MODELS_DOING_COUT", false);
 
 JWLpp::JWLpp(const ProcessorGroup* myworld, 
-             ProblemSpecP& params,
+             const MaterialManagerP& materialManager,
+             const ProblemSpecP& params,
              const ProblemSpecP& prob_spec)
-  : ModelInterface(myworld), d_params(params), d_prob_spec(prob_spec)
+  : HEChemModel(myworld, materialManager),
+    d_params(params), d_prob_spec(prob_spec)
 {
   mymatls = 0;
-  Ilb  = scinew ICELabel();
+  Ilb = scinew ICELabel();
   d_saveConservedVars = scinew saveConservedVars();
   
   //__________________________________
@@ -86,27 +88,25 @@ JWLpp::~JWLpp()
 }
 //______________________________________________________________________
 //
-void JWLpp::problemSetup(GridP&, SimulationStateP& sharedState, ModelSetup*)
+void JWLpp::problemSetup(GridP&,
+                          const bool isRestart)
 {
-  d_sharedState = sharedState;
-  bool defaultActive=true;
-  d_params->getWithDefault("Active",          d_active, defaultActive);
-  d_params->getWithDefault("ThresholdVolFrac",d_threshold_volFrac, 0.01);
+  ProblemSpecP JWL_ps = d_params->findBlock("JWLpp");
+
+  JWL_ps->getWithDefault("ThresholdVolFrac",d_threshold_volFrac, 0.01);
   
-  d_params->require("ThresholdPressure", d_threshold_pressure);
-  d_params->require("fromMaterial",fromMaterial);
-  d_params->require("toMaterial",  toMaterial);
-  d_params->require("G",    d_G);
-  d_params->require("b",    d_b);
-  d_params->require("E0",   d_E0);
-  d_params->require("rho0", d_rho0);
+  JWL_ps->require("ThresholdPressure", d_threshold_pressure);
+  JWL_ps->require("fromMaterial",fromMaterial);
+  JWL_ps->require("toMaterial",  toMaterial);
+  JWL_ps->require("G",    d_G);
+  JWL_ps->require("b",    d_b);
+  JWL_ps->require("E0",   d_E0);
+  JWL_ps->require("rho0", d_rho0);
 
   //__________________________________
   //  Are we saving the total burned mass and total burned energy
   ProblemSpecP DA_ps = d_prob_spec->findBlock("DataArchiver");
-  for (ProblemSpecP child = DA_ps->findBlock("save");
-       child != 0;
-       child = child->findNextBlock("save") ){
+  for (ProblemSpecP child = DA_ps->findBlock("save"); child != nullptr; child = child->findNextBlock("save") ){
     map<string,string> var_attr;
     child->getAttributes(var_attr);
     
@@ -118,57 +118,9 @@ void JWLpp::problemSetup(GridP&, SimulationStateP& sharedState, ModelSetup*)
     }
   }
   
-  if(d_active){
-    matl0 = sharedState->parseAndLookupMaterial(d_params, "fromMaterial");
-    matl1 = sharedState->parseAndLookupMaterial(d_params, "toMaterial");
+  matl0 = d_materialManager->parseAndLookupMaterial(JWL_ps, "fromMaterial");
+  matl1 = d_materialManager->parseAndLookupMaterial(JWL_ps, "toMaterial");
 
-    //__________________________________
-    //  define the materialSet
-    mymatls = scinew MaterialSet();
-
-    vector<int> m;
-    m.push_back(0);                       // needed for the pressure and NC_CCWeight
-    m.push_back(matl0->getDWIndex());
-    m.push_back(matl1->getDWIndex());
-
-    mymatls->addAll_unique(m);            // elimiate duplicate entries
-    mymatls->addReference(); 
-  }
-}
-//______________________________________________________________________
-//
-void JWLpp::outputProblemSpec(ProblemSpecP& ps)
-{
-  ProblemSpecP model_ps = ps->appendChild("Model");
-  model_ps->setAttribute("type","JWLpp");
-
-  model_ps->appendElement("Active",d_active);
-  model_ps->appendElement("ThresholdPressure",d_threshold_pressure);
-  model_ps->appendElement("ThresholdVolFrac", d_threshold_volFrac);
-  model_ps->appendElement("fromMaterial",fromMaterial);
-  model_ps->appendElement("toMaterial",toMaterial);
-  model_ps->appendElement("G",    d_G);
-  model_ps->appendElement("b",    d_b);
-  model_ps->appendElement("E0",   d_E0);
-  model_ps->appendElement("rho0", d_rho0);
-  
-}
-
-//______________________________________________________________________
-//
-void JWLpp::activateModel(GridP&, SimulationStateP& sharedState, ModelSetup*)
-{
-  d_active=true;
-#if 0
-  d_params->require("G",    d_G);
-  d_params->require("b",    d_b);
-  d_params->require("E0",   d_E0);
-  d_params->require("rho0", d_rho0);
-#endif
-
-  matl0 = sharedState->parseAndLookupMaterial(d_params, "fromMaterial");
-  matl1 = sharedState->parseAndLookupMaterial(d_params, "toMaterial");
- 
   //__________________________________
   //  define the materialSet
   mymatls = scinew MaterialSet();
@@ -181,20 +133,36 @@ void JWLpp::activateModel(GridP&, SimulationStateP& sharedState, ModelSetup*)
   mymatls->addAll_unique(m);            // elimiate duplicate entries
   mymatls->addReference(); 
 }
+//______________________________________________________________________
+//
+void JWLpp::outputProblemSpec(ProblemSpecP& ps)
+{
+  ProblemSpecP model_ps = ps->appendChild("Model");
+  model_ps->setAttribute("type","JWLpp");
+  ProblemSpecP JWL_ps = model_ps->appendChild("JWLpp");
+
+  JWL_ps->appendElement("ThresholdVolFrac",  d_threshold_volFrac);
+  JWL_ps->appendElement("ThresholdPressure", d_threshold_pressure);
+  JWL_ps->appendElement("fromMaterial",     fromMaterial);
+  JWL_ps->appendElement("toMaterial",       toMaterial);
+  JWL_ps->appendElement("G",    d_G);
+  JWL_ps->appendElement("b",    d_b);
+  JWL_ps->appendElement("E0",   d_E0);
+  JWL_ps->appendElement("rho0", d_rho0);
+  
+}
 
 //______________________________________________________________________
 //     
 void JWLpp::scheduleInitialize(SchedulerP&,
-                               const LevelP&,
-                               const ModelInfo*)
+                               const LevelP&)
 {
   // None necessary...
 }
 //______________________________________________________________________
 //      
 void JWLpp::scheduleComputeStableTimestep(SchedulerP&,
-                                          const LevelP&,
-                                          const ModelInfo*)
+                                          const LevelP&)
 {
   // None necessary...
 }
@@ -202,125 +170,53 @@ void JWLpp::scheduleComputeStableTimestep(SchedulerP&,
 //______________________________________________________________________
 //     
 void JWLpp::scheduleComputeModelSources(SchedulerP& sched,
-                                       const LevelP& level,
-                                       const ModelInfo* mi)
+                                       const LevelP& level)
 {
-  if(d_active){
-    Task* t = scinew Task("JWLpp::computeModelSources", this, 
-                          &JWLpp::computeModelSources, mi);
-    cout_doing << "JWLpp::scheduleComputeModelSources "<<  endl;  
-   
-    Ghost::GhostType  gn  = Ghost::None;
-    const MaterialSubset* react_matl = matl0->thisMaterial();
-    const MaterialSubset* prod_matl  = matl1->thisMaterial();
-    MaterialSubset* one_matl     = scinew MaterialSubset();
-    one_matl->add(0);
-    one_matl->addReference();
-    MaterialSubset* press_matl   = one_matl;
-  
-    t->requires(Task::OldDW, mi->delT_Label,         level.get_rep());
-    //__________________________________
-    // Products
-    t->requires(Task::NewDW,  Ilb->rho_CCLabel,      prod_matl, gn);
-  
-    //__________________________________
-    // Reactants
-    t->requires(Task::NewDW, Ilb->sp_vol_CCLabel,    react_matl, gn);
-    t->requires(Task::OldDW, Ilb->vel_CCLabel,       react_matl, gn);
-    t->requires(Task::OldDW, Ilb->temp_CCLabel,      react_matl, gn);
-    t->requires(Task::NewDW, Ilb->rho_CCLabel,       react_matl, gn);
-    t->requires(Task::NewDW, Ilb->vol_frac_CCLabel,  react_matl, gn);
+  Task* t = scinew Task("JWLpp::computeModelSources", this, 
+                        &JWLpp::computeModelSources);
+  cout_doing << "JWLpp::scheduleComputeModelSources "<<  endl;  
 
-    t->requires(Task::NewDW, Ilb->press_equil_CCLabel, press_matl,gn);
-    t->computes(reactedFractionLabel, react_matl);
-    t->computes(delFLabel,            react_matl);
+  Ghost::GhostType  gn  = Ghost::None;
+  const MaterialSubset* react_matl = matl0->thisMaterial();
+  const MaterialSubset* prod_matl  = matl1->thisMaterial();
+  MaterialSubset* one_matl     = scinew MaterialSubset();
+  one_matl->add(0);
+  one_matl->addReference();
+  MaterialSubset* press_matl   = one_matl;
 
-    t->modifies(mi->modelMass_srcLabel);
-    t->modifies(mi->modelMom_srcLabel);
-    t->modifies(mi->modelEng_srcLabel);
-    t->modifies(mi->modelVol_srcLabel); 
-    
-    if(d_saveConservedVars->mass ){
-      t->computes(JWLpp::totalMassBurnedLabel);
-    }
-    if(d_saveConservedVars->energy){
-      t->computes(JWLpp::totalHeatReleasedLabel);
-    } 
-    sched->addTask(t, level->eachPatch(), mymatls);
+  t->requires(Task::OldDW, Ilb->timeStepLabel );
+  t->requires(Task::OldDW, Ilb->delTLabel,         level.get_rep());
+  //__________________________________
+  // Products
+  t->requires(Task::NewDW,  Ilb->rho_CCLabel,      prod_matl, gn);
 
-    if (one_matl->removeReference())
-      delete one_matl;
+  //__________________________________
+  // Reactants
+  t->requires(Task::NewDW, Ilb->specificVolume_CCLabel,    react_matl, gn);
+  t->requires(Task::OldDW, Ilb->velocity_CCLabel,       react_matl, gn);
+  t->requires(Task::OldDW, Ilb->temperature_CCLabel,      react_matl, gn);
+  t->requires(Task::NewDW, Ilb->rho_CCLabel,       react_matl, gn);
+  t->requires(Task::NewDW, Ilb->vol_frac_CCLabel,  react_matl, gn);
+
+  t->requires(Task::NewDW, Ilb->press_equil_CCLabel, press_matl,gn);
+  t->computes(reactedFractionLabel, react_matl);
+  t->computes(delFLabel,            react_matl);
+
+  t->modifies(Ilb->modelMass_srcLabel);
+  t->modifies(Ilb->modelMom_srcLabel);
+  t->modifies(Ilb->modelEng_srcLabel);
+  t->modifies(Ilb->modelVol_srcLabel); 
+
+  if(d_saveConservedVars->mass ){
+    t->computes(JWLpp::totalMassBurnedLabel);
   }
-}
-//______________________________________________________________________
-//
-void JWLpp::scheduleCheckNeedAddMaterial(SchedulerP& sched,
-                                         const LevelP& level,
-                                         const ModelInfo* mi)
-{
-    Task* t = scinew Task("JWLpp::checkNeedAddMaterial", this, 
-                          &JWLpp::checkNeedAddMaterial, mi);
-    cout_doing << "JWLpp::scheduleCheckNeedAddMaterial "<<  endl;  
+  if(d_saveConservedVars->energy){
+    t->computes(JWLpp::totalHeatReleasedLabel);
+  } 
+  sched->addTask(t, level->eachPatch(), mymatls);
 
-    Ghost::GhostType  gn  = Ghost::None;
-
-    MaterialSet* one_matl     = scinew MaterialSet();
-    one_matl->add(0);
-    one_matl->addReference();
-
-    t->requires(Task::NewDW, Ilb->press_equil_CCLabel, one_matl->getUnion(),gn);
-    t->computes(Ilb->NeedAddIceMaterialLabel);
-
-    sched->addTask(t, level->eachPatch(), one_matl);
-
-    if (one_matl->removeReference())
-      delete one_matl;
-}
-
-//______________________________________________________________________
-//
-void
-JWLpp::checkNeedAddMaterial(const ProcessorGroup*,
-                            const PatchSubset* patches,
-                            const MaterialSubset*,
-                            DataWarehouse* /*old_dw*/,
-                            DataWarehouse* new_dw,
-                            const ModelInfo* /*mi*/)
-{
-  for(int p=0;p<patches->size();p++){
-    const Patch* patch = patches->get(p);  
-    
-    cout_doing << "Doing checkNeedAddMaterial on patch "<< patch->getID()
-               <<"\t\t\t\t  JWLpp" << endl;
-
-    Ghost::GhostType  gn  = Ghost::None;
-
-    constCCVariable<double> press_CC;
-    new_dw->get(press_CC,   Ilb->press_equil_CCLabel,0,  patch,gn, 0);
-
-    double need_add=0.;
-
-    if(!d_active){
-      bool add = false;
-      for (CellIterator iter = patch->getCellIterator();!iter.done();iter++){
-        IntVector c = *iter;
-        if (press_CC[c] > .9*d_threshold_pressure){
-          add = true;
-        }
-      }
-
-      if(add){
-        need_add=1.;
-      }
-      else{
-        need_add=0.;
-      }
-    }  //only add a new material once
-    else{
-      need_add=0.;
-    }
-    new_dw->put(sum_vartype(need_add),     Ilb->NeedAddIceMaterialLabel);
-  }
+  if (one_matl->removeReference())
+    delete one_matl;
 }
 //______________________________________________________________________
 //
@@ -328,12 +224,17 @@ void JWLpp::computeModelSources(const ProcessorGroup*,
                                 const PatchSubset* patches,
                                 const MaterialSubset*,
                                 DataWarehouse* old_dw,
-                                DataWarehouse* new_dw,
-                                const ModelInfo* mi)
+                                DataWarehouse* new_dw)
 {
-  delt_vartype delT;
   const Level* level = getLevel(patches);
-  old_dw->get(delT, mi->delT_Label, level);
+
+  timeStep_vartype timeStep;
+  old_dw->get(timeStep, Ilb->timeStepLabel );
+
+  bool isNotInitialTimestep = (timeStep > 0);
+
+  delt_vartype delT;
+  old_dw->get(delT, Ilb->delTLabel, level);
 
   int m0 = matl0->getDWIndex(); /* reactant material */
   int m1 = matl1->getDWIndex(); /* product material */
@@ -350,15 +251,15 @@ void JWLpp::computeModelSources(const ProcessorGroup*,
     CCVariable<double> energy_src_0, energy_src_1;
     CCVariable<double> sp_vol_src_0, sp_vol_src_1;
 
-    new_dw->getModifiable(mass_src_0,    mi->modelMass_srcLabel,  m0,patch);
-    new_dw->getModifiable(momentum_src_0,mi->modelMom_srcLabel,   m0,patch);
-    new_dw->getModifiable(energy_src_0,  mi->modelEng_srcLabel,   m0,patch);
-    new_dw->getModifiable(sp_vol_src_0,  mi->modelVol_srcLabel,   m0,patch);
+    new_dw->getModifiable(mass_src_0,    Ilb->modelMass_srcLabel,  m0,patch);
+    new_dw->getModifiable(momentum_src_0,Ilb->modelMom_srcLabel,   m0,patch);
+    new_dw->getModifiable(energy_src_0,  Ilb->modelEng_srcLabel,   m0,patch);
+    new_dw->getModifiable(sp_vol_src_0,  Ilb->modelVol_srcLabel,   m0,patch);
 
-    new_dw->getModifiable(mass_src_1,    mi->modelMass_srcLabel,  m1,patch);
-    new_dw->getModifiable(momentum_src_1,mi->modelMom_srcLabel,   m1,patch);
-    new_dw->getModifiable(energy_src_1,  mi->modelEng_srcLabel,   m1,patch);
-    new_dw->getModifiable(sp_vol_src_1,  mi->modelVol_srcLabel,   m1,patch);
+    new_dw->getModifiable(mass_src_1,    Ilb->modelMass_srcLabel,  m1,patch);
+    new_dw->getModifiable(momentum_src_1,Ilb->modelMom_srcLabel,   m1,patch);
+    new_dw->getModifiable(energy_src_1,  Ilb->modelEng_srcLabel,   m1,patch);
+    new_dw->getModifiable(sp_vol_src_1,  Ilb->modelVol_srcLabel,   m1,patch);
 
     constCCVariable<double> press_CC, cv_reactant,rctVolFrac;
     constCCVariable<double> rctTemp,rctRho,rctSpvol,prodRho;
@@ -372,10 +273,10 @@ void JWLpp::computeModelSources(const ProcessorGroup*,
    
     //__________________________________
     // Reactant data
-    old_dw->get(rctTemp,       Ilb->temp_CCLabel,      m0,patch,gn, 0); 
-    old_dw->get(rctvel_CC,     Ilb->vel_CCLabel,       m0,patch,gn, 0); 
+    old_dw->get(rctTemp,       Ilb->temperature_CCLabel,      m0,patch,gn, 0); 
+    old_dw->get(rctvel_CC,     Ilb->velocity_CCLabel,       m0,patch,gn, 0); 
     new_dw->get(rctRho,        Ilb->rho_CCLabel,       m0,patch,gn, 0); 
-    new_dw->get(rctSpvol,      Ilb->sp_vol_CCLabel,    m0,patch,gn, 0); 
+    new_dw->get(rctSpvol,      Ilb->specificVolume_CCLabel,    m0,patch,gn, 0); 
     new_dw->get(rctVolFrac,    Ilb->vol_frac_CCLabel,  m0,patch,gn, 0);
     new_dw->allocateAndPut(Fr,   reactedFractionLabel, m0,patch);
     new_dw->allocateAndPut(delF, delFLabel,            m0,patch);
@@ -392,8 +293,8 @@ void JWLpp::computeModelSources(const ProcessorGroup*,
 
     // Get the specific heat, this is the value from the input file
     double cv_rct = -1.0; 
-    MPMMaterial* mpm_matl = dynamic_cast<MPMMaterial *>(d_sharedState->getMaterial(m0));
-    ICEMaterial* ice_matl = dynamic_cast<ICEMaterial *>(d_sharedState->getMaterial(m0));
+    MPMMaterial* mpm_matl = dynamic_cast<MPMMaterial *>(d_materialManager->getMaterial(m0));
+    ICEMaterial* ice_matl = dynamic_cast<ICEMaterial *>(d_materialManager->getMaterial(m0));
     if(mpm_matl) {
       cv_rct = mpm_matl->getSpecificHeat();
     } else if(ice_matl){
@@ -401,14 +302,6 @@ void JWLpp::computeModelSources(const ProcessorGroup*,
     }
     for (CellIterator iter = patch->getCellIterator();!iter.done();iter++){
       IntVector c = *iter;
-
-      /*
-      if (c == IntVector(8,21,0)) {
-        std::cout << "hechem cell = " << c << " press_CC = " << press_CC[c] 
-                  << " vol_frac = " << rctVolFrac[c] << "\n";
-      }
-      */
-
       if (press_CC[c] > d_threshold_pressure && rctVolFrac[c] > d_threshold_volFrac){          
         //__________________________________
         // Insert Burn Model Here
@@ -445,17 +338,15 @@ void JWLpp::computeModelSources(const ProcessorGroup*,
         double createdVolx  = burnedMass * rctSpvol[c];
         sp_vol_src_0[c] -= createdVolx;
         sp_vol_src_1[c] += createdVolx;
-
-        //std::cout << "mass_src_0 = " << burnedMass << " energy_src_0 = " << energyX << "\n";
       }  // if (pressure)
     }  // cell iterator  
 
     //__________________________________
     //  set symetric BC
-    setBC(mass_src_0, "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(mass_src_1, "set_if_sym_BC",patch, d_sharedState, m1, new_dw);
-    setBC(delF,       "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
-    setBC(Fr,         "set_if_sym_BC",patch, d_sharedState, m0, new_dw);
+    setBC(mass_src_0, "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimestep);
+    setBC(mass_src_1, "set_if_sym_BC",patch, d_materialManager, m1, new_dw, isNotInitialTimestep);
+    setBC(delF,       "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimestep);
+    setBC(Fr,         "set_if_sym_BC",patch, d_materialManager, m0, new_dw, isNotInitialTimestep);
   }
   //__________________________________
   //save total quantities
@@ -465,33 +356,4 @@ void JWLpp::computeModelSources(const ProcessorGroup*,
   if(d_saveConservedVars->energy){
     new_dw->put(sum_vartype(totalHeatReleased), JWLpp::totalHeatReleasedLabel);
   }
-}
-//______________________________________________________________________
-//
-void JWLpp::scheduleModifyThermoTransportProperties(SchedulerP&,
-                                                    const LevelP&,
-                                                    const MaterialSet*)
-{
-  // do nothing      
-}
-void JWLpp::computeSpecificHeat(CCVariable<double>&,
-                                const Patch*,   
-                                DataWarehouse*, 
-                                const int)      
-{
-  //do nothing
-}
-//______________________________________________________________________
-//
-void JWLpp::scheduleErrorEstimate(const LevelP&,
-                                  SchedulerP&)
-{
-  // Not implemented yet
-}
-//__________________________________
-void JWLpp::scheduleTestConservation(SchedulerP&,
-                                     const PatchSet*,                      
-                                     const ModelInfo*)                     
-{
-  // Not implemented yet
 }

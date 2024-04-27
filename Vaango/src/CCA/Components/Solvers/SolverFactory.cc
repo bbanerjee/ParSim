@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,71 +23,67 @@
  * IN THE SOFTWARE.
  */
 
-#include <sci_defs/hypre_defs.h>
 #include <CCA/Components/Solvers/SolverFactory.h>
+
+#include <sci_defs/hypre_defs.h>
+
 #include <CCA/Components/Solvers/CGSolver.h>
-#include <CCA/Components/Solvers/DirectSolve.h>
 
 #ifdef HAVE_HYPRE
-#  include <CCA/Components/Solvers/HypreSolver.h>
+#include <CCA/Components/Solvers/HypreSolver.h>
 #endif
 
 #include <CCA/Components/Solvers/AMR/AMRSolver.h>
-#include <Core/Parallel/ProcessorGroup.h>
+
 #include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Parallel/ProcessorGroup.h>
+
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
 
-SolverInterface* SolverFactory::create(       ProblemSpecP   & ps,
-                                        const ProcessorGroup * world,
-                                        const string         & cmdline )
+std::shared_ptr<SolverInterface>
+SolverFactory::create(ProblemSpecP& ps,
+                      const ProcessorGroup* world,
+                      std::string solverName)
 {
-  string solver = "CGSolver";
-
-  if( cmdline == "" ) {
-    ProblemSpecP sol_ps = ps->findBlock( "Solver" );
-    if( sol_ps ) {
-      sol_ps->getAttribute( "type", solver );
+  if (solverName == "") {
+    ProblemSpecP sol_ps = ps->findBlock("Solver");
+    if (sol_ps) {
+      sol_ps->getAttribute("type", solverName);
+    } else {
+      solverName = "CGSolver";
     }
   }
-  else {
-    solver = cmdline;
-  }
 
-  SolverInterface* solve = 0;
+  proc0cout << "Linear Solver: \t\t" << solverName << std::endl;
 
-  if( solver == "CGSolver" ) {
-    solve = scinew CGSolver(world);
-  }
-  else if (solver == "direct" || solver == "DirectSolver") {
-    solve = scinew DirectSolve(world);
-  }
-  else if (solver == "HypreSolver" || solver == "hypre") {
+  if (solverName == "CGSolver") {
+    return std::make_shared<CGSolver>(world);
+  } else if (solverName == "HypreSolver" || solverName == "hypre") {
 #if HAVE_HYPRE
-    solve = scinew HypreSolver2(world);
+    return std::make_shared<HypreSolver2>(world);
 #else
-    ostringstream msg;
-    msg << "Hypre solver not available, Hypre was not configured.\n";
-    throw ProblemSetupException( msg.str(), __FILE__, __LINE__ );
+    std::ostringstream msg;
+    msg << "\nERROR<Solver>: Hypre solver not available, Hypre was not "
+           "configured.\n";
+    throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
 #endif
-  }
-  else if (solver == "AMRSolver" || solver == "hypreamr") {
+  } else if (solverName == "AMRSolver" || solverName == "hypreamr") {
 #if HAVE_HYPRE
-    solve = scinew AMRSolver(world);
+    return std::make_shared<AMRSolver>(world);
 #else
-    ostringstream msg;
-    msg << "Hypre 1.9.0b solver not available, Hypre not configured.\n";
-    throw ProblemSetupException( msg.str(), __FILE__, __LINE__ );
+    std::ostringstream msg;
+    msg << "\nERROR<Solver>: Hypre 1.9.0b solver not available, Hypre not "
+           "configured.\n";
+    throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
 #endif
-  }
-  else {
-    ostringstream msg;
-    msg << "\nERROR: Unknown solver (" << solver
-        << ") Valid Solvers: CGSolver, DirectSolver, HypreSolver, AMRSolver, hypreamr \n";
-    throw ProblemSetupException( msg.str(), __FILE__, __LINE__ );
+  } else {
+    std::ostringstream msg;
+    msg << "\nERROR<Solver>: Unknown solver (" << solverName
+        << ") Valid Solvers: CGSolver, HypreSolver, AMRSolver, hypreamr \n";
+    throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
   }
 
-  return solve;
+  return nullptr;
 }

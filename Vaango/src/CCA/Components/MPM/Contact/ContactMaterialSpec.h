@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,7 +37,6 @@
 #include <vector>
 
 namespace Uintah {
-using namespace Uintah;
 
 /**************************************
 
@@ -88,38 +87,44 @@ class ContactMaterialSpec
 
 public:
   // Constructor
-  ContactMaterialSpec() {}
+  ContactMaterialSpec() = default;
 
   // contructor using contact block
   ContactMaterialSpec(ProblemSpecP& ps);
 
-  void outputProblemSpec(ProblemSpecP& ps);
+  void
+  outputProblemSpec(ProblemSpecP& ps);
 
   // require this material to apply contact
-  void add(unsigned int matlIndex);
+  void
+  add(unsigned int matlIndex);
 
   // is this material used
-  bool requested(int imat) const
+  bool
+  requested(int imat) const
   {
-    if (d_matls.size() == 0)
+    if (d_matls.size() == 0) {
       return true; // everything by default
-    if ((int)d_matls.size() <= imat)
+    }
+    if ((int)d_matls.size() <= imat) {
       return false;
+    }
     return d_matls[imat];
   }
 
   //  does this cell have the requested materials
-  bool present(const std::vector<constNCVariable<double>>& gmass,
-               IntVector c) const
+  bool
+  present(const std::vector<constNCVariable<double>>& gMass, IntVector c) const
   {
     static const double EPSILON = 1.e-14;
 
-    size_t numMats = gmass.size();
-    if (numMats > d_matls.size())
+    size_t numMats = gMass.size();
+    if (numMats > d_matls.size()) {
       numMats = d_matls.size();
+    }
 
     for (unsigned int imat = 0; imat < numMats; imat++) {
-      if (d_matls[imat] && fabs(gmass[imat][c]) < EPSILON) {
+      if (d_matls[imat] && fabs(gMass[imat][c]) < EPSILON) {
         // required material not present, dont apply this bc
         return false;
       }
@@ -128,8 +133,12 @@ public:
   }
 
 private:
-  ContactMaterialSpec(const ContactMaterialSpec&);
-  ContactMaterialSpec& operator=(const ContactMaterialSpec&);
+  ContactMaterialSpec(const ContactMaterialSpec&) = delete;
+  ContactMaterialSpec(ContactMaterialSpec&&)      = delete;
+  ContactMaterialSpec&
+  operator=(const ContactMaterialSpec&) = delete;
+  ContactMaterialSpec&
+  operator=(ContactMaterialSpec&&) = delete;
 
 protected: // data
   // is each material required

@@ -59,7 +59,7 @@ using namespace std;
 
 static string _rngtxt(double v1, double v2)
 {
-  ostringstream b;
+   std::ostringstream b;
   b << "(" 
     << setw(12) << setprecision(6) << v1 << ","
     << setw(12) << setprecision(6) << v2 << ")";
@@ -101,16 +101,16 @@ namespace Uintah {
   InfoDumper::Step::storeField(string fieldname, const Uintah::TypeDescription * td)
   {
     if(!fselect_.wantField(fieldname)) return;
-    cout << "  " << fieldname << endl;
+    std::cout << "  " << fieldname << endl;
     
     GridP grid = da_->queryGrid(index_);
 
     // need to count materials before we start, since we want material loop outside
     // of patch loop
-    vector<int> mats;
+    std::vector<int> mats;
     for(int l=0;l<=0;l++) {
       LevelP level = grid->getLevel(l);
-      for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+      for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
         const Patch* patch = *iter;
         ConsecutiveRangeSet matls= da_->queryMaterials(fieldname, patch, index_);
         for(ConsecutiveRangeSet::iterator matlIter = matls.begin();matlIter != matls.end(); matlIter++) {
@@ -122,7 +122,7 @@ namespace Uintah {
     }
     
     TensorDiag const * tensor_preop = createTensorOp(fselect_);
-    list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, fselect_, tensor_preop);
+     std::list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, fselect_, tensor_preop);
     for(list<ScalarDiag const *>::const_iterator diagit(scalardiaggens.begin());
         diagit!=scalardiaggens.end();diagit++) 
       {
@@ -153,10 +153,10 @@ namespace Uintah {
           double mat_sumval   =0.;
           double mat_valcount =0.;
           
-          for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+          for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
             const Patch* patch = *iter;
             
-            if(td->getType()==Uintah::TypeDescription::CCVariable) {
+            if(td->getType()==Uintah::TypeDescription::Type::CCVariable) {
               
               CCVariable<double> svals;
               (**diagit)(da_, patch, fieldname, matl, index_, svals);
@@ -174,7 +174,7 @@ namespace Uintah {
                 
                 sumdiffsq += pow(val-avgval, 2.0);
               }
-            } else if(td->getType()==Uintah::TypeDescription::NCVariable) {
+            } else if(td->getType()==Uintah::TypeDescription::Type::NCVariable) {
               
               NCVariable<double> svals;
               (**diagit)(da_, patch, fieldname, matl, index_, svals);
@@ -192,7 +192,7 @@ namespace Uintah {
                 
                 sumdiffsq += pow(val-avgval, 2.0);
               }
-            } else if (td->getType()==Uintah::TypeDescription::ParticleVariable) {
+            } else if (td->getType()==Uintah::TypeDescription::Type::ParticleVariable) {
               ParticleVariable<Point> posns;
               da_->query(posns, "p.x", matl, patch, index_);
               ParticleSubset* pset = posns.getParticleSubset();
@@ -221,7 +221,7 @@ namespace Uintah {
           
           // may want more column formatted output here ...
           if(opts_.showeachmat && ipass==1) {
-            cout << "      " << (*diagit)->name() <<  " mat " << matl << ", "
+            std::cout << "      " << (*diagit)->name() <<  " mat " << matl << ", "
                  << "range = " << _rngtxt(mat_minval,mat_maxval) << ", "
                  << "absolute range = " << _rngtxt(mat_minabsval,mat_maxabsval) << ", "
                  << "average = " << mat_sumval/mat_valcount
@@ -245,7 +245,7 @@ namespace Uintah {
         if(ipass==0)
           avgval = sumval/valcount;
         else
-          cout << "      " << (*diagit)->name() << ",       "
+          std::cout << "      " << (*diagit)->name() << ",       "
                << "range = " << _rngtxt(minval,maxval) << ", "
                << "absolute range = " << _rngtxt(minabsval,maxabsval) << ", "
                << "average = " << sumval/valcount << ", "

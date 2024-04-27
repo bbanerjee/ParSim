@@ -59,9 +59,9 @@ SET(Vaango_Core_Malloc_SRCS
   new.cc
 )
 
-ADD_LIBRARY(Vaango_Core_Malloc ${Vaango_Core_Malloc_SRCS})
+add_library(Vaango_Core_Malloc ${Vaango_Core_Malloc_SRCS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Malloc)
+  add_definitions(-DBUILD_Vaango_Core_Malloc)
 ENDIF(BUILD_SHARED_LIBS)
 

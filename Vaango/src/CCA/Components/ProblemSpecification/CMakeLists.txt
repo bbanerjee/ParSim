@@ -56,9 +56,9 @@ SET(Vaango_CCA_Components_ProblemSpecification_SRCS
   ProblemSpecReader.cc
 )
 
-ADD_LIBRARY(Vaango_CCA_Components_ProblemSpecification ${Vaango_CCA_Components_ProblemSpecification_SRCS})
+add_library(Vaango_CCA_Components_ProblemSpecification ${Vaango_CCA_Components_ProblemSpecification_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_ProblemSpecification
+target_link_libraries(Vaango_CCA_Components_ProblemSpecification
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
   Vaango_Core_Grid
@@ -69,5 +69,5 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_ProblemSpecification
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_ProblemSpecification)
+  add_definitions(-DBUILD_Vaango_CCA_Components_ProblemSpecification)
 ENDIF(BUILD_SHARED_LIBS)

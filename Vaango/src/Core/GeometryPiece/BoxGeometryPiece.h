@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -33,94 +33,101 @@
 namespace Uintah {
 
 /**************************************
-	
+
 CLASS
    BoxGeometryPiece
-	
+
    Creates a box from the xml input file description.
-	
+
 GENERAL INFORMATION
-	
+
    BoxGeometryPiece.h
-	
+
    John A. Schmidt
    Department of Mechanical Engineering
    University of Utah
-	
+
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-	
- 
-	
+
+
+
 KEYWORDS
    BoxGeometryPiece BoundingBox inside
-	
+
 DESCRIPTION
    Creates a box from the xml input file description.
-   Requires two inputs: lower left point and upper right point.  
+   Requires two inputs: lower left point and upper right point.
    There are methods for checking if a point is inside the box
    and also for determining the bounding box for the box (which
    just returns the box itself).
    The input form looks like this:
        <box>
          <min>[0.,0.,0.]</min>
-	 <max>[1.,1.,1.]</max>
+         <max>[1.,1.,1.]</max>
        </box>
-	
-	
+
+
 WARNING
-	
+
 ****************************************/
 
+class BoxGeometryPiece : public GeometryPiece {
+ public:
+  //////////
+  // Constructor that takes a ProblemSpecP argument.   It reads the xml
+  // input specification and builds a generalized box.
+  BoxGeometryPiece(ProblemSpecP&);
 
-      class BoxGeometryPiece : public GeometryPiece {
-	 
-      public:
-	 //////////
-	 // Constructor that takes a ProblemSpecP argument.   It reads the xml 
-	 // input specification and builds a generalized box.
-	 BoxGeometryPiece(ProblemSpecP&);
+  //////////
+  // Construct a box from a min/max point
+  BoxGeometryPiece(const Point& p1, const Point& p2);
 
-	 //////////
-	 // Construct a box from a min/max point
-	 BoxGeometryPiece(const Point& p1, const Point& p2);
-	 
-	 //////////
-	 // Destructor
-	 virtual ~BoxGeometryPiece();
+  //////////
+  // Destructor
+  virtual ~BoxGeometryPiece() = default;
 
-         static const string TYPE_NAME;
-         virtual std::string getType() const { return TYPE_NAME; }
+  static const string TYPE_NAME;
+  virtual std::string
+  getType() const {
+    return TYPE_NAME;
+  }
 
-	 /// Make a clone
-	 virtual GeometryPieceP clone() const;
+  /// Make a clone
+  virtual GeometryPieceP
+  clone() const;
 
-	 //////////
-	 // Determines whether a point is inside the box.
-	 virtual bool inside(const Point &p) const;
-	 
-	 //////////
-	 //  Returns the bounding box surrounding the box (ie, the box itself).
-	 virtual Box getBoundingBox() const;
-	 
-	 //////////
-	 //  Returns the volume of the box
-	 double volume() const;
+  //////////
+  // Determines whether a point is inside the box.
+  virtual bool
+  inside(const Point& p) const;
 
-	 //////////
-	 //  Returns the length pf the smallest side
-	 double smallestSide() const;
+  //////////
+  //  Returns the bounding box surrounding the box (ie, the box itself).
+  virtual Box
+  getBoundingBox() const;
 
-	 //////////
-	 //  Returns the thickness direction (direction
-	 //  of smallest side)
-	 unsigned int thicknessDirection() const;
+  //////////
+  //  Returns the volume of the box
+  double
+  volume() const;
 
-      private:
-         virtual void outputHelper( ProblemSpecP & ps ) const;
+  //////////
+  //  Returns the length pf the smallest side
+  double
+  smallestSide() const;
 
-	 Box d_box;
-	 
-      };
-} // End namespace Uintah
+  //////////
+  //  Returns the thickness direction (direction
+  //  of smallest side)
+  unsigned int
+  thicknessDirection() const;
 
-#endif // __BOX_GEOMTRY_Piece_H__
+ private:
+  virtual void
+  outputHelper(ProblemSpecP& ps) const;
+
+  Box d_box;
+};
+}  // End namespace Uintah
+
+#endif  // __BOX_GEOMTRY_Piece_H__

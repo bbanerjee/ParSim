@@ -1,9 +1,12 @@
+#ifndef __CORE_DISCLOSURE_TYPE_DESCRIPTION_H__
+#define __CORE_DISCLOSURE_TYPE_DESCRIPTION_H__
+
 /*
  * The MIT License
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,51 +27,18 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_HOMEBREW_TypeDescription_H
-#define UINTAH_HOMEBREW_TypeDescription_H
-
-#include   <string>
-
-#include <sci_defs/mpi_defs.h> // For MPIPP_H on SGI
-
+#include <Core/Parallel/UintahMPI.h>
+#include <string>
 
 namespace Uintah {
 
-using std::string;
-
 class Variable;
 
-/**************************************
-     
-     CLASS
-       TypeDescription
-      
-       Short Description...
-      
-     GENERAL INFORMATION
-      
-       TypeDescription.h
-      
-       Steven G. Parker
-       Department of Computer Science
-       University of Utah
-      
-       Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-      
-      
-     KEYWORDS
-       TypeDescription
-      
-     DESCRIPTION
-       Long description...
-      
-     WARNING
-      
-****************************************/
-    
-class TypeDescription {
+class TypeDescription
+{
 public:
-  enum Type {
+  enum class Type
+  {
     CCVariable,
     NCVariable,
     SFCXVariable,
@@ -88,78 +58,91 @@ public:
     short_int_type,
     long_type,
     long64_type,
-    Short27,   // for Fracture
+    Short27, // for Fracture
     Int130,
     Stencil4,
     Stencil7,
-    NeighborList, // for Peridynamics
-    NeighborConnectivity, // for Peridynamics
-    NeighborBondEnergy, // for Peridynamics
+    NeighborList,              // for Peridynamics
+    NeighborConnectivity,      // for Peridynamics
+    NeighborBondEnergy,        // for Peridynamics
     NeighborBondInternalForce, // for Peridynamics
-    //MetalIntvar,
-    //ArenaIntvar,
-    //BorjaIntvar,
-    //SoilBrannonIntvar,
-    //TabularCapIntvar,
+    MetalIntvar,
+    ArenaIntvar,
+    BorjaIntvar,
+    SoilBrannonIntvar,
+    TabularCapIntvar,
+    IntVector,
     Unknown,
     Other
   };
 
-  TypeDescription(Type type, const string& name,
-                  bool isFlat, MPI_Datatype (*make_mpitype)());
-  TypeDescription(Type type, const string& name,
-                  bool isFlat, MPI_Datatype mpitype);
-  TypeDescription(Type type, const string& name,
-                  Variable* (*maker)(),
+  static std::string toString(const Type& type);
+
+  TypeDescription(Type type, const std::string& name, bool isFlat,
+                  MPI_Datatype (*make_mpitype)());
+  TypeDescription(Type type, const std::string& name, bool isFlat,
+                  MPI_Datatype mpitype);
+  TypeDescription(Type type, const std::string& name, Variable* (*maker)(),
                   const TypeDescription* subtype);
-     
-  bool isReductionVariable() const {
-    return d_type == ReductionVariable;
-  }
-  Type getType() const {
-    return d_type;
-  }
-  const TypeDescription* getSubType() const {
-    return d_subtype;
-  }
-  string getName() const;
-  string getFileName() const;
+  ~TypeDescription(){};
 
-  bool isFlat() const {
-    return d_isFlat;
-  }
+  TypeDescription(const TypeDescription&) = delete;
+  TypeDescription& operator=(const TypeDescription&) = delete;
+  TypeDescription(TypeDescription&&) = delete;
+  TypeDescription& operator=(TypeDescription&&) = delete;
 
-  MPI_Datatype getMPIType() const;
+  std::string getName() const;
+  std::string getFileName() const;
 
-  struct  Register {
-    Register(const TypeDescription*);
-    ~Register();
-  };
-  static const TypeDescription* lookupType(const string&);
+  static const TypeDescription* lookupType(const std::string&);
 
   Variable* createInstance() const;
 
-  ~TypeDescription();
-
   static void deleteAll();
-     
+
+  bool isReductionVariable() const { return d_type == Type::ReductionVariable; }
+  Type getType() const { return d_type; }
+  const TypeDescription* getSubType() const { return d_subtype; }
+
+  bool isFlat() const { return d_isFlat; }
+
+  MPI_Datatype getMPIType() const;
+
+  // Our main variables (CCVariables, etc) create a static variable of
+  // this type.  This is used to 'register' the variable type (eg:
+  // NCVariable<int>) with the TypeDescription system when the Variable classes
+  // are originally loaded (usually at program start up).
+  struct Register
+  {
+    Register(const TypeDescription*)
+    {
+      // Actual registration of Variable Type happens when the 'td' variable is
+      // originally created.
+    }
+    ~Register(){};
+  };
+
+  // These are for uniquely identifying the Uintah::CrowdMonitors<Tag>
+  // used to protect multi-threaded access to global data structures
+  struct register_tag
+  {}; // used in register_type()
+  struct lookup_tag
+  {}; // used in lookup_type()
+
 private:
-  Type d_type;
-  const TypeDescription* d_subtype;
-  string d_name;
-  bool d_isFlat;
-  mutable MPI_Datatype d_mpitype;
-  MPI_Datatype (*d_mpitypemaker)();
-  Variable* (*d_maker)();
-
-  TypeDescription(const TypeDescription&);
-  TypeDescription& operator=(const TypeDescription&);
-
   void register_type();
+
+private:
+  Type d_type{};
+  const TypeDescription* d_subtype{ nullptr };
+  std::string d_name{};
+  bool d_isFlat{ false };
+  mutable MPI_Datatype d_mpitype{};
+
+  MPI_Datatype (*d_mpitypemaker)(){ nullptr };
+  Variable* (*d_maker)(){ nullptr };
 };
 
 } // End namespace Uintah
 
-
-#endif
-
+#endif //__CORE_DISCLOSURE_TYPE_DESCRIPTION_H__

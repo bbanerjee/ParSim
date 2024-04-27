@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,36 +37,59 @@ class CompositeContact : public Contact
 {
 public:
   // Constructor
-  CompositeContact(const ProcessorGroup* myworld, MPMLabel* Mlb,
-                   MPMFlags* MFlag);
-  virtual ~CompositeContact();
+  CompositeContact(const ProcessorGroup* myworld,
+                   const MPMLabel* labels,
+                   const MPMFlags* flags,
+                   ProblemSpecP& ps);
+  virtual ~CompositeContact() = default;
 
-  void outputProblemSpec(ProblemSpecP& ps) override;
+  CompositeContact(const CompositeContact&) = delete;
+  CompositeContact(CompositeContact&&)      = delete;
+  CompositeContact&
+  operator=(const CompositeContact&) = delete;
+  CompositeContact&
+  operator=(CompositeContact&&) = delete;
+
+  virtual void
+  setContactMaterialAttributes() override;
+
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
   // memory deleted on destruction of composite
-  void add(Contact* m);
+  void
+  add(std::unique_ptr<Contact> m);
 
   // how many
-  size_t size() const { return d_m.size(); }
+  size_t
+  size() const
+  {
+    return d_m.size();
+  }
 
-  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
-                        const MaterialSubset* matls, DataWarehouse* old_dw,
-                        DataWarehouse* new_dw, const VarLabel* label) override;
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
 
-  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
-                              const MaterialSet* matls,
-                              const VarLabel* label) override;
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
 
-  void initFriction(const ProcessorGroup*, const PatchSubset*,
-                    const MaterialSubset* matls, DataWarehouse*,
-                    DataWarehouse* new_dw);
-
-private: // hide
-  CompositeContact(const CompositeContact&);
-  CompositeContact& operator=(const CompositeContact&);
+  void
+  initFriction(const ProcessorGroup*,
+               const PatchSubset*,
+               const MaterialSubset* matls,
+               DataWarehouse*,
+               DataWarehouse* new_dw);
 
 protected: // data
-  std::list<Contact*> d_m;
+  std::list<std::unique_ptr<Contact>> d_m;
 };
 
 } // End namespace Uintah

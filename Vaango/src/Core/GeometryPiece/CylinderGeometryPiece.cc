@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,158 +24,149 @@
  * IN THE SOFTWARE.
  */
 
+#include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Geometry/Vector.h>
 #include <Core/GeometryPiece/CylinderGeometryPiece.h>
 #include <Core/Grid/Box.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Exceptions/ProblemSetupException.h>
-
 #include <Core/Malloc/Allocator.h>
-#include <Core/Geometry/Vector.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
-using namespace Uintah;
+#include <memory>
+
+namespace Uintah {
 
 const string CylinderGeometryPiece::TYPE_NAME = "cylinder";
 
-CylinderGeometryPiece::CylinderGeometryPiece() 
-{
-  name_ = "Unnamed " + TYPE_NAME + " from BasicCtor";
+CylinderGeometryPiece::CylinderGeometryPiece() {
+  d_name = "Unnamed " + TYPE_NAME + " from BasicCtor";
 
   Point top, bottom;
-  d_bottom = bottom;
-  d_top = top;
-  d_radius = 0.0;
-  d_cylinder_end=false;
-  d_axisymmetric_end=false;
-  d_axisymmetric_side=false;
+  d_bottom            = bottom;
+  d_top               = top;
+  d_radius            = 0.0;
+  d_cylinder_end      = false;
+  d_axisymmetric_end  = false;
+  d_axisymmetric_side = false;
 }
 
-CylinderGeometryPiece::CylinderGeometryPiece(ProblemSpecP& ps) 
-{
-  name_ = "Unnamed " + TYPE_NAME + " from PS";
-  Point top,bottom;
+CylinderGeometryPiece::CylinderGeometryPiece(ProblemSpecP& ps) {
+  d_name = "Unnamed " + TYPE_NAME + " from PS";
+  Point top, bottom;
   double rad;
-  
-  ps->require("bottom",bottom);
-  ps->require("top",top);
-  ps->require("radius",rad);
-  ps->getWithDefault("cylinder_end",     d_cylinder_end,      false);
-  ps->getWithDefault("axisymmetric_end", d_axisymmetric_end,  false);
-  ps->getWithDefault("axisymmetric_side",d_axisymmetric_side, false);
-  
+
+  ps->require("bottom", bottom);
+  ps->require("top", top);
+  ps->require("radius", rad);
+  ps->getWithDefault("cylinder_end", d_cylinder_end, false);
+  ps->getWithDefault("axisymmetric_end", d_axisymmetric_end, false);
+  ps->getWithDefault("axisymmetric_side", d_axisymmetric_side, false);
+
   double near_zero = 1e-100;
-  Vector axis = top - bottom;
-  
-  if ( axis.length()  < near_zero ) {
-    SCI_THROW(ProblemSetupException("Input File Error: Cylinder axes has zero length", __FILE__, __LINE__));
+  Vector axis      = top - bottom;
+
+  if (axis.length() < near_zero) {
+    SCI_THROW(ProblemSetupException(
+        "Input File Error: Cylinder axes has zero length", __FILE__, __LINE__));
   }
-  if ( rad <= 0.0) {
-    SCI_THROW(ProblemSetupException("Input File Error: Cylinder radius must be > 0.0", __FILE__, __LINE__));
+  if (rad <= 0.0) {
+    SCI_THROW(ProblemSetupException(
+        "Input File Error: Cylinder radius must be > 0.0", __FILE__, __LINE__));
   }
   d_bottom = bottom;
-  d_top = top;
+  d_top    = top;
   d_radius = rad;
 }
 
 CylinderGeometryPiece::CylinderGeometryPiece(const Point& top,
                                              const Point& bottom,
-                                             double radius)
-{
-  name_ = "Unnamed " + TYPE_NAME + " from top/bottom/radius";
+                                             double radius) {
+  d_name = "Unnamed " + TYPE_NAME + " from top/bottom/radius";
 
   double near_zero = 1e-100;
-  Vector axis = top - bottom;
-  
-  if ( axis.length()  < near_zero ) {
-    SCI_THROW(ProblemSetupException("Input File Error: Cylinder axes has zero length", __FILE__, __LINE__));
-  }
-  if ( radius <= 0.0) {
-    SCI_THROW(ProblemSetupException("Input File Error: Cylinder radius must be > 0.0", __FILE__, __LINE__));
-  }
-  d_bottom = bottom;
-  d_top = top;
-  d_radius = radius;
-  d_cylinder_end=false;
-  d_axisymmetric_end=false;
-  d_axisymmetric_side=false;
-}
+  Vector axis      = top - bottom;
 
-CylinderGeometryPiece::~CylinderGeometryPiece()
-{
+  if (axis.length() < near_zero) {
+    SCI_THROW(ProblemSetupException(
+        "Input File Error: Cylinder axes has zero length", __FILE__, __LINE__));
+  }
+  if (radius <= 0.0) {
+    SCI_THROW(ProblemSetupException(
+        "Input File Error: Cylinder radius must be > 0.0", __FILE__, __LINE__));
+  }
+  d_bottom            = bottom;
+  d_top               = top;
+  d_radius            = radius;
+  d_cylinder_end      = false;
+  d_axisymmetric_end  = false;
+  d_axisymmetric_side = false;
 }
 
 void
-CylinderGeometryPiece::outputHelper( ProblemSpecP & ps ) const
-{
-  ps->appendElement("bottom",d_bottom);
-  ps->appendElement("top",d_top);
-  ps->appendElement("radius",d_radius);
-  if(d_cylinder_end || d_axisymmetric_end || d_axisymmetric_side){
-    ps->appendElement("cylinder_end",d_cylinder_end);
+CylinderGeometryPiece::outputHelper(ProblemSpecP& ps) const {
+  ps->appendElement("bottom", d_bottom);
+  ps->appendElement("top", d_top);
+  ps->appendElement("radius", d_radius);
+  if (d_cylinder_end || d_axisymmetric_end || d_axisymmetric_side) {
+    ps->appendElement("cylinder_end", d_cylinder_end);
     ps->appendElement("axisymmetric_end", d_axisymmetric_end);
-    ps->appendElement("axisymmetric_side",d_axisymmetric_side);
+    ps->appendElement("axisymmetric_side", d_axisymmetric_side);
   }
 }
 
 GeometryPieceP
-CylinderGeometryPiece::clone() const
-{
-  return scinew CylinderGeometryPiece(*this);
+CylinderGeometryPiece::clone() const {
+  return std::make_shared<CylinderGeometryPiece>(*this);
 }
 
 bool
-CylinderGeometryPiece::inside(const Point &p) const
-{
-  Vector axis = d_top-d_bottom;  
+CylinderGeometryPiece::inside(const Point& p) const {
+  Vector axis    = d_top - d_bottom;
   double height2 = axis.length2();
 
-  Vector tobot = p-d_bottom;
+  Vector tobot = p - d_bottom;
 
   // pt is the "test" point
   double h = Dot(tobot, axis);
-  if(h < 0.0 || h > height2)
-    return false; // Above or below the cylinder
+  if (h < 0.0 || h > height2) return false;  // Above or below the cylinder
 
   double area = Cross(axis, tobot).length2();
-  double d = area/height2;
-  if( d > d_radius*d_radius)
-    return false;
+  double d    = area / height2;
+  if (d > d_radius * d_radius) return false;
   return true;
 }
 
 Box
-CylinderGeometryPiece::getBoundingBox() const
-{
-  
+CylinderGeometryPiece::getBoundingBox() const {
   Point minBB = Min(d_bottom, d_top);
   Point maxBB = Max(d_bottom, d_top);
-  
-  double x_sqrd = pow( ( d_bottom.x() - d_top.x() ), 2);
-  double y_sqrd = pow( ( d_bottom.y() - d_top.y() ), 2);
-  double z_sqrd = pow( ( d_bottom.z() - d_top.z() ), 2);  
+
+  double x_sqrd   = pow((d_bottom.x() - d_top.x()), 2);
+  double y_sqrd   = pow((d_bottom.y() - d_top.y()), 2);
+  double z_sqrd   = pow((d_bottom.z() - d_top.z()), 2);
   double all_sqrd = x_sqrd + y_sqrd + z_sqrd;
-  
-  double kx = sqrt( (y_sqrd + z_sqrd)/all_sqrd );
-  double ky = sqrt( (x_sqrd + z_sqrd)/all_sqrd );
-  double kz = sqrt( (x_sqrd + y_sqrd)/all_sqrd );
-  
-  Vector tmp(kx*d_radius, ky*d_radius, kz*d_radius);
+
+  double kx = sqrt((y_sqrd + z_sqrd) / all_sqrd);
+  double ky = sqrt((x_sqrd + z_sqrd) / all_sqrd);
+  double kz = sqrt((x_sqrd + y_sqrd) / all_sqrd);
+
+  Vector tmp(kx * d_radius, ky * d_radius, kz * d_radius);
   minBB -= tmp;
   maxBB += tmp;
 
-  return Box(minBB,maxBB);
+  return Box(minBB, maxBB);
 }
 
 //////////
 // Calculate the unit normal vector to axis from point
-Vector 
-CylinderGeometryPiece::radialDirection(const Point& pt) const
-{
-  Vector axis = d_top-d_bottom;  
-  double height2 = axis.length();
-  Vector pbot = pt-d_bottom;
-  double tt = Dot(pbot,axis)/height2;
-  Vector projOnAxis = tt*axis/height2;
-  Vector normal = pbot - projOnAxis;
-  return (normal/normal.length());
+Vector
+CylinderGeometryPiece::radialDirection(const Point& pt) const {
+  Vector axis       = d_top - d_bottom;
+  double height2    = axis.length();
+  Vector pbot       = pt - d_bottom;
+  double tt         = Dot(pbot, axis) / height2;
+  Vector projOnAxis = tt * axis / height2;
+  Vector normal     = pbot - projOnAxis;
+  return (normal / normal.length());
 }
 
+} // end namespace Uintah

@@ -59,7 +59,7 @@
 #include <fstream>
 
 using namespace Uintah;
-using namespace std;
+
 
 SpecificHeatFactory::SpecificHeatFactory()
 {
@@ -85,12 +85,12 @@ SpecificHeat* SpecificHeatFactory::create(ProblemSpecP& ps)
     }else if (cv_model == "Polynomial"){
       return(scinew PolynomialCv(cv_ps));
     }else{
-      ostringstream warn;
+       std::ostringstream warn;
       warn << "ERROR ICE: Unknown specific heat model ("<< cv_model << " )\n"
          << "Valid models are:\n"
          << " Debye\n"
          << " Component\n"
-         << " Polynomial\n" << endl;
+         << " Polynomial\n" << std::endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
     }
   }

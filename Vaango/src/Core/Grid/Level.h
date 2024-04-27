@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,55 +22,47 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_GRID_LEVEL_H
-#define UINTAH_GRID_LEVEL_H
+#ifndef CORE_GRID_LEVEL_H
+#define CORE_GRID_LEVEL_H
 
-#include <Core/Util/RefCounted.h>
-#include <Core/Grid/GridP.h>
-#include <Core/Grid/Grid.h>
-#include <Core/Grid/LevelP.h>
-#include <Core/Util/Handle.h>
 #include <CCA/Ports/LoadBalancer.h>
+
 #include <Core/Containers/OffsetArray1.h>
-#include <Core/Thread/CrowdMonitor.h>
+#include <Core/Disclosure/TypeDescription.h>
 
 #ifdef max
 // some uintah 3p utilities define max, so undefine it before BBox chokes on it.
-#undef max
+#  undef max
 #endif
-
 #include <Core/Geometry/BBox.h>
-#include <Core/Geometry/Point.h>
-#include <Core/Geometry/IntVector.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/fixedvector.h>
-#include <Core/Grid/Variables/ComputeSet.h>
 
-#include <vector>
+#include <Core/Geometry/IntVector.h>
+#include <Core/Geometry/Point.h>
+#include <Core/Grid/GridP.h>
+#include <Core/Grid/Grid.h>
+#include <Core/Grid/LevelP.h>
+#include <Core/Grid/Variables/ComputeSet.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Util/Handle.h>
+#include <Core/Util/RefCounted.h>
+
 #include <map>
+#include <vector>
 
 namespace Uintah {
-
-  using Uintah::Vector;
-  using Uintah::Point;
-  using Uintah::IntVector;
-  using Uintah::BBox;
-  using Uintah::OffsetArray1;
-  using Uintah::CrowdMonitor;
 
   class PatchBVH;
   class BoundCondBase;
   class Box;
   class Patch;
   class Task;
-   
+
 /**************************************
 
 CLASS
    Level
    
-   Just a container class that manages a set of Patches that
-   make up this level.
+   Just a container class that manages a set of Patches that make up this level.
 
 GENERAL INFORMATION
 
@@ -88,265 +79,259 @@ KEYWORDS
    Level
 
 DESCRIPTION
-   Long description...
-  
-WARNING
+
   
 ****************************************/
 
-  class Level : public RefCounted {
-  public:
-    Level(Grid* grid, const Point& anchor, const Vector& dcell, int index, 
-          IntVector refinementRatio,
-          int id = -1);
-    virtual ~Level();
+class Level : public RefCounted {
+
+public:
+
+  Level(       Grid      * grid
+       , const Point     & anchor
+       , const Vector    & dcell
+       , const int         index
+       , const IntVector   refinementRatio
+       , const int         id = -1
+       );
+
+  virtual ~Level();
   
-    void setPatchDistributionHint(const IntVector& patchDistribution);
-    void setBCTypes();
+  void setPatchDistributionHint( const IntVector & patchDistribution );
+
+  void setBCTypes();
      
-    typedef std::vector<Patch*>::iterator patchIterator;
-    typedef std::vector<Patch*>::const_iterator const_patchIterator;
-    const_patchIterator patchesBegin() const;
-    const_patchIterator patchesEnd() const;
-    patchIterator patchesBegin();
-    patchIterator patchesEnd();
+  using       patch_iterator = std::vector<Patch*>::iterator;
+  using const_patch_iterator = std::vector<Patch*>::const_iterator;
+  const_patch_iterator patchesBegin() const;
+  patch_iterator       patchesBegin();
 
-    const Patch* getPatch(int index) const { return d_realPatches[index]; }
+  const_patch_iterator patchesEnd() const;
+  patch_iterator       patchesEnd();
 
-    // go through the virtual ones too
-    const_patchIterator allPatchesBegin() const;
-    const_patchIterator allPatchesEnd() const;
+  const Patch* getPatch( int index ) const { return m_real_patches[ index ]; }
+
+  // go through the virtual ones too
+  const_patch_iterator allPatchesBegin() const;
+  const_patch_iterator allPatchesEnd() const;
       
-    Patch* addPatch(const IntVector& extraLowIndex,
-                    const IntVector& extraHighIndex,
-                    const IntVector& lowIndex,
-                    const IntVector& highIndex,
-                    Grid* grid);
+  Patch* addPatch( const IntVector & extraLowIndex
+                 , const IntVector & extraHighIndex
+                 , const IntVector & lowIndex
+                 , const IntVector & highIndex
+                 ,       Grid      * grid
+                 );
       
-    Patch* addPatch(const IntVector& extraLowIndex,
-                    const IntVector& extraHighIndex,
-                    const IntVector& lowIndex,
-                    const IntVector& highIndex,
-                    Grid* grid,
-                    int ID);
+  Patch* addPatch( const IntVector & extraLowIndex
+                 , const IntVector & extraHighIndex
+                 , const IntVector & lowIndex
+                 , const IntVector & highIndex
+                 ,       Grid      * grid
+                 ,       int         ID
+                 );
 
-    // Move up and down the hierarchy
-    const LevelP& getCoarserLevel() const;
-    const LevelP& getFinerLevel() const;
-    bool hasCoarserLevel() const;
-    bool hasFinerLevel() const;
+  // Move up and down the hierarchy
+  const LevelP& getCoarserLevel() const;
+  const LevelP& getFinerLevel() const;
+  bool          hasCoarserLevel() const;
+  bool          hasFinerLevel() const;
 
-    IntVector mapNodeToCoarser(const IntVector& idx) const;
-    IntVector mapNodeToFiner(const IntVector& idx) const;
-    IntVector mapCellToCoarser(const IntVector& idx, int level_offset=1) const;
-    IntVector mapCellToFiner(const IntVector& idx) const;
+  IntVector     mapNodeToCoarser( const IntVector & idx ) const;
+  IntVector     mapNodeToFiner(   const IntVector & idx ) const;
+  IntVector     mapCellToCoarser( const IntVector & idx, int level_offset=1 ) const;
+  IntVector     mapCellToFiner(   const IntVector & idx ) const;
+  IntVector     mapCellToFinest(  const IntVector & idx ) const;
+  IntVector     mapCellToFinestNoAdjustments( const IntVector & idx ) const;
 
-    //////////
-    // Find a patch containing the point, return 0 if non exists
-    const Patch* getPatchFromPoint( const Point&, const bool includeExtraCells ) const;
-    //////////
-    // Find a patch containing the cell or node, return 0 if non exists
-    const Patch* getPatchFromIndex( const IntVector&, const bool includeExtraCells ) const;
 
-    void finalizeLevel();
-    void finalizeLevel(bool periodicX, bool periodicY, bool periodicZ);
-    void assignBCS(const ProblemSpecP& ps, LoadBalancer* lb);
+  //////////
+  // Find a patch containing the point, return 0 if non exists
+  const Patch* getPatchFromPoint( const Point &, const bool includeExtraCells ) const;
+
+  //////////
+  // Find a patch containing the cell or node, return 0 if non exists
+  const Patch* getPatchFromIndex( const IntVector &, const bool includeExtraCells ) const;
+
+  void finalizeLevel();
+  void finalizeLevel( bool periodicX, bool periodicY, bool periodicZ );
+  void assignBCS( const ProblemSpecP & ps, LoadBalancer * lb );
       
-    int numPatches() const;
-    long totalCells() const;
-
-    void getSpatialRange(BBox& b) const {b.extend(d_spatial_range);};
-    void getInteriorSpatialRange(BBox& b) const {b.extend(d_int_spatial_range);};
-    void findIndexRange(IntVector& lowIndex, IntVector& highIndex) const
-    { findNodeIndexRange(lowIndex, highIndex); }
-    void findNodeIndexRange(IntVector& lowIndex, IntVector& highIndex) const;
-    void findCellIndexRange(IntVector& lowIndex, IntVector& highIndex) const;
-
-    void findInteriorIndexRange(IntVector& lowIndex, IntVector& highIndex) const
-    { findInteriorNodeIndexRange(lowIndex, highIndex);}
-    void findInteriorNodeIndexRange(IntVector& lowIndex,
-                                    IntVector& highIndex) const;
-    void findInteriorCellIndexRange(IntVector& lowIndex,
-                                    IntVector& highIndex) const;
-      
-    void performConsistencyCheck() const;
-    GridP getGrid() const;
-
-    /* const LevelP& getFineLevel() const
-       { return getRelativeLevel(1); }
-       const LevelP& getCoarseLevel() const
-       { return getRelativeLevel(-1); }*/
-     
-    const LevelP& getRelativeLevel(int offset) const;
-
-
-    // Grid spacing
-    Vector dCell() const {
-      return d_dcell;
-    }
+  int  numPatches() const;
+  long totalCells() const;
   
-    /**
-     * Returns the cell volume dx*dy*dz. This will not work for stretched grids.
-     */
-    double cellVolume() const {
-      if (isStretched()) {
-        std::ostringstream out;
-        out << "Cell volume is not unique for stretched meshes. "
-            << "Therefore, you cannot use Patch::cellVolume() or Level::cellVolume().";
-        throw InternalError( out.str(), __FILE__, __LINE__);
-      }
-      return d_dcell.x()*d_dcell.y()*d_dcell.z();
-    }
+  long getTotalCellsInRegion( const TypeDescription::Type   varType
+                            , const IntVector             & boundaryLayer
+                            , const IntVector             & lowIndex
+                            , const IntVector             & highIndex
+                            ) const;
+                             
+  IntVector nCellsPatch_max() const;
 
-    /**
-     * Returns the cell area dx*dy, dx*dz, or dy*dz. This will not work for stretched grids.
-     */
-    double cellArea(Vector unitNormal) const {
-      if (isStretched()) {
-        std::ostringstream out;
-        out << "Cell area is not unique for stretched meshes. "
-            << "Therefore, you cannot use Patch::cellArea() or Level::cellArea().";
-        throw InternalError( out.str(), __FILE__, __LINE__);
-      }
-      Vector areas(d_dcell.y() * d_dcell.z(), 
-                   d_dcell.x() * d_dcell.z(), 
-                   d_dcell.x() * d_dcell.y());
-      return Dot(areas, unitNormal);
-    }
-
-    Point getAnchor() const {
-      return d_anchor;
-    }
-
-    // For stretched grids
-    bool isStretched() const {
-      return d_stretched;
-    }
-    void getCellWidths(Grid::Axis axis, OffsetArray1<double>& widths) const;
-    void getFacePositions(Grid::Axis axis, OffsetArray1<double>& faces) const;
-    void setStretched(Grid::Axis axis, const OffsetArray1<double>& faces);
-
-    void setExtraCells(const IntVector& ec);
-    IntVector getExtraCells() const {
-      return d_extraCells;
-    }
-
-    Point getNodePosition(const IntVector&) const;
-    Point getCellPosition(const IntVector&) const;
-    IntVector getCellIndex(const Point&) const;
-    Point positionToIndex(const Point&) const;
-
-    Box getBox(const IntVector&, const IntVector&) const;
-
-  static const int MAX_PATCH_SELECT = 32;
-  typedef FixedVector<const Patch*, MAX_PATCH_SELECT> selectType;
-      
-
-    void selectPatches(const IntVector&, const IntVector&,
-                       selectType&, bool withExtraCells=false, bool cache=true) const;
-
-    bool containsPointIncludingExtraCells(const Point&) const;
-    bool containsPoint(const Point&) const;
-    bool containsCell(const IntVector&) const;
-
-    // IntVector whose elements are each 1 or 0 specifying whether there
-    // are periodic boundaries in each dimension (1 means periodic).
-    IntVector getPeriodicBoundaries() const
-    { return d_periodicBoundaries; }
-
-    // The eachPatch() function returns a PatchSet containing patches on
-    // this level with one patch per PatchSubSet.  Eg: { {1}, {2}, {3} }
-    const PatchSet* eachPatch() const;
-    const PatchSet* allPatches() const;
-    const Patch* selectPatchForCellIndex( const IntVector& idx) const;
-    const Patch* selectPatchForNodeIndex( const IntVector& idx) const;
+  void getSpatialRange( BBox & b ) const { b.extend(m_spatial_range); };
+  void getInteriorSpatialRange( BBox & b ) const { b.extend(m_int_spatial_range); };
   
-    //getID() returns a unique identifier so if the grid is rebuilt the new 
-    //levels will have different id numbers (like a  serial number).  
-    inline int getID() const {
-      return d_id;
-    }
-
-    //getIndex() returns the relative position of the level - 0 is coarsest, 1 is  
-    //next and so forth.  
-    inline int getIndex() const {
-      return d_index;
-    }
-    inline IntVector getRefinementRatio() const {
-      return d_refinementRatio;
-    }
-    int getRefinementRatioMaxDim() const;
-
-    friend std::ostream& operator<<(std::ostream& out, const Uintah::Level& level);
-
-  private:
-    Level(const Level&);
-    Level& operator=(const Level&);
-      
-    std::vector<Patch*> d_patches;
-
-    Grid* d_grid;
-    Point d_anchor;
-    Vector d_dcell;
-
-    //the spatial range of the level
-    BBox d_spatial_range;
-    BBox d_int_spatial_range;
+  // methods to identify if this is non-cubic level
+  bool isNonCubic() const { return m_isNonCubicDomain; };
   
-    bool d_finalized;
-    int d_index; // number of the level
-    IntVector d_patchDistribution;
-    IntVector d_periodicBoundaries;
+  
+  void findIndexRange(     IntVector & lowIndex, IntVector & highIndex ) const { findNodeIndexRange(lowIndex, highIndex); }
+  void findNodeIndexRange( IntVector & lowIndex, IntVector & highIndex ) const;
+  void findCellIndexRange( IntVector & lowIndex, IntVector & highIndex ) const;
 
-    PatchSet* d_each_patch;
-    PatchSet* d_all_patches;
+  void findInteriorIndexRange(     IntVector & lowIndex, IntVector & highIndex ) const { findInteriorNodeIndexRange(lowIndex, highIndex); }
+  void findInteriorNodeIndexRange( IntVector & lowIndex, IntVector & highIndex ) const;
+  void findInteriorCellIndexRange( IntVector & lowIndex, IntVector & highIndex ) const;
+                                  
+  void computeVariableExtents( const TypeDescription::Type   TD
+                             ,       IntVector             & lo
+                             ,       IntVector             & hi
+                             ) const;
+      
+  void performConsistencyCheck() const;
 
-    long d_totalCells;
-    IntVector d_extraCells;
+  GridP getGrid() const;
 
-    std::vector<Patch*> d_realPatches; // only real patches
-    std::vector<Patch*> d_virtualAndRealPatches; // real and virtual
+  const LevelP & getRelativeLevel( int offset ) const;
 
-    int d_id;
-    IntVector d_refinementRatio;
+  // Grid spacing
+  Vector dCell() const { return m_dcell; }
 
-    // vars for select_grid - don't ifdef them here, so if we change it
-    // we don't have to compile everything
-    IntVector d_idxLow;
-    IntVector d_idxHigh;
-    IntVector d_idxSize;
-    IntVector d_gridSize;
-    vector<int> d_gridStarts;
-    vector<Patch*> d_gridPatches;
+  // Returns the cell volume dx*dy*dz.
+  double cellVolume() const {
+    return m_dcell.x()*m_dcell.y()*m_dcell.z();
+  }
 
-    // For stretched grids
-    bool d_stretched;
+  // Returns the cell area dx*dy, dx*dz, or dy*dz.
+  double cellArea( Vector unitNormal ) const {
+    Vector areas(m_dcell.y() * m_dcell.z(), m_dcell.x() * m_dcell.z(), m_dcell.x() * m_dcell.y());
+    return Dot(areas, unitNormal);
+  }
 
-    // This is three different arrays containing the x,y,z coordinate of the face position
-    // be sized to d_idxSize[axis] + 1.  Used only for stretched grids
-    OffsetArray1<double> d_facePosition[3];
+  Point getAnchor() const { return m_anchor; }
 
-    // vars for select_rangetree
+  void      setExtraCells( const IntVector & ec );
+  IntVector getExtraCells() const { return m_extra_cells; }
 
-    class IntVectorCompare {
-    public:
-      bool operator() (const std::pair<IntVector, IntVector>&a, const std::pair<IntVector, IntVector>&b) const 
-      {
-        return (a.first < b.first) || (!(b.first < a.first) && a.second < b.second);
-      }
-    };
+  Point     getNodePosition( const IntVector & ) const;
+  Point     getCellPosition( const IntVector & ) const;
 
-    typedef std::map<std::pair<IntVector, IntVector>, std::vector<const Patch*>, IntVectorCompare> selectCache;
-    mutable selectCache d_selectCache; // we like const Levels in most places :) 
-    PatchBVH* d_bvh;
-    mutable CrowdMonitor    d_cachelock;
+  IntVector getCellIndex(    const Point & ) const;
+  Point     positionToIndex( const Point & ) const;
+
+  Box getBox( const IntVector &, const IntVector & ) const;
+
+  using selectType = std::vector<const Patch*>;
+
+
+  void selectPatches( const IntVector  &
+                    , const IntVector  &
+                    ,       selectType &
+                    ,       bool withExtraCells = false
+                    ,       bool cache_patches  = false
+                    ) const;
+
+  bool containsPointIncludingExtraCells( const Point & ) const;
+  bool containsPoint( const Point & ) const;
+  bool containsCell(  const IntVector & ) const;
+
+  // IntVector whose elements are each 1 or 0 specifying whether there
+  // are periodic boundaries in each dimension (1 means periodic).
+  IntVector getPeriodicBoundaries() const { return m_periodic_boundaries; }
+
+  // The eachPatch() function returns a PatchSet containing patches on
+  // this level with one patch per PatchSubSet.  Eg: { {1}, {2}, {3} }
+  const PatchSet* eachPatch() const;
+  const PatchSet* allPatches() const;
+  
+  const Patch* selectPatchForCellIndex( const IntVector & idx ) const;
+  const Patch* selectPatchForNodeIndex( const IntVector & idx ) const;
+  
+  // getID() returns a unique identifier so if the grid is rebuilt the new
+  // levels will have different id numbers (like a  serial number).
+  inline int getID() const { return m_id; }
+
+  // getIndex() returns the relative position of the level - 0 is coarsest,
+  // 1 is next and so forth.
+  inline int getIndex() const { return m_index; }
+  inline IntVector getRefinementRatio() const { return m_refinement_ratio; }
+  int getRefinementRatioMaxDim() const;
+
+  friend std::ostream& operator<<( std::ostream& out, const Level& level );
+
+  //__________________________________
+  //  overlapping patches:  Used to keep track of patches that overlap in non-cubic levels
+  struct overlap {
+    std::pair <int,int> patchIDs{-9,-9};        // overlapping patch IDs
+    IntVector lowIndex{ IntVector(-9,-9,-9)};   // low/high index of overlap
+    IntVector highIndex{IntVector(-9,-9,-9)};
   };
 
-  const Level* getLevel(const PatchSubset* subset);
-  const Level* getLevel(const PatchSet* set);
+  // for a set of patches and region return the min/max number of overlapping cells
+  std::pair<int,int> getOverlapCellsInRegion( const selectType & patches
+                                            , const IntVector  & regionLow
+                                            , const IntVector  & regionHigh
+                                            ) const;
 
-  const LevelP& getLevelP(const PatchSubset* subset);
+private:
+
+  // eliminate copy, assignment and move
+  Level( const Level & )            = delete;
+  Level& operator=( const Level & ) = delete;
+  Level( Level && )                 = delete;
+  Level& operator=( Level && )      = delete;
+      
+  Grid    * m_grid{nullptr};
+  Point     m_anchor{};
+  Vector    m_dcell{};
+
+  // The spatial range of the level.
+  BBox      m_spatial_range{ Uintah::Point(DBL_MAX,DBL_MAX,DBL_MAX),Point(-DBL_MAX,-DBL_MAX,-DBL_MAX) };
+  BBox      m_int_spatial_range{ Uintah::Point(DBL_MAX,DBL_MAX,DBL_MAX),Point(-DBL_MAX,-DBL_MAX,-DBL_MAX) };
+
+  bool      m_isNonCubicDomain{false};                    // is level non cubic level
+  void      setIsNonCubicLevel();
+  
+  bool      m_finalized{false};
+  int       m_index{};                                      // number of the level
+  IntVector m_patch_distribution{-1,-1,-1};
+  IntVector m_periodic_boundaries{0, 0, 0};
+
+  PatchSet* m_each_patch{nullptr};
+  PatchSet* m_all_patches{nullptr};
+
+  long      m_total_cells{0};
+  IntVector m_extra_cells{IntVector(0,0,0)};
+  IntVector m_numcells_patch_max{IntVector(0,0,0)};
+
+  std::vector<Patch*> m_real_patches{};                    // only real patches
+  std::vector<Patch*> m_virtual_and_real_patches{};        // real and virtual
+
+  int       m_id{};
+  IntVector m_refinement_ratio{};
+
+  class IntVectorCompare {
+  public:
+    bool operator() (const std::pair<IntVector, IntVector>&a, const std::pair<IntVector, IntVector>&b) const 
+    {
+      return (a.first < b.first) || (!(b.first < a.first) && a.second < b.second);
+    }
+  };
+
+  
+  using select_cache =  std::map<std::pair<IntVector, IntVector>, std::vector<const Patch*>, IntVectorCompare>;
+  mutable select_cache m_select_cache; // we like const Levels in most places :)
+
+  PatchBVH * m_bvh{nullptr};
+
+  // overlapping patches   
+  std::map< std::pair<int, int>, overlap > m_overLapPatches{};
+  void setOverlappingPatches();
+};
+
+const Level  * getLevel(  const PatchSubset * subset );
+const Level  * getLevel(  const PatchSet    * set );
+const LevelP & getLevelP( const PatchSubset * subset );
 
 } // End namespace Uintah
 
-#endif
+#endif // CORE_GRID_LEVEL_H

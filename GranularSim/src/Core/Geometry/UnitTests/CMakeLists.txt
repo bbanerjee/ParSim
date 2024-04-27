@@ -34,7 +34,7 @@ add_executable(testFaceEdge testFaceEdge.cpp)
 
 target_link_libraries(testFaceEdge
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -55,7 +55,7 @@ add_executable(testOrientedBox testOrientedBox.cpp)
 
 target_link_libraries(testOrientedBox
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -76,7 +76,7 @@ add_executable(testEllipsoid testEllipsoid.cpp)
 
 target_link_libraries(testEllipsoid
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}

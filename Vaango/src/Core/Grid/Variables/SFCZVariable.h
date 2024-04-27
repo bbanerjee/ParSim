@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,150 +26,173 @@
 #ifndef UINTAH_HOMEBREW_SFCZVARIABLE_H
 #define UINTAH_HOMEBREW_SFCZVARIABLE_H
 
+#include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/GridVariable.h>
 #include <Core/Grid/Variables/constGridVariable.h>
-#include <Core/Grid/Patch.h>
 
 namespace Uintah {
 
-  using Uintah::InternalError;
+using Uintah::InternalError;
 
-  class TypeDescription;
+class TypeDescription;
 
-  /**************************************
+/**************************************
 
 CLASS
-   SFCZVariable
-   
-   Short description...
+ SFCZVariable
+
+ Short description...
 
 GENERAL INFORMATION
 
-   SFCZVariable.h
+ SFCZVariable.h
 
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
+ Steven G. Parker
+ Department of Computer Science
+ University of Utah
 
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+ Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+
 
 KEYWORDS
-   Variable__Cell_Centered
+ Variable__Cell_Centered
 
 DESCRIPTION
-   Long description...
-  
+ Long description...
+
 WARNING
-  
+
 ****************************************/
 
-  template<class T> 
-  class SFCZVariable : public GridVariable<T> {
-    friend class constVariable<GridVariableBase, SFCZVariable<T>, T, const IntVector&>;
-  public:
-    SFCZVariable();
-    virtual ~SFCZVariable();
-      
-    //////////
-    // Insert Documentation Here:
-    const TypeDescription* virtualGetTypeDescription() const 
-    { return getTypeDescription(); }
-    static const TypeDescription* getTypeDescription();
-    
-    virtual GridVariableBase* clone();
-    virtual const GridVariableBase* clone() const;
-    virtual GridVariableBase* cloneType() const
-    { return scinew SFCZVariable<T>(); }
-    
-    // allocate(IntVector, IntVector) is hidden without this
-    using GridVariable<T>::allocate;
-    virtual void allocate(const Patch* patch, const IntVector& boundary)
-    {      
-      IntVector l,h;
-      patch->computeVariableExtents(Patch::ZFaceBased, boundary, 
-                                    Ghost::None, 0, l, h);
-      GridVariable<T>::allocate(l, h);
-    }
+template<class T>
+class SFCZVariable : public GridVariable<T>
+{
+  friend class constVariable<GridVariableBase,
+                             SFCZVariable<T>,
+                             T,
+                             const IntVector&>;
 
-    static TypeDescription::Register registerMe;
+public:
+  SFCZVariable();
+  virtual ~SFCZVariable();
 
-  protected:
-    SFCZVariable(const SFCZVariable<T>&);
-
-  private:
-    static TypeDescription* td;
-    
-    SFCZVariable<T>& operator=(const SFCZVariable<T>&);
-
-    static Variable* maker();
-  };
-
-  template<class T>
-  TypeDescription* SFCZVariable<T>::td = 0;
-  
-  template<class T>
-  TypeDescription::Register
-  SFCZVariable<T>::registerMe(getTypeDescription());
-   
-  template<class T>
+  //////////
+  // Insert Documentation Here:
   const TypeDescription*
-  SFCZVariable<T>::getTypeDescription()
+  virtualGetTypeDescription() const override
   {
-    if(!td){
-      td = scinew TypeDescription(TypeDescription::SFCZVariable,
-                                  "SFCZVariable", &maker,
-                                  fun_getTypeDescription((T*)0));
-    }
-    return td;
+    return getTypeDescription();
   }
-    
-  template<class T>
-  Variable*
-  SFCZVariable<T>::maker()
+  static const TypeDescription*
+  getTypeDescription();
+
+  virtual GridVariableBase*
+  clone() override;
+  virtual const GridVariableBase*
+  clone() const override;
+  virtual GridVariableBase*
+  cloneType() const override
   {
     return scinew SFCZVariable<T>();
   }
-   
-  template<class T>
-  SFCZVariable<T>::~SFCZVariable()
+
+  // allocate(IntVector, IntVector) is hidden without this
+  using GridVariable<T>::allocate;
+  virtual void
+  allocate(const Patch* patch, const IntVector& boundary) override
   {
-  }
-   
-  template<class T>
-  GridVariableBase*
-  SFCZVariable<T>::clone()
-  {
-    return scinew SFCZVariable<T>(*this);
+    IntVector l, h;
+    patch->computeVariableExtents(
+      Patch::ZFaceBased, boundary, Ghost::None, 0, l, h);
+    GridVariable<T>::allocate(l, h);
   }
 
-  template<class T>
-  const GridVariableBase*
-  SFCZVariable<T>::clone() const
-  {
-    return scinew SFCZVariable<T>(*this);
-  }
+  static TypeDescription::Register registerMe;
 
-  template<class T>
-  SFCZVariable<T>::SFCZVariable()
-  {
-  }
+protected:
+  SFCZVariable(const SFCZVariable<T>&);
 
-  template<class T>
-  SFCZVariable<T>::SFCZVariable(const SFCZVariable<T>& copy)
-    : GridVariable<T>(copy)
+private:
+  static TypeDescription* td;
+
+  SFCZVariable<T>&
+  operator=(const SFCZVariable<T>&);
+
+  static Variable*
+  maker();
+};
+
+template<class T>
+TypeDescription* SFCZVariable<T>::td = 0;
+
+template<class T>
+TypeDescription::Register SFCZVariable<T>::registerMe(getTypeDescription());
+
+template<class T>
+const TypeDescription*
+SFCZVariable<T>::getTypeDescription()
+{
+  if (!td) {
+    td = scinew TypeDescription(TypeDescription::Type::SFCZVariable,
+                                "SFCZVariable",
+                                &maker,
+                                fun_getTypeDescription((T*)0));
+  }
+  return td;
+}
+
+template<class T>
+Variable*
+SFCZVariable<T>::maker()
+{
+  return scinew SFCZVariable<T>();
+}
+
+template<class T>
+SFCZVariable<T>::~SFCZVariable()
+{
+}
+
+template<class T>
+GridVariableBase*
+SFCZVariable<T>::clone()
+{
+  return scinew SFCZVariable<T>(*this);
+}
+
+template<class T>
+const GridVariableBase*
+SFCZVariable<T>::clone() const
+{
+  return scinew SFCZVariable<T>(*this);
+}
+
+template<class T>
+SFCZVariable<T>::SFCZVariable()
+{
+}
+
+template<class T>
+SFCZVariable<T>::SFCZVariable(const SFCZVariable<T>& copy)
+  : GridVariable<T>(copy)
+{
+}
+
+template<class T>
+class constSFCZVariable
+  : public constGridVariable<GridVariableBase, SFCZVariable<T>, T>
+{
+public:
+  constSFCZVariable()
+    : constGridVariable<GridVariableBase, SFCZVariable<T>, T>()
   {
   }
-   
-  template <class T>
-  class constSFCZVariable : public constGridVariable<GridVariableBase, SFCZVariable<T>, T>
+  constSFCZVariable(const SFCZVariable<T>& copy)
+    : constGridVariable<GridVariableBase, SFCZVariable<T>, T>(copy)
   {
-  public:
-    constSFCZVariable() : constGridVariable<GridVariableBase, SFCZVariable<T>, T>() {}
-    constSFCZVariable(const SFCZVariable<T>& copy) : constGridVariable<GridVariableBase, SFCZVariable<T>, T>(copy) {}
-  };
+  }
+};
 
 } // end namespace Uintah
 
 #endif
-

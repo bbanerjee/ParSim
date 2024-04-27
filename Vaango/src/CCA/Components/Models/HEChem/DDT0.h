@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,7 +26,8 @@
 #ifndef Packages_Uintah_CCA_Components_Models_DDT0_h
 #define Packages_Uintah_CCA_Components_Models_DDT0_h
 
-#include <CCA/Ports/ModelInterface.h>
+#include <CCA/Components/Models/HEChem/HEChemModel.h>
+
 #include <Core/Grid/Variables/ComputeSet.h>
 
 namespace Uintah {
@@ -88,63 +65,45 @@ WARNING
 
 ****************************************/
 
-  class DDT0 : public ModelInterface {
+  class DDT0 : public HEChemModel {
   public:
-    DDT0(const ProcessorGroup* myworld, ProblemSpecP& params,
-                const ProblemSpecP& prob_spec);
+    DDT0(const ProcessorGroup* myworld,
+         const MaterialManagerP& materialManager,
+         const ProblemSpecP& params,
+         const ProblemSpecP& prob_spec);
 
     virtual ~DDT0();
 
     virtual void outputProblemSpec(ProblemSpecP& ps);
 
-    virtual void problemSetup(GridP& grid, SimulationStateP& sharedState,
-			      ModelSetup* setup);
+    virtual void problemSetup(GridP& grid,
+                               const bool isRestart);
 
-      
     virtual void scheduleInitialize(SchedulerP&,
-				    const LevelP& level,
-				    const ModelInfo*);
+                                    const LevelP& level);
 
-    virtual void initialize(const ProcessorGroup*,
-                            const PatchSubset*,
-                            const MaterialSubset*,
-                            DataWarehouse*,
-                            DataWarehouse*);
-
-    virtual void restartInitialize() {}
+    virtual void scheduleRestartInitialize(SchedulerP&,
+                                           const LevelP& level){};
       
     virtual void scheduleComputeStableTimestep(SchedulerP&,
-					       const LevelP& level,
-					       const ModelInfo*);
+                                               const LevelP& level);
       
     virtual void scheduleComputeModelSources(SchedulerP&,
-						   const LevelP& level,
-						   const ModelInfo*);
+                                                   const LevelP& level);
                                              
-    virtual void scheduleModifyThermoTransportProperties(SchedulerP&,
-                                               const LevelP&,
-                                               const MaterialSet*);
-                                               
-   virtual void computeSpecificHeat(CCVariable<double>&,
-                                    const Patch*,
-                                    DataWarehouse*,
-                                    const int);
-                                    
-   virtual void scheduleErrorEstimate(const LevelP& coarseLevel,
-                                      SchedulerP& sched);
-
-                                             
-   virtual void scheduleTestConservation(SchedulerP&,
-                                         const PatchSet* patches,
-                                         const ModelInfo* mi);
-
   private:    
+
+    void initialize(const ProcessorGroup*,
+                                const PatchSubset*,
+                                const MaterialSubset*,
+                                DataWarehouse*,
+                                DataWarehouse*);
+
     void computeModelSources(const ProcessorGroup*, 
                              const PatchSubset* patches,
                              const MaterialSubset* matls,
                              DataWarehouse*,
-                             DataWarehouse* new_dw,
-                             const ModelInfo*);
+                             DataWarehouse* new_dw);
       
     DDT0(const DDT0&);
     DDT0& operator=(const DDT0&);
@@ -162,22 +121,21 @@ WARNING
     const VarLabel* totalMassConvertedLabel;
     const VarLabel* detonatingLabel;
 
-    const VarLabel* pCrackRadiusLabel;
+    const VarLabel* pCrackRadiusLabel {nullptr};
     
-    ProblemSpecP d_prob_spec;
-    ProblemSpecP d_params;
-    const Material* d_matl0;
-    const Material* d_matl1;
-    SimulationStateP d_sharedState;   
+    ProblemSpecP d_params {nullptr};
+    ProblemSpecP d_prob_spec {nullptr};
 
-    ICELabel* Ilb;
-    MPMICELabel* MIlb;
-    MPMLabel* Mlb;
-    MaterialSet* d_mymatls;
-    MaterialSubset* d_one_matl;
-   
+    const Material* d_matl0 {nullptr};
+    const Material* d_matl1 {nullptr};
 
-    string fromMaterial, toMaterial;
+    ICELabel* Ilb {nullptr};
+    MPMICELabel* MIlb {nullptr};
+    MPMLabel* Mlb {nullptr};
+    MaterialSet* d_mymatls {nullptr};
+    MaterialSubset* d_one_matl {nullptr};   
+
+    std::string fromMaterial, toMaterial;
     double d_G;
     double d_b;
     double d_E0;
@@ -204,10 +162,6 @@ WARNING
         bool energy;
     };
     saveConservedVars* d_saveConservedVars;
-      
-      
-    #define d_SMALL_NUM 1e-100
-    #define d_TINY_RHO 1e-12
   };
 }
 

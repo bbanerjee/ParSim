@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,20 +24,18 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <Core/Grid/Variables/ListOfCellsIterator.h>
 
-namespace Uintah
+namespace Uintah {
+
+std::ostream&
+operator<<(std::ostream& out, const Uintah::ListOfCellsIterator& b)
 {
+  int last = b.d_size - 1;
+  out << "[ListOfCellsIterator with " << b.d_size
+      << " elements, first cell in list: " << b.d_list_of_cells[0]
+      << " last cell in list: " << b.d_list_of_cells[last] << "]";
 
-  std::ostream& operator<<(std::ostream& out, const Uintah::ListOfCellsIterator& b)
-  {    
-    int last = b.listOfCells_.size()-2;
-    out << "[ListOfCellsIterator with " << b.listOfCells_.size()-1 << " elements, first cell in list: "<< b.begin() 
-        << " last cell in list: " << b.listOfCells_[last] << "]";
-
-    return out;
-
-  }
+  return out;
 }
-  
+}

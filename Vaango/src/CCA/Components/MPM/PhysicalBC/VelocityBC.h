@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,7 +27,7 @@
 
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>
 #include <CCA/Components/MPM/PhysicalBC/LoadCurve.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/Point.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -80,9 +80,9 @@ WARNING
       // of a load curve)
       VelocityBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags);
       ~VelocityBC();
-      virtual std::string getType() const;
+      virtual std::string getType() const override;
 
-      virtual void outputProblemSpec(ProblemSpecP& ps);
+      virtual void outputProblemSpec(ProblemSpecP& ps) override;
 
       // Locate and flag the material points to which this velocity BC is
       // to be applied. 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -99,7 +99,7 @@ void customInitialization_problemSetup( const ProblemSpecP& cfd_ice_ps,
     ProblemSpecP mms_ps= c_init_ps->findBlock("manufacturedSolution");
     if(mms_ps) {
       
-      map<string,string> whichmms;
+      std::map<std::string,string> whichmms;
       mms_ps->getAttributes(whichmms);
       
       cib->which = whichmms["type"];

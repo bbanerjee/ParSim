@@ -60,7 +60,7 @@
 
 #include   <iostream>
 
-#include <Core/Math/share.h>
+
 
 namespace Uintah {
 
@@ -68,7 +68,7 @@ enum EndCondition {natural_ends, clamped_ends, bessel_ends, quadratic_ends};
 
 template <class T> class Cubic3DPWI;
 
-class SCISHARE CubicPWI: public PiecewiseInterp<double>
+class  CubicPWI: public PiecewiseInterp<double>
 {
 public:
   CubicPWI();
@@ -142,7 +142,7 @@ template <class T> inline bool Cubic3DPWI<T>::get_value(double w, T& res){
 }
 
 
-SCISHARE bool set_tangents(const Array1<double>&, const Array1<double>&, 
+ bool set_tangents(const Array1<double>&, const Array1<double>&, 
 			       Array1<double>&, EndCondition);
 
 template <class T> bool 
@@ -163,7 +163,7 @@ Cubic3DPWI<T>::set_data(const Array1<double>& pts, const Array1<T>& vals){
   if (set_tangents(pts, vx, drvX, natural_ends) && 
       set_tangents(pts, vy, drvY, natural_ends) &&
       set_tangents(pts, vz, drvZ, natural_ends)) {
-    // cout << "Derivatives are done!!!" << "\n";
+    // std::cout << "Derivatives are done!!!" << "\n";
     Array1<Vector> drvs;
     drvs.resize(sz);
     for (int i=0; i<sz; i++)
@@ -184,7 +184,7 @@ Cubic3DPWI<T>::set_data(const Array1<double>& pts, const Array1<T>& vals,
 
   if( this->fill_data(pts) && (sz = this->points.size()) > 1 && 
       sz == vals.size() && sz == drvs.size() ) {
-    // cout << "Inside set_data!!!" << "\n";
+    // std::cout << "Inside set_data!!!" << "\n";
     X.resize(sz);
     Y.resize(sz);
     Z.resize(sz);
@@ -223,8 +223,8 @@ Cubic3DPWI<T>::set_data(const Array1<double>& pts, const Array1<T>& vals,
 	X[i].c=c;
 	X[i].d=d;
 	
-	// cout << "Interval: " << this->points[i] << ", " << this->points[i+1] << "\n";
-	// cout << "Coeff. are for X: " << X[i].a << "\n" << X[i].b 
+	// std::cout << "Interval: " << this->points[i] << ", " << this->points[i+1] << "\n";
+	// std::cout << "Coeff. are for X: " << X[i].a << "\n" << X[i].b 
 	//      << "\n" << X[i].c << "\n" << X[i].d << "\n";
 	
 	a=vy[i];
@@ -237,8 +237,8 @@ Cubic3DPWI<T>::set_data(const Array1<double>& pts, const Array1<T>& vals,
 	Y[i].c=c;
 	Y[i].d=d;
 
-	// cout << "Interval: " << this->points[i] << ", " << this->points[i+1] << "\n";
-	// cout << "Coeff. are for Y: " << Y[i].a << "\n" << Y[i].b 
+	// std::cout << "Interval: " << this->points[i] << ", " << this->points[i+1] << "\n";
+	// std::cout << "Coeff. are for Y: " << Y[i].a << "\n" << Y[i].b 
 	//      << "\n" << Y[i].c << "\n" << Y[i].d << "\n";
 	
 	a=vz[i];

@@ -87,7 +87,7 @@ namespace Uintah {
     string filelistname = outdir + string("/") + string("timelist");
     filelist_ = fopen(filelistname.c_str(),"w");
     if (!filelist_) {
-      cerr << "Can't open output file " << filelistname << endl;
+      std::cerr <<  "Can't open output file " << filelistname << std::endl;
       abort();
     }
   }
@@ -132,10 +132,10 @@ namespace Uintah {
     
     // need to count materials before we start, since we want material loop outside
     // of patch loop
-    vector<int> mats;
+    std::vector<int> mats;
     for(int l=0;l<=0;l++) {
       LevelP level = grid->getLevel(l);
-      for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+      for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
         const Patch* patch = *iter;
         ConsecutiveRangeSet matls= da_->queryMaterials(fieldname, patch, index_);
         for(ConsecutiveRangeSet::iterator matlIter = matls.begin();matlIter != matls.end(); matlIter++) {
@@ -148,30 +148,30 @@ namespace Uintah {
     
     // loop through requested diagnostics
     TensorDiag const * tensor_preop = createTensorOp(fselect_);
-    list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, fselect_, tensor_preop);
+     std::list<ScalarDiag const *> scalardiaggens = createScalarDiags(td, fselect_, tensor_preop);
     
     if(scalardiaggens.size())
       {
-        cout << "   " << fieldname << endl;
+        std::cout << "   " << fieldname << std::endl;
       }
     else
       {
         static int noisecount = 0;
         if(++noisecount<=20)
           {
-            cout << "   WARNING: Field '" << fieldname << "' has no scalar diagnostics specified" << endl;
-            cout << "            You probably want a '-diagnostic magnitude' option for vectors" << endl;
-            cout << "            or the '-diagnostic norm' option for tensors." << endl;
-            cout << endl;
-            cout << "            Try running with '-showdiags' to get the available diagnostics" << endl;
-            cout << endl;
+            std::cout << "   WARNING: Field '" << fieldname << "' has no scalar diagnostics specified" << std::endl;
+            std::cout << "            You probably want a '-diagnostic magnitude' option for vectors" << std::endl;
+            std::cout << "            or the '-diagnostic norm' option for tensors." << std::endl;
+            std::cout << std::endl;
+            std::cout << "            Try running with '-showdiags' to get the available diagnostics" << std::endl;
+            std::cout << std::endl;
           }
       }
     
     for(list<ScalarDiag const *>::const_iterator diagit(scalardiaggens.begin());
         diagit!=scalardiaggens.end();diagit++) 
       {
-        vector<int> bins(opts_.nbins);
+        std::vector<int> bins(opts_.nbins);
         double minval=opts_.minval;
         double maxval=opts_.maxval;
         
@@ -188,10 +188,10 @@ namespace Uintah {
             int matl = *mit;
             
             LevelP level = grid->getLevel(0);
-            for(Level::const_patchIterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
+            for(Level::const_patch_iterator iter = level->patchesBegin();iter != level->patchesEnd(); iter++) {
               const Patch* patch = *iter;
               
-              if(td->getType()==Uintah::TypeDescription::CCVariable) {
+              if(td->getType()==Uintah::TypeDescription::Type::CCVariable) {
                 
                 CCVariable<double> svals;
                 (**diagit)(da_, patch, fieldname, matl, index_, svals);
@@ -205,7 +205,7 @@ namespace Uintah {
                     maxval = MAX(maxval, val);
                   }
                 }
-              } else if(td->getType()==Uintah::TypeDescription::NCVariable) {
+              } else if(td->getType()==Uintah::TypeDescription::Type::NCVariable) {
 
                 NCVariable<double> svals;
                 (**diagit)(da_, patch, fieldname, matl, index_, svals);
@@ -220,7 +220,7 @@ namespace Uintah {
                     maxval = MAX(maxval, val);
                   }
                 }
-              } else if (td->getType()==Uintah::TypeDescription::ParticleVariable) {
+              } else if (td->getType()==Uintah::TypeDescription::Type::ParticleVariable) {
                 ParticleVariable<Point> posns;
                 da_->query(posns, "p.x", matl, patch, index_);
                 ParticleSubset* pset = posns.getParticleSubset();
@@ -247,7 +247,7 @@ namespace Uintah {
                 {
                   if(fabs(minval)<2.e-16)
                     {
-                      cout << "   WARNING: all your data seems to be at zero, adjusting the range" << endl;
+                      std::cout << "   WARNING: all your data seems to be at zero, adjusting the range" << std::endl;
                       // both zero
                       minval = -1;
                       maxval =  1;
@@ -255,7 +255,7 @@ namespace Uintah {
                   else
                     {
                       double midval = (minval+maxval)/2; 
-                      cout << "   WARNING: all your data seems to be at " << midval << ", adjusting the range" << endl;
+                      std::cout << "   WARNING: all your data seems to be at " << midval << ", adjusting the range" << std::endl;
                       minval = 0.9 * midval;
                       maxval = 1.1 * midval;
                     }
@@ -267,15 +267,15 @@ namespace Uintah {
         string ext = (*diagit)->name();
         if(ext=="norm" || ext=="value") ext = "";
         string fname = this->fileName(fieldname+ext, "hist");
-        cout << "     " << fname << endl;
-        cout << "     range = " << minval << "," << maxval
-             << endl;
+        std::cout << "     " << fname << std::endl;
+        std::cout << "     range = " << minval << "," << maxval
+             << std::endl;
         
         ofstream os(fname.c_str());
         os << "# time = " << time_ << ", field = " 
-           << fieldname << endl;
-        os << "# min = " << minval << endl;
-        os << "# max = " << maxval << endl;
+           << fieldname << std::endl;
+        os << "# min = " << minval << std::endl;
+        os << "# max = " << maxval << std::endl;
         
         double totcount = 1.;
         if(opts_.normalize_by_bins) {
@@ -287,7 +287,7 @@ namespace Uintah {
         
         for(int ibin=0;ibin<opts_.nbins;ibin++) {
           double xmid = minval+(ibin+0.5)*(maxval-minval)/opts_.nbins;
-          os << xmid*opts_.xscale << " " << bins[ibin]/totcount << endl;
+          os << xmid*opts_.xscale << " " << bins[ibin]/totcount << std::endl;
         }
         
         if(!os)

@@ -59,7 +59,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/MinMax.h>
@@ -73,7 +73,7 @@
 using std::cerr;
 
 using namespace Uintah;
-using namespace std;
+
 
 simpleGeoModel_BB::simpleGeoModel_BB(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
@@ -236,11 +236,11 @@ simpleGeoModel_BB::computeStableTimestep(const Patch* patch,
   int dwi = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -251,10 +251,10 @@ simpleGeoModel_BB::computeStableTimestep(const Patch* patch,
     particleIndex idx = *iter;
     // Compute wave speed + particle velocity at each particle,
     // store the maximum
-    c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   WaveSpeed = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
@@ -290,9 +290,9 @@ void simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
     Vector WaveSpeed(1.e-12,1.e-12,1.e-12);
 
     ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Vector dx = patch->dCell();
     double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
@@ -305,9 +305,9 @@ void simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Matrix3> stress_old;
     ParticleVariable<Matrix3> stress_new;
     constParticleVariable<Point> px;
-    constParticleVariable<double> pmass;
-    ParticleVariable<double> pvolume,p_q;
-    constParticleVariable<Vector> pvelocity,psize;
+    constParticleVariable<double> pMass;
+    ParticleVariable<double> pVolume,p_q;
+    constParticleVariable<Vector> pVelocity,pSize;
     ParticleVariable<double> pdTdt;
     constParticleVariable<double> pPlasticStrain;
     ParticleVariable<double>  pPlasticStrain_new;
@@ -337,13 +337,13 @@ void simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pBackStressIso_new,pBackStressIsoLabel_preReloc,pset);
     Ghost::GhostType  gac   = Ghost::AroundCells;
     old_dw->get(px,                  lb->pXLabel,                        pset);
-    old_dw->get(pmass,               lb->pMassLabel,                     pset);
-    old_dw->get(psize,               lb->pSizeLabel,                     pset);
-    old_dw->get(pvelocity,           lb->pVelocityLabel,                 pset);
+    old_dw->get(pMass,               lb->pMassLabel,                     pset);
+    old_dw->get(pSize,               lb->pSizeLabel,                     pset);
+    old_dw->get(pVelocity,           lb->pVelocityLabel,                 pset);
     old_dw->get(defGrad, lb->pDeformationMeasureLabel,       pset);
     old_dw->get(stress_old,             lb->pStressLabel,                pset);
     new_dw->allocateAndPut(stress_new,  lb->pStressLabel_preReloc,       pset);
-    new_dw->allocateAndPut(pvolume,  lb->pVolumeLabel_preReloc,          pset);
+    new_dw->allocateAndPut(pVolume,  lb->pVolumeLabel_preReloc,          pset);
     new_dw->allocateAndPut(pdTdt,    lb->pdTdtLabel_preReloc,            pset);
     new_dw->allocateAndPut(defGrad_new,
                                   lb->pDeformationMeasureLabel_preReloc, pset);
@@ -382,8 +382,8 @@ void simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
 
     // Get the deformation gradients first.  This is done differently
     // depending on whether or not the grid is reset.  (Should it be??? -JG)
-    constNCVariable<Vector> gvelocity;
-    new_dw->get(gvelocity, lb->gVelocityStarLabel,dwi,patch,gac,NGN);
+    constNCVariable<Vector> gVelocity;
+    new_dw->get(gVelocity, lb->gVelocityStarLabel,dwi,patch,gac,NGN);
     for(ParticleSubset::iterator iter=pset->begin();iter!=pset->end();iter++){
       particleIndex idx = *iter;
 
@@ -391,16 +391,16 @@ void simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
       L_new.set(0.0);
       if(!flag->d_axisymmetric){
         // Get the node indices that surround the cell
-        interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S,psize[idx],
+        interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S,pSize[idx],
         defGrad[idx]);
 
-        computeVelocityGradient(L_new,ni,d_S, oodx, gvelocity);
+        computeVelocityGradient(L_new,ni,d_S, oodx, gVelocity);
       } else {  // axi-symmetric kinematics
         // Get the node indices that surround the cell
         interpolator->findCellAndWeightsAndShapeDerivatives(px[idx],ni,S,d_S,
-                                  psize[idx],defGrad[idx]);
+                                  pSize[idx],defGrad[idx]);
         // x -> r, y -> z, z -> theta
-        computeAxiSymVelocityGradient(L_new,ni,d_S,S,oodx,gvelocity,px[idx]);
+        computeAxiSymVelocityGradient(L_new,ni,d_S,S,oodx,gVelocity,px[idx]);
       }
 
       // Update vel grad, def grad, J
@@ -408,14 +408,14 @@ void simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
       defGrad_new[idx]=(L_new*delT+Identity)*defGrad[idx];
       J = defGrad_new[idx].Determinant();
       if (J <= 0){
-        cout<< "ERROR, negative J! in particle "<< idx << endl;
+        cout<< "ERROR, negative J! in particle "<< idx << std::endl;
         cout<<"J= "<<J<<endl;
         cout<<"L= "<<L_new<<endl;
         exit(1);
       }
 
       // Update particle volumes
-      pvolume[idx]=(pmass[idx]/rho_orig)*J;
+      pVolume[idx]=(pMass[idx]/rho_orig)*J;
       rho_cur = rho_orig/J;
 
       // Initialize dT/dt to zero
@@ -547,7 +547,7 @@ void simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
           // Multi-stage return loop begins
           while(abs(del_gamma)>gamma_tol && count<=max_iter){
             //cout << "Particle = " << idx << " return algo count = " << count 
-            //     << " del_gamma = " << del_gamma << endl;
+            //     << " del_gamma = " << del_gamma << std::endl;
             count=count+1;
             // fast return algorithm to the yield surface
             // compute the invariants of the trial stres in the loop
@@ -692,12 +692,12 @@ void simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
         if (abs(f_new) > 0.01*sqrt(J2_new+I1_new*I1_new)) {
           cerr<<"ERROR!  Particle " << idx << 
                 " did not return to yield surface (simplifiedGeomodel.cc)"<<endl;
-          cerr << "f_new= " << f_new << " sqrt(J2_new)= " << sqrt(J2_new) 
-               <<" I1_new= " << I1_new << endl;
-          cerr << "f_trial= " << f_trial << " sqrt(j2_trial)= " << sqrt(j2_trial) 
-               <<" i1_trial= " << i1_trial << endl;
-          cerr << "sig_n = " << unrotated_stress << "\n D = " << D  
-               << "\n sig_trial = " << Sig_trial << "\n sig_n+1 = " << stress_new[idx] << endl; 
+          std::cerr <<  "f_new= " << f_new << " sqrt(J2_new)= " << sqrt(J2_new) 
+               <<" I1_new= " << I1_new << std::endl;
+          std::cerr <<  "f_trial= " << f_trial << " sqrt(j2_trial)= " << sqrt(j2_trial) 
+               <<" i1_trial= " << i1_trial << std::endl;
+          std::cerr <<  "sig_n = " << unrotated_stress << "\n D = " << D  
+               << "\n sig_trial = " << Sig_trial << "\n sig_n+1 = " << stress_new[idx] << std::endl; 
           //exit(1);
         }
 
@@ -724,9 +724,9 @@ void simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
       // Compute wave speed + particle velocity at each particle,
       // store the maximum
       c_dil = sqrt((bulk+four_third*shear)/(rho_cur));
-      WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                       Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                       Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
+      WaveSpeed=Vector(Max(c_dil+fabs(pVelocity[idx].x()),WaveSpeed.x()),
+                       Max(c_dil+fabs(pVelocity[idx].y()),WaveSpeed.y()),
+                       Max(c_dil+fabs(pVelocity[idx].z()),WaveSpeed.z()));
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z())*one_third;
@@ -742,7 +742,7 @@ void simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
                   D(2,2)*AvgStress(2,2) +
               2.*(D(0,1)*AvgStress(0,1) +
                   D(0,2)*AvgStress(0,2) +
-                  D(1,2)*AvgStress(1,2))) * pvolume[idx]*delT;
+                  D(1,2)*AvgStress(1,2))) * pVolume[idx]*delT;
       se += e;
 
     }  // end loop over particles
@@ -786,9 +786,9 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
     Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
 
     ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Vector dx = patch->dCell();
     double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
@@ -802,9 +802,9 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Matrix3> stress_old;
     ParticleVariable<Matrix3> stress_new;
     constParticleVariable<Point> px;
-    constParticleVariable<double> pmass;
-    ParticleVariable<double> pvolume, p_q;
-    constParticleVariable<Vector> pvelocity, psize;
+    constParticleVariable<double> pMass;
+    ParticleVariable<double> pVolume, p_q;
+    constParticleVariable<Vector> pVelocity, pSize;
     ParticleVariable<double> pdTdt;
     constParticleVariable<double> pPlasticStrain;
     ParticleVariable<double> pPlasticStrain_new;
@@ -839,13 +839,13 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
                            pset);
     Ghost::GhostType gac = Ghost::AroundCells;
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(defGrad, lb->pDeformationMeasureLabel, pset);
     old_dw->get(stress_old, lb->pStressLabel, pset);
     new_dw->allocateAndPut(stress_new, lb->pStressLabel_preReloc, pset);
-    new_dw->allocateAndPut(pvolume, lb->pVolumeLabel_preReloc, pset);
+    new_dw->allocateAndPut(pVolume, lb->pVolumeLabel_preReloc, pset);
     new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
     new_dw->allocateAndPut(defGrad_new, lb->pDeformationMeasureLabel_preReloc,
                            pset);
@@ -868,8 +868,8 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
 
     // Get the deformation gradients first.  This is done differently
     // depending on whether or not the grid is reset.  (Should it be??? -JG)
-    constNCVariable<Vector> gvelocity;
-    new_dw->get(gvelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
+    constNCVariable<Vector> gVelocity;
+    new_dw->get(gVelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
     for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
          iter++) {
       particleIndex idx = *iter;
@@ -878,16 +878,16 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
       L_new.set(0.0);
       if (!flag->d_axisymmetric) {
         // Get the node indices that surround the cell
-        interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx],
+        interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, pSize[idx],
                                                   defGrad[idx]);
 
-        computeVelocityGradient(L_new, ni, d_S, oodx, gvelocity);
+        computeVelocityGradient(L_new, ni, d_S, oodx, gVelocity);
       } else { // axi-symmetric kinematics
         // Get the node indices that surround the cell
         interpolator->findCellAndWeightsAndShapeDerivatives(
-          px[idx], ni, S, d_S, psize[idx], defGrad[idx]);
+          px[idx], ni, S, d_S, pSize[idx], defGrad[idx]);
         // x -> r, y -> z, z -> theta
-        computeAxiSymVelocityGradient(L_new, ni, d_S, S, oodx, gvelocity,
+        computeAxiSymVelocityGradient(L_new, ni, d_S, S, oodx, gVelocity,
                                       px[idx]);
       }
 
@@ -896,17 +896,17 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
       defGrad_new[idx] = (L_new * delT + Identity) * defGrad[idx];
       J = defGrad_new[idx].Determinant();
       if (J <= 0 || isnan(J)) {
-        cout << "ERROR, negative or nan J=det(F) in particle " << idx << endl;
-        cout << "J= " << J << endl;
-        cout << "L= " << L_new << endl;
+        std::cout << "ERROR, negative or nan J=det(F) in particle " << idx << std::endl;
+        std::cout << "J= " << J << std::endl;
+        std::cout << "L= " << L_new << std::endl;
         for (int k = 0; k < flag->d_8or27; k++) {
-          cout << "gvel[" << k << "] = " << gvelocity[ni[k]] << endl;
+          std::cout << "gvel[" << k << "] = " << gVelocity[ni[k]] << std::endl;
         }
         exit(1);
       }
 
       // Update particle volumes
-      pvolume[idx] = (pmass[idx] / rho_orig) * J;
+      pVolume[idx] = (pMass[idx] / rho_orig) * J;
       rho_cur = rho_orig / J;
 
       // Initialize dT/dt to zero
@@ -923,7 +923,7 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
       if (fabs(eta) > 0.05) {
         double dp_drho = c0*c0*(1 - eta*(Gamma - 1-s))/pow((1 + eta*(1-s)), 3);
         bulk = dp_drho*rho_cur;
-        if (idx == 3120) cerr << "bulk modulus = " << bulk << endl;
+        if (idx == 3120) std::cerr <<  "bulk modulus = " << bulk << std::endl;
       }
       */
 
@@ -965,12 +965,12 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
       pKappa_new[idx] = kappa_new;
 
       if (isnan(strain_inc.Norm()) || isnan(rotation.Norm())) {
-        cerr << "**ERROR** Strain is nan." << endl;
-        cerr << "eps_p = " << eps_p << " epsv_p = " << epsv_p
-             << " epsv_e = " << epsv_e << endl;
-        cerr << "strain_inc = " << strain_inc << endl;
-        cerr << "stress_new = " << stress_new[idx] << endl;
-        cerr << "rotation = " << rotation << endl;
+        std::cerr <<  "**ERROR** Strain is nan." << std::endl;
+        std::cerr <<  "eps_p = " << eps_p << " epsv_p = " << epsv_p
+             << " epsv_e = " << epsv_e << std::endl;
+        std::cerr <<  "strain_inc = " << strain_inc << std::endl;
+        std::cerr <<  "stress_new = " << stress_new[idx] << std::endl;
+        std::cerr <<  "rotation = " << rotation << std::endl;
       }
 
       Matrix3 deltaBackStress(0.0);
@@ -1005,9 +1005,9 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
       // Compute wave speed + particle velocity at each particle,
       // store the maximum
       c_dil = sqrt((bulk + four_third * shear) / (rho_cur));
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+      WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) * one_third;
@@ -1022,7 +1022,7 @@ simpleGeoModel_BB::computeStressTensor(const PatchSubset* patches,
                   D(2, 2) * AvgStress(2, 2) +
                   2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
                         D(1, 2) * AvgStress(1, 2))) *
-                 pvolume[idx] * delT;
+                 pVolume[idx] * delT;
       se += e;
 
     } // end loop over particles
@@ -1055,7 +1055,7 @@ simpleGeoModel_BB::computeStress(
 {
   int max_recursion_level = 20;
   if (lvl > max_recursion_level) {
-    cerr << "ParticleID = " << idx << " Stress = " << Sig_old << endl;
+    std::cerr <<  "ParticleID = " << idx << " Stress = " << Sig_old << std::endl;
     throw InternalError("Maximum number of recursive subcycles exceeded.",
                         __FILE__, __LINE__);
   }
@@ -1095,10 +1095,10 @@ simpleGeoModel_BB::computeStress(
   // Compute deformation gradient and rate of deformation tensor
   F_new = (L_new * delT + One) * F_old;
   if (isnan(F_new(0, 0))) {
-    cerr << "F_new = " << F_new << endl;
-    cerr << "F_old = " << F_old << endl;
-    cerr << "L_new = " << L_new << endl;
-    cerr << "delT = " << delT << endl;
+    std::cerr <<  "F_new = " << F_new << std::endl;
+    std::cerr <<  "F_old = " << F_old << std::endl;
+    std::cerr <<  "L_new = " << L_new << std::endl;
+    std::cerr <<  "delT = " << delT << std::endl;
     throw InternalError("Nan def grad in compute stress", __FILE__, __LINE__);
   }
   // double j_new = F_new.Determinant();
@@ -1115,7 +1115,7 @@ simpleGeoModel_BB::computeStress(
   // compute shifted stress
   Sig_trial -= Alpha_old;
   Sig_new = Sig_unrot;
-  // cerr << "1 Sig_new calc" << endl;
+  // std::cerr <<  "1 Sig_new calc" << std::endl;
 
   // compute stress invariants for the trial stress
   double i1_trial = 0, j2_trial = 0;
@@ -1125,10 +1125,10 @@ simpleGeoModel_BB::computeStress(
   // compute the value of the yield function for the trial stress
   double f_trial =
     evalYieldFunction(j2_trial, i1_trial, fSlope, kappa, cap_rad, i1_peak_hard);
-  // cerr << "1 D_new" << D_new << " F_new = " << F_new << " F_old = " << F_old
+  // std::cerr <<  "1 D_new" << D_new << " F_new = " << F_new << " F_old = " << F_old
   //     << " Sig_trial = " << Sig_trial << " kappa = " << kappa << " cap_rad =
   //     " << cap_rad
-  //     << " i1_peak_hard = " << i1_peak_hard << endl;
+  //     << " i1_peak_hard = " << i1_peak_hard << std::endl;
 
   // initial assignment for the plastic strains and the position of the cap
   // function
@@ -1143,7 +1143,7 @@ simpleGeoModel_BB::computeStress(
   double f_tol = 0.0 * 1.0e-6; // HARDCODED for testing
   if (f_trial < f_tol) {
     Sig_new = Sig_trial;
-    // cerr << "2 Sig_new calc" << endl;
+    // std::cerr <<  "2 Sig_new calc" << std::endl;
   } else {
     // plasticity vertex treatment begins
     double i1_hard_fSlope = i1_peak_hard / fSlope;
@@ -1151,7 +1151,7 @@ simpleGeoModel_BB::computeStress(
     if (i1_trial > i1_hard_fSlope) {
       if (j2_trial < 0.00000001) {
         Sig_new = One * i1_hard_fSlope * one_third;
-        // cerr << "3 Sig_new calc" << endl;
+        // std::cerr <<  "3 Sig_new calc" << std::endl;
         return_to_vertex = false;
       } else {
         int count_1_fix = 0;
@@ -1205,7 +1205,7 @@ simpleGeoModel_BB::computeStress(
           (p_vol * p_vol);
         if (ratio_plus >= 0.0 && ratio_minus >= 0.0) {
           Sig_new = One * (i1_hard_fSlope * one_third);
-          // cerr << "4 Sig_new calc" << endl;
+          // std::cerr <<  "4 Sig_new calc" << std::endl;
           return_to_vertex = false;
         }
       }
@@ -1230,8 +1230,8 @@ simpleGeoModel_BB::computeStress(
       feclearexcept(FE_ALL_EXCEPT);
       int count = 1;
       while (abs(del_gamma) > gamma_tol && count <= max_iter) {
-        // cout << "Particle = " << idx << " return algo count = " << count
-        //     << " del_gamma = " << del_gamma << endl;
+        // std::cout << "Particle = " << idx << " return algo count = " << count
+        //     << " del_gamma = " << del_gamma << std::endl;
         count = count + 1;
 
         // compute the invariants of the trial stres in the loop
@@ -1328,13 +1328,13 @@ simpleGeoModel_BB::computeStress(
             S_upd *
             ((i1_peak_hard - fSlope * i1_upd) * beta_cap * one_sqrt_J2_upd - 1);
           if (fetestexcept(FE_INVALID) != 0) {
-            cerr << "Nan floating point exception in fast algorithm to return"
-                 << endl;
-            cerr << "ParticleID = " << idx << endl;
-            cerr << "Sig_upd = " << Sig_upd << " S_upd = " << S_upd << endl;
-            cerr << "kappa = " << kappa << " i1_upd = " << i1_upd
+            std::cerr <<  "Nan floating point exception in fast algorithm to return"
+                 << std::endl;
+            std::cerr <<  "ParticleID = " << idx << std::endl;
+            std::cerr <<  "Sig_upd = " << Sig_upd << " S_upd = " << S_upd << std::endl;
+            std::cerr <<  "kappa = " << kappa << " i1_upd = " << i1_upd
                  << " cap_rad = " << cap_rad << " ratio = " << ratio
-                 << " beta_cap = " << beta_cap << endl;
+                 << " beta_cap = " << beta_cap << std::endl;
             throw InternalError("Nan in fast return algorithm", __FILE__,
                                 __LINE__);
           }
@@ -1374,14 +1374,14 @@ simpleGeoModel_BB::computeStress(
                            (cap_rad_sq * beta_cap) +
                          fSlope * beta_cap;
             if (fetestexcept(FE_INVALID) != 0) {
-              cerr << "Nan floating point exception in"
+              std::cerr <<  "Nan floating point exception in"
                    << " check if the stress state is in the cap zone or not?"
-                   << endl;
-              cerr << "ParticleID = " << idx << endl;
-              cerr << "kappa = " << kappa << " i1_upd = " << i1_upd
-                   << " cap_rad = " << cap_rad << " ratio = " << ratio << endl;
-              cerr << "Sig_trial = " << Sig_trial << " Sig_upd = " << Sig_upd
-                   << endl;
+                   << std::endl;
+              std::cerr <<  "ParticleID = " << idx << std::endl;
+              std::cerr <<  "kappa = " << kappa << " i1_upd = " << i1_upd
+                   << " cap_rad = " << cap_rad << " ratio = " << ratio << std::endl;
+              std::cerr <<  "Sig_trial = " << Sig_trial << " Sig_upd = " << Sig_upd
+                   << std::endl;
               throw InternalError("Nan in check for stress in cap zone",
                                   __FILE__, __LINE__);
             }
@@ -1403,15 +1403,15 @@ simpleGeoModel_BB::computeStress(
         // compute the changes of gamma in order to control converging
         del_gamma = (gamma - gamma_old) / gamma;
         if (fetestexcept(FE_INVALID) != 0) {
-          cerr << "Nan floating point exception in multistage return loop"
-               << endl;
-          cerr << "ParticleID = " << idx << endl;
-          cerr << "Sig_trial = " << Sig_trial << endl;
-          cerr << "Sig_upd = " << Sig_upd << endl;
-          cerr << "P = " << P << endl;
-          cerr << "G = " << G << endl;
-          cerr << "gamma_old = " << gamma_old << " gamma = " << gamma
-               << " del_gamma = " << del_gamma << endl;
+          std::cerr <<  "Nan floating point exception in multistage return loop"
+               << std::endl;
+          std::cerr <<  "ParticleID = " << idx << std::endl;
+          std::cerr <<  "Sig_trial = " << Sig_trial << std::endl;
+          std::cerr <<  "Sig_upd = " << Sig_upd << std::endl;
+          std::cerr <<  "P = " << P << std::endl;
+          std::cerr <<  "G = " << G << std::endl;
+          std::cerr <<  "gamma_old = " << gamma_old << " gamma = " << gamma
+               << " del_gamma = " << del_gamma << std::endl;
           throw InternalError("Nan in multistage return loop", __FILE__,
                               __LINE__);
         }
@@ -1442,12 +1442,12 @@ simpleGeoModel_BB::computeStress(
              exp(-p1 * (kappa - cap_rad - p0)) * M.Trace()) *
           one_G_norm;
         if (fetestexcept(FE_INVALID) != 0) {
-          cerr << "Nan floating point exception in compute new stress state"
-               << endl;
-          cerr << "ParticleID = " << idx << endl;
-          cerr << "hard_scaled = " << hard_scaled << " beta_cap = " << beta_cap
-               << endl;
-          cerr << "M = " << M << " G = " << G << endl;
+          std::cerr <<  "Nan floating point exception in compute new stress state"
+               << std::endl;
+          std::cerr <<  "ParticleID = " << idx << std::endl;
+          std::cerr <<  "hard_scaled = " << hard_scaled << " beta_cap = " << beta_cap
+               << std::endl;
+          std::cerr <<  "M = " << M << " G = " << G << std::endl;
           throw InternalError("Nan in compute new stress state", __FILE__,
                               __LINE__);
         }
@@ -1456,7 +1456,7 @@ simpleGeoModel_BB::computeStress(
       double GP = G_unit.Contract(P);
       gamma *= GP / (GP + hard_scaled);
       Sig_new = Sig_trial - P * gamma;
-      // cerr << "5 Sig_new calc" << endl;
+      // std::cerr <<  "5 Sig_new calc" << std::endl;
 
     } // End return to vertex if
 
@@ -1480,9 +1480,9 @@ simpleGeoModel_BB::computeStress(
     double term3 = var1 / ((var1 - 1.0) * (var1 - 1.0)) +
                    var2 / ((var2 - 1.0) * (var2 - 1.0));
     if (fetestexcept(FE_INVALID) != 0) {
-      cerr << "Particle " << idx << " var1 = " << var1 << " var2 = " << var2
+      std::cerr <<  "Particle " << idx << " var1 = " << var1 << " var2 = " << var2
            << " term1 = " << term1 << " term2 = " << term2
-           << " term3 = " << term3 << endl;
+           << " term3 = " << term3 << std::endl;
       throw InternalError("Inf/Nan in compute new kappa", __FILE__, __LINE__);
     }
     kappa_new = kappa +
@@ -1492,7 +1492,7 @@ simpleGeoModel_BB::computeStress(
     //           3.0*fluid_B0*(exp(p3+p4)-1.0)*(var1/((var1-1.0)*(var1-1.0)) +
     //                                          var2/((var2-1.0)*(var2-1.0))) )
     //           *Eps_diff.Trace()/(1.0+fSlope*cap_ratio);
-    // cerr << "    kappa_old = " << kappa << " kappa_new = " << kappa_new <<
+    // std::cerr <<  "    kappa_old = " << kappa << " kappa_new = " << kappa_new <<
     // endl;
 
     double cap_rad_old = cap_rad;
@@ -1508,15 +1508,15 @@ simpleGeoModel_BB::computeStress(
     if (abs(f_new) > 0.01 * sqrt(j2_new + i1_new * i1_new)) {
       // Warning message
       lvl += 1;
-      cerr << "WARNING!  Particle " << idx << " Recursion level = " << lvl
+      std::cerr <<  "WARNING!  Particle " << idx << " Recursion level = " << lvl
            << " did not return to yield surface (simplifiedGeomodel.cc)"
-           << " with delT = " << delT << endl;
-      cerr << "  data_new = [" << f_new << " " << sqrt(j2_new) << " " << i1_new
+           << " with delT = " << delT << std::endl;
+      std::cerr <<  "  data_new = [" << f_new << " " << sqrt(j2_new) << " " << i1_new
            << " " << kappa_new << " " << cap_rad << " " << eps_p_new << " "
-           << epsv_p_new << "]" << endl;
-      cerr << "  data_trial = [" << f_trial << " " << sqrt(j2_trial) << " "
+           << epsv_p_new << "]" << std::endl;
+      std::cerr <<  "  data_trial = [" << f_trial << " " << sqrt(j2_trial) << " "
            << i1_trial << " " << kappa << " " << cap_rad_old << " " << eps_p
-           << " " << epsv_p << "]" << endl;
+           << " " << epsv_p << "]" << std::endl;
 
       // Split again and see it is gets to the yield surface
       double delT_new = delT * 0.5;
@@ -1532,15 +1532,15 @@ simpleGeoModel_BB::computeStress(
                     Alpha_old, eps_p, epsv_e, epsv_p, eps_p_tmp, epsv_e_tmp,
                     epsv_p_tmp, kappa, kappa_tmp, Eps_inc, F_tmp, R_tmp,
                     Sig_tmp);
-      // cerr << "Step 1: kappa = " << kappa << " kappa_tmp = " << kappa_tmp <<
+      // std::cerr <<  "Step 1: kappa = " << kappa << " kappa_tmp = " << kappa_tmp <<
       // endl;
       // delT_new = delT*0.5;
       computeStress(idx, lvl, delT_new, lame, lame_inv, L_new, F_tmp, Sig_tmp,
                     Alpha_old, eps_p_tmp, epsv_e_tmp, epsv_p_tmp, eps_p_new,
                     epsv_e_new, epsv_p_new, kappa_tmp, kappa_new, Eps_inc,
                     F_new, R_new, Sig_new);
-      // cerr << "Step 2: kappa_tmp = " << kappa_tmp << " kappa_new = " <<
-      // kappa_new << endl;
+      // std::cerr <<  "Step 2: kappa_tmp = " << kappa_tmp << " kappa_new = " <<
+      // kappa_new << std::endl;
       lvl -= 1;
     }
   }
@@ -1809,17 +1809,17 @@ simpleGeoModel_BB::computeRhoMicroCM(double pressure, const double p_ref,
     } while (fabs(f) > tol && iter < max_iter);
     rho = rho0 * (1 + eta);
     if (!(iter < max_iter)) {
-      cerr << "**Warning** iter = " << iter << "f = "
+      std::cerr <<  "**Warning** iter = " << iter << "f = "
            << "eta = " << eta << " rho = " << rho << " p = " << p_gauge
-           << " p_ref = " << p_ref << endl;
+           << " p_ref = " << p_ref << std::endl;
     }
   }
 
   if (!(rho > 0.0)) {
-    cerr << "**Warning**Negative mass density in "
+    std::cerr <<  "**Warning**Negative mass density in "
             "SimplifiedGeoModel::computeRhoMicroCM "
          << rho << " rho0 = " << rho0 << " eta = " << eta << " p = " << p_gauge
-         << " p_ref = " << p_ref << endl;
+         << " p_ref = " << p_ref << std::endl;
   }
 
   // eta cannot be less than -1 or greater than 2
@@ -1891,19 +1891,19 @@ simpleGeoModel_BB::computePressEOSCM(double rho, double& pressure, double p_ref,
       c0 * c0 * (1 - eta * (Gamma - 1 - s)) / pow((1 + eta * (1 - s)), 3);
     csquared = dp_drho * dp_drho;
     if (csquared < 0.0) {
-      cerr << "**ERROR**simplifiedGeoMode:computePressEOSCM:impaginary sound "
+      std::cerr <<  "**ERROR**simplifiedGeoMode:computePressEOSCM:impaginary sound "
               "speed: c^2 = "
            << csquared << " p = " << (pressure - p_ref) << " eta = " << eta
-           << endl;
+           << std::endl;
     }
     // if (pressure < p_ref) {
-    //  cerr << "simplifiedGeoMode:computePressEOSCM:eta = " << eta
+    //  std::cerr <<  "simplifiedGeoMode:computePressEOSCM:eta = " << eta
     //       << " p = " << (pressure - p_ref) << " dp_drho = " << dp_drho <<
     //       endl;
     //}
   }
-  // cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR simpleGeoModel_BB"
-  //     << endl;
+  // std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR simpleGeoModel_BB"
+  //     << std::endl;
 }
 
 //***************************************************************************
@@ -1912,8 +1912,8 @@ simpleGeoModel_BB::computePressEOSCM(double rho, double& pressure, double p_ref,
 double
 simpleGeoModel_BB::getCompressibility()
 {
-  cout << "NO VERSION OF getCompressibility EXISTS YET FOR simpleGeoModel_BB"
-       << endl;
+  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR simpleGeoModel_BB"
+       << std::endl;
   return 1.0;
 }
 

@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,26 +23,25 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef UINTAH_HOMEBREW_PerPatchBase_H
 #define UINTAH_HOMEBREW_PerPatchBase_H
 
-#include <string>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Grid/Variables/Variable.h>
+#include <string>
 
 namespace Uintah {
 
-  using Uintah::IntVector;
+using Uintah::IntVector;
 
-  class Patch;
-  class RefCounted;
+class Patch;
+class RefCounted;
 
 /**************************************
 
 CLASS
    PerPatchBase
-   
+
    Short description...
 
 GENERAL INFORMATION
@@ -53,50 +53,67 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    PerPatchBase
 
 DESCRIPTION
    Long description...
-  
+
 WARNING
-  
+
 ****************************************/
 
-  // inherits from Variable solely for the purpose of stuffing it in the DW
-  class PerPatchBase : public Variable {
-   public:
-      
-      virtual ~PerPatchBase();
-      
-      virtual const TypeDescription* virtualGetTypeDescription() const;
-      virtual void copyPointer(Variable&) = 0;
-      virtual PerPatchBase* clone() const = 0;
-      virtual RefCounted* getRefCounted();
-      virtual void getSizeInfo(std::string& elems, unsigned long& totsize,
-                               void*& ptr) const = 0;
+// inherits from Variable solely for the purpose of stuffing it in the DW
+class PerPatchBase : public Variable
+{
+public:
+  virtual ~PerPatchBase();
 
-      virtual size_t getDataSize() const = 0;
-      virtual bool copyOut(void* dst) const = 0;
-      virtual void* getBasePointer() const = 0;
+  virtual const TypeDescription*
+  virtualGetTypeDescription() const override;
+  virtual void
+  copyPointer(Variable&) override = 0;
+  virtual PerPatchBase*
+  clone() const = 0;
+  virtual RefCounted*
+  getRefCounted() override;
+  virtual void
+  getSizeInfo(std::string& elems,
+              unsigned long& totsize,
+              void*& ptr) const override = 0;
 
-      // Only affects grid variables
-      void offsetGrid(const Uintah::IntVector& /*offset*/);
- 
-      virtual void emitNormal(std::ostream& out, const Uintah::IntVector& l,
-                              const Uintah::IntVector& h, ProblemSpecP varnode, bool outputDoubleAsFloat );
-      virtual void readNormal(std::istream& in, bool swapbytes);      
-      virtual void allocate(const Patch* patch, const Uintah::IntVector& boundary);
+  virtual size_t
+  getDataSize() const override = 0;
+  virtual bool
+  copyOut(void* dst) const override = 0;
+  virtual void*
+  getBasePointer() const = 0;
 
-   protected:
-      PerPatchBase(const PerPatchBase&);
-      PerPatchBase();
-      
-   private:
-      PerPatchBase& operator=(const PerPatchBase&);
-   };
+  // Only affects grid variables
+  void
+  offsetGrid(const Uintah::IntVector& /*offset*/) override;
+
+  virtual void
+  emitNormal(std::ostream& out,
+             const Uintah::IntVector& l,
+             const Uintah::IntVector& h,
+             ProblemSpecP varnode,
+             bool outputDoubleAsFloat) override;
+  virtual void
+  readNormal(std::istream& in, bool swapbytes) override;
+  virtual void
+  allocate(const Patch* patch, const Uintah::IntVector& boundary) override;
+
+protected:
+  PerPatchBase(const PerPatchBase&);
+  PerPatchBase();
+
+private:
+  PerPatchBase&
+  operator=(const PerPatchBase&);
+};
 } // End namespace Uintah
 
 #endif

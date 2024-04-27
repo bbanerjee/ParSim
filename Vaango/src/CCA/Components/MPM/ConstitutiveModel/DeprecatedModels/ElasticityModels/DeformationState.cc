@@ -169,7 +169,7 @@ DeformationState::update(const Matrix3& l_old, const Matrix3& l_new,
   J_inc = exp(l_mid.Trace() * delT);
   double J_inc_check = defGrad_inc.Determinant();
   if (fabs(J_inc - J_inc_check) > 1.0e-16) {
-    cerr << "Taylor series approximation of F_inc not accurate enough." << endl;
+    std::cerr <<  "Taylor series approximation of F_inc not accurate enough." << std::endl;
   }
 
   // Compute rate of deformation and spin

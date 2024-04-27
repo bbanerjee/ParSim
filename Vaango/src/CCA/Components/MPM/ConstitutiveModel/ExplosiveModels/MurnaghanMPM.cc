@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,7 +37,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
@@ -86,10 +86,10 @@ MurnaghanMPM::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("viscosity", d_modelParam.d_viscosity);
 }
 
-MurnaghanMPM*
+std::unique_ptr<ConstitutiveModel>
 MurnaghanMPM::clone()
 {
-  return scinew MurnaghanMPM(*this);
+  return std::make_unique<MurnaghanMPM>(*this);
 }
 
 void

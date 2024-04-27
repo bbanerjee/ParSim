@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -58,7 +58,14 @@ IsoNonlinHypoelastic::computeStress(double delT,
   Matrix3 stress_rate = 
     Vaango::Util::Identity * (lambda * D.Trace()) + D * (2.0 * mu);
 
+  //std::cout << "delT = " << delT << "\n";
+  //std::cout << "sig_old = " << stress_old << "\n";
+  //std::cout << "stress_rate = " << stress_rate << "\n";
+  //std::cout << "K = " << kappa << " G = " << mu << "\n";
+  //std::cout << "stress_inc = " << stress_rate * delT << "\n";
+
   Matrix3 stress_new = stress_old + stress_rate * delT;
+  //std::cout << "sig_new = " << stress_new << "\n";
   return stress_new;
 }
 

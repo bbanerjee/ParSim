@@ -40,7 +40,7 @@ add_executable(testInputParameter testInputParameter.cpp)
 
 target_link_libraries(testInputParameter
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -61,7 +61,7 @@ add_executable(testDEMParticleFileWriter testDEMParticleFileWriter.cpp)
 
 target_link_libraries(testDEMParticleFileWriter
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -82,7 +82,7 @@ add_executable(testDEMParticleFileReader testDEMParticleFileReader.cpp)
 
 target_link_libraries(testDEMParticleFileReader
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,45 +24,45 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef __INTERSECTION_GEOMETRY_OBJECT_H__
-#define __INTERSECTION_GEOMETRY_OBJECT_H__      
+#define __INTERSECTION_GEOMETRY_OBJECT_H__
 
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Grid/GridP.h>
+
 #include <vector>
 
 namespace Uintah {
 
 /**************************************
-        
+
 CLASS
    IntersectionGeometryPiece
-        
-   Creates the intersection of geometry pieces from the xml input 
-   file description. 
 
-        
+   Creates the intersection of geometry pieces from the xml input
+   file description.
+
+
 GENERAL INFORMATION
-        
+
    IntersectionGeometryPiece.h
-        
+
    John A. Schmidt
    Department of Mechanical Engineering
    University of Utah
-        
+
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-        
- 
-        
+
+
+
 KEYWORDS
    IntersectionGeometryPiece
-        
+
 DESCRIPTION
-   Creates a intersection of different geometry pieces from the xml input 
+   Creates a intersection of different geometry pieces from the xml input
    file description.
-   Requires multiple inputs: specify multiple geometry pieces.  
-   There are methods for checking if a point is inside the intersection of 
+   Requires multiple inputs: specify multiple geometry pieces.
+   There are methods for checking if a point is inside the intersection of
    pieces and also for determining the bounding box for the collection.
    The input form looks like this:
        <intersection>
@@ -75,49 +75,55 @@ DESCRIPTION
            <radius>1.5</radius>
          </sphere>
        </intersection>
-        
+
 WARNING
-        
+
 ****************************************/
 
-      class IntersectionGeometryPiece : public GeometryPiece {
-         
-      public:
-         //////////
-         // Constructor that takes a ProblemSpecP argument.   It reads the xml 
-         // input specification and builds the intersection of geometry pieces.
-         IntersectionGeometryPiece(ProblemSpecP & ps,
-                                   const GridP grid);
-         
-         /// Copy constructor
-         IntersectionGeometryPiece(const IntersectionGeometryPiece&);
+class IntersectionGeometryPiece final : public GeometryPiece {
+ public:
+  //////////
+  // Constructor that takes a ProblemSpecP argument.   It reads the xml
+  // input specification and builds the intersection of geometry pieces.
+  IntersectionGeometryPiece(ProblemSpecP& ps);
 
-         /// Assignment operator
-         IntersectionGeometryPiece& operator=(const IntersectionGeometryPiece& );
-         //////////
-         // Destructor
-         virtual ~IntersectionGeometryPiece();
+  /// Copy constructor
+  IntersectionGeometryPiece(const IntersectionGeometryPiece&);
 
-         static const string TYPE_NAME;
-         virtual std::string getType() const { return TYPE_NAME; }
+  /// Assignment operator
+  IntersectionGeometryPiece&
+  operator=(const IntersectionGeometryPiece&);
+  //////////
+  // Destructor
+  virtual ~IntersectionGeometryPiece() = default;
 
-         /// Make a clone
-         GeometryPieceP clone() const;
-         
-         //////////
-         // Determines whether a point is inside the intersection piece.  
-         virtual bool inside(const Point &p) const;
-         
-         //////////
-         // Returns the bounding box surrounding the intersection piece.
-         virtual Box getBoundingBox() const;
-         
-      private:
-         virtual void outputHelper( ProblemSpecP & ps) const;
+  static const string TYPE_NAME;
+  std::string
+  getType() const {
+    return TYPE_NAME;
+  }
 
-         std::vector<GeometryPieceP> child_;
-      };
+  /// Make a clone
+  GeometryPieceP
+  clone() const;
 
-} // End namespace Uintah
-      
-#endif // __INTERSECTION_GEOMETRY_PIECE_H__
+  //////////
+  // Determines whether a point is inside the intersection piece.
+  bool
+  inside(const Point& p) const;
+
+  //////////
+  // Returns the bounding box surrounding the intersection piece.
+  Box
+  getBoundingBox() const;
+
+ private:
+  void
+  outputHelper(ProblemSpecP& ps) const;
+
+  std::vector<GeometryPieceP> d_children;
+};
+
+}  // End namespace Uintah
+
+#endif  // __INTERSECTION_GEOMETRY_PIECE_H__

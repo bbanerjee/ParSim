@@ -67,7 +67,7 @@ X::X()
 
 X::~X()
 {
-    cerr << "~X() : crap=" << crap << "\n";
+    std::cerr <<  "~X() : crap=" << crap << "\n";
 }
 
 

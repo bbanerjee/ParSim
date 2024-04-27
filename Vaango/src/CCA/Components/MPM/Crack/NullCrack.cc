@@ -73,7 +73,7 @@ void NullCrack::outputInitialCrackPlane(int i)
 }
 
 void NullCrack::discretize(int& nstart0,vector<Point>& cx,
-                           vector<IntVector>& ce,vector<int>& SegNodes)
+                           std::vector<IntVector>& ce,vector<int>& SegNodes)
 {
 }
 

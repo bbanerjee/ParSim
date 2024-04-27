@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,14 +25,17 @@
  */
 
 #include <CCA/Components/MPM/ParticleCreator/FractureParticleCreator.h>
-#include <Core/Grid/Box.h>
-#include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBCFactory.h>
-#include <CCA/Components/MPM/PhysicalBC/ForceBC.h>
-#include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
+
+#include <CCA/Components/MPM/Core/AMRMPMLabel.h>
+#include <CCA/Components/MPM/Core/HydroMPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/PhysicalBC/CrackBC.h>
-#include <CCA/Components/MPM/MPMFlags.h>
-#include <Core/Labels/MPMLabel.h>
+#include <CCA/Components/MPM/PhysicalBC/ForceBC.h>
+#include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBCFactory.h>
+#include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
 #include <CCA/Ports/DataWarehouse.h>
+#include <Core/Grid/Box.h>
 
 using namespace Uintah;
 using std::vector;
@@ -40,47 +43,43 @@ using std::vector;
 FractureParticleCreator::FractureParticleCreator(MPMMaterial* matl,
                                                  MPMFlags* flags)
 
-  :  ParticleCreator(matl,flags)
+  : ParticleCreator(matl, flags)
 {
   registerPermanentParticleState(matl);
 }
 
-FractureParticleCreator::~FractureParticleCreator()
-{
-}
+FractureParticleCreator::~FractureParticleCreator() {}
 
 void
 FractureParticleCreator::registerPermanentParticleState(MPMMaterial* /*matl*/)
 
 {
-  //particle_state.push_back(lb->pX0Label);
-  //particle_state_preReloc.push_back(lb->pX0Label_preReloc);
-
+  // particle_state.push_back(lb->pX0Label);
+  // particle_state_preReloc.push_back(lb->pX0Label_preReloc);
 }
 
-
-void 
-FractureParticleCreator::applyForceBC(const Vector& dxpp, 
+void
+FractureParticleCreator::applyForceBC(const Vector& dxpp,
                                       const Point& pp,
-                                      const double& pMass, 
+                                      const double& pMass,
                                       Vector& pExtForce)
 {
   for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
     string bcType = bc->getType();
-        
-    //cerr << " BC Type = " << bcType << endl;
+
+    // std::cerr <<  " BC Type = " << bcType << std::endl;
     if (bcType == "Force") {
       ForceBC* fbc = dynamic_cast<ForceBC*>(bc.get());
 
       Box fbcBox(fbc->getLowerRange(), fbc->getUpperRange());
 
-      //cerr << "BC Box = " << bcBox << " Point = " << pp << endl;
-      if(fbcBox.contains(pp)) {
+      // std::cerr <<  "BC Box = " << bcBox << " Point = " << pp << std::endl;
+      if (fbcBox.contains(pp)) {
         pExtForce = fbc->getForceDensity() * pMass;
-        //cerr << "External Force on Particle = " << pExtForce 
-        //     << " Force Density = " << fbc->getForceDensity() 
-        //     << " Particle Mass = " << pMass << endl;
+        // std::cerr <<  "External Force on Particle = " << pExtForce
+        //      << " Force Density = " << fbc->getForceDensity()
+        //      << " Particle Mass = " << pMass << std::endl;
       }
-    } 
+    }
   }
 }

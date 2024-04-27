@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,134 +22,114 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Packages_Uintah_CCA_Components_ontheflyAnalysis_lineExtract_h
 #define Packages_Uintah_CCA_Components_ontheflyAnalysis_lineExtract_h
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
+#include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/Output.h>
-#include <Core/Grid/Variables/VarTypes.h>
+#include <Core/Grid/GridP.h>
+#include <Core/Grid/LevelP.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/SFCXVariable.h>
 #include <Core/Grid/Variables/SFCYVariable.h>
 #include <Core/Grid/Variables/SFCZVariable.h>
-#include <Core/Grid/GridP.h>
-#include <Core/Grid/LevelP.h>
+#include <Core/Grid/Variables/VarTypes.h>
 
 #include <map>
 #include <vector>
 
 namespace Uintah {
-  
 
-/**************************************
+class lineExtract : public AnalysisModule
+{
+public:
+  lineExtract(const ProcessorGroup* myworld,
+              const MaterialManagerP& materialManager,
+              const ProblemSpecP& module_spec);
 
-CLASS
-   lineExtract
-   
-GENERAL INFORMATION
+  lineExtract() = default;
 
-   lineExtract.h
+  virtual ~lineExtract();
 
-   Todd Harman
-   Department of Mechanical Engineering
-   University of Utah
+  virtual void
+  problemSetup(const ProblemSpecP& prob_spec,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid,
+               std::vector<std::vector<const VarLabel*>>& PState,
+               std::vector<std::vector<const VarLabel*>>& PState_preReloc);
 
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+  virtual void
+  outputProblemSpec(ProblemSpecP& ps){};
 
-KEYWORDS
-   lineExtract
+  virtual void
+  scheduleInitialize(SchedulerP& sched, const LevelP& level);
 
-DESCRIPTION
-   Long description...
-  
-WARNING
-  
-****************************************/
-  class lineExtract : public AnalysisModule {
+  virtual void
+  scheduleRestartInitialize(SchedulerP& sched, const LevelP& level);
+
+  virtual void
+  scheduleDoAnalysis(SchedulerP& sched, const LevelP& level);
+
+  virtual void
+  scheduleDoAnalysis_preReloc(SchedulerP& sched, const LevelP& level){};
+
+private:
+  void
+  initialize(const ProcessorGroup*,
+             const PatchSubset* patches,
+             const MaterialSubset*,
+             DataWarehouse*,
+             DataWarehouse* new_dw);
+
+  void
+  doAnalysis(const ProcessorGroup* pg,
+             const PatchSubset* patches,
+             const MaterialSubset*,
+             DataWarehouse*,
+             DataWarehouse* new_dw);
+
+  void
+  createFile(const std::string& filename, FILE*& fp);
+
+  void
+  printHeader(FILE*& fp, const Uintah::TypeDescription::Type myType);
+
+  template<class D, class V>
+  void
+  fprintf_Arrays(FILE*& fp,
+                 const IntVector& c,
+                 const D& doubleData,
+                 const V& VectorData);
+
+  // general labels
+  class lineExtractLabel
+  {
   public:
-    lineExtract(ProblemSpecP& prob_spec,
-                    SimulationStateP& sharedState,
-		      Output* dataArchiver);
-    lineExtract();
-                    
-    virtual ~lineExtract();
-   
-    virtual void problemSetup(const ProblemSpecP& prob_spec,
-                              const ProblemSpecP& restart_prob_spec,
-                              GridP& grid,
-                              SimulationStateP& sharedState);
-                              
-
-                              
-    virtual void scheduleInitialize(SchedulerP& sched,
-                                    const LevelP& level);
-                                    
-    virtual void restartInitialize();
-                                    
-    virtual void scheduleDoAnalysis(SchedulerP& sched,
-                                    const LevelP& level);
-   
-    virtual void scheduleDoAnalysis_preReloc(SchedulerP& sched,
-                                    const LevelP& level) {};
-                                      
-  private:
-
-    void initialize(const ProcessorGroup*, 
-                    const PatchSubset* patches,
-                    const MaterialSubset*,
-                    DataWarehouse*,
-                    DataWarehouse* new_dw);
-                    
-    void doAnalysis(const ProcessorGroup* pg,
-                    const PatchSubset* patches,
-                    const MaterialSubset*,
-                    DataWarehouse*,
-                    DataWarehouse* new_dw);
-                    
-    void createFile(std::string& filename, FILE*& fp);
-    
-    void createDirectory(std::string& lineName, std::string& levelIndex);
-                    
-    
-    // general labels
-    class lineExtractLabel {
-    public:
-      VarLabel* lastWriteTimeLabel;
-      VarLabel* fileVarsStructLabel;
-    };
-    
-    lineExtractLabel* ps_lb;
-
-    struct line{
-      std::string  name;
-      Point   startPt;
-      Point   endPt;
-      double  stepSize;
-      int loopDir;    // direction to loop over
-    };
-    
-    
-       
-    //__________________________________
-    // global constants
-    double d_writeFreq; 
-    double d_startTime;
-    double d_stopTime;
-    std::vector<VarLabel*> d_varLabels;
-    std::vector<int> d_varMatl;
-    SimulationStateP d_sharedState;
-    std::vector<line*> d_lines;
-    Output* d_dataArchiver;
-    ProblemSpecP d_prob_spec;
-    const Material* d_matl;
-    MaterialSet* d_matl_set;
-    std::set<std::string> d_isDirCreated;
-    
-    MaterialSubset* d_zero_matl;
-    
-  
+    VarLabel* lastWriteTimeLabel;
+    VarLabel* fileVarsStructLabel;
   };
-}
+
+  lineExtractLabel* m_lb;
+
+  struct line
+  {
+    std::string name;
+    Point startPt;
+    Point endPt;
+    double stepSize;
+    int loopDir; // direction to loop over
+  };
+
+  //__________________________________
+  // global constants
+  std::vector<VarLabel*> d_varLabels;
+  std::vector<int> d_varMatl;
+  std::vector<line*> d_lines;
+  int d_col_width = 16; //  column width
+
+  const Material* d_matl{ nullptr };
+  MaterialSet* d_matl_set{ nullptr };
+};
+} // namespace Uintah
 
 #endif

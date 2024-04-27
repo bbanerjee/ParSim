@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,58 +23,52 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef PATCH_BVH_H
-#define PATCH_BVH_H
+#ifndef __CORE_GRID_PATCH_BVH_H__
+#define __CORE_GRID_PATCH_BVH_H__
 
 #include <Core/Grid/PatchBVH/PatchBVHBase.h>
 #include <vector>
 
 namespace Uintah {
 
-  /**************************************
+/**************************************
+  CLASS
+  PatchBVH
 
-    CLASS
-    PatchBVH
+  A Bounding Volume Hiearchy for querying patches that are
+  within a given range.
 
-    A Bounding Volume Hiearchy for querying patches that are 
-    within a given range.
+  GENERAL INFORMATION
 
-    GENERAL INFORMATION
+  PatchBVH.h
 
-    PatchBVH.h
+  Justin Luitjens
+  Department of Computer Science
+  University of Utah
 
-    Justin Luitjens
-    Department of Computer Science
-    University of Utah
+  Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+ ****************************************/
 
-    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+class PatchBVH
+{
+public:
+  PatchBVH(const std::vector<const Patch*>& patches);
+  PatchBVH(const std::vector<Patch*>& patches);
 
+  ~PatchBVH();
 
-    KEYWORDS
-    PatchBVH
+  void
+  query(const IntVector& low,
+        const IntVector& high,
+        std::vector<const Patch*>& patches,
+        bool includeExtraCells = false);
 
-    DESCRIPTION
-    The PatchBVH is used for querying patches within a given range.
-    WARNING
-
-   ****************************************/
-
-  class PatchBVH
-  {
-    public:
-      PatchBVH(const std::vector<const Patch*>& patches);
-      PatchBVH(const std::vector<Patch*>& patches);
-
-      ~PatchBVH();
-
-      void query(const IntVector& low, const IntVector& high, Level::selectType& patches,bool includeExtraCells=false);
-      
-    private:
-
-      PatchBVHBase *root_; //the root of the BVH tree
-      std::vector<PatchKeyVal>  patches_; //a copy of the patches passed in that can be reordered
-  };
+private:
+  PatchBVHBase* root_; // the root of the BVH tree
+  std::vector<PatchKeyVal>
+    patches_; // a copy of the patches passed in that can be reordered
+};
 
 } // end namespace Uintah
 
-#endif
+#endif //__CORE_GRID_PATCH_BVH_H__

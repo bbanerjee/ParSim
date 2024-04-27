@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -45,17 +45,17 @@ SET(EXTRACTOR_LIBS
   Vaango_Core_Util
 )
 
-TARGET_LINK_LIBRARIES(selectpart ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(partvarRange ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(timeextract ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(lineextract ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(partextract ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(faceextract ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(extractF ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(extractV ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(extractPvec ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(extractPmat ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(extractPscalar ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(extractS ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(extractPos ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(extractPosVelMasVol ${EXTRACTOR_LIBS})
+target_link_libraries(selectpart ${EXTRACTOR_LIBS})
+target_link_libraries(partvarRange ${EXTRACTOR_LIBS})
+target_link_libraries(timeextract ${EXTRACTOR_LIBS})
+target_link_libraries(lineextract ${EXTRACTOR_LIBS})
+target_link_libraries(partextract ${EXTRACTOR_LIBS})
+target_link_libraries(faceextract ${EXTRACTOR_LIBS})
+target_link_libraries(extractF ${EXTRACTOR_LIBS})
+target_link_libraries(extractV ${EXTRACTOR_LIBS})
+target_link_libraries(extractPvec ${EXTRACTOR_LIBS})
+target_link_libraries(extractPmat ${EXTRACTOR_LIBS})
+target_link_libraries(extractPscalar ${EXTRACTOR_LIBS})
+target_link_libraries(extractS ${EXTRACTOR_LIBS})
+target_link_libraries(extractPos ${EXTRACTOR_LIBS})
+target_link_libraries(extractPosVelMasVol ${EXTRACTOR_LIBS})

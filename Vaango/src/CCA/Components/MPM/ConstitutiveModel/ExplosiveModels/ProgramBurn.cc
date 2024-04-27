@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,7 +37,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
@@ -121,10 +121,10 @@ ProgramBurn::~ProgramBurn()
   VarLabel::destroy(pLocalizedLabel_preReloc);
 }
 
-ProgramBurn*
+std::unique_ptr<ConstitutiveModel>
 ProgramBurn::clone()
 {
-  return scinew ProgramBurn(*this);
+  return std::make_unique<ProgramBurn>(*this);
 }
 
 void
@@ -246,6 +246,7 @@ ProgramBurn::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForExplicit(task, matlset, patches);
 
+  task->requires(Task::OldDW, lb->simulationTimeLabel);
   task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pProgressFLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pLocalizedLabel, matlset, Ghost::None);
@@ -264,7 +265,10 @@ ProgramBurn::computeStressTensor(const PatchSubset* patches,
   delt_vartype delT;
   old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
-  double time = d_sharedState->getElapsedTime() - d_cm.d_T0;
+  simTime_vartype simTimeVar;
+  old_dw->get(simTimeVar, lb->simulationTimeLabel);
+
+  double time = simTimeVar - d_cm.d_T0;
 
   double K    = d_cm.d_K;
   double n    = d_cm.d_n;

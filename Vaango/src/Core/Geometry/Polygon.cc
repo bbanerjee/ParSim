@@ -57,7 +57,7 @@ namespace Uintah {
 
 Polygon::Polygon(const Polygon& p)
   {
-  vector<Point>::const_iterator i,j;
+  std::vector<Point>::const_iterator i,j;
   for( i = p.vertices.begin(), j = p.texcoords.begin();
        i != p.vertices.end(); i++, j++){
     vertices.push_back(*i);
@@ -68,7 +68,7 @@ Polygon::Polygon(const Polygon& p)
 
 Polygon::Polygon(const vector<Point>& p, const vector<Point>& t)
   {
-  vector<Point>::const_iterator i,j;
+  std::vector<Point>::const_iterator i,j;
   for( i = p.begin(), j = t.begin(); i != p.end(); i++, j++ ){
     vertices.push_back(*i);
     texcoords.push_back(*j);
@@ -89,7 +89,7 @@ Polygon::operator==(const Polygon& p) const
 {
   if( p.vertices.size() != vertices.size())
     return false;
-  vector<Point>::const_iterator i,j;
+  std::vector<Point>::const_iterator i,j;
   for( i = vertices.begin(), j = p.vertices.begin();
        i != vertices.end(); i++, j++){
     if( *i != *j )
@@ -108,7 +108,7 @@ Polygon::operator!=(const Polygon& p) const
 Polygon&
 Polygon::operator=(const Polygon& p)
 {
-  vector<Point>::const_iterator i;
+  std::vector<Point>::const_iterator i;
   vertices.clear();
   for( i = p.vertices.begin(); i != p.vertices.end(); i++ ){
     vertices.push_back(*i);
@@ -138,7 +138,7 @@ Polygon::getTexCoord(int i) const
 string
 Polygon::get_string() const
 {
-  vector<Point>::const_iterator i;
+  std::vector<Point>::const_iterator i;
   string r = "( ";
   for( i = vertices.begin(); i != vertices.end(); i++ )
   {

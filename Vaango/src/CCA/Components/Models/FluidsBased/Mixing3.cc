@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -48,6 +24,7 @@
 
 
 #include <CCA/Components/Models/FluidsBased/Mixing3.h>
+#include <CCA/Components/ICE/Core/ICELabel.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -56,14 +33,13 @@
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Material.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/GeometryPiece/GeometryPieceFactory.h>
 #include <Core/GeometryPiece/UnionGeometryPiece.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
-#include <vector>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <Core/Math/MiscMath.h>
 #include <iostream>
 
@@ -82,22 +58,27 @@
 using namespace Uintah;
 using namespace std;
 
-Mixing3::Mixing3(const ProcessorGroup* myworld, ProblemSpecP& params)
-  : ModelInterface(myworld), params(params)
+Mixing3::Mixing3(const ProcessorGroup* myworld,
+                 const MaterialManagerP& materialManager,
+                 const ProblemSpecP& params)
+  : FluidsBasedModel(myworld, materialManager), d_params(params)
 {
+  Ilb = scinew ICELabel();
+
   mymatls = 0;
   gas = 0;
   reactor = 0;
-  params->require("dtemp", dtemp);
-  params->require("dpress", dpress);
-  params->require("dmf", dmf);
-  params->require("dtfactor", dtfactor);
+  d_params->require("dtemp", dtemp);
+  d_params->require("dpress", dpress);
+  d_params->require("dmf", dmf);
+  d_params->require("dtfactor", dtfactor);
   nlook=0;
   nmiss=0;
 }
 
 Mixing3::~Mixing3()
 {
+  delete Ilb;
   if(mymatls && mymatls->removeReference())
     delete mymatls;
   for(vector<Stream*>::iterator iter = streams.begin();
@@ -122,11 +103,10 @@ Mixing3::Region::Region(GeometryPiece* piece, ProblemSpecP& ps)
   ps->require("massFraction", initialMassFraction);
 }
 
-void Mixing3::problemSetup(GridP&, SimulationStateP& in_state,
-                           ModelSetup* setup)
+void Mixing3::problemSetup(GridP&,
+                           const bool isRestart)
 {
-  sharedState = in_state;
-  matl = sharedState->parseAndLookupMaterial(params, "material");
+  matl = d_materialManager->parseAndLookupMaterial(d_params, "material");
 
   vector<int> m(1);
   m[0] = matl->getDWIndex();
@@ -136,13 +116,13 @@ void Mixing3::problemSetup(GridP&, SimulationStateP& in_state,
 
   // Parse the Cantera XML file
   string fname;
-  params->get("file", fname);
+  d_params->get("file", fname);
   string id;
-  params->get("id", id);
+  d_params->get("id", id);
   try {
     gas = scinew IdealGasMix(fname, id);
     int nsp = gas->nSpecies();
-    if(d_myworld->myrank() == 0){
+    if(d_myworld->myRank() == 0){
 #if 0
       cerr.precision(17);
       cerr << "Using ideal gas " << id << "(from " << fname << ") with " << nel << " elements and " << nsp << " species\n";
@@ -159,9 +139,10 @@ void Mixing3::problemSetup(GridP&, SimulationStateP& in_state,
       string mfsname = "massFractionSource-"+stream->name;
       stream->massFraction_source_CCLabel = VarLabel::create(mfsname, CCVariable<double>::getTypeDescription());
       
-      setup->registerTransportedVariable(mymatls,
-                                         stream->massFraction_CCLabel,
-                                         stream->massFraction_source_CCLabel);
+      registerTransportedVariable(mymatls,
+                                  stream->massFraction_CCLabel,
+                                  stream->massFraction_source_CCLabel);
+      
       streams.push_back(stream);
       names[stream->name] = stream;
     }
@@ -176,7 +157,7 @@ void Mixing3::problemSetup(GridP&, SimulationStateP& in_state,
   if(streams.size() == 0)
     throw ProblemSetupException("Mixing3 specified with no streams!", __FILE__, __LINE__);
 
-  for (ProblemSpecP child = params->findBlock("stream"); child != 0;
+  for (ProblemSpecP child = d_params->findBlock("stream"); child != 0;
        child = child->findNextBlock("stream")) {
     string name;
     child->getAttribute("name", name);
@@ -184,7 +165,8 @@ void Mixing3::problemSetup(GridP&, SimulationStateP& in_state,
     if(iter == names.end())
       throw ProblemSetupException("Stream "+name+" species not found", __FILE__, __LINE__);
     Stream* stream = iter->second;
-    for (ProblemSpecP geom_obj_ps = child->findBlock("geom_object");
+    if(!isRestart){
+     for (ProblemSpecP geom_obj_ps = child->findBlock("geom_object");
          geom_obj_ps != 0;
          geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
       
@@ -201,8 +183,9 @@ void Mixing3::problemSetup(GridP&, SimulationStateP& in_state,
       }
 
       stream->regions.push_back(scinew Region(mainpiece, geom_obj_ps));
+     }
     }
-    if(stream->regions.size() == 0)
+    if(stream->regions.size() == 0 && !isRestart)
       throw ProblemSetupException("Variable: "+stream->name+" does not have any initial value regions",
                                   __FILE__, __LINE__);
 
@@ -210,8 +193,7 @@ void Mixing3::problemSetup(GridP&, SimulationStateP& in_state,
 }
 
 void Mixing3::scheduleInitialize(SchedulerP& sched,
-                                const LevelP& level,
-                                const ModelInfo*)
+                                const LevelP& level)
 {
   Task* t = scinew Task("Mixing3::initialize",
                         this, &Mixing3::initialize);
@@ -275,23 +257,21 @@ void Mixing3::initialize(const ProcessorGroup*,
 }
       
 void Mixing3::scheduleComputeStableTimestep(SchedulerP&,
-                                           const LevelP&,
-                                           const ModelInfo*)
+                                           const LevelP&)
 {
   // None necessary...
 }
 
 void Mixing3::scheduleComputeModelSources(SchedulerP& sched,
-                                               const LevelP& level,
-                                               const ModelInfo* mi)
+                                               const LevelP& level)
 {
   Task* t = scinew Task("Mixing3::computeModelSources", this, 
-                        &Mixing3::computeModelSources, mi);
-  t->modifies(mi->modelEng_srcLabel);
-  t->requires(Task::OldDW, mi->rho_CCLabel,   Ghost::None);
-  t->requires(Task::OldDW, mi->press_CCLabel, Ghost::None);
-  t->requires(Task::OldDW, mi->temp_CCLabel,  Ghost::None);
-  t->requires(Task::OldDW, mi->delT_Label,    level.get_rep());
+                        &Mixing3::computeModelSources);
+  t->modifies(Ilb->modelEng_srcLabel);
+  t->requires(Task::OldDW, Ilb->rho_CCLabel,   Ghost::None);
+  t->requires(Task::OldDW, Ilb->press_CCLabel, Ghost::None);
+  t->requires(Task::OldDW, Ilb->temperature_CCLabel,  Ghost::None);
+  t->requires(Task::OldDW, Ilb->delTLabel,    level.get_rep());
   
   for(vector<Stream*>::iterator iter = streams.begin();
       iter != streams.end(); iter++){
@@ -404,11 +384,10 @@ double Mixing3::lookup(int nsp, int idt, int itemp, int ipress, int* imf,
 }
 
 void Mixing3::computeModelSources(const ProcessorGroup*, 
-                                    const PatchSubset* patches,
-                                    const MaterialSubset* matls,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw,
-                                    const ModelInfo* mi)
+                                  const PatchSubset* patches,
+                                  const MaterialSubset* matls,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw)
 {
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -419,19 +398,19 @@ void Mixing3::computeModelSources(const ProcessorGroup*,
       constCCVariable<double> pressure;
       constCCVariable<double> temperature;
       constCCVariable<double>cv;
-      old_dw->get(density,     mi->rho_CCLabel,        matl, patch, Ghost::None, 0);
-      old_dw->get(pressure,    mi->press_CCLabel,      matl, patch, Ghost::None, 0);
-      old_dw->get(temperature, mi->temp_CCLabel,       matl, patch, Ghost::None, 0);
-      new_dw->get(cv,          mi->specific_heatLabel, matl, patch, Ghost::None, 0);
+      old_dw->get(density,     Ilb->rho_CCLabel,        matl, patch, Ghost::None, 0);
+      old_dw->get(pressure,    Ilb->press_CCLabel,      matl, patch, Ghost::None, 0);
+      old_dw->get(temperature, Ilb->temperature_CCLabel,       matl, patch, Ghost::None, 0);
+      new_dw->get(cv,          Ilb->specific_heatLabel, matl, patch, Ghost::None, 0);
     
       CCVariable<double> energySource;
-      new_dw->getModifiable(energySource, mi->modelEng_srcLabel,matl, patch);
+      new_dw->getModifiable(energySource, Ilb->modelEng_srcLabel,matl, patch);
 
       Vector dx = patch->dCell();
       double volume = dx.x()*dx.y()*dx.z();
 
       delt_vartype delT;
-      old_dw->get(delT, mi->delT_Label, getLevel(patches));
+      old_dw->get(delT, Ilb->delTLabel, getLevel(patches));
       double dt = delT;
 
       int numSpecies = streams.size();

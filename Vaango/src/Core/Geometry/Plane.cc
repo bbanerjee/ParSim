@@ -65,131 +65,144 @@
 namespace Uintah {
 
 Plane::Plane()
-: n(Vector(0,0,1)), d(0)
+  : n(Vector(0, 0, 1))
+  , d(0)
 {
 }
 
-Plane::Plane(double a, double b, double c, double d) : n(Vector(a,b,c)), d(d) {
-    double l=n.length();
-    d/=l;
-    n.normalize();
+Plane::Plane(double a, double b, double c, double d)
+  : n(Vector(a, b, c))
+  , d(d)
+{
+  double l = n.length();
+  d /= l;
+  n.normalize();
 }
 
-
-
-Plane::Plane(const Point &p, const Vector &normal)
-  : n(normal), d(-Dot(p, normal))
+Plane::Plane(const Point& p, const Vector& normal)
+  : n(normal)
+  , d(-Dot(p, normal))
 {
 }
 
-Plane::Plane(const Plane &copy)
-: n(copy.n), d(copy.d)
+Plane::Plane(const Plane& copy)
+  : n(copy.n)
+  , d(copy.d)
 {
 }
 
-Plane::Plane(const Point &p1, const Point &p2, const Point &p3) {
-    Vector v1(p2-p1);
-    Vector v2(p2-p3);
-    n=Cross(v2,v1);
-    n.normalize();
-    d=-Dot(p1, n);
-}
-
-Plane::~Plane() {
-}
-
-void Plane::flip() {
-   n.x(-n.x());
-   n.y(-n.y());
-   n.z(-n.z());
-   d=-d;
-}
-
-double Plane::eval_point(const Point &p) const {
-    return Dot(p, n)+d;
-}
-
-Point Plane::project(const Point& p) const
+Plane&
+Plane::operator=(const Plane& plane)
 {
-   return p-n*(d+Dot(p,n));
+  n = plane.n;
+  d = plane.d;
+  return *this;
 }
 
-Vector Plane::project(const Vector& v) const
+Plane::Plane(const Point& p1, const Point& p2, const Point& p3)
 {
-    return v-n*Dot(v,n);
+  Vector v1(p2 - p1);
+  Vector v2(p2 - p3);
+  n = Cross(v2, v1);
+  n.normalize();
+  d = -Dot(p1, n);
 }
 
-Vector Plane::normal() const
+Plane::~Plane() {}
+
+void
+Plane::flip()
 {
-   return n;
+  n.x(-n.x());
+  n.y(-n.y());
+  n.z(-n.z());
+  d = -d;
+}
+
+double
+Plane::eval_point(const Point& p) const
+{
+  return Dot(p, n) + d;
+}
+
+Point
+Plane::project(const Point& p) const
+{
+  return p - n * (d + Dot(p, n));
+}
+
+Vector
+Plane::project(const Vector& v) const
+{
+  return v - n * Dot(v, n);
+}
+
+Vector
+Plane::normal() const
+{
+  return n;
 }
 
 void
-Plane::ChangePlane(const Point &p1, const Point &p2, const Point &p3) {
-    Vector v1(p2-p1);
-    Vector v2(p2-p3);
-    n=Cross(v2,v1);
-    n.normalize();
-    d=-Dot(p1, n);
+Plane::ChangePlane(const Point& p1, const Point& p2, const Point& p3)
+{
+  Vector v1(p2 - p1);
+  Vector v2(p2 - p3);
+  n = Cross(v2, v1);
+  n.normalize();
+  d = -Dot(p1, n);
 }
 
-
 void
-Plane::ChangePlane(const Point &P, const Vector &N) {
+Plane::ChangePlane(const Point& P, const Vector& N)
+{
   //  std::cerr << N << std::endl;
   //  return;
   n = N;
   n.safe_normalize();
-  d = -Dot(P,n);
+  d = -Dot(P, n);
 }
 
-
-
 int
-Plane::Intersect( Point s, Vector v, Point& hit )
+Plane::Intersect(Point s, Vector v, Point& hit)
 {
-  Point origin( 0., 0., 0. );
+  Point origin(0., 0., 0.);
   Point ptOnPlane = origin - n * d;
-  double tmp = Dot( n, v );
+  double tmp      = Dot(n, v);
 
-  if( tmp > -1.e-6 && tmp < 1.e-6 ) // Vector v is parallel to plane
+  if (tmp > -1.e-6 && tmp < 1.e-6) // Vector v is parallel to plane
   {
     // vector from origin of line to point on plane
-      
+
     Vector temp = s - ptOnPlane;
 
-    if ( temp.length() < 1.e-5 )
-    {
+    if (temp.length() < 1.e-5) {
       // the origin of plane and the origin of line are almost
       // the same
-	  
+
       hit = ptOnPlane;
       return 1;
-    }
-    else
-    {
+    } else {
       // point s and d are not the same, but maybe s lies
       // in the plane anyways
-	  
-      tmp = Dot( temp, n );
 
-      if(tmp > -1.e-6 && tmp < 1.e-6)
-      {
-	hit = s;
-	return 1;
+      tmp = Dot(temp, n);
+
+      if (tmp > -1.e-6 && tmp < 1.e-6) {
+        hit = s;
+        return 1;
+      } else {
+        return 0;
       }
-      else
-	return 0;
     }
   }
 
-  tmp = - ( ( d + Dot( s, n ) ) / Dot( v, n ) );
+  tmp = -((d + Dot(s, n)) / Dot(v, n));
 
   hit = s + v * tmp;
 
   return 1;
 }
-
 
 #if 0
 int
@@ -237,40 +250,34 @@ Plane::Intersect( Point s, Vector v, double &t ) const
 
 #else
 int
-Plane::Intersect(Point s, Vector v, double &t) const
+Plane::Intersect(Point s, Vector v, double& t) const
 {
-  double tmp = Dot( n, v );
-  if(tmp > -1.e-6 && tmp < 1.e-6) // Vector v is parallel to plane
+  double tmp = Dot(n, v);
+  if (tmp > -1.e-6 && tmp < 1.e-6) // Vector v is parallel to plane
   {
     // vector from origin of line to point on plane
-    Vector temp = (s + n*d).asVector();
-    if (temp.length() < 1.e-5)
-    {
+    Vector temp = (s + n * d).asVector();
+    if (temp.length() < 1.e-5) {
       // origin of plane and origin of line are almost the same
       t = 0.0;
       return 1;
-    }
-    else
-    {
+    } else {
       // point s and d are not the same, but maybe s lies
       // in the plane anyways
       tmp = Dot(temp, n);
-      if (tmp > -1.e-6 && tmp < 1.e-6)
-      {
-	t = 0.0;
-	return 1;
+      if (tmp > -1.e-6 && tmp < 1.e-6) {
+        t = 0.0;
+        return 1;
+      } else {
+        return 0;
       }
-      else
-	return 0;
     }
   }
-  
+
   t = -((d + Dot(s, n)) / Dot(v, n));
   return 1;
 }
 #endif
-
-
 
 void
 Plane::get(double (&abcd)[4]) const
@@ -282,4 +289,3 @@ Plane::get(double (&abcd)[4]) const
 }
 
 } // End namespace Uintah
-

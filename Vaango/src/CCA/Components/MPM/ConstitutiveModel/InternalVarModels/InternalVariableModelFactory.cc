@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,7 +47,7 @@ using std::cerr;
 using std::ifstream;
 using std::ofstream;
 
-InternalVariableModel*
+std::unique_ptr<InternalVariableModel>
 InternalVariableModelFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("internal_variable_model");
@@ -59,18 +59,18 @@ InternalVariableModelFactory::create(ProblemSpecP& ps)
     throw ProblemSetupException(
       "No type for internal_var_model", __FILE__, __LINE__);
   if (mat_type == "metal_internal_var") {
-    return scinew IntVar_Metal(child);
+    return std::make_unique<IntVar_Metal>(child);
   } else if (mat_type == "soil_model_brannon_kappa") {
-    return (scinew IntVar_SoilBrannon(child));
+    return (std::make_unique<IntVar_SoilBrannon>(child));
   } else if (mat_type == "tabular_cap") {
-    return (scinew IntVar_TabularCap(child));
+    return (std::make_unique<IntVar_TabularCap>(child));
   } else {
     throw ProblemSetupException(
       "Unknown InternalVariable Model (" + mat_type + ")", __FILE__, __LINE__);
   }
 }
 
-InternalVariableModel*
+std::unique_ptr<InternalVariableModel>
 InternalVariableModelFactory::create(ProblemSpecP& ps, ShearModulusModel* shear)
 {
   ProblemSpecP child = ps->findBlock("internal_variable_model");
@@ -82,14 +82,14 @@ InternalVariableModelFactory::create(ProblemSpecP& ps, ShearModulusModel* shear)
     throw ProblemSetupException(
       "No type for internal_var_model", __FILE__, __LINE__);
   if (mat_type == "borja_consolidation_pressure")
-    return (scinew IntVar_BorjaPressure(child, shear));
+    return (std::make_unique<IntVar_BorjaPressure>(child, shear));
   else {
     throw ProblemSetupException(
       "Unknown InternalVariable Model (" + mat_type + ")", __FILE__, __LINE__);
   }
 }
 
-InternalVariableModel*
+std::unique_ptr<InternalVariableModel>
 InternalVariableModelFactory::create(ProblemSpecP& ps,
                                      ElasticModuliModel* elastic)
 {
@@ -102,33 +102,33 @@ InternalVariableModelFactory::create(ProblemSpecP& ps,
     throw ProblemSetupException(
       "No type for internal_var_model", __FILE__, __LINE__);
   if (mat_type == "arena")
-    return (scinew IntVar_Arena(child, elastic));
+    return (std::make_unique<IntVar_Arena>(child, elastic));
   else {
     throw ProblemSetupException(
       "Unknown InternalVariable Model (" + mat_type + ")", __FILE__, __LINE__);
   }
 }
 
-InternalVariableModel*
+std::unique_ptr<InternalVariableModel>
 InternalVariableModelFactory::createCopy(const InternalVariableModel* pm)
 {
   if (dynamic_cast<const IntVar_Arena*>(pm))
-    return scinew IntVar_Arena(dynamic_cast<const IntVar_Arena*>(pm));
+    return std::make_unique<IntVar_Arena>(dynamic_cast<const IntVar_Arena*>(pm));
 
   else if (dynamic_cast<const IntVar_BorjaPressure*>(pm))
-    return (scinew IntVar_BorjaPressure(
+    return (std::make_unique<IntVar_BorjaPressure>(
       dynamic_cast<const IntVar_BorjaPressure*>(pm)));
 
   else if (dynamic_cast<const IntVar_Metal*>(pm))
-    return scinew IntVar_Metal(dynamic_cast<const IntVar_Metal*>(pm));
+    return std::make_unique<IntVar_Metal>(dynamic_cast<const IntVar_Metal*>(pm));
 
   else if (dynamic_cast<const IntVar_SoilBrannon*>(pm))
     return (
-      scinew IntVar_SoilBrannon(dynamic_cast<const IntVar_SoilBrannon*>(pm)));
+      std::make_unique<IntVar_SoilBrannon>(dynamic_cast<const IntVar_SoilBrannon*>(pm)));
 
   else if (dynamic_cast<const IntVar_TabularCap*>(pm))
     return (
-      scinew IntVar_TabularCap(dynamic_cast<const IntVar_TabularCap*>(pm)));
+      std::make_unique<IntVar_TabularCap>(dynamic_cast<const IntVar_TabularCap*>(pm)));
 
   else {
     throw Uintah::InternalError(

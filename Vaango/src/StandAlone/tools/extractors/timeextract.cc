@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -73,23 +74,23 @@ void
 usage(const std::string& badarg, const std::string& progname)
 {
     if(badarg != "")
-        cerr << "Error parsing argument: " << badarg << endl;
-    cerr << "Usage: " << progname << " [options] "
+        std::cerr <<  "Error parsing argument: " << badarg << std::endl;
+    std::cerr <<  "Usage: " << progname << " [options] "
          << "-uda <archive file>\n\n";
-    cerr << "Valid options are:\n";
-    cerr << "  -h,      --help\n";
-    cerr << "  -v,      --variable          <variable name>\n";
-    cerr << "  -m,      --material          <material number> [defaults to 0]\n";
-    //    cerr << "  -binary (prints out the data in binary)\n";
-    cerr << "  -tlow,   --timesteplow       [int] (only outputs timestep from int) [defaults to 0]\n";
-    cerr << "  -thigh,  --timestephigh      [int] (only outputs timesteps up to int) [defaults to last timestep]\n";
-    cerr << "  -i,      --index             <i> <j> <k> [intx] cell index [defaults to 0,0,0]\n";
-    cerr << "  -p,      --point             <x> <y> <z> [doubles] point location in physical coordinates \n";
-    cerr << "  -l,      --level             [int] (level index to query range from) [defaults to 0]\n";
-    cerr << "  -o,      --out               <outputfilename> [defaults to stdout]\n";
-    cerr << "  -vv,     --verbose           (prints status of output)\n";
-    cerr << "  -q,      --quiet             (only print data values)\n";
-    cerr << "  -noxml,  --xml-cache-off (turn off XML caching in DataArchive)\n";
+    std::cerr <<  "Valid options are:\n";
+    std::cerr <<  "  -h,      --help\n";
+    std::cerr <<  "  -v,      --variable          <variable name>\n";
+    std::cerr <<  "  -m,      --material          <material number> [defaults to 0]\n";
+    //    std::cerr <<  "  -binary (prints out the data in binary)\n";
+    std::cerr <<  "  -tlow,   --timesteplow       [int] (only outputs timestep from int) [defaults to 0]\n";
+    std::cerr <<  "  -thigh,  --timestephigh      [int] (only outputs timesteps up to int) [defaults to last timestep]\n";
+    std::cerr <<  "  -i,      --index             <i> <j> <k> [intx] cell index [defaults to 0,0,0]\n";
+    std::cerr <<  "  -p,      --point             <x> <y> <z> [doubles] point location in physical coordinates \n";
+    std::cerr <<  "  -l,      --level             [int] (level index to query range from) [defaults to 0]\n";
+    std::cerr <<  "  -o,      --out               <outputfilename> [defaults to stdout]\n";
+    std::cerr <<  "  -vv,     --verbose           (prints status of output)\n";
+    std::cerr <<  "  -q,      --quiet             (only print data values)\n";
+    std::cerr <<  "  -noxml,  --xml-cache-off (turn off XML caching in DataArchive)\n";
     exit(1);
 }
 
@@ -104,36 +105,36 @@ printData(DataArchive* archive, string& variable_name,
           unsigned long time_step_lower, unsigned long time_step_upper,
           unsigned long output_precision, ostream& out) 
 {
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
 
   // query time info from dataarchive
   archive->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  if (!quiet) cout << "There are " << index.size() << " timesteps:\n";
+  if (!quiet) std::cout << "There are " << index.size() << " timesteps:\n";
       
   //------------------------------
   // figure out the lower and upper bounds on the timesteps
   if (time_step_lower >= times.size()) {
-    cerr << "timesteplow must be between 0 and " << times.size()-1 << endl;
+    std::cerr <<  "timesteplow must be between 0 and " << times.size()-1 << std::endl;
     exit(1);
   }
 
   // set default max time value
   if (time_step_upper == (unsigned long)-1) {
     if (verbose)
-      cout <<"Initializing time_step_upper to "<<times.size()-1<<"\n";
+      std::cout <<"Initializing time_step_upper to "<<times.size()-1<<"\n";
     time_step_upper = times.size() - 1;
   }
 
   if (time_step_upper >= times.size() || time_step_upper < time_step_lower) {
-    cerr << "timestephigh("<<time_step_upper<<") must be greater than " << time_step_lower 
-         << " and less than " << times.size()-1 << endl;
+    std::cerr <<  "timestephigh("<<time_step_upper<<") must be greater than " << time_step_lower 
+         << " and less than " << times.size()-1 << std::endl;
     exit(1);
   }
   
   if (!quiet){
-    cout << "outputting for times["<<time_step_lower<<"] = " << times[time_step_lower]<<" to times["<<time_step_upper<<"] = "<<times[time_step_upper] << endl;
+    std::cout << "outputting for times["<<time_step_lower<<"] = " << times[time_step_lower]<<" to times["<<time_step_upper<<"] = "<<times[time_step_upper] << std::endl;
   }
   
   // set defaults for output stream
@@ -142,11 +143,11 @@ printData(DataArchive* archive, string& variable_name,
   
   // for each type available, we need to query the values for the time range, 
   // variable name, and material
-  vector<T> values;
+  std::vector<T> values;
   try {
     archive->query(values, variable_name, material, var_id, times[time_step_lower], times[time_step_upper], levelIndex);
   } catch (const VariableNotFoundInGrid& exception) {
-    cerr << "Caught VariableNotFoundInGrid Exception: " << exception.message() << endl;
+    std::cerr <<  "Caught VariableNotFoundInGrid Exception: " << exception.message() << std::endl;
     exit(1);
   }
 
@@ -161,7 +162,7 @@ printData(DataArchive* archive, string& variable_name,
   // Print out data
   for(unsigned int i = 0; i < values.size(); i++) {
     out << times[time_step_lower + i] << "  " << values[i] 
-        << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
+        << " " << pos.x() << " " << pos.y() << " " << pos.z() << std::endl;
   }
 } 
 
@@ -211,11 +212,11 @@ main(int argc, char** argv)
     } else if (s == "-q" || s == "--quiet") {
       quiet = true;
     } else if (s == "-tlow" || s == "--timesteplow") {
-      time_step_lower = strtoul(argv[++i],(char**)NULL,10);
+      time_step_lower = strtoul(argv[++i],(char**)nullptr,10);
     } else if (s == "-thigh" || s == "--timestephigh") {
-      time_step_upper = strtoul(argv[++i],(char**)NULL,10);
+      time_step_upper = strtoul(argv[++i],(char**)nullptr,10);
     } else if (s == "-pr" || s == "--precision") {
-      output_precision = strtoul(argv[++i],(char**)NULL,10);
+      output_precision = strtoul(argv[++i],(char**)nullptr,10);
       if (output_precision > 32) {
         std::cout << "Output precision cannot be larger than 32. Setting precision to 32 \n";        
         output_precision = 32;
@@ -253,7 +254,7 @@ main(int argc, char** argv)
   }
   
   if(input_uda_name == ""){
-    cerr << "No archive file specified\n";
+    std::cerr <<  "No archive file specified\n";
     usage("", argv[0]);
   }
 
@@ -264,12 +265,13 @@ main(int argc, char** argv)
       archive->turnOffXMLCaching();
     }
     
-    vector<string> vars;
-    vector<const Uintah::TypeDescription*> types;
+    std::vector<std::string> vars;
+    std::vector<int> num_matl;
+    std::vector<const Uintah::TypeDescription*> types;
 
-    archive->queryVariables(vars, types);
+    archive->queryVariables(vars, num_matl, types);
     ASSERTEQ(vars.size(), types.size());
-    if (verbose) cout << "There are " << vars.size() << " variables:\n";
+    if (verbose) std::cout << "There are " << vars.size() << " variables:\n";
     bool var_found = false;
     unsigned int var_index = 0;
     for (;var_index < vars.size(); var_index++) {
@@ -282,17 +284,17 @@ main(int argc, char** argv)
     //__________________________________
     //  Bullet proofing
     if (!var_found) {
-      cerr << "\n\n";
-      cerr << "ERROR: Variable \"" << variable_name << "\" was not found.\n";
-      cerr << "If a variable name was not specified try -v [name].\n";
-      cerr << "Possible variable names are:\n";
+      std::cerr <<  "\n\n";
+      std::cerr <<  "ERROR: Variable \"" << variable_name << "\" was not found.\n";
+      std::cerr <<  "If a variable name was not specified try -v [name].\n";
+      std::cerr <<  "Possible variable names are:\n";
       var_index = 0;
       for (;var_index < vars.size(); var_index++) {
-        cout << "vars[" << var_index << "] = " << vars[var_index] << endl;
+        std::cout << "vars[" << var_index << "] = " << vars[var_index] << std::endl;
       }
-      cerr << "\n";
-      cerr << "Goodbye!!\n";
-      cerr << "\n";
+      std::cerr <<  "\n";
+      std::cerr <<  "Goodbye!!\n";
+      std::cerr <<  "\n";
       exit(-1);
       //      var = vars[0];
     }
@@ -300,8 +302,8 @@ main(int argc, char** argv)
     //__________________________________
     //  compute the cell index from the point
     if(findCellIndex){
-      vector<int> index;
-      vector<double> times;
+      std::vector<int> index;
+      std::vector<double> times;
       archive->queryTimesteps(index, times);
       ASSERTEQ(index.size(), times.size());
 
@@ -313,24 +315,24 @@ main(int argc, char** argv)
     }
       
     if (!quiet){
-      cout << vars[var_index] << ": " << types[var_index]->getName() << " being extracted for material "<<material<<" at index "<<var_id<<endl;
+      std::cout << vars[var_index] << ": " << types[var_index]->getName() << " being extracted for material "<<material<<" at index "<<var_id<<endl;
     }
     
     // get type and subtype of data
     const Uintah::TypeDescription* td = types[var_index];
     const Uintah::TypeDescription* subtype = td->getSubType();
 
-    if( subtype == NULL ) {
-      cout << "\n";
-      cout << "An ERROR occurred.  Subtype is NULL.  Most likely this means that the automatic\n";
-      cout << "type instantiation is not working... Are you running on a strange architecture?\n";
-      cout << "Types should be constructed when global static variables of each type are instantiated\n";
-      cout << "automatically when the program loads.  The registering of the types occurs in:\n";
-      cout << "src/Core/Disclosure/TypeDescription.cc in register_type() (called from the\n";
-      cout << "TypeDescription() constructor(s).  However, I'm not quite sure where the variables\n";
-      cout << "are initially (or in this case not initially) instantiated...  Need to track\n";
-      cout << "that down and force them to be created... Dd.\n";
-      cout << "\n";
+    if( subtype == nullptr ) {
+      std::cout << "\n";
+      std::cout << "An ERROR occurred.  Subtype is nullptr.  Most likely this means that the automatic\n";
+      std::cout << "type instantiation is not working... Are you running on a strange architecture?\n";
+      std::cout << "Types should be constructed when global static variables of each type are instantiated\n";
+      std::cout << "automatically when the program loads.  The registering of the types occurs in:\n";
+      std::cout << "src/Core/Disclosure/TypeDescription.cc in register_type() (called from the\n";
+      std::cout << "TypeDescription() constructor(s).  However, I'm not quite sure where the variables\n";
+      std::cout << "are initially (or in this case not initially) instantiated...  Need to track\n";
+      std::cout << "that down and force them to be created... Dd.\n";
+      std::cout << "\n";
       exit( 1 );
     }
 
@@ -338,12 +340,12 @@ main(int argc, char** argv)
     // if no output file, call with cout
     ostream *output_stream = &cout;
     if (output_file_name != "-") {
-      if (verbose) cout << "Opening \""<<output_file_name<<"\" for writing.\n";
+      if (verbose) std::cout << "Opening \""<<output_file_name<<"\" for writing.\n";
       ofstream *output = new ofstream();
       output->open(output_file_name.c_str());
       if (!(*output)) {
         // Error!!
-        cerr << "Could not open "<<output_file_name<<" for writing.\n";
+        std::cerr <<  "Could not open "<<output_file_name<<" for writing.\n";
         exit(1);
       }
       output_stream = output;
@@ -354,32 +356,32 @@ main(int argc, char** argv)
   //__________________________________
   //  Now print out the data  
   switch (subtype->getType()) {
-  case Uintah::TypeDescription::double_type:
+  case Uintah::TypeDescription::Type::double_type:
     printData<double>(archive, variable_name, material, var_id, levelIndex,
                       time_step_lower, time_step_upper, output_precision, *output_stream);
     break;
-  case Uintah::TypeDescription::float_type:
+  case Uintah::TypeDescription::Type::float_type:
     printData<float>(archive, variable_name, material, var_id, levelIndex,
                       time_step_lower, time_step_upper, output_precision, *output_stream);
     break;
-  case Uintah::TypeDescription::int_type:
+  case Uintah::TypeDescription::Type::int_type:
     printData<int>(archive, variable_name, material, var_id, levelIndex,
                    time_step_lower, time_step_upper, output_precision, *output_stream);
     break;
-  case Uintah::TypeDescription::Vector:
+  case Uintah::TypeDescription::Type::Vector:
     printData<Vector>(archive, variable_name, material, var_id, levelIndex,
                    time_step_lower, time_step_upper, output_precision, *output_stream);
     break;
-  case Uintah::TypeDescription::Matrix3:
-  case Uintah::TypeDescription::bool_type:
-  case Uintah::TypeDescription::short_int_type:
-  case Uintah::TypeDescription::long_type:
-  case Uintah::TypeDescription::long64_type:
-    cerr << "Subtype is not implemented\n";
+  case Uintah::TypeDescription::Type::Matrix3:
+  case Uintah::TypeDescription::Type::bool_type:
+  case Uintah::TypeDescription::Type::short_int_type:
+  case Uintah::TypeDescription::Type::long_type:
+  case Uintah::TypeDescription::Type::long64_type:
+    std::cerr <<  "Subtype is not implemented\n";
     exit(1);
     break;
   default:
-    cerr << "Unknown subtype\n";
+    std::cerr <<  "Unknown subtype\n";
     exit(1);
   }
 
@@ -389,10 +391,10 @@ main(int argc, char** argv)
   }
 
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << endl;
+    std::cerr <<  "Caught exception: " << e.message() << std::endl;
     exit(1);
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     exit(1);
   }
 } // end main

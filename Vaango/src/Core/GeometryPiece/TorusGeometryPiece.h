@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,13 +27,13 @@
 #ifndef __TORUS_GEOMETRY_OBJECT_H__
 #define __TORUS_GEOMETRY_OBJECT_H__
 
-#include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
+#include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Math/Matrix3.h>
 
 #ifndef M_PI
-# define M_PI           3.14159265358979323846  /* pi */
+#define M_PI 3.14159265358979323846 /* pi */
 #endif
 
 namespace Uintah {
@@ -60,7 +60,7 @@ KEYWORDS
 
 DESCRIPTION
    Creates a z-axis aligned torus from the xml input file description.
-   Requires three inputs: center point, and major and minor radii 
+   Requires three inputs: center point, and major and minor radii
    There are methods for checking if a point is inside the torus
    and also for determining the bounding box for the torus.
    The input form looks like this:
@@ -75,83 +75,104 @@ WARNING
 
 ****************************************/
 
-  class TorusGeometryPiece : public GeometryPiece {
-    
-  public:
-    //////////
-    // Constructor that takes a ProblemSpecP argument.   It reads the xml 
-    // input specification and builds a generalized cylinder.
-    //
-    TorusGeometryPiece(ProblemSpecP &);
-    
-    //////////
-    // Constructor that takes top, bottom and radius
-    //
-    TorusGeometryPiece(const Point& center, 
-                       const Vector& axis,
-                       const double minor,
-                       const double major);
-    
-    virtual ~TorusGeometryPiece() = default;
-    
-    static const string TYPE_NAME;
-    virtual std::string getType() const { return TYPE_NAME; }
+class TorusGeometryPiece : public GeometryPiece {
+ public:
+  //////////
+  // Constructor that takes a ProblemSpecP argument.   It reads the xml
+  // input specification and builds a generalized cylinder.
+  //
+  TorusGeometryPiece(ProblemSpecP&);
 
-    /// Make a clone
-    virtual GeometryPieceP clone() const;
-    
-    //////////
-    // Determines whether a point is inside the cylinder.
-    //
-    virtual bool inside(const Point &p) const;
-    
-    //////////
-    // Returns the bounding box surrounding the cylinder.
-    virtual Box getBoundingBox() const;
-    
-    //////////
-    // Calculate the surface area
-    //
-    virtual inline double surfaceArea() const
-      {
-        return (4.0*M_PI*M_PI*d_major_radius*d_minor_radius);
-      }
+  //////////
+  // Constructor that takes top, bottom and radius
+  //
+  TorusGeometryPiece(const Point& center,
+                     const Vector& axis,
+                     const double minor,
+                     const double major);
 
-    //////////
-    // Calculate the volume
-    //
-    virtual inline double volume() const
-      {
-        return ((2.0*M_PI*M_PI*d_major_radius*d_minor_radius*d_minor_radius));
-      }
-    
-    //////////
-    // Calculate the unit normal vector to axis from point
-    //
-    Vector radialDirection(const Point& pt) const;
-    
-    inline Point center() const {return d_center;}
-    inline Vector axis() const {return d_axis_vec;}
-    inline double major_radius() const {return d_major_radius;}
-    inline double minor_radius() const {return d_minor_radius;}
+  virtual ~TorusGeometryPiece() = default;
 
-  protected:
-    
-    void checkInput() const;
-    void computeRotation();
+  static const std::string TYPE_NAME;
+  virtual std::string
+  getType() const {
+    return TYPE_NAME;
+  }
 
-    virtual void outputHelper( ProblemSpecP & ps ) const;
-    
-    //////////
-    // Constructor needed for subclasses
-    //
-    TorusGeometryPiece();
-    Point d_center;
-    Vector d_axis_vec;
-    double d_major_radius;
-    double d_minor_radius;
-    Matrix3 d_rotation;
-  };
-} // End namespace Uintah
-      
-#endif // __TORUS_GEOMTRY_Piece_H__
+  /// Make a clone
+  virtual GeometryPieceP
+  clone() const;
+
+  //////////
+  // Determines whether a point is inside the cylinder.
+  //
+  virtual bool
+  inside(const Point& p) const;
+
+  //////////
+  // Returns the bounding box surrounding the cylinder.
+  virtual Box
+  getBoundingBox() const;
+
+  //////////
+  // Calculate the surface area
+  //
+  virtual inline double
+  surfaceArea() const {
+    return (4.0 * M_PI * M_PI * d_major_radius * d_minor_radius);
+  }
+
+  //////////
+  // Calculate the volume
+  //
+  virtual inline double
+  volume() const {
+    return (
+        (2.0 * M_PI * M_PI * d_major_radius * d_minor_radius * d_minor_radius));
+  }
+
+  //////////
+  // Calculate the unit normal vector to axis from point
+  //
+  Vector
+  radialDirection(const Point& pt) const;
+
+  inline Point
+  center() const {
+    return d_center;
+  }
+  inline Vector
+  axis() const {
+    return d_axis_vec;
+  }
+  inline double
+  major_radius() const {
+    return d_major_radius;
+  }
+  inline double
+  minor_radius() const {
+    return d_minor_radius;
+  }
+
+ protected:
+  void
+  checkInput() const;
+  void
+  computeRotation();
+
+  virtual void
+  outputHelper(ProblemSpecP& ps) const;
+
+  //////////
+  // Constructor needed for subclasses
+  //
+  TorusGeometryPiece();
+  Point d_center;
+  Vector d_axis_vec;
+  double d_major_radius;
+  double d_minor_radius;
+  Matrix3 d_rotation;
+};
+}  // End namespace Uintah
+
+#endif  // __TORUS_GEOMTRY_Piece_H__

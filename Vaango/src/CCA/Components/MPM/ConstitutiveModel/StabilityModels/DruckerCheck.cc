@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -30,7 +30,7 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace std;
+
 
 DruckerCheck::DruckerCheck(ProblemSpecP&)
 {
@@ -57,12 +57,12 @@ DruckerCheck::checkStability(const Matrix3&, const Matrix3& deformRate,
   Matrix3 stressRate(0.0);
   Cep.contract(deformRate, stressRate);
 
-  // cout << "Deform Rate = \n" << deformRate << endl;
-  // cout << "Cep = \n" << Cep ;
-  // cout << "Stress Rate = \n" << stressRate << endl;
+  // std::cout << "Deform Rate = \n" << deformRate << std::endl;
+  // std::cout << "Cep = \n" << Cep ;
+  // std::cout << "Stress Rate = \n" << stressRate << std::endl;
 
   double val = stressRate.Contract(deformRate);
-  // cout << "val = " << val << endl << endl;
+  // std::cout << "val = " << val << std::endl << std::endl;
   if (val > 0.0)
     return false;
   return true;
@@ -87,12 +87,12 @@ DruckerCheck::checkStability(const Matrix3& cauchyStress,
   auto d_vec = Vaango::Tensor::constructVector6Mandel(deformRate);
   Vaango::Tensor::Vector6Mandel stressRate = C_ep * d_vec;
 
-  // cout << "Deform Rate = \n" << d_vec << endl;
-  // cout << "Cep = \n" << Cep ;
-  // cout << "Stress Rate = \n" << stressRate << endl;
+  // std::cout << "Deform Rate = \n" << d_vec << std::endl;
+  // std::cout << "Cep = \n" << Cep ;
+  // std::cout << "Stress Rate = \n" << stressRate << std::endl;
 
   double val = stressRate.transpose() * d_vec;
-  // cout << "val = " << val << endl << endl;
+  // std::cout << "val = " << val << std::endl << std::endl;
   if (val > 0.0)
     return false;
   return true;

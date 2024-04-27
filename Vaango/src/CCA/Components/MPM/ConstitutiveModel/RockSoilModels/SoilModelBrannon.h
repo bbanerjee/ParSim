@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -89,6 +89,7 @@ public:
   // constructor
   SoilModelBrannon(ProblemSpecP& ps, MPMFlags* flag);
   SoilModelBrannon(const SoilModelBrannon* cm);
+  SoilModelBrannon(const SoilModelBrannon& cm) = delete;
   SoilModelBrannon& operator=(const SoilModelBrannon& cm) = delete;
 
   // destructor
@@ -102,8 +103,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-
-  SoilModelBrannon* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   // compute stable timestep for this patch
   virtual void computeStableTimestep(const Patch* patch,
@@ -186,7 +186,8 @@ public:
 private:
 
   CMData d_cm;
-  Vaango::IntVar_SoilBrannon* d_intvar;
+  //std::unique_ptr<Vaango::IntVar_SoilBrannon> d_intvar;
+  std::unique_ptr<Vaango::InternalVariableModel> d_intvar;
 
   void initializeLocalMPMLabels();
 

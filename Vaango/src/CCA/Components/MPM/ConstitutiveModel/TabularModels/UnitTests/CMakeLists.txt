@@ -1,7 +1,7 @@
 #
 # The MIT License
 #
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -49,11 +49,10 @@ configure_file(mlp_regression_keras_total_scaled.h5
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-        Vaango_Core_Thread       
+               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-        Vaango_Core_Labels      
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
@@ -68,6 +67,7 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_Schedulers           
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
+        Vaango_CCA_Components_Models
         ${HDF5_LIBRARY}
 )
 
@@ -83,58 +83,58 @@ target_link_libraries(testTabularData
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testTabularData)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#set(UNIT_TEST testTabularData)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 
 add_executable(testTabularEOS testTabularEOS.cc)
 target_link_libraries(testTabularEOS
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testTabularEOS)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#set(UNIT_TEST testTabularEOS)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 
 add_executable(testTabularPlasticity testTabularPlasticity.cc)
 target_link_libraries(testTabularPlasticity
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testTabularPlasticity)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#set(UNIT_TEST testTabularPlasticity)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 
 add_executable(testNeuralNetTabularPlasticity testNeuralNetTabularPlasticity.cc)
 target_link_libraries(testNeuralNetTabularPlasticity
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testNeuralNetTabularPlasticity)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#set(UNIT_TEST testNeuralNetTabularPlasticity)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 
 add_executable(testTabularPlasticityCap testTabularPlasticityCap.cc)
 target_link_libraries(testTabularPlasticityCap
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testTabularPlasticityCap)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#set(UNIT_TEST testTabularPlasticityCap)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 

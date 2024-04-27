@@ -51,7 +51,7 @@
 
 #include <CCA/Components/ICE/SpecificHeatModel/SpecificHeat.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 
 //  A generalized Polynomial form for specific heat that asymptotes to a upper bound
 //   where:

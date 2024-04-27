@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,26 +23,31 @@
  * IN THE SOFTWARE.
  */
 
-
-#include <Core/Grid/Variables/ReductionVariableBase.h>
-#include <Core/Disclosure/TypeDescription.h>
 #include <Core/Exceptions/InternalError.h>
+#include <Core/Grid/Variables/ReductionVariableBase.h>
 
-using namespace Uintah;
-using namespace Uintah;
+#include <sstream>
 
-ReductionVariableBase::~ReductionVariableBase()
-{
-}
+namespace Uintah {
 
-ReductionVariableBase::ReductionVariableBase()
-{
-}   
+ReductionVariableBase::~ReductionVariableBase() {}
 
+ReductionVariableBase::ReductionVariableBase() {}
 
 RefCounted*
 ReductionVariableBase::getRefCounted()
 {
-  SCI_THROW(InternalError("getRefCounted not implemented for ReductionVariable", __FILE__, __LINE__));
+  std::ostringstream out;
+  out << "getRefCounted not implemented for ReductionVariable";
+  throw InternalError(out.str(), __FILE__, __LINE__);
 }
-    
+
+void
+ReductionVariableBase::allocate(const Patch*, const IntVector&)
+{
+  std::ostringstream out;
+  out << "Should not call allocate for ReductionVariableBase";
+  throw InternalError(out.str(), __FILE__, __LINE__);
+}
+
+} // end namespace Uintah

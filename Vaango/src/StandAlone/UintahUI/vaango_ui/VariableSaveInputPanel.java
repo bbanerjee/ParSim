@@ -52,7 +52,7 @@ public class VariableSaveInputPanel extends JPanel
   private JCheckBox p_volumeCB = null;
   private JCheckBox p_temperatureCB = null;
   private JCheckBox p_stressCB = null;
-  private JCheckBox p_deformationGradientCB = null;
+  private JCheckBox p_pDefGradCB = null;
   private JCheckBox p_displacementCB = null;
   private JCheckBox p_velocityCB = null;
   private JCheckBox p_externalForceCB = null;
@@ -151,7 +151,7 @@ public class VariableSaveInputPanel extends JPanel
     p_massCB = new JCheckBox("Mass");
     p_volumeCB = new JCheckBox("Volume");
     p_temperatureCB = new JCheckBox("Temperature");
-    p_deformationGradientCB = new JCheckBox("Def. Gradient");
+    p_pDefGradCB = new JCheckBox("Def. Gradient");
     p_displacementCB = new JCheckBox("Displacement");
     p_velocityCB = new JCheckBox("Velocity");
     p_stressCB = new JCheckBox("Stress");
@@ -173,7 +173,7 @@ public class VariableSaveInputPanel extends JPanel
     d_partVarStr.addElement(new String("p.volume"));
     d_partVar.addElement(p_temperatureCB);
     d_partVarStr.addElement(new String("p.temperature"));
-    d_partVar.addElement(p_deformationGradientCB);
+    d_partVar.addElement(p_pDefGradCB);
     d_partVarStr.addElement(new String("p.deformationGradient"));
     d_partVar.addElement(p_displacementCB);
     d_partVarStr.addElement(new String("p.displacement"));

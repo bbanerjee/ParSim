@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -58,9 +58,9 @@ using namespace std;
 
 //__________________________________
 //  To turn on normal output
-//  setenv SCI_DEBUG "HYPRE_DOING_COUT:+"
+//  setenv SCI_DEBUG "SOLVER_DOING_COUT:+"
 
-static DebugStream cout_doing("HYPRE_DOING_COUT", false);
+static DebugStream cout_doing("SOLVER_DOING_COUT", false);
 static DebugStream cout_dbg("HYPRE_DBG", false);
 
 //___________________________________________________________________
@@ -138,10 +138,6 @@ void HypreDriverSStruct::cleanup(void)
     HYPRE_SStructGridDestroy(_grid);
     _exists[SStructGrid] = SStructDestroyed;
   }
-  if (_vars) {
-    delete _vars;
-    _vars = 0;
-  }
 }
 //______________________________________________________________________
 void
@@ -216,15 +212,15 @@ HypreDriverSStruct::makeLinearSystem_CC(const int matl)
   ASSERTEQ(sizeof(Stencil7), 7*sizeof(double));
   //__________________________________
   // Set up the grid
-  cout_doing << _pg->myrank() << " Setting up the grid" << "\n";
+  cout_doing << _pg->myRank() << " Setting up the grid" << "\n";
   // Create an empty grid in 3 dimensions with # parts = numLevels.
   const int numDims = 3;
   const int numLevels = _level->getGrid()->numLevels();
   HYPRE_SStructGridCreate(_pg->getComm(), numDims, numLevels, &_grid);
 
   _exists[SStructGrid] = SStructCreated;
-  _vars = scinew HYPRE_SStructVariable[CC_NUM_VARS];
-  _vars[CC_VAR] = HYPRE_SSTRUCT_VARIABLE_CELL; // We use only cell centered var
+  
+  HYPRE_SStructVariable vars[1] = {HYPRE_SSTRUCT_VARIABLE_CELL};  // We use only cell centered var
 
   // if my processor doesn't have patches on a given level, then we need to create
   // some bogus (irrelevent inexpensive) data so hypre doesn't crash.
@@ -232,19 +228,16 @@ HypreDriverSStruct::makeLinearSystem_CC(const int matl)
 
   for (int p = 0 ; p < _patches->size(); p++) {
     HyprePatch_CC hpatch(_patches->get(p),matl);
-    hpatch.addToGrid(_grid,_vars);
+    hpatch.addToGrid( _grid, vars );
     useBogusLevelData[_patches->get(p)->getLevel()->getIndex()] = false;
   }
   
   for (int l = 0; l < numLevels; l++) {
-    if (useBogusLevelData[l]) {
-      HyprePatch_CC hpatch(l, matl);
-      hpatch.addToGrid(_grid, _vars);
+    if ( useBogusLevelData[l] ) {
+      HyprePatch_CC hpatch( l, matl );
+      hpatch.addToGrid( _grid, vars );
     }
   }
-
-  delete _vars;
-  _vars = 0;
 
   HYPRE_SStructGridAssemble(_grid);
   _exists[SStructGrid] = SStructAssembled;
@@ -284,7 +277,7 @@ HypreDriverSStruct::makeLinearSystem_CC(const int matl)
   //==================================================================
   // Setup connection graph
   //================================================================== 
-  cout_doing << _pg->myrank() << " Create the graph and stencil" << "\n";
+  cout_doing << _pg->myRank() << " Create the graph and stencil" << "\n";
   HYPRE_SStructGraphCreate(_pg->getComm(), _grid, &_graph);
   _exists[SStructGraph] = SStructCreated;
   
@@ -369,10 +362,12 @@ HypreDriverSStruct::makeLinearSystem_CC(const int matl)
                              _stencilSize, DoingFineToCoarse);
     }
     // Looking up
+#ifndef SKIP_COARSE_TO_FINE_CONNECTIONS // DEBUG THIS
     if (level < numLevels-1) {
       hpatch.makeConnections(_HA, _A_dw, _A_label,
                              _stencilSize, DoingCoarseToFine);
     }
+#endif
   } 
   HYPRE_SStructMatrixAssemble(_HA);
   _exists[SStructA] = SStructAssembled;
@@ -380,7 +375,7 @@ HypreDriverSStruct::makeLinearSystem_CC(const int matl)
   //==================================================================
   //  Create the rhs
   //==================================================================
-  cout_doing << _pg->myrank() << " Doing setup RHS vector _HB" << "\n";
+  cout_doing << _pg->myRank() << " Doing setup RHS vector _HB" << "\n";
   HYPRE_SStructVectorCreate(_pg->getComm(), _grid, &_HB);
   _exists[SStructB] = SStructCreated;
   
@@ -409,7 +404,7 @@ HypreDriverSStruct::makeLinearSystem_CC(const int matl)
   //==================================================================
   //  Create the solution
   //==================================================================
-  cout_doing << _pg->myrank() << " Doing setup solution vector _HX" << "\n";
+  cout_doing << _pg->myRank() << " Doing setup solution vector _HX" << "\n";
   HYPRE_SStructVectorCreate(_pg->getComm(), _grid, &_HX);
   _exists[SStructX] = SStructCreated;
   
@@ -435,7 +430,7 @@ HypreDriverSStruct::makeLinearSystem_CC(const int matl)
   } else {
 #if 0
     // If guess is not provided by ICE, use zero as initial guess
-    cout_doing << _pg->myrank() << " Default initial guess: zero" << "\n";
+    cout_doing << _pg->myRank() << " Default initial guess: zero" << "\n";
     for (int p = 0 ; p < _patches->size(); p++) {
       // Read Uintah patch info into our data structure, set Uintah pointers
       const Patch* patch = _patches->get(p);
@@ -456,7 +451,7 @@ HypreDriverSStruct::makeLinearSystem_CC(const int matl)
 
   // For solvers that require ParCSR format
   if (_requiresPar) {
-    cout_doing << _pg->myrank() << " Making ParCSR objects from SStruct objects" << "\n";
+    cout_doing << _pg->myRank() << " Making ParCSR objects from SStruct objects" << "\n";
     HYPRE_SStructMatrixGetObject(_HA, (void **) &_HA_Par);
     HYPRE_SStructVectorGetObject(_HB, (void **) &_HB_Par);
     HYPRE_SStructVectorGetObject(_HX, (void **) &_HX_Par);
@@ -541,11 +536,11 @@ HypreDriverSStruct::HyprePatch_CC::makeGraphConnections(HYPRE_SStructGraph& grap
   const IntVector& refRat = fineLevel->getRefinementRatio();
   
   //At the CFI compute the fine/coarse level indices and pass them to hypre
-  for(int i = 0; i < coarsePatches.size(); i++){  
+  for(unsigned int i = 0; i < coarsePatches.size(); i++){  
     const Patch* coarsePatch = coarsePatches[i];
     
-    for(int i = 0; i < finePatches.size(); i++){  
-      const Patch* finePatch = finePatches[i];
+    for(unsigned int j = 0; j < finePatches.size(); j++){  
+      const Patch* finePatch = finePatches[j];
 
       vector<Patch::FaceType> cf;
       finePatch->getCoarseFaces(cf);
@@ -699,7 +694,7 @@ HypreDriverSStruct::HyprePatch_CC::makeInteriorVector(HYPRE_SStructVector& HV,
                                                       DataWarehouse* V_dw,
                                                       const VarLabel* V_label)
 {
-  CCTypes::const_type V;
+  CCTypes::const_double_type V;
   V_dw->get(V, V_label, _matl, _patch, Ghost::None, 0);
   
   for(int z = _low.z(); z <= _high.z(); z++) {
@@ -764,8 +759,8 @@ HypreDriverSStruct::HyprePatch_CC::makeConnections(HYPRE_SStructMatrix& HA,
   int fineIndex, coarseIndex;
   Level::selectType finePatches;
   Level::selectType coarsePatches;
-  const Level* fineLevel = NULL;
-  const Level* coarseLevel = NULL;
+  const Level* fineLevel = nullptr;
+  const Level* coarseLevel = nullptr;
   const double ZERO = 0.0;
   //__________________________________
   // looking down
@@ -795,11 +790,11 @@ HypreDriverSStruct::HyprePatch_CC::makeConnections(HYPRE_SStructMatrix& HA,
   const IntVector& refRat = fineLevel->getRefinementRatio();
   
   //At the CFI compute the fine/coarse level indices and pass them to hypre
-  for(int i = 0; i < coarsePatches.size(); i++){  
+  for(unsigned int i = 0; i < coarsePatches.size(); i++){  
     const Patch* coarsePatch = coarsePatches[i];
     
-    for(int i = 0; i < finePatches.size(); i++){  
-      const Patch* finePatch = finePatches[i];
+    for(unsigned int j = 0; j < finePatches.size(); j++){  
+      const Patch* finePatch = finePatches[j];
       
       //__________________________________
       // get the fine level data
@@ -931,8 +926,8 @@ HypreDriverSStruct::HyprePatch_CC::getSolution(HYPRE_SStructVector& HX,
                                                const VarLabel* X_label,
                                                const bool modifies_x)
 {
-  typedef CCTypes::sol_type sol_type;
-  sol_type Xnew;
+  typedef CCTypes::double_type double_type;
+  double_type Xnew;
   if (modifies_x) {
     new_dw->getModifiable(Xnew, X_label, _matl, _patch);
   } else {

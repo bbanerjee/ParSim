@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,61 +24,90 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <Core/Util/RefCounted.h>
-#include <Core/Thread/AtomicCounter.h>
-#include <Core/Thread/Mutex.h>
+
+#include <Core/Malloc/Allocator.h>
+#include <Core/Parallel/MasterLock.h>
+
 #include <Core/Util/Assert.h>
 #include <Core/Util/FancyAssert.h>
-#include <Core/Malloc/Allocator.h>
 
-using namespace Uintah;
-using namespace Uintah;
+#include <atomic>
 
-static const int    NLOCKS=1024;
-static       Mutex* locks[NLOCKS];
-static       bool   initialized = false;
-static Mutex initlock("RefCounted initialization lock");
+//
+//
 
-static AtomicCounter* nextIndex;
-static AtomicCounter* freeIndex;
+namespace Uintah {
+
+static const int NLOCKS = 1024;
+static bool initialized = false;
+
+static Uintah::MasterLock* locks[NLOCKS];
+static Uintah::MasterLock initlock{};
+
+static std::atomic<long long> nextIndex{0};
+static std::atomic<long long> freeIndex{0};
+
+//static Mutex* locks[NLOCKS];
+//static Mutex initlock("RefCounted initialization lock");
+
+//static AtomicCounter* nextIndex;
+//static AtomicCounter* freeIndex;
 
 
 RefCounted::RefCounted()
-    : d_refCount(0)
+  : d_refCount(0)
 {
-  if(!initialized){
+  if (!initialized) {
     initlock.lock();
-    if(!initialized){
-      for(int i=0;i<NLOCKS;i++)
-	locks[i] = scinew Mutex("RefCounted Mutex");
-      nextIndex=new AtomicCounter("RefCounted nextIndex count", 0);
-      freeIndex=new AtomicCounter("RefCounted freeIndex count", 0);
-      initialized=true;
+    {
+      for (int i = 0; i < NLOCKS; i++) {
+        locks[i] = scinew Uintah::MasterLock();
+        //locks[i] = scinew Mutex("RefCounted Mutex");
+      }
+      //nextIndex = new AtomicCounter("RefCounted nextIndex count", 0);
+      //freeIndex = new AtomicCounter("RefCounted freeIndex count", 0);
+      initialized = true;
     }
     initlock.unlock();
   }
-  d_lockIndex = ((*nextIndex)++)%NLOCKS;
+  d_lockIndex = (nextIndex.fetch_add(1, std::memory_order_seq_cst)) % NLOCKS;
+  //d_lockIndex = ((*nextIndex)++) % NLOCKS;
   ASSERT(d_lockIndex >= 0);
 }
 
-RefCounted::~RefCounted()
+RefCounted::~RefCounted() noexcept(false)
 {
   ASSERTEQ(d_refCount, 0);
-  int index = ++(*freeIndex);
-  if(index == *nextIndex){
+  int index = freeIndex.load(std::memory_order_seq_cst);
+  //int index = ++(*freeIndex);
+  //if (index == *nextIndex) {
+  if (index == nextIndex.load(std::memory_order_seq_cst)) {
     initlock.lock();
-    if(*freeIndex == *nextIndex){
+    {
+      if (freeIndex.store(nextIndex.load(std::memory_order_seq_cst)),
+                          std::memory_order_seq_cst) {
+        initialized = false;
+        for (int i = 0; i < NLOCKS; i++) {
+          delete locks[i];
+          locks[i] = nullptr;
+        }
+
+      }
+    }
+    /*
+    if (*freeIndex == *nextIndex) {
       initialized = false;
-      for(int i=0;i<NLOCKS;i++){
-	delete locks[i];
-	locks[i]=0;
+      for (int i = 0; i < NLOCKS; i++) {
+        delete locks[i];
+        locks[i] = 0;
       }
       delete nextIndex;
-      nextIndex=0;
+      nextIndex = 0;
       delete freeIndex;
-      freeIndex=0;
+      freeIndex = 0;
     }
+    */
     initlock.unlock();
   }
 }
@@ -85,17 +115,24 @@ RefCounted::~RefCounted()
 void
 RefCounted::addReference() const
 {
-    locks[d_lockIndex]->lock();
+  locks[d_lockIndex]->lock();
+  {
     d_refCount++;
-    locks[d_lockIndex]->unlock();
+  }
+  locks[d_lockIndex]->unlock();
 }
 
 bool
 RefCounted::removeReference() const
 {
-    locks[d_lockIndex]->lock();
-    bool status = (--d_refCount == 0);
+  bool status;
+  locks[d_lockIndex]->lock();
+  {
+    status = (--d_refCount == 0);
     ASSERT(d_refCount >= 0);
-    locks[d_lockIndex]->unlock();
-    return status;
+  }
+  locks[d_lockIndex]->unlock();
+  return status;
 }
+
+} // end namespace Uintah

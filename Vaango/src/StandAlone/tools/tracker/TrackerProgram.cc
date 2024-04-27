@@ -59,11 +59,11 @@ main()
 {
   int numClients = 1;
 
-  cout << "Starting to track sus running on " << numClients << " hosts.\n";
+  std::cout << "Starting to track sus running on " << numClients << " hosts.\n";
 
   TrackerServer::startTracking( numClients );
 
-  cout << "hit any key to quit\n";
+  std::cout << "hit any key to quit\n";
 
   char answer;
   cin >> answer;

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022    Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,106 +27,74 @@
 #ifndef VAANGO_CCA_COMPONENTS_SIMULATIONCONTROLLER_AMRSIMULATIONCONTROLLER_H
 #define VAANGO_CCA_COMPONENTS_SIMULATIONCONTROLLER_AMRSIMULATIONCONTROLLER_H
 
-#include <Core/Parallel/UintahParallelComponent.h>
-#include <CCA/Ports/DataWarehouseP.h>
-#include <Core/Grid/GridP.h>
-#include <Core/Grid/LevelP.h>
-#include <Core/Grid/SimulationStateP.h>
-#include <CCA/Ports/SchedulerP.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <CCA/Components/SimulationController/SimulationController.h>
-#include <Core/Grid/Variables/ComputeSet.h>
-
-#include <sci_defs/visit_defs.h>
-#ifdef HAVE_VISIT
-#include <VisIt/libsim/visit_libsim.h>
-#endif
 
 namespace Uintah {
 
-  class SimulationInterface;
-  class Output;
-  class LoadBalancer;  
-  class Regridder;
-/**************************************
-      
-  CLASS
-       AMRSimulationController
-      
-       Short description...
-      
-  GENERAL INFORMATION
-      
-       AMRSimulationController.h
-      
-       Steven G. Parker
-       Department of Computer Science
-       University of Utah
-      
-       Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-       
-             
-  KEYWORDS
-       Simulation_Controller
-      
-  DESCRIPTION
-       Long description...
-     
-  WARNING
-      
-****************************************/
+//! Controls the execution of an AMR Simulation
+class AMRSimulationController : public SimulationController
+{
+public:
+  AMRSimulationController(const ProcessorGroup* myworld,
+                          ProblemSpecP pspec,
+                          const std::string& input_ups_dir = "");
 
-  //! Controls the execution of an AMR Simulation
-  class AMRSimulationController : public SimulationController {
-  public:
-    AMRSimulationController(const ProcessorGroup* myworld, bool doAMR, ProblemSpecP pspec);
-    virtual ~AMRSimulationController();
+  ~AMRSimulationController() override = default;
 
-    virtual void run();
+  // eliminate copy, assignment and move
+  AMRSimulationController(const AMRSimulationController&) = delete;
+  AMRSimulationController(AMRSimulationController&&)      = delete;
 
-  private:
-    //! Set up, compile, and execute initial timestep
-    void doInitialTimestep(GridP& grid, double& t);
+  auto
+  operator=(const AMRSimulationController&)
+    -> AMRSimulationController& = delete;
+  auto
+  operator=(AMRSimulationController&&) -> AMRSimulationController& = delete;
 
-    bool doRegridding(GridP& grid, bool initialTimestep);
+  void
+  run() override;
 
-    void recompile(double t, double delt, GridP& currentGrid, int totalFine);
+protected:
+  //! Set up, compile, and execute initial timestep
+  void
+  doInitialTimestep();
 
-    void executeTimestep(double t, double& delt, GridP& currentGrid, int totalFine);
+  //! Execute a time step
+  void
+  executeTimestep(int totalFine);
 
-    //! Asks a variety of components if one of them needs the taskgraph
-    //! to recompile.
-    bool needRecompile(double t, double delt, const GridP& level);
-    AMRSimulationController(const AMRSimulationController&);
-    AMRSimulationController& operator=(const AMRSimulationController&);
+  //! If doing AMR do the regridding
+  auto
+  doRegridding(bool initialTimestep) -> bool;
 
-    //! recursively schedule refinement, coarsening, and time advances for
-    //! finer levels - compensating for time refinement.  Builds one taskgraph
-    void subCycleCompile(GridP& grid, int startDW, int dwStride, int step, int numLevel);
+  void
+  compileTaskGraph(int totalFine);
 
-    //! recursively executes taskgraphs, as several were executed.  Similar to subCycleCompile,
-    //! except that this executes the recursive taskgraphs, and compile builds one taskgraph
-    //! (to exsecute once) recursively.
-    void subCycleExecute(GridP& grid, int startDW, int dwStride, int numLevel, bool rootCycle);
+  auto
+  doRegridding(GridP& grid, bool initialTimestep) -> bool;
 
-    void scheduleComputeStableTimestep(const GridP& grid,
-                                       SchedulerP&);
-    void reduceSysVar(const ProcessorGroup*,
-                      const PatchSubset* patches,
-                      const MaterialSubset* /*matls*/,
-                      DataWarehouse* /*old_dw*/,
-                      DataWarehouse* new_dw);
-#ifdef HAVE_VISIT
-    visit_simulation_data d_visit_simulation_data;
+  //! recursively schedule refinement, coarsening, and time advances for
+  //! finer levels - compensating for time refinement.  Builds one taskgraph
+  void
+  subCycleCompile(int startDW, int dwStride, int numLevel, int step);
 
-    bool do_visit;
+  //! recursively executes taskgraphs, as several were executed.  Similar to
+  //! subCycleCompile, except that this executes the recursive taskgraphs, and
+  //! compile builds one taskgraph (to exsecute once) recursively.
+  void
+  subCycleExecute(int startDW, int dwStride, int numLevel, bool rootCycle);
 
-  public:
-    void SetVisIt( bool val ) { do_visit = val; }
-    bool GetVisIt() { return do_visit; }
-#endif 
+  void
+  scheduleComputeStableTimestep();
 
-  };
+protected:
+  // Optional flag for scrubbing, defaulted to true.
+  bool m_scrub_datawarehouse{ true };
+
+  // Barrier timers used when running and regridding.
+  Timers::Simple m_barrier_timer;
+  double m_barrier_times[5];
+};
 
 } // End namespace Uintah
 

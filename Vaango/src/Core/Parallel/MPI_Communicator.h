@@ -50,10 +50,10 @@
 #include <queue>
 #include <unistd.h>
 #include <cstdlib>
-#include <Core/Thread/Thread.h>
-#include <Core/Thread/Time.h>
+
+#include <Core/Util/Timers/Timers.hpp>
 #include <Core/Thread/Runnable.h>
-#include <Core/Thread/Mutex.h>
+
 #include <Core/Thread/ConditionVariable.h>
 #include <sys/time.h>
 

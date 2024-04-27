@@ -74,7 +74,7 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/OS/Dir.h> // for MKDIR
-#include <Core/Thread/Thread.h>
+
 #include <Core/Util/ProgressiveWarning.h>
 #include <dirent.h>
 #include <iostream>
@@ -87,9 +87,9 @@ using namespace Uintah;
 void usage(const std::string& badarg, const std::string& progname)
 {
   if(badarg != ""){
-    cerr << "\nError parsing argument: " << badarg << "\n\n";
+    std::cerr <<  "\nError parsing argument: " << badarg << "\n\n";
   }
-  cout << " \n compute_Lnorm_uda:  Computes the L(1,2,inf) norm for each variable in two udas.  Each variable in uda1 \n"
+  std::cout << " \n compute_Lnorm_uda:  Computes the L(1,2,inf) norm for each variable in two udas.  Each variable in uda1 \n"
        << " is examined at each level and timestep.  You can compare udas that have different computational domains\n"
        << " and different patch distributions.  The uda with the small compuational domain should always be specified first.\n \n"
        << " Output is sent to the terminal in addition to a directory named 'Lnorm'.  The structure of 'Lnorm' is:\n"
@@ -101,17 +101,17 @@ void usage(const std::string& badarg, const std::string& progname)
        << "    |-- press_equil_CC_0 \n"
        << "In each file is the physical time, L1, L2, Linf norms.\n";
        
-  cout << "\nNote only CC, NC, SFCX, SFCY, SFCZ variables are supported.\n";      
-  cout << "\nUsage: "
+  std::cout << "\nNote only CC, NC, SFCX, SFCY, SFCZ variables are supported.\n";      
+  std::cout << "\nUsage: "
        << " [options] <uda1> <uda2>\n\n";
-  cout << "Valid options are:\n";
-  cout << "  -h[elp]\n";
+  std::cout << "Valid options are:\n";
+  std::cout << "  -h[elp]\n";
   Thread::exitAll(1);
 }
 //__________________________________
 void abort_uncomparable()
 {
-  cerr << "\nThe uda directories may not be compared.\n";
+  std::cerr <<  "\nThe uda directories may not be compared.\n";
   Thread::exitAll(5);
 }
 
@@ -149,7 +149,7 @@ class Norms{
     {
       d_L1   = d_L1/((T)d_n);
       d_L2   = Sqrt( d_L2/((T)d_n) );
-      cout << " \t norms: L1 " << d_L1 << " L2: " << d_L2 << " Linf: " << d_Linf<< " n_cells: " << d_n<<endl;
+      std::cout << " \t norms: L1 " << d_L1 << " L2: " << d_L2 << " Linf: " << d_Linf<< " n_cells: " << d_n<<endl;
     }
     
     void outputNorms(const double& time,const string& filename) 
@@ -160,7 +160,7 @@ class Norms{
       out.precision(10);
       
       if(! out){
-        cerr << " could not open output file: " << filename << endl;
+        std::cerr <<  " could not open output file: " << filename << std::endl;
         abort_uncomparable();
       }
       out << time << " " << d_L1 << " " << d_L2 << " " << d_Linf<<endl;
@@ -179,13 +179,13 @@ GridIterator
 getIterator( const Uintah::TypeDescription * td, const Patch * patch, bool use_extra_cells ) 
 {
   switch( td->getType() ){
-    case Uintah::TypeDescription::NCVariable :    return GridIterator( patch->getNodeIterator() );
-    case Uintah::TypeDescription::CCVariable :    return GridIterator( patch->getCellIterator() );
-    case Uintah::TypeDescription::SFCXVariable :  return GridIterator( patch->getSFCXIterator() );
-    case Uintah::TypeDescription::SFCYVariable :  return GridIterator( patch->getSFCYIterator() );
-    case Uintah::TypeDescription::SFCZVariable :  return GridIterator( patch->getSFCZIterator() );
+    case Uintah::TypeDescription::Type::NCVariable :    return GridIterator( patch->getNodeIterator() );
+    case Uintah::TypeDescription::Type::CCVariable :    return GridIterator( patch->getCellIterator() );
+    case Uintah::TypeDescription::Type::SFCXVariable :  return GridIterator( patch->getSFCXIterator() );
+    case Uintah::TypeDescription::Type::SFCYVariable :  return GridIterator( patch->getSFCYIterator() );
+    case Uintah::TypeDescription::Type::SFCZVariable :  return GridIterator( patch->getSFCZIterator() );
     default:
-      cout << "ERROR: Don't know how to handle type: " << td->getName() << "\n";
+      std::cout << "ERROR: Don't know how to handle type: " << td->getName() << "\n";
       exit( 1 );
   }
 } // end getIterator()
@@ -217,8 +217,8 @@ void compareFields(Norms<subtype>* norms,
   
   da1->query(field1, var, matl, patch, timestep);
 
-  map<const Patch*, Field*> patch_FieldMap;
-  typename map<const Patch*, Field*>::iterator findIter;
+  std::map<const Patch*, Field*> patch_FieldMap;
+  typename  std::map< const Patch*, Field*>::iterator findIter;
   
   //__________________________________
   //  Loop over the cells of patch1
@@ -248,9 +248,9 @@ void compareFields(Norms<subtype>* norms,
     if (p1.x() != p2.x()   ||
        (p1.y() != p2.y() ) ||
        (p1.z() != p2.z() ) ){
-      cout <<"\n__________________________________\n "
+      std::cout <<"\n__________________________________\n "
             << "You can't compare data at different physical locations  \n"
-            << " uda1 data location: " << p1 << "\n uda2 data location: " << p2 << endl;
+            << " uda1 data location: " << p1 << "\n uda2 data location: " << p2 << std::endl;
       abort_uncomparable();
     }
     
@@ -265,7 +265,7 @@ void compareFields(Norms<subtype>* norms,
   norms->setNorms(L1, L2, Linf, n);
   
   // now cleanup memory.
-  typename map<const Patch*, Field*>::iterator itr = patch_FieldMap.begin();
+  typename  std::map< const Patch*, Field*>::iterator itr = patch_FieldMap.begin();
   for ( ; itr != patch_FieldMap.end(); itr++) {
     delete (*itr).second;
   }
@@ -301,7 +301,7 @@ void BuildCellToPatchMap(LevelP level,
   patchMap.resize(low, high);
   patchMap.initialize(0);
 
-  Level::const_patchIterator patch_iter;
+  Level::const_patch_iterator patch_iter;
   for(patch_iter = level->patchesBegin(); patch_iter != level->patchesEnd(); patch_iter++) {
     const Patch* patch = *patch_iter;
     
@@ -318,9 +318,9 @@ void BuildCellToPatchMap(LevelP level,
       if (*iter != 0) {
        
        #if 0
-       cerr << "Patches " << patch->getID() << " and " 
+       std::cerr <<  "Patches " << patch->getID() << " and " 
                << (*iter)->getID() << " overlap on the same file at time " << time
-               << " in " << filebase << " at index " << iter.getIndex() << endl;
+               << " in " << filebase << " at index " << iter.getIndex() << std::endl;
         #endif
         // in some cases, we can have overlapping patches, where an extra cell/node 
         // overlaps an interior cell/node of another patch.  We prefer the interior
@@ -350,8 +350,8 @@ createDirectory(string& levelIndex, string& path)
 {
   string dirName = "./Lnorm";
   DIR *check = opendir(dirName.c_str());
-  if ( check == NULL ) {
-    cout << "Making directory "<< dirName<<endl;
+  if ( check == nullptr ) {
+    std::cout << "Making directory "<< dirName<<endl;
     MKDIR( dirName.c_str(), 0777 );
   } else {
     closedir(check);
@@ -360,8 +360,8 @@ createDirectory(string& levelIndex, string& path)
   // level index
   path = dirName + "/" + levelIndex;
   check = opendir(path.c_str());
-  if ( check == NULL ) {
-    cout << "Making directory " << path << endl;
+  if ( check == nullptr ) {
+    std::cout << "Making directory " << path << std::endl;
     MKDIR( path.c_str(), 0777 );
   } else {
     closedir(check);
@@ -374,10 +374,10 @@ void createFile(string& filename, const int timestep)
   if(timestep == 0){
     ofstream out(filename.c_str(), ios_base::out);
     if(! out){
-      cerr << " could not open output file: " << filename << endl;
+      std::cerr <<  " could not open output file: " << filename << std::endl;
       abort_uncomparable();
     }
-    cout << " Now creating the file: "<< filename << endl;
+    std::cout << " Now creating the file: "<< filename << std::endl;
     out << "#Time \t\t\t L1 \t\t L2 \t\t Linf" <<endl;
     out.close();
   }
@@ -421,16 +421,16 @@ main(int argc, char** argv)
   }
   //__________________________________
   if( filebase2 == "" ){
-    cerr << "\nYou must specify two archive directories.\n";
+    std::cerr <<  "\nYou must specify two archive directories.\n";
     usage("", argv[0]);
   }
 
   DataArchive* da1 = scinew DataArchive(filebase1);
   DataArchive* da2 = scinew DataArchive(filebase2);
 
-  vector<string> vars, vars2;
-  vector<const Uintah::TypeDescription*> types, types2;
-  vector< pair<string, const Uintah::TypeDescription*> > vartypes1,vartypes2;    
+  std::vector<std::string> vars, vars2;
+  std::vector<const Uintah::TypeDescription*> types, types2;
+  std::vector< pair<std::string, const Uintah::TypeDescription*> > vartypes1,vartypes2;    
   da1->queryVariables(vars,  types);
   da2->queryVariables(vars2, types2);
 
@@ -440,28 +440,28 @@ main(int argc, char** argv)
   ASSERTEQ(vars2.size(), types2.size());
 
   if (vars.size() != vars2.size()) {
-    cerr << filebase1 << " has " << vars.size() << " variables\n";
-    cerr << filebase2 << " has " << vars2.size() << " variables\n";
+    std::cerr <<  filebase1 << " has " << vars.size() << " variables\n";
+    std::cerr <<  filebase2 << " has " << vars2.size() << " variables\n";
     abort_uncomparable();
   }
  
   for (unsigned int i = 0; i < vars.size(); i++) {
     if (vars[i] != vars2[i]) {
-      cerr << "Variable " << vars[i]  << " in " << filebase1 << " does not match\n";
-      cerr << "variable " << vars2[i] << " in " << filebase2 << endl;
+      std::cerr <<  "Variable " << vars[i]  << " in " << filebase1 << " does not match\n";
+      std::cerr <<  "variable " << vars2[i] << " in " << filebase2 << std::endl;
       abort_uncomparable();
     }
 
     if (types[i] != types2[i]) {
-      cerr << "Variable " << vars[i] << " does not have the same type in both uda directories.\n";
-      cerr << "In " << filebase1 << " its type is " << types[i]->getName() << endl;
-      cerr << "In " << filebase2 << " its type is " << types2[i]->getName() << endl;
+      std::cerr <<  "Variable " << vars[i] << " does not have the same type in both uda directories.\n";
+      std::cerr <<  "In " << filebase1 << " its type is " << types[i]->getName() << std::endl;
+      std::cerr <<  "In " << filebase2 << " its type is " << types2[i]->getName() << std::endl;
       abort_uncomparable();
     } 
   }
 
-  vector<int> index, index2;
-  vector<double> times, times2;
+  std::vector<int> index, index2;
+  std::vector<double> times, times2;
 
   da1->queryTimesteps(index,  times);
   da2->queryTimesteps(index2, times2);
@@ -475,7 +475,7 @@ main(int argc, char** argv)
   int numLevels  = g->numLevels();
   string path;
   for(int l=0;l<numLevels;l++){
-    ostringstream li;
+     std::ostringstream li;
     li << "L-" << l;
     string levelIndex = li.str();
     createDirectory(levelIndex, path);
@@ -487,7 +487,7 @@ main(int argc, char** argv)
 
     double time1 = times[t];
     double time2 = times2[t];
-    cout << "time = " << time1 << "\n";
+    std::cout << "time = " << time1 << "\n";
     GridP grid1  = da1->queryGrid(t);
     GridP grid2  = da2->queryGrid(t);
 
@@ -498,20 +498,20 @@ main(int argc, char** argv)
     // warn the user that the computational domains are different
     if ((b1.min() != b2.min() ) ||
         (b1.max() != b2.max() ) ){
-      cout << " The compuational domains of uda1 & uda2 are different" << endl;
-      cout << " uda1: " << b1 << "\n uda2: " << b2 << endl;
+      std::cout << " The compuational domains of uda1 & uda2 are different" << std::endl;
+      std::cout << " uda1: " << b1 << "\n uda2: " << b2 << std::endl;
     }
     
     // bullet proofing
     if (grid1->numLevels() != grid2->numLevels()) {
-      cerr << "Grid at time " << time1 << " in " << filebase1 << " has " << grid1->numLevels() << " levels.\n";
-      cerr << "Grid at time " << time2 << " in " << filebase2 << " has " << grid2->numLevels() << " levels.\n";
+      std::cerr <<  "Grid at time " << time1 << " in " << filebase1 << " has " << grid1->numLevels() << " levels.\n";
+      std::cerr <<  "Grid at time " << time2 << " in " << filebase2 << " has " << grid2->numLevels() << " levels.\n";
       abort_uncomparable();
     }
     
     if (abs(times[t] - times2[t]) > 1e-5) {
-      cerr << "Timestep at time " << times[t] << " in " << filebase1 << " does not match\n";
-      cerr << "timestep at time " << times2[t] << " in " << filebase2 << " within the allowable tolerance.\n";
+      std::cerr <<  "Timestep at time " << times[t] << " in " << filebase1 << " does not match\n";
+      std::cerr <<  "timestep at time " << times2[t] << " in " << filebase2 << " within the allowable tolerance.\n";
       abort_uncomparable();
     }
 
@@ -522,18 +522,18 @@ main(int argc, char** argv)
       const Uintah::TypeDescription* td = types[v];
       const Uintah::TypeDescription* subtype = td->getSubType();
 
-      cout << "\t" << var << "\n";
+      std::cout << "\t" << var << "\n";
 
       Patch::VariableBasis basis=Patch::translateTypeToBasis(td->getType(),false);
       //__________________________________
       //  loop over levels
       for(int l=0;l<grid1->numLevels();l++){
-        cout << " \t\t L-" << l;
+        std::cout << " \t\t L-" << l;
         LevelP level1  = grid1->getLevel(l);
         LevelP level2  = grid2->getLevel(l);
 
         //check patch coverage
-        vector<Region> region1, region2, difference1, difference2;
+        std::vector<Region> region1, region2, difference1, difference2;
 
         for(int i=0;i<level1->numPatches();i++){
           const Patch* patch=level1->getPatch(i);
@@ -549,7 +549,7 @@ main(int argc, char** argv)
         difference2 = Region::difference(region1,region2);
 
         if(!difference1.empty() || !difference2.empty()){
-          cerr << "\n__________________________________\n"
+          std::cerr <<  "\n__________________________________\n"
                << "The physical region covered on level " << l << " is not the same on both udas\n"
                << "If one of the udas has a smaller computational domain make sure it's the first\n"
                << "one listed in the command line arguments\n";
@@ -570,12 +570,12 @@ main(int argc, char** argv)
 
           if ((cellToPatchMap1[index] == 0 && cellToPatchMap2[index] != 0) ||
               (cellToPatchMap2[index] == 0 && cellToPatchMap1[index] != 0)) {
-            cerr << "Inconsistent patch coverage on level " << l << " at time " << time1 << endl;
+            std::cerr <<  "Inconsistent patch coverage on level " << l << " at time " << time1 << std::endl;
 
             if (cellToPatchMap1[index] != 0) {
-              cerr << index << " is covered by " << filebase1 << " and not " << filebase2 << endl;
+              std::cerr <<  index << " is covered by " << filebase1 << " and not " << filebase2 << std::endl;
             } else {
-              cerr << index << " is covered by " << filebase2 << " and not " << filebase1 << endl;
+              std::cerr <<  index << " is covered by " << filebase2 << " and not " << filebase1 << std::endl;
             }
 
             abort_uncomparable();
@@ -590,12 +590,12 @@ main(int argc, char** argv)
         for (ConsecutiveRangeSet::iterator matlIter = matls.begin();matlIter != matls.end(); matlIter++){
           int matl = *matlIter;
           
-          cout << "\t";  // output formatting
+          std::cout << "\t";  // output formatting
           if(matl> 0 ){
-            cout << "\t\t";
+            std::cout << "\t\t";
           }
-          cout << " Matl-"<<matl;
-          ostringstream fname;
+          std::cout << " Matl-"<<matl;
+           std::ostringstream fname;
           fname<< path << "/" << var << "_" << matl;
           string filename = fname.str();
           createFile(filename, t);
@@ -609,101 +609,101 @@ main(int argc, char** argv)
           dnorm->setNorms(0,0,0,0);
           vnorm->setNorms(zero,zero,zero,0);
                     
-          Level::const_patchIterator iter;
+          Level::const_patch_iterator iter;
           for(iter = level1->patchesBegin();iter != level1->patchesEnd(); iter++) {
             const Patch* patch = *iter;
 
             switch(td->getType()){
               //__________________________________
               //  CC
-              case Uintah::TypeDescription::CCVariable:                                                   
+              case Uintah::TypeDescription::Type::CCVariable:                                                   
                 switch(subtype->getType()){                                                                 
-                  case Uintah::TypeDescription::int_type:{                                                         
+                  case Uintah::TypeDescription::Type::int_type:{                                                         
                     compareFields<CCVariable<int>,int>( inorm, da1, da2, var, matl, patch, cellToPatchMap2, t);        
                     break;
                   }
-                  case Uintah::TypeDescription::double_type:{
+                  case Uintah::TypeDescription::Type::double_type:{
                     compareFields<CCVariable<double>,double>(dnorm,da1, da2, var, matl, patch, cellToPatchMap2, t); 
                     break;
                   }               
-                  case Uintah::TypeDescription::Vector:{
+                  case Uintah::TypeDescription::Type::Vector:{
                     compareFields<CCVariable<Vector>,Vector>(vnorm,da1, da2, var, matl, patch, cellToPatchMap2, t);  
                     break;
                   }
                   default:
-                    cout << " Data type not supported "<< td->getName() <<  endl;
+                    std::cout << " Data type not supported "<< td->getName() <<  endl;
                 }
                 break;
               //__________________________________
               //  NC
-              case Uintah::TypeDescription::NCVariable:                                                   
+              case Uintah::TypeDescription::Type::NCVariable:                                                   
                 switch(subtype->getType()){                                                                 
-                  case Uintah::TypeDescription::int_type:{                                                         
+                  case Uintah::TypeDescription::Type::int_type:{                                                         
                     compareFields<NCVariable<int>,int>(inorm, da1, da2, var, matl, patch, cellToPatchMap2, t);        
                     break;
                   }
-                  case Uintah::TypeDescription::double_type:{
+                  case Uintah::TypeDescription::Type::double_type:{
                     compareFields<NCVariable<double>,double>(dnorm, da1, da2, var, matl, patch, cellToPatchMap2, t); 
                     break;
                   }               
-                  case Uintah::TypeDescription::Vector:{
+                  case Uintah::TypeDescription::Type::Vector:{
                     compareFields<NCVariable<Vector>,Vector>(vnorm, da1, da2, var, matl, patch, cellToPatchMap2, t);  
                     break;
                   }
                   default:
-                    cout << " Data type not supported "<< td->getName() <<  endl;
+                    std::cout << " Data type not supported "<< td->getName() <<  endl;
                 }
                 break;
               //__________________________________
               //  SFCX
-              case Uintah::TypeDescription::SFCXVariable:                                                   
+              case Uintah::TypeDescription::Type::SFCXVariable:                                                   
                 switch(subtype->getType()){                                                                 
-                  case Uintah::TypeDescription::int_type:{                                                         
+                  case Uintah::TypeDescription::Type::int_type:{                                                         
                     compareFields<SFCXVariable<int>,int>(inorm, da1, da2, var, matl, patch, cellToPatchMap2, t);        
                     break;
                   }
-                  case Uintah::TypeDescription::double_type:{
+                  case Uintah::TypeDescription::Type::double_type:{
                     compareFields<SFCXVariable<double>,double>(dnorm, da1, da2, var, matl, patch, cellToPatchMap2, t); 
                     break;
                   }
                   default:
-                    cout << " Data type not supported "<< td->getName() <<  endl;
+                    std::cout << " Data type not supported "<< td->getName() <<  endl;
                 }
                 break; 
               //__________________________________
               //  SFCY
-              case Uintah::TypeDescription::SFCYVariable:                                                   
+              case Uintah::TypeDescription::Type::SFCYVariable:                                                   
                 switch(subtype->getType()){                                                                 
-                  case Uintah::TypeDescription::int_type:{                                                         
+                  case Uintah::TypeDescription::Type::int_type:{                                                         
                     compareFields<SFCYVariable<int>,int>(inorm, da1, da2, var, matl, patch, cellToPatchMap2, t);        
                     break;
                   }
-                  case Uintah::TypeDescription::double_type:{
+                  case Uintah::TypeDescription::Type::double_type:{
                     compareFields<SFCYVariable<double>,double>(dnorm, da1, da2, var, matl, patch, cellToPatchMap2, t); 
                     break;
                   }
                   default:
-                    cout << " Data type not supported "<< td->getName() <<  endl;
+                    std::cout << " Data type not supported "<< td->getName() <<  endl;
                 }
                 break;
               //__________________________________
               //  SFCZ
-              case Uintah::TypeDescription::SFCZVariable:                                                   
+              case Uintah::TypeDescription::Type::SFCZVariable:                                                   
                 switch(subtype->getType()){                                                                 
-                  case Uintah::TypeDescription::int_type:{                                                         
+                  case Uintah::TypeDescription::Type::int_type:{                                                         
                     compareFields<SFCZVariable<int>,int>(inorm, da1, da2, var, matl, patch, cellToPatchMap2, t);        
                     break;
                   }
-                  case Uintah::TypeDescription::double_type:{
+                  case Uintah::TypeDescription::Type::double_type:{
                     compareFields<SFCZVariable<double>,double>(dnorm, da1, da2, var, matl, patch, cellToPatchMap2, t); 
                     break;
                   }
                   default:
-                    cout << " Data type not supported "<< td->getName() <<  endl;
+                    std::cout << " Data type not supported "<< td->getName() <<  endl;
                 }
                 break;
               default:
-                cout << " Data type not yet supported: " << td->getName() << endl;
+                std::cout << " Data type not yet supported: " << td->getName() << std::endl;
               break;
             }
           }  // patches
@@ -731,9 +731,9 @@ main(int argc, char** argv)
   }
 
   if (times.size() != times2.size()) {
-    cout << endl;
-    cout << filebase1 << " has " << times.size() << " timesteps\n";
-    cout << filebase2 << " has " << times2.size() << " timesteps\n";
+    std::cout << std::endl;
+    std::cout << filebase1 << " has " << times.size() << " timesteps\n";
+    std::cout << filebase2 << " has " << times2.size() << " timesteps\n";
     abort_uncomparable();
   }
   delete da1;

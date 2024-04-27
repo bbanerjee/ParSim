@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,7 +37,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/MinMax.h>
@@ -179,10 +179,10 @@ SoilFoam::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("p9", d_initialData.p[9]);
 }
 
-SoilFoam*
+std::unique_ptr<ConstitutiveModel>
 SoilFoam::clone()
 {
-  return scinew SoilFoam(*this);
+  return std::make_unique<SoilFoam>(*this);
 }
 
 void
@@ -256,11 +256,11 @@ SoilFoam::computeStableTimestep(const Patch* patch,
   int matlindex = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(matlindex, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -271,10 +271,10 @@ SoilFoam::computeStableTimestep(const Patch* patch,
     // Compute wave speed + particle velocity at each particle,
     // store the maximum
     // double E = 9.0*bulk/(3.0*bulk/G + 1.0);
-    c_dil     = sqrt((bulk + 4. * G / 3.) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    c_dil     = sqrt((bulk + 4. * G / 3.) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   WaveSpeed       = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
@@ -300,11 +300,11 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
     //
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
-    Matrix3 deformationGradientInc, Identity, zero(0.), One(1.);
+    Matrix3 pDefGradInc, Identity, zero(0.), One(1.);
     double c_dil = 0.0;
     Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
     double onethird = (1.0 / 3.0);
@@ -318,35 +318,35 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
     // Create array for the particle position
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> deformationGradient, pstress;
+    constParticleVariable<Matrix3> pDefGrad, pstress;
     ParticleVariable<Matrix3> pstress_new;
-    constParticleVariable<Matrix3> deformationGradient_new, velGrad;
-    constParticleVariable<double> pmass, ptemperature, sv_min, p_sv_min;
-    constParticleVariable<double> pvolume;
+    constParticleVariable<Matrix3> pDefGrad_new, velGrad;
+    constParticleVariable<double> pMass, ptemperature, sv_min, p_sv_min;
+    constParticleVariable<double> pVolume;
     ParticleVariable<double> sv_min_new, p_sv_min_new;
-    constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Vector> pVelocity;
+    constParticleVariable<Matrix3> pSize;
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pstress, lb->pStressLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(ptemperature, lb->pTemperatureLabel, pset);
     old_dw->get(sv_min, sv_minLabel, pset);
     old_dw->get(p_sv_min, p_sv_minLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
     new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
-    new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
-    new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->get(pVolume, lb->pVolumeLabel_preReloc, pset);
 
-    constParticleVariable<Matrix3> pdispGrads;
+    constParticleVariable<Matrix3> pDisplacementGrads;
     constParticleVariable<double> pstrainEnergyDensity;
     ParticleVariable<Matrix3> pvelGrads;
-    ParticleVariable<Matrix3> pdispGrads_new;
+    ParticleVariable<Matrix3> pDisplacementGrads_new;
     ParticleVariable<double> pstrainEnergyDensity_new;
     ParticleVariable<double> pdTdt, p_q;
 
@@ -369,9 +369,9 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
       Matrix3 DPrime = D - Identity * onethird * D.Trace();
 
       // get the volumetric part of the deformation
-      double J          = deformationGradient_new[idx].Determinant();
+      double J          = pDefGrad_new[idx].Determinant();
       double rho_cur    = rho_orig / J;
-      double vol_strain = log(pvolume[idx] / (pmass[idx] / rho_orig));
+      double vol_strain = log(pVolume[idx] / (pMass[idx] / rho_orig));
       double pres;
 
       // Traditional method for mat5
@@ -437,15 +437,15 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
                   D(2, 2) * AvgStress(2, 2) +
                   2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
                         D(1, 2) * AvgStress(1, 2))) *
-                 pvolume[idx] * delT;
+                 pVolume[idx] * delT;
 
       se += e;
 
       // Compute wave speed at each particle, store the maximum
-      Vector pvelocity_idx = pvelocity[idx];
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
+      Vector pVelocity_idx = pVelocity[idx];
+      WaveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pVelocity_idx.y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pVelocity_idx.z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {
@@ -573,7 +573,7 @@ SoilFoam::computeRhoMicroCM(double pressure,
 {
 
   // std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR SoilFoam"
-  //   << endl;
+  //   << std::endl;
 
   int i1 = 0, i;
   for (i = 1; i < 9; i++) {
@@ -615,13 +615,13 @@ SoilFoam::computePressEOSCM(double rho_cur,
         rho_cur; // speed of sound squared
 
   // std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR SoilFoam"
-  //   << endl;
+  //   << std::endl;
 }
 
 double
 SoilFoam::getCompressibility()
 {
-  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR SoilFoam" << endl;
+  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR SoilFoam" << std::endl;
   return 1.0;
 }
 
@@ -641,7 +641,7 @@ const TypeDescription* fun_getTypeDescription(SoilFoam::CMData*)
 {
    static TypeDescription* td = 0;
    if(!td){
-      td = scinew TypeDescription(TypeDescription::Other, "SoilFoam::CMData", true, &makeMPI_CMData);
+      td = scinew TypeDescription(TypeDescription::Type::Other, "SoilFoam::CMData", true, &makeMPI_CMData);
    }
    return td;   
 }

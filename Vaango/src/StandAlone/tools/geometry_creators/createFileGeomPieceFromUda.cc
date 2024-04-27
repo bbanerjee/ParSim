@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -60,12 +60,18 @@ typedef struct
 } FileGeomParticleData;
 
 // declarations
-void usage(const std::string& badarg, const std::string& progname);
-int getNumberOfMaterials(DataArchive* da);
-void readFileGeomParticleData(DataArchive* da, int matID,
-                              FileGeomParticleData& partData);
-void writeFileGeomParticleData(int matID, FileGeomParticleData& partData,
-                               const std::string& output_file);
+void
+usage(const std::string& badarg, const std::string& progname);
+int
+getNumberOfMaterials(DataArchive* da);
+void
+readFileGeomParticleData(DataArchive* da,
+                         int matID,
+                         FileGeomParticleData& partData);
+void
+writeFileGeomParticleData(int matID,
+                          FileGeomParticleData& partData,
+                          const std::string& output_file);
 
 //-------------------------------------------------------------------------------------
 // Usage: createFileGeomPieceFromUda <uda_file> <output_file>
@@ -88,11 +94,12 @@ int
 main(int argc, char** argv)
 {
   // In correct number of arguments
-  if (argc != 3)
+  if (argc != 3) {
     usage(argv[0]);
+  }
 
   // Parse arguments
-  std::string uda_file = argv[1];
+  std::string uda_file    = argv[1];
   std::string output_file = argv[2];
 
   // Read the data archive and print out
@@ -130,7 +137,7 @@ getNumberOfMaterials(DataArchive* da)
   ASSERTEQ(index.size(), times.size());
 
   unsigned int timeID = times.size() - 1;
-  double time = times[timeID];
+  double time         = times[timeID];
   std::cout << "Time = " << time << endl;
 
   std::string posVar("p.x");
@@ -139,11 +146,12 @@ getNumberOfMaterials(DataArchive* da)
   for (int levelID = 0; levelID < grid->numLevels(); levelID++) {
     LevelP level = grid->getLevel(levelID);
     for (auto patchIter = level->patchesBegin();
-         patchIter != level->patchesEnd(); patchIter++) {
-      const Patch* patch = *patchIter;
+         patchIter != level->patchesEnd();
+         patchIter++) {
+      const Patch* patch        = *patchIter;
       ConsecutiveRangeSet matls = da->queryMaterials(posVar, patch, timeID);
-      int localNumMat = 0;
-      for (auto matl : matls) {
+      int localNumMat           = 0;
+      for ([[maybe_unused]] auto matl : matls) {
         ++localNumMat;
       }
       if (localNumMat > numMat) {
@@ -158,7 +166,8 @@ getNumberOfMaterials(DataArchive* da)
 // Read the particle positions and volumes
 //-------------------------------------------------------------------------------
 void
-readFileGeomParticleData(DataArchive* da, int matID,
+readFileGeomParticleData(DataArchive* da,
+                         int matID,
                          FileGeomParticleData& part_data)
 {
   // set defaults for cout
@@ -168,19 +177,22 @@ readFileGeomParticleData(DataArchive* da, int matID,
   // Check if the particle variables p.position and p.volume are available
   // in the uda
   std::vector<std::string> vars;
+  std::vector<int> num_matl;
   std::vector<const Uintah::TypeDescription*> types;
-  da->queryVariables(vars, types);
+  da->queryVariables(vars, num_matl, types);
   ASSERTEQ(vars.size(), types.size());
 
   bool positionFound = false;
-  bool volumeFound = false;
+  bool volumeFound   = false;
   std::string posVar("p.x");
   std::string volVar("p.volume");
   for (auto var : vars) {
-    if (var == posVar)
+    if (var == posVar) {
       positionFound = true;
-    if (var == volVar)
+    }
+    if (var == volVar) {
       volumeFound = true;
+    }
   }
   if (!positionFound) {
     std::cerr << "**ERROR** Variable " << posVar << " not found in the uda.\n";
@@ -199,7 +211,7 @@ readFileGeomParticleData(DataArchive* da, int matID,
   ASSERTEQ(index.size(), times.size());
   std::cout << "There are " << index.size() << " timesteps:\n";
   unsigned int timeID = times.size() - 1;
-  double time = times[timeID];
+  double time         = times[timeID];
   std::cout << "Time = " << time << endl;
 
   // Get grid info for time t
@@ -212,7 +224,7 @@ readFileGeomParticleData(DataArchive* da, int matID,
     LevelP level = grid->getLevel(levelID);
 
     // Loop thru all the patches
-    Level::const_patchIterator patchIter = level->patchesBegin();
+    Level::const_patch_iterator patchIter = level->patchesBegin();
     for (; patchIter != level->patchesEnd(); patchIter++) {
 
       // Get patch
@@ -248,7 +260,8 @@ readFileGeomParticleData(DataArchive* da, int matID,
 // Write out the data
 //------------------------------------------------------------------------------------
 void
-writeFileGeomParticleData(int matID, FileGeomParticleData& partData,
+writeFileGeomParticleData(int matID,
+                          FileGeomParticleData& partData,
                           const std::string& output_file)
 {
   std::string fileName = output_file + ".mat" + std::to_string(matID);

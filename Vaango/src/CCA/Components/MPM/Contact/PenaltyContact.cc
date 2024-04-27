@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2019 The University of Utah
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -45,24 +45,15 @@ using std::vector;
 using std::string;
 
 PenaltyContact::PenaltyContact(const ProcessorGroup* myworld,
-                               ProblemSpecP& ps,
-                               SimulationStateP& d_sS,
-                               MPMLabel* Mlb,
-                               MPMFlags* MFlag)
-  : Contact(myworld, Mlb, MFlag, ps)
+                               const MaterialManagerP& mat_manager,
+                               const MPMLabel* labels,
+                               const MPMFlags* flags,
+                               const ProblemSpecP& ps)
+  : Contact(myworld, mat_manager, labels, flags, ps)
 {
-  d_vol_const=0.;
-  d_oneOrTwoStep = 1;
+  d_one_or_two_step = 1;
 
   ps->require("mu",d_mu);
-
-  d_sharedState = d_sS;
-
-  if (flag->d_8or27 == 8) {
-    NGP = 1; NGN = 1;
-  } else {
-    NGP = 2; NGN = 2;
-  }
 }
 
 void 
@@ -119,7 +110,7 @@ PenaltyContact::exMomIntegrated(const ProcessorGroup*,
 {
   Ghost::GhostType gnone = Ghost::None;
 
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   ASSERTEQ(numMatls, matls->size());
 
   delt_vartype delT;

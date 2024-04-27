@@ -74,7 +74,7 @@ void launchPoisson1Kernel(dim3 dimGrid,
 
 
 namespace Uintah {
-  class SimpleMaterial;
+  class EmptyMaterial;
 
 
 /**************************************
@@ -122,7 +122,7 @@ WARNING
 
     virtual void problemSetup(const ProblemSpecP& params, 
                               const ProblemSpecP& restart_prob_spec, 
-                              GridP& grid, SimulationStateP&);
+                              GridP& grid, MaterialManagerP&);
 
     virtual void scheduleInitialize(const LevelP& level, SchedulerP& sched);
                                     
@@ -133,9 +133,9 @@ WARNING
     virtual void scheduleRestartInitialize(const LevelP& level,
 			   	           SchedulerP& sched) {}
   private:
-    SimulationStateP  sharedState_;
+    MaterialManagerP  sharedState_;
     double            delt_;
-    SimpleMaterial*   mymat_;
+    EmptyMaterial*   mymat_;
     const VarLabel*   phi_label;
     const VarLabel*   residual_label;
 

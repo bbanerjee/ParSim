@@ -120,7 +120,7 @@ TEST(TabularDataTest, readJSONTableFromStream1D)
 
   try {
     eos.readJSONTable<1>(docJSON1D, "test_dummy");
-  } catch (ProblemSetupException e) {
+  } catch (const ProblemSetupException& e) {
     std::cout << e.message() << std::endl;
   }
 
@@ -254,7 +254,7 @@ TEST(TabularDataTest, readJSONTableFromStream2D)
 
   try {
     eos.readJSONTable<2>(docJSON2D, "test_dummy");
-  } catch (ProblemSetupException e) {
+  } catch (const ProblemSetupException& e) {
     std::cout << e.message() << std::endl;
   }
 
@@ -448,7 +448,7 @@ TEST(TabularDataTest, readJSONTableFromStream3D)
 
   try {
     eos.readJSONTable<3>(docJSON3D, "test_dummy");
-  } catch (ProblemSetupException e) {
+  } catch (const ProblemSetupException& e) {
     std::cout << e.message() << std::endl;
   }
 
@@ -737,7 +737,7 @@ TEST(TabularDataTest, computeDerivative)
   TabularData elastic(ps);
   elastic.setup();
 
-  double deriv = elastic.computeDerivative(0, 0); 
+  [[maybe_unused]] double deriv = elastic.computeDerivative(0, 0); 
   //std::cout << "deriv = " << deriv << "\n";
 
   deriv = elastic.computeDerivative(-0.5, 0); 

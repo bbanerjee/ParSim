@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022    Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -52,6 +52,7 @@ namespace Uintah {
   class IntVector {
   public:
     inline IntVector() {
+      value_[0] = 0; value_[1] = 0; value_[2] = 0;
     }
     inline ~IntVector() {
     }
@@ -205,9 +206,9 @@ namespace Uintah {
     //! support dynamic compilation
     static const string& get_h_file_path();
 
-    SCISHARE friend void Pio( Piostream&, IntVector& );
+     friend void Pio( Piostream&, IntVector& );
 
-    SCISHARE friend std::ostream& operator<<(std::ostream&, const Uintah::IntVector&);
+     friend std::ostream& operator<<(std::ostream&, const Uintah::IntVector&);
 
   private:
     int value_[3];

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Reseach Limited, New Zealand
+ * Copyright (c) 2015-2023 Parresia Reseach Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -46,7 +46,8 @@ public:
   TransIsoHyperImplicit(const TransIsoHyperImplicit* cm);
   TransIsoHyperImplicit& operator=(const TransIsoHyperImplicit& cm) = delete;
   ~TransIsoHyperImplicit() override;
-  TransIsoHyperImplicit* clone() override;
+  
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   ModelType modelType() const override { return ModelType::TOTAL_FORM; }
 

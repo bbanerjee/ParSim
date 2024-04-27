@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -35,6 +35,7 @@
 
 #include <CCA/Ports/DataWarehouse.h>
 
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
@@ -43,7 +44,6 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h> //for Fracture
@@ -102,12 +102,13 @@ ViscoPlastic::ViscoPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
   ps->get("initial_material_temperature", d_initialMaterialTemperature);
 
   d_stable = StabilityCheckFactory::create(ps);
-  if (!d_stable)
+  if (!d_stable) {
     std::cerr << "Stability check disabled\n";
+  }
 
   d_plastic = ViscoPlasticityModelFactory::create(ps);
   if (!d_plastic) {
-    ostringstream desc;
+    std::ostringstream desc;
     desc << "An error occured in the ViscoPlasticityModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " ffjhl.  "
@@ -118,7 +119,7 @@ ViscoPlastic::ViscoPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
   d_eos = Vaango::MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    ostringstream desc;
+    std::ostringstream desc;
     desc << "An error occured in the EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " ffjhl.  "
@@ -147,10 +148,10 @@ ViscoPlastic::ViscoPlastic(const ViscoPlastic* cm)
   d_tol                        = cm->d_tol;
   d_initialMaterialTemperature = cm->d_initialMaterialTemperature;
 
-  d_stable  = StabilityCheckFactory::createCopy(cm->d_stable);
+  d_stable  = StabilityCheckFactory::createCopy(cm->d_stable.get());
   d_plastic = ViscoPlasticityModelFactory::createCopy(cm->d_plastic);
   //   d_damage = DamageModelFactory::createCopy(cm->d_damage);
-  d_eos = Vaango::MPMEquationOfStateFactory::createCopy(cm->d_eos);
+  d_eos = Vaango::MPMEquationOfStateFactory::createCopy(cm->d_eos.get());
   d_eos->setBulkModulus(d_initialData.Bulk);
 
   // Initialize local VarLabels
@@ -187,10 +188,6 @@ ViscoPlastic::~ViscoPlastic()
   VarLabel::destroy(pFailureVariableLabel_preReloc);
 
   delete d_plastic;
-  //   delete d_yield;
-  delete d_stable;
-  //   delete d_damage;
-  delete d_eos;
 }
 
 void
@@ -235,10 +232,10 @@ ViscoPlastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_eos->outputProblemSpec(cm_ps);
 }
 
-ViscoPlastic*
+std::unique_ptr<ConstitutiveModel>
 ViscoPlastic::clone()
 {
-  return scinew ViscoPlastic(*this);
+  return std::make_unique<ViscoPlastic>(this);
 }
 
 void
@@ -364,9 +361,9 @@ ViscoPlastic::initializeCMData(const Patch* patch,
 {
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
-  if (flag->d_integrator == MPMFlags::Implicit)
+  if (flag->d_integrator == MPMFlags::Implicit) {
     initSharedDataForImplicit(patch, matl, new_dw);
-  else {
+  } else {
     initSharedDataForExplicit(patch, matl, new_dw);
     computeStableTimestep(patch, matl, new_dw);
   }
@@ -452,16 +449,16 @@ ViscoPlastic::computeStableTimestep(const Patch* patch,
     particleIndex idx = *iter;
 
     // Compute wave speed at each particle, store the maximum
-    Vector pvelocity_idx = pVelocity[idx];
+    Vector pVelocity_idx = pVelocity[idx];
     if (pMass[idx] > 0) {
       c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pVolume[idx] / pMass[idx]);
     } else {
       c_dil         = 0.0;
-      pvelocity_idx = Vector(0.0, 0.0, 0.0);
+      pVelocity_idx = Vector(0.0, 0.0, 0.0);
     }
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity_idx.y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity_idx.z()), WaveSpeed.z()));
   }
 
   WaveSpeed       = dx / WaveSpeed;
@@ -572,8 +569,8 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // std::cerr << getpid() << " patch = " << patch->getID() << "\n";
     // Get grid size
@@ -597,10 +594,10 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
 
     // Get the particle location, particle size, particle mass, particle volume
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
     constParticleVariable<double> pMass, pVolume;
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pMass, lb->pMassLabel, pset);
 
     // Get the velocity from the grid and particle velocity
@@ -760,8 +757,9 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
         //         pDamage_new[idx] = pDamage[idx];
         //         pPorosity_new[idx] = pPorosity[idx];
         pLocalized_new[idx] = pLocalized[idx];
-        if (pLocalized_new[idx] == 1)
+        if (pLocalized_new[idx] == 1) {
           totalLocalizedParticle += 1;
+        }
         pFailureVariable_new[idx]    = pFailureVariable[idx];
         pPlasticTemperature_new[idx] = pPlasticTemperature[idx];
         pPlasticTempInc_new[idx]     = 0.0;
@@ -807,7 +805,7 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
       double C_p = matl->getSpecificHeat();
 
       // Set up the PlasticityState
-      auto state        = scinew ModelStateBase();
+      auto state          = scinew ModelStateBase();
       state->eqStrainRate = pStrainRate_new[idx];
       //       state->eqPlasticStrainRate = epdot;
       //       state->eqPlasticStrain = ep;
@@ -854,10 +852,11 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
           pStress_new[idx] = zero;
         } else if (d_allowNoTension) {
           double pressure = (1.0 / 3.0) * pStress_new[idx].Trace();
-          if (pressure > 0.0)
+          if (pressure > 0.0) {
             pStress_new[idx] = zero;
-          else
+          } else {
             pStress_new[idx] = one * pressure;
+          }
         } else {
           pStress_new[idx] = pStress[idx];
         }
@@ -908,8 +907,9 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
           // Compute stability criterion
           pLocalized_new[idx]       = pLocalized[idx];
           pFailureVariable_new[idx] = pFailureVariable[idx];
-          if (pLocalized_new[idx] == 1)
+          if (pLocalized_new[idx] == 1) {
             totalLocalizedParticle += 1;
+          }
           // plastic
         } else {
 
@@ -970,8 +970,9 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
                                                    temp_new,
                                                    Tm_cur);
           }
-          if (pLocalized_new[idx] == 1)
+          if (pLocalized_new[idx] == 1) {
             totalLocalizedParticle += 1;
+          }
           // Rotate the stress back to the laboratory coordinates
           // Save the new data
           tensorSig        = (tensorR * tensorSig) * (tensorR.Transpose());
@@ -1068,7 +1069,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     pStrainRate, pFailureVariable;
 
   constParticleVariable<Point> px;
-  constParticleVariable<Matrix3> psize;
+  constParticleVariable<Matrix3> pSize;
   constParticleVariable<Matrix3> pDeformGrad, pStress, pLeftStretch, pRotation;
   constNCVariable<Vector> gDisp;
 
@@ -1107,8 +1108,8 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
 
     //     LinearInterpolator* interpolator = new LinearInterpolator(patch);
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get grid size
     // Vector dx = patch->dCell();
@@ -1126,7 +1127,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     old_dw->get(pTemperature, lb->pTemperatureLabel, pset);
     old_dw->get(pTempPrev, lb->pTempPreviousLabel, pset);
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pDeformGrad, lb->pDefGradLabel, pset);
     old_dw->get(pStress, lb->pStressLabel, pset);
     old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
@@ -1483,7 +1484,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     pPorosity;
 
   constParticleVariable<Point> px;
-  constParticleVariable<Matrix3> psize;
+  constParticleVariable<Matrix3> pSize;
   constParticleVariable<Matrix3> pDeformGrad, pStress;
   constNCVariable<Vector> gDisp;
 
@@ -1522,8 +1523,8 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     // Get interpolation functions
     //     LinearInterpolator* interpolator = new LinearInterpolator(patch);
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get patch indices for parallel solver
     //    IntVector lowIndex = patch->getInteriorNodeLowIndex();
@@ -1552,7 +1553,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     parent_old_dw->get(pTempPrev, lb->pTempPreviousLabel, pset);
     parent_old_dw->get(pTemperature, lb->pTemperatureLabel, pset);
     parent_old_dw->get(px, lb->pXLabel, pset);
-    parent_old_dw->get(psize, lb->pSizeLabel, pset);
+    parent_old_dw->get(pSize, lb->pSizeLabel, pset);
     parent_old_dw->get(pDeformGrad, lb->pDefGradLabel, pset);
     parent_old_dw->get(pStress, lb->pStressLabel, pset);
 
@@ -1605,7 +1606,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
       // Calculate the displacement gradient
       //       interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S);
       interpolator->findCellAndShapeDerivatives(
-        px[idx], ni, d_S, psize[idx], pDeformGrad[idx]);
+        px[idx], ni, d_S, pSize[idx], pDeformGrad[idx]);
       dg.computeBmats(ni, d_S, oodx, l2g, B, Bnl, dof);
 
       // Update the deformation gradient
@@ -2711,8 +2712,9 @@ ViscoPlastic::getPlasticTemperatureIncrement(ParticleSubset* pset,
   constParticleVariable<double> pPlasticTempInc;
   new_dw->get(pPlasticTempInc, pPlasticTempIncLabel_preReloc, pset);
   ParticleSubset::iterator iter = pset->begin();
-  for (; iter != pset->end(); iter++)
+  for (; iter != pset->end(); iter++) {
     T[*iter] = pPlasticTempInc[*iter];
+  }
 }
 
 void
@@ -2858,21 +2860,23 @@ ViscoPlastic::computeElasticTangentModulus(double bulk,
   double C11 = fac * (1.0 - nu);
   double C12 = fac * nu;
   FastMatrix C_6x6(6, 6);
-  for (int ii = 0; ii < 6; ++ii)
-    for (int jj = 0; jj < 6; ++jj)
+  for (int ii = 0; ii < 6; ++ii) {
+    for (int jj = 0; jj < 6; ++jj) {
       C_6x6(ii, jj) = 0.0;
-  C_6x6(0, 0)       = C11;
-  C_6x6(1, 1)       = C11;
-  C_6x6(2, 2)       = C11;
-  C_6x6(0, 1)       = C12;
-  C_6x6(0, 2)       = C12;
-  C_6x6(1, 0)       = C12;
-  C_6x6(1, 2)       = C12;
-  C_6x6(2, 0)       = C12;
-  C_6x6(2, 1)       = C12;
-  C_6x6(3, 3)       = shear;
-  C_6x6(4, 4)       = shear;
-  C_6x6(5, 5)       = shear;
+    }
+  }
+  C_6x6(0, 0) = C11;
+  C_6x6(1, 1) = C11;
+  C_6x6(2, 2) = C11;
+  C_6x6(0, 1) = C12;
+  C_6x6(0, 2) = C12;
+  C_6x6(1, 0) = C12;
+  C_6x6(1, 2) = C12;
+  C_6x6(2, 0) = C12;
+  C_6x6(2, 1) = C12;
+  C_6x6(3, 3) = shear;
+  C_6x6(4, 4) = shear;
+  C_6x6(5, 5) = shear;
 
   Ce.convertToTensorForm(C_6x6);
 }
@@ -3090,21 +3094,23 @@ ViscoPlastic::updateFailedParticlesAndModifyStress(
   // Find if the particle has failed
   pLocalized_new = pLocalized;
 
-  if (epsMax > pFailureVariable)
+  if (epsMax > pFailureVariable) {
     pLocalized_new = 1;
+  }
   if (pLocalized != pLocalized_new) {
     std::cout << "Particle " << particleID
               << " has failed: current value = " << epsMax
               << ", max allowable  = " << pFailureVariable << "\n";
     isLocalized = true;
 
-    if (d_setStressToZero)
+    if (d_setStressToZero) {
       pStress_new = zero;
-    else if (d_allowNoTension) {
-      if (pressure > 0.0)
+    } else if (d_allowNoTension) {
+      if (pressure > 0.0) {
         pStress_new = zero;
-      else
+      } else {
         pStress_new = Identity * pressure;
+      }
     }
   }
 

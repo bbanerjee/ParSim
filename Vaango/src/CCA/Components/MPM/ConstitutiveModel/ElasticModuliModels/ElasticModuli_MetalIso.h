@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -70,10 +70,10 @@ public:
 private:
 
   /* For tangent bulk modulus parameters */
-  MPMEquationOfState* d_eos;
+  std::unique_ptr<MPMEquationOfState> d_eos;
 
   /* For tangent shear modulus parameters */
-  ShearModulusModel* d_shear;
+  std::unique_ptr<ShearModulusModel> d_shear;
 
   double d_Km, d_Gm, d_rho0;
 

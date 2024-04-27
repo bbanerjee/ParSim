@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,239 +32,317 @@
  *   University of Utah
  *   Nov. 2000
  *
- * 
+ *
  */
 
-#ifndef SCI_Containers_ConsecutiveRangeSet_h
-#define SCI_Containers_ConsecutiveRangeSet_h
+#ifndef __CORE_CONTAINERS_CONSECUTIVE_RANGESET_H__
+#define __CORE_CONTAINERS_CONSECUTIVE_RANGESET_H__
 
-#include <list>
-#include <vector>
-#include <string>
-#include <iostream>
-#include <sstream>
-
-#include <Core/Util/Assert.h>
 #include <Core/Exceptions/Exception.h>
-#include <Core/Containers/share.h>
+#include <Core/Util/Assert.h>
+
+#include <iostream>
+#include <list>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace Uintah {
 
 /**************************************
-
-CLASS 
+CLASS
    ConsecutiveRangeSet
-   
+
 KEYWORDS
    Interval, integers
 
 DESCRIPTION
-   
+
    Represents a set of integers that are
    stored efficiently if grouped together
    in consecutive ranges.
- 
+
    Written by:
     Wayne Witzel
     Department of Computer Science
     University of Utah
     Nov. 2000
- 
-  
- 
-PATTERNS
-   
-WARNING
-  
 ****************************************/
 
 class ConsecutiveRangeSetException : public Exception
 {
 public:
-  ConsecutiveRangeSetException(const std::string& msg, const char* file, int line)
-    : msg_(msg) {
+  ConsecutiveRangeSetException(std::string msg, const char* file, int line)
+    : Exception()
+    , msg_(std::move(msg))
+  {
 
     std::ostringstream s;
     s << "A ConsecutiveRangeSetException exception was thrown\n"
-      << file << ":" << line << "\n" << msg_;
+      << file << ":" << line << "\n"
+      << msg_;
     msg_ = (char*)(s.str().c_str());
 
 #ifdef EXCEPTIONS_CRASH
-  std::cout << msg_ << "\n";
+    std::cout << msg_ << "\n";
 #endif
- }
+  }
 
   ConsecutiveRangeSetException(const ConsecutiveRangeSetException& copy)
-    : msg_(copy.msg_) { }
+    : Exception()
+    , msg_(copy.msg_)
+  {
+  }
 
-  virtual const char* message() const
-  { return msg_.c_str(); }
-  
-  virtual const char* type() const
-  { return "ConsecutiveRangeSetException"; }
+  auto
+  operator=(const ConsecutiveRangeSetException& copy)
+    -> ConsecutiveRangeSetException
+  {
+    msg_ = copy.msg_;
+    return *this;
+  }
+
+  [[nodiscard]] const char*
+  message() const override
+  {
+    return msg_.c_str();
+  }
+
+  [[nodiscard]] const char*
+  type() const override
+  {
+    return "ConsecutiveRangeSetException";
+  }
+
 private:
   std::string msg_;
 };
 
 class ConsecutiveRangeSet
 {
-  SCISHARE friend std::ostream& operator<<(std::ostream& out,
-				  const ConsecutiveRangeSet& set);
+  friend auto
+  operator<<(std::ostream& out, const ConsecutiveRangeSet& set)
+    -> std::ostream&;
+
 public:
-  
   class iterator
   {
   public:
     iterator(const ConsecutiveRangeSet* set, int range, int offset)
-      : set_(set), range_(range), offset_(offset) { }
-    iterator(const iterator& it2)
-      : set_(it2.set_), range_(it2.range_), offset_(it2.offset_) { }
-
-    iterator& operator=(const iterator& it2) {
-      set_ = it2.set_; range_ = it2.range_; offset_ = it2.offset_;
-      return *this;
+      : set_{ set }
+      , range_{ range }
+      , offset_{ offset }
+    {
     }
-    
-    inline int operator*();
 
-    bool operator==(const iterator& it2) const
-    { return range_ == it2.range_ && offset_ == it2.offset_; }
+    iterator(const iterator& it2) = default;
 
-    bool operator!=(const iterator& it2) const
-    { return !(*this == it2); }
+    auto
+    operator=(const iterator& it2) -> iterator& = default;
 
-    SCISHARE iterator& operator++();
-    inline iterator operator++(int);
+    inline auto
+    operator*() noexcept(false) -> int;
+
+    auto
+    operator==(const iterator& it2) const -> bool
+    {
+      return range_ == it2.range_ && offset_ == it2.offset_;
+    }
+
+    auto
+    operator!=(const iterator& it2) const -> bool
+    {
+      return !(*this == it2);
+    }
+
+    auto
+    operator++() -> iterator&;
+
+    inline auto
+    operator++(int) -> iterator;
+
   private:
-    const ConsecutiveRangeSet* set_;
-    int range_;
-    int offset_;
+    const ConsecutiveRangeSet* set_{ nullptr };
+    int range_{ 0 };
+    int offset_{ 0 };
   };
 
-  
   // represents range: [low, low+extent]
   struct Range
   {
     Range(int low, int high);
+
     Range(const Range& r2)
-      : low_(r2.low_), extent_(r2.extent_) { }
 
-    Range& operator=(const Range& r2)
-    { low_ = r2.low_; extent_ = r2.extent_; return *this; }
+      = default;
 
-    bool operator==(const Range& r2) const
-    { return low_ == r2.low_ && extent_ == r2.extent_; }
+    auto
+    operator=(const Range& r2) -> Range& = default;
 
-    bool operator!=(const Range& r2) const
-    { return low_ != r2.low_ || extent_ != r2.extent_; }
-    
-    bool operator<(const Range& r2) const
-    { return low_ < r2.low_; }
+    auto
+    operator==(const Range& r2) const -> bool
+    {
+      return low_ == r2.low_ && extent_ == r2.extent_;
+    }
 
-    inline void display(std::ostream& out) const;
-	
-    int high() const { return (int)(low_ + extent_); }
-    int low_;
-    unsigned long extent_;
+    auto
+    operator!=(const Range& r2) const -> bool
+    {
+      return low_ != r2.low_ || extent_ != r2.extent_;
+    }
+
+    auto
+    operator<(const Range& r2) const -> bool
+    {
+      return low_ < r2.low_;
+    }
+
+    inline void
+    display(std::ostream& out) const;
+
+    [[nodiscard]] auto
+    high() const -> int
+    {
+      return (int)(low_ + extent_);
+    }
+
+    int low_{ 0 };
+    unsigned long extent_{ 0 };
   };
 
 public:
-  SCISHARE ConsecutiveRangeSet(std::list<int>& set);
+  ConsecutiveRangeSet(std::list<int>& set);
 
-  SCISHARE ConsecutiveRangeSet(int low, int high); // single consecutive range
+  ConsecutiveRangeSet(int low, int high); // single consecutive range
 
-  SCISHARE ConsecutiveRangeSet() : size_(0) {} // empty set
-  
+  // empty set
+  ConsecutiveRangeSet() = default;
+
   // initialize a range set with a string formatted like: "1, 2-8, 10, 15-30"
-  SCISHARE ConsecutiveRangeSet(const std::string& setstr);
+  ConsecutiveRangeSet(const std::string& setstr) noexcept(false);
 
-  SCISHARE ConsecutiveRangeSet(const ConsecutiveRangeSet& set2)
-    : rangeSet_(set2.rangeSet_), size_(set2.size_) { }
-  
-  SCISHARE ~ConsecutiveRangeSet() {}
+  ConsecutiveRangeSet(const ConsecutiveRangeSet& set2) = default;
 
-  ConsecutiveRangeSet& operator=(const ConsecutiveRangeSet& set2)
-  { rangeSet_ = set2.rangeSet_; size_ = set2.size_; return *this; }
+  ~ConsecutiveRangeSet() = default;
+
+  auto
+  operator=(const ConsecutiveRangeSet& set2) -> ConsecutiveRangeSet& = default;
 
   // Add to the range set, asserting that value is greater or equal
   // to anything already in the set (if it is equal to something already
   // in teh set then the value is simply discarded).
-  SCISHARE void addInOrder(int value);
-  
-  template <class AnyIterator>
-  void addInOrder(const AnyIterator& begin, const AnyIterator& end)
-  { for (AnyIterator it = begin; it != end; ++it) addInOrder(*it); }
-  
-  SCISHARE bool operator==(const ConsecutiveRangeSet& set2) const;
-  bool operator!=(const ConsecutiveRangeSet& set2) const
-  { return !(*this == set2); }
-      
+  void
+  addInOrder(int value) noexcept(false);
+
+  template<class AnyIterator>
+  void
+  addInOrder(const AnyIterator& begin, const AnyIterator& end)
+  {
+    for (AnyIterator it = begin; it != end; ++it) {
+      addInOrder(*it);
+    }
+  }
+
+  auto
+  operator==(const ConsecutiveRangeSet& set2) const -> bool;
+
+  auto
+  operator!=(const ConsecutiveRangeSet& set2) const -> bool
+  {
+    return !(*this == set2);
+  }
+
   // obtain the intersection of two sets
-  SCISHARE ConsecutiveRangeSet intersected(const ConsecutiveRangeSet& set2) const;
+  [[nodiscard]] auto
+  intersected(const ConsecutiveRangeSet& set2) const -> ConsecutiveRangeSet;
 
   // obtain the union of two sets
-  SCISHARE ConsecutiveRangeSet unioned(const ConsecutiveRangeSet& set2) const;
+  [[nodiscard]] auto
+  unioned(const ConsecutiveRangeSet& set2) const -> ConsecutiveRangeSet;
 
   // Could implement binary search on the range set, but this
   // wasn't needed so I didn't do it.  Perhaps in the future if
   // needed. -- Wayne
   // I needed it, so I implemented it.  -- Bryan
-  SCISHARE iterator find(int n);
-  
-  inline iterator begin() const
-  { return iterator(this, 0, 0); }
+  auto
+  find(int n) -> iterator;
 
-  inline iterator end() const
-  { return iterator(this, (int)rangeSet_.size(), 0); }
+  [[nodiscard]] inline auto
+  begin() const -> iterator
+  {
+    return iterator(this, 0, 0);
+  }
 
-  unsigned long size() const
-  { return size_; }
+  [[nodiscard]] inline auto
+  end() const -> iterator
+  {
+    return iterator(this, (int)rangeSet_.size(), 0);
+  }
 
-  SCISHARE std::string toString() const;
- 
+  [[nodiscard]] auto
+  size() const -> unsigned long
+  {
+    return size_;
+  }
+
+  [[nodiscard]] auto
+  toString() const -> std::string;
+
   // return a space separated list of integers
-  SCISHARE std::string expandedString() const;
+  [[nodiscard]] auto
+  expandedString() const -> std::string;
 
   // used for debugging
-  int getNumRanges()
-  { return (int)rangeSet_.size(); }
+  auto
+  getNumRanges() -> int
+  {
+    return (int)rangeSet_.size();
+  }
 
-  SCISHARE static const ConsecutiveRangeSet empty;
-  SCISHARE static const ConsecutiveRangeSet all;  
+  static const ConsecutiveRangeSet empty;
+  static const ConsecutiveRangeSet all;
   friend class ConsecutiveRangeSet::iterator;
+
 private:
-  template <class InputIterator>
+  template<class InputIterator>
   ConsecutiveRangeSet(InputIterator begin, InputIterator end)
-    : rangeSet_(begin, end) { setSize(); }
-  void setSize();
-  
-  std::vector<Range> rangeSet_;
-  unsigned long size_; // sum of range (extent+1)'s
+    : rangeSet_{ begin, end }
+  {
+    setSize();
+  }
+  void
+  setSize();
+
+  std::vector<Range> rangeSet_{};
+  unsigned long size_{ 0 }; // sum of range (extent+1)'s
 };
 
-inline int ConsecutiveRangeSet::iterator::operator*()
+inline auto
+ConsecutiveRangeSet::iterator::operator*() noexcept(false) -> int
 {
   CHECKARRAYBOUNDS(range_, 0, (long)set_->rangeSet_.size());
   return set_->rangeSet_[range_].low_ + offset_;
 }
 
-inline
-ConsecutiveRangeSet::iterator ConsecutiveRangeSet::iterator::operator++(int)
+inline auto
+ConsecutiveRangeSet::iterator::operator++(int) -> ConsecutiveRangeSet::iterator
 {
   iterator oldit(*this);
   ++(*this);
   return oldit;
 }
 
-inline
-void ConsecutiveRangeSet::Range::display(std::ostream& out) const
+inline void
+ConsecutiveRangeSet::Range::display(std::ostream& out) const
 {
-  if (extent_ == 0)
+  if (extent_ == 0) {
     out << low_;
-  else
+  } else {
     out << low_ << " - " << high();
+  }
 }
 
 } // End namespace Uintah
 
-#endif
+#endif //__CORE_CONTAINERS_CONSECUTIVE_RANGESET_H__

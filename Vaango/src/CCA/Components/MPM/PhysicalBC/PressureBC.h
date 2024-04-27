@@ -28,7 +28,7 @@
 
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>
 #include <CCA/Components/MPM/PhysicalBC/LoadCurve.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/Point.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -83,9 +83,9 @@ WARNING
       // of a load curve)
       PressureBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags);
       ~PressureBC();
-      virtual std::string getType() const;
+      virtual std::string getType() const override;
 
-      virtual void outputProblemSpec(ProblemSpecP& ps);
+      virtual void outputProblemSpec(ProblemSpecP& ps) override;
 
       // Locate and flag the material points to which this pressure BC is
       // to be applied. 
@@ -134,7 +134,7 @@ WARNING
       // Get the force vector to be applied at 4 corners of the point 
       Vector getForceVectorCBDI(const Point& px, 
                                 const Vector& pDisp,
-                                const Matrix3& psize,
+                                const Matrix3& pSize,
                                 const Matrix3& pDeformationMeasure,
                                 double forcePerParticle, const double time,
                                 Point& pExternalForceCorner1,

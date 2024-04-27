@@ -101,8 +101,8 @@ const double NAN_REPLACE_VAL=1.0E9;
 avtudaReaderMTMDFileFormat::avtudaReaderMTMDFileFormat(const char *filename, DBOptionsAttributes* attrs) :
   avtMTMDFileFormat(filename),
   useExtraCells(true),
-  archive(NULL),
-  grid(NULL)
+  archive(nullptr),
+  grid(nullptr)
 {
   for (int i=0; attrs!=0 && i<attrs->GetNumberOfOptions(); ++i) {
     if (attrs->GetName(i) == "Load extra cells") {
@@ -115,7 +115,7 @@ avtudaReaderMTMDFileFormat::avtudaReaderMTMDFileFormat(const char *filename, DBO
   // The 2nd line should look like this <Uintah_DataArchive>.
 
   FILE * fp = fopen( filename, "r" );
-  if( fp == NULL ) {
+  if( fp == nullptr ) {
     string error = string( "Failed to open file: " ) + filename;
     EXCEPTION1( InvalidDBTypeException, error.c_str() );
   }
@@ -146,15 +146,15 @@ avtudaReaderMTMDFileFormat::avtudaReaderMTMDFileFormat(const char *filename, DBO
   putenv(tmp);
   
   // Load the program and fill dynamic tables
-  dlopen(NULL,RTLD_NOW|RTLD_GLOBAL);
+  dlopen(nullptr,RTLD_NOW|RTLD_GLOBAL);
 
   // Open the uds2vis shared library
   libHandle = dlopen(lib, RTLD_NOW); // The dylib locn should be changed
   if (!libHandle) {
     char* errString = dlerror();
-    cerr << "Error: " << string( errString ) << "\n"; 
-    cerr << "The library libuda2vis could not be located!!!\n"; 
-    cerr << "Tried to load: " << lib << "\n";
+    std::cerr <<  "Error: " << string( errString ) << "\n"; 
+    std::cerr <<  "The library libuda2vis could not be located!!!\n"; 
+    std::cerr <<  "Tried to load: " << lib << "\n";
     EXCEPTION1(InvalidDBTypeException, errString);
   }
 
@@ -162,43 +162,43 @@ avtudaReaderMTMDFileFormat::avtudaReaderMTMDFileFormat(const char *filename, DBO
   char *error;
 
   openDataArchive = (DataArchive* (*)(const std::string&)) dlsym(libHandle, "openDataArchive");
-  if((error = dlerror()) != NULL) {
+  if((error = dlerror()) != nullptr) {
     EXCEPTION1(InvalidDBTypeException, "The function openDataArchive could not be located in the library!!!");
   }
 
   closeDataArchive = (void (*)(DataArchive*)) dlsym(libHandle, "closeDataArchive");
-  if((error = dlerror()) != NULL) {
+  if((error = dlerror()) != nullptr) {
     EXCEPTION1(InvalidDBTypeException, "The function closeDataArchive could not be located in the library!!!");
   }
 
   getGrid = (GridP* (*)(DataArchive*, int)) dlsym(libHandle, "getGrid");
-  if((error = dlerror()) != NULL) {
+  if((error = dlerror()) != nullptr) {
     EXCEPTION1(InvalidDBTypeException, "The function getGrid could not be located in the library!!!");
   }
 
   releaseGrid = (void (*)(GridP*)) dlsym(libHandle, "releaseGrid");
-  if((error = dlerror()) != NULL) {
+  if((error = dlerror()) != nullptr) {
     EXCEPTION1(InvalidDBTypeException, "The function releaseGrid could not be located in the library!!!");
   }
 
 
   getCycleTimes = (std::vector<double> (*)(DataArchive*)) dlsym(libHandle, "getCycleTimes");
-  if((error = dlerror()) != NULL) {
+  if((error = dlerror()) != nullptr) {
     EXCEPTION1(InvalidDBTypeException, "The function getCycleTimes could not be located in the library!!!");
   }
 
-  getTimeStepInfo = (TimeStepInfo* (*)(DataArchive*, GridP*, int, bool)) dlsym(libHandle, "getTimeStepInfo");
-  if((error = dlerror()) != NULL) {
-    EXCEPTION1(InvalidDBTypeException, "The function getTimeStepInfo could not be located in the library!!!");
+  getTimestepInfo = (TimestepInfo* (*)(DataArchive*, GridP*, int, bool)) dlsym(libHandle, "getTimestepInfo");
+  if((error = dlerror()) != nullptr) {
+    EXCEPTION1(InvalidDBTypeException, "The function getTimestepInfo could not be located in the library!!!");
   }
 
   getGridData = (GridDataRaw* (*)(DataArchive*, GridP*, int, int, std::string, int, int, int[3], int[3])) dlsym(libHandle, "getGridData");
-  if((error = dlerror()) != NULL) {
+  if((error = dlerror()) != nullptr) {
     EXCEPTION1(InvalidDBTypeException, "The function getGridData could not be located in the library!!!");
   }
 
   getParticleData = (ParticleDataRaw* (*)(DataArchive*, GridP*, int, int, std::string, int, int)) dlsym(libHandle, "getParticleData");
-  if((error = dlerror()) != NULL) {
+  if((error = dlerror()) != nullptr) {
     EXCEPTION1(InvalidDBTypeException, "The function getParticleData could not be located in the library!!!");
   }
 
@@ -213,8 +213,8 @@ avtudaReaderMTMDFileFormat::avtudaReaderMTMDFileFormat(const char *filename, DBO
   cycleTimes = (*getCycleTimes)(archive);
 
   // haven't loaded any timestep data yet
-  stepInfo = NULL;  
-  currTimeStep = -1;
+  stepInfo = nullptr;  
+  currTimestep = -1;
 }
 
 
@@ -281,7 +281,7 @@ avtudaReaderMTMDFileFormat::GetTime(int ts)
 void
 avtudaReaderMTMDFileFormat::ActivateTimestep(int ts)
 {
-  if (currTimeStep == ts)
+  if (currTimestep == ts)
     return;
 
   // get the uda grid for the new timestep
@@ -291,9 +291,9 @@ avtudaReaderMTMDFileFormat::ActivateTimestep(int ts)
 
   if (stepInfo)
     delete stepInfo;
-  stepInfo = (*getTimeStepInfo)(archive, grid, ts, useExtraCells);
+  stepInfo = (*getTimestepInfo)(archive, grid, ts, useExtraCells);
 
-  currTimeStep = ts; 
+  currTimestep = ts; 
 }
 
 
@@ -411,10 +411,10 @@ avtudaReaderMTMDFileFormat::ReadMetaData(avtDatabaseMetaData *md, int timeState)
   int totalPatches = 0;
   for (int i = 0; i < numLevels; i++)
     totalPatches +=  stepInfo->levelInfo[i].patchInfo.size();
-  //debug5 << "avtudaReaderMTMDFileFormat::ReadMetaData: Levels: " << numLevels << " Patches: " << totalPatches << endl;
+  //debug5 << "avtudaReaderMTMDFileFormat::ReadMetaData: Levels: " << numLevels << " Patches: " << totalPatches << std::endl;
 
-  vector<int> groupIds(totalPatches);
-  vector<string> pieceNames(totalPatches);
+  std::vector<int> groupIds(totalPatches);
+  std::vector<std::string> pieceNames(totalPatches);
 
   for (int i = 0; i < totalPatches; i++) {
     char tmpName[64];
@@ -665,7 +665,7 @@ avtudaReaderMTMDFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md, in
 
   MPI_Comm_size(VISIT_MPI_COMM, &numProcs);
   MPI_Comm_rank(VISIT_MPI_COMM, &rank);
-  //debug5 << "Proc: " << rank << " sent to mdserver" << endl;  
+  //debug5 << "Proc: " << rank << " sent to mdserver" << std::endl;  
 
   if (rank == 0) {
     ReadMetaData(md, timeState);
@@ -755,7 +755,7 @@ void
 avtudaReaderMTMDFileFormat::CalculateDomainNesting(int timestate, const std::string &meshname)
 {
   //lookup mesh in our cache and if it's not there, compute it
-  if (*this->mesh_domains[meshname]==NULL)
+  if (*this->mesh_domains[meshname]==nullptr)
   {
     //
     // Calculate some info we will need in the rest of the routine.
@@ -805,7 +805,7 @@ avtudaReaderMTMDFileFormat::CalculateDomainNesting(int timestate, const std::str
     //
     for (int level = 0 ; level < num_levels ; level++) {
       // SetLevelRefinementRatios requires data as a vector<int>
-      vector<int> rr(3);
+      std::vector<int> rr(3);
       for (int i=0; i<3; i++)
         rr[i] = stepInfo->levelInfo[level].refinementRatio[i];
 
@@ -819,7 +819,7 @@ avtudaReaderMTMDFileFormat::CalculateDomainNesting(int timestate, const std::str
     // cases.  Although this routine has performed well for a previous 55K
     // patch run.
     //
-    vector< vector<int> > childPatches(totalPatches);
+    std::vector< vector<int> > childPatches(totalPatches);
     for (int level = num_levels-1 ; level > 0 ; level--) {
       int prev_level = level-1;
       LevelInfo &levelInfoParent = stepInfo->levelInfo[prev_level];
@@ -865,7 +865,7 @@ avtudaReaderMTMDFileFormat::CalculateDomainNesting(int timestate, const std::str
       int low[3],high[3];
       patchInfo.getBounds(low,high,meshname);
 
-      vector<int> e(6);
+      std::vector<int> e(6);
       for (int i=0; i<3; i++) {
         e[i+0] = low[i];
         e[i+3] = high[i]-1;
@@ -892,13 +892,13 @@ avtudaReaderMTMDFileFormat::CalculateDomainNesting(int timestate, const std::str
   void_ref_ptr vrTmp = cache->GetVoidRef("any_mesh", // MUST be called any_mesh
                             AUXILIARY_DATA_DOMAIN_BOUNDARY_INFORMATION,
                             timestate, -1);
-  if (*vrTmp == NULL || *vrTmp != *this->mesh_boundaries[meshname])
+  if (*vrTmp == nullptr || *vrTmp != *this->mesh_boundaries[meshname])
     throw InvalidFilesException("uda boundary mesh not registered");
 
   vrTmp = cache->GetVoidRef("any_mesh", // MUST be called any_mesh
                             AUXILIARY_DATA_DOMAIN_NESTING_INFORMATION,
                             timestate, -1);
-  if (*vrTmp == NULL || *vrTmp != *this->mesh_domains[meshname])
+  if (*vrTmp == nullptr || *vrTmp != *this->mesh_domains[meshname])
     throw InvalidFilesException("uda domain mesh not registered");
 }
 
@@ -1056,7 +1056,7 @@ avtudaReaderMTMDFileFormat::GetMesh(int timestate, int domain, const char *meshn
     return ugrid;
   }
 
-  return NULL;
+  return nullptr;
 }
 
 
@@ -1121,7 +1121,7 @@ avtudaReaderMTMDFileFormat::GetVar(int timestate, int domain, const char *varnam
     int qlow[3], qhigh[3]; // region we're going to ask uintah for (from qlow to qhigh-1)
     patchInfo.getBounds(qlow,qhigh,varType);
 
-    GridDataRaw *gd=NULL;
+    GridDataRaw *gd=nullptr;
 
     if (strcmp(varname, "proc_id")==0) {
       gd = new GridDataRaw;
@@ -1158,7 +1158,7 @@ avtudaReaderMTMDFileFormat::GetVar(int timestate, int domain, const char *varnam
       // domain 0 always reads right away
       if (domain==0)
         prev = -1;
-      //debug5 << "Proc: " << rank << " sent to GetVar" << endl;
+      //debug5 << "Proc: " << rank << " sent to GetVar" << std::endl;
 
       // wait for previous read to finish
       if (prev>=0)
@@ -1192,7 +1192,7 @@ avtudaReaderMTMDFileFormat::GetVar(int timestate, int domain, const char *varnam
     if (matl.compare("*") != 0)
       matlNo = atoi(matl.c_str());
 
-    ParticleDataRaw *pd = NULL;
+    ParticleDataRaw *pd = nullptr;
 
 #ifdef SERIALIZED_READS
     int numProcs, rank;
@@ -1214,7 +1214,7 @@ avtudaReaderMTMDFileFormat::GetVar(int timestate, int domain, const char *varnam
     // domain 0 always reads right away
     if (domain==0)
       prev = -1;
-    //debug5 << "Proc: " << rank << " sent to GetVar" << endl;
+    //debug5 << "Proc: " << rank << " sent to GetVar" << std::endl;
 
     // wait for previous read to finish
     if (prev>=0)
@@ -1301,7 +1301,7 @@ avtudaReaderMTMDFileFormat::GetAuxiliaryData(const char *var, int dom,
                                              const char * type, void *,
                                              DestructorFunction &df)
 {
-  return NULL;
+  return nullptr;
 }
 
 // ****************************************************************************

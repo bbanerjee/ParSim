@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,14 +26,14 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Matrix3.h>
@@ -99,6 +99,7 @@ ImplicitCM::addSharedCRForImplicit(Task* task, const MaterialSubset* matlset,
   // Ghost::GhostType  gac   = Ghost::AroundCells;
 
   task->requires(Task::OldDW, d_lb->delTLabel);
+  task->requires(Task::OldDW, d_lb->simulationTimeLabel);
   task->requires(Task::OldDW, d_lb->pXLabel, matlset, gnone);
   task->requires(Task::OldDW, d_lb->pSizeLabel, matlset, gnone);
   task->requires(Task::OldDW, d_lb->pMassLabel, matlset, gnone);
@@ -215,7 +216,7 @@ ImplicitCM::computeStressTensorImplicit(const PatchSubset*, const MPMMaterial*,
 void
 ImplicitCM::loadBMatsGIMP(Array3<int> l2g, int dof[81], double B[6][81],
                           double Bnl[3][81], vector<Vector> d_S,
-                          vector<IntVector> ni, double* oodx) const
+                          std::vector<IntVector> ni, double* oodx) const
 {
   for (int k = 0; k < 27; k++) {
     // Need to loop over the neighboring patches l2g to get the right
@@ -262,7 +263,7 @@ ImplicitCM::loadBMatsGIMP(Array3<int> l2g, int dof[81], double B[6][81],
 void
 ImplicitCM::loadBMats(Array3<int> l2g, int dof[24], double B[6][24],
                       double Bnl[3][24], vector<Vector> d_S,
-                      vector<IntVector> ni, double* oodx) const
+                      std::vector<IntVector> ni, double* oodx) const
 {
   for (int k = 0; k < 8; k++) {
     // Need to loop over the neighboring patches l2g to get the right

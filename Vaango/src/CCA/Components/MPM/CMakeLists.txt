@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -22,25 +22,43 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
+
+SET(Vaango_MPM_Solvers_SRCS
+  ImpMPMSolvers/SimpleSolver.cc 
+  ImpMPMSolvers/Solver.cc       
+)
+
+IF (PETSC)
+  SET(Vaango_MPM_Solvers_SRCS 
+      ${Vaango_MPM_Solvers_SRCS} 
+      ImpMPMSolvers/PetscSolver.cc)
+  SET(LIBS ${LIBS} ${PETSC_LIBRARIES})
+ELSE ()
+  SET(Vaango_MPM_Solvers_SRCS 
+      ${Vaango_MPM_Solvers_SRCS} 
+      ImpMPMSolvers/FakePetscSolver.cc)
+ENDIF ()
+
+SET(Vaango_MPM_DiffusionTasks_SRCS
+  ReactionDiffusion/ScalarDiffusionTasks.cc
+)
+
 SET(Vaango_CCA_Components_MPM_SRCS
+  ${Vaango_MPM_Solvers_SRCS}
+  ${Vaango_MPM_DiffusionTasks_SRCS}
   SerialMPM.cc    
   MPM_UpdateStressLast.cc    
   RigidMPM.cc     
-  MPMCommon.cc    
   FractureMPM.cc  
   ImpMPM.cc       
   ShellMPM.cc     
   AMRMPM.cc       
-  SimpleSolver.cc 
-  Solver.cc       
-  MPMBoundCond.cc 
-  MPMFlags.cc	  
-  ImpMPMFlags.cc
   UofU_MPM.cc    
 )
 
-add_subdirectory(ConstitutiveModel)
+add_subdirectory(Core)
 add_subdirectory(Contact)
+add_subdirectory(ConstitutiveModel)
 add_subdirectory(ThermalContact)
 add_subdirectory(PhysicalBC)
 add_subdirectory(ParticleCreator)
@@ -52,34 +70,31 @@ add_subdirectory(GradientComputer)
 add_subdirectory(ReactionDiffusion)
 
 SET(LIBS
+  ${LIBS}
   Vaango_CCA_Ports
   Vaango_Core_Grid
   Vaango_Core_Util
-  Vaango_Core_Labels
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
+  MPM_ParticleCreator
+  MPM_GradientComputer
   MPM_ConstitutiveModel
+  MPM_PhysicalBC
+  MPM_MMS
+  MPM_Diffusion
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}
   ${MPI_LIBRARY}
 )
 
-IF (PETSC)
-  SET(Vaango_CCA_Components_MPM_SRCS ${Vaango_CCA_Components_MPM_SRCS} PetscSolver.cc)
-  SET(LIBS ${LIBS} ${PETSC_LIBRARIES})
-ELSE ()
-  SET(Vaango_CCA_Components_MPM_SRCS ${Vaango_CCA_Components_MPM_SRCS} FakePetscSolver.cc)
-ENDIF ()
+add_library(Vaango_CCA_Components_MPM ${Vaango_CCA_Components_MPM_SRCS})
 
-
-ADD_LIBRARY(Vaango_CCA_Components_MPM ${Vaango_CCA_Components_MPM_SRCS})
-
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_MPM ${LIBS})
+target_link_libraries(Vaango_CCA_Components_MPM ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_MPM)
+  add_definitions(-DBUILD_Vaango_CCA_Components_MPM)
 ENDIF(BUILD_SHARED_LIBS)

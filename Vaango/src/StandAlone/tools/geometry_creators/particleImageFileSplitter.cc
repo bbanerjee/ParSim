@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -110,7 +110,7 @@ main(int argc, char* argv[])
 {
   try {
     // Do some Uintah initialization
-    Uintah::Parallel::determineIfRunningUnderMPI(argc, argv);
+    //Uintah::Parallel::determineIfRunningUnderMPI(argc, argv);
     Uintah::Parallel::initializeManager(argc, argv);
 
     string infile;
@@ -148,7 +148,7 @@ main(int argc, char* argv[])
       } else if (s == "-h" || s == "-help") {
         usage(argv[0]);
       } else if (s[0] == '-') {
-        cout << "\nERROR invalid input (" << s << ")" << endl;
+        std::cout << "\nERROR invalid input (" << s << ")" << endl;
         usage(argv[0]);
       }
     }
@@ -167,10 +167,10 @@ main(int argc, char* argv[])
         fprintf(stderr, "Cylinder height, volume: %g, %g\n", cylinder->height(),
                 cylinder->volume());
       } catch (Exception& e) {
-        cerr << "Caught exception: " << e.message() << endl;
+        std::cerr <<  "Caught exception: " << e.message() << endl;
         abort();
       } catch (...) {
-        cerr << "Caught unknown exception\n";
+        std::cerr <<  "Caught unknown exception\n";
         abort();
       }
     }
@@ -227,9 +227,9 @@ main(int argc, char* argv[])
           fprintf(stderr, "\n--- Reading geometry object --- \n");
 
           string imgname;  // raw image file name
-          vector<int> res; // image resolution
-          vector<int> ppc; // nr particles per cell
-          vector<int> L;   // lower and upper threshold
+          std::vector<int> res; // image resolution
+          std::vector<int> ppc; // nr particles per cell
+          std::vector<int> L;   // lower and upper threshold
           string f_name;   // the base name of the output file
           string of_name;  // actual output file name
           int ncols = 0;   // nr. of additional data columns
@@ -255,11 +255,11 @@ main(int argc, char* argv[])
               child->require("res", res);
               child->require("threshold", L);
 
-              cout << "Image name : " << imgname << endl;
-              cout << "Resolution : " << res[0] << ", " << res[1] << ", "
+              std::cout << "Image name : " << imgname << endl;
+              std::cout << "Resolution : " << res[0] << ", " << res[1] << ", "
                    << res[2] << endl;
-              cout << "Min threshold : " << L[0] << endl;
-              cout << "Max threshold : " << L[1] << endl;
+              std::cout << "Min threshold : " << L[0] << endl;
+              std::cout << "Max threshold : " << L[1] << endl;
               ncheck++;
             }
 
@@ -295,8 +295,8 @@ main(int argc, char* argv[])
                                                 next_var_name + "'",
                                               __FILE__, __LINE__);
               }
-              cout << "Output file name : " << f_name << endl;
-              cout << "Nr of additional columns :" << ncols << endl;
+              std::cout << "Output file name : " << f_name << endl;
+              std::cout << "Nr of additional columns :" << ncols << endl;
               ncheck++;
             }
           }
@@ -311,14 +311,14 @@ main(int argc, char* argv[])
           //__________________________________
           // read the image data
           unsigned int nPixels = res[0] * res[1] * res[2];
-          cout << "Reading " << nPixels << " nPixels\n";
+          std::cout << "Reading " << nPixels << " nPixels\n";
           pixel* pimg = scinew pixel[nPixels];
 
           if (ReadImage(imgname.c_str(), nPixels, pimg, endianness) == false) {
-            cout << "FATAL ERROR : Failed reading image data" << endl;
+            std::cout << "FATAL ERROR : Failed reading image data" << endl;
             exit(0);
           }
-          cout << "Done reading " << nPixels << " pixels\n";
+          std::cout << "Done reading " << nPixels << " pixels\n";
 
           // these points define the extremas of the grid
           Point minP(1.e30, 1.e30, 1.e30), maxP(-1.e30, -1.e30, -1.e30);
@@ -330,8 +330,8 @@ main(int argc, char* argv[])
           // to recreate the points
 
           int npatches = level->numPatches();
-          vector<vector<int>> points(npatches);
-          vector<int> sizes(npatches);
+          std::vector<vector<int>> points(npatches);
+          std::vector<int> sizes(npatches);
 
           int i, j, k;
           unsigned int n;
@@ -404,7 +404,7 @@ main(int argc, char* argv[])
           delete[] pimg;
 
           // loop over all patches
-          for (Level::const_patchIterator iter = level->patchesBegin();
+          for (Level::const_patch_iterator iter = level->patchesBegin();
                iter != level->patchesEnd(); iter++) {
             const Patch* patch = *iter;
             unsigned int pid = patch->getID();
@@ -418,7 +418,7 @@ main(int argc, char* argv[])
             // cleanly read the header off a binary file
             FILE* dest = fopen(of_name.c_str(), "wb");
             if (dest == 0) {
-              cout << "FATAL ERROR : Failed opening points file" << endl;
+              std::cout << "FATAL ERROR : Failed opening points file" << endl;
               exit(0);
             }
 
@@ -457,11 +457,11 @@ main(int argc, char* argv[])
     }       // loop over grid levels
 
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << '\n';
+    std::cerr <<  "Caught exception: " << e.message() << '\n';
     if (e.stackTrace())
-      cerr << "Stack trace: " << e.stackTrace() << '\n';
+      std::cerr <<  "Stack trace: " << e.stackTrace() << '\n';
   } catch (...) {
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
   }
 }
 
@@ -502,14 +502,14 @@ CreateGrid(ProblemSpecP ups)
 void
 usage(char* prog_name)
 {
-  cout << "Usage: " << prog_name << " [options]  <ups file> \n";
-  cout << "options:" << endl;
-  cout << "-b, -binary:            binary output \n";
-  cout << "-cyl <args> :           defines a cylinder within the geometry args "
+  std::cout << "Usage: " << prog_name << " [options]  <ups file> \n";
+  std::cout << "options:" << endl;
+  std::cout << "-b, -binary:            binary output \n";
+  std::cout << "-cyl <args> :           defines a cylinder within the geometry args "
           "= xbot ybot zbot xtop ytop ztop radius \n";
-  cout << "-l, -littleEndian:      input file contains little endian bytes  "
+  std::cout << "-l, -littleEndian:      input file contains little endian bytes  "
           "[default]\n";
-  cout << "-B, -bigEndian:         input file contains big endian bytes\n";
+  std::cout << "-B, -bigEndian:         input file contains big endian bytes\n";
   exit(1);
 }
 
@@ -528,7 +528,7 @@ ReadImage(const char* szfile, unsigned int nPixels, pixel* pb,
   unsigned int nread = fread(pb, sizeof(pixel), nPixels, fp);
   fclose(fp);
 
-  cout << "Reading: " << szfile << ", Bytes per pixel " << sizeof(pixel)
+  std::cout << "Reading: " << szfile << ", Bytes per pixel " << sizeof(pixel)
        << ", number of pixels read " << nread << endl;
 
   //__________________________________
@@ -544,14 +544,14 @@ ReadImage(const char* szfile, unsigned int nPixels, pixel* pb,
       maxI = max(pb[i], maxI);
       minI = min(pb[i], minI);
     }
-    cout << "Big endian intensity: max (" << maxI << "), min(" << minI << " )"
+    std::cout << "Big endian intensity: max (" << maxI << "), min(" << minI << " )"
          << endl;
   } else {
     for (unsigned int i = 0; i < nread; i++) {
       maxI = max(pb[i], maxI);
       minI = min(pb[i], minI);
     }
-    cout << "Little endian intensity: max (" << maxI << "), min(" << minI
+    std::cout << "Little endian intensity: max (" << maxI << "), min(" << minI
          << " )" << endl;
   }
 

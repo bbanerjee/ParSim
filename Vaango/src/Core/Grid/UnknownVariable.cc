@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,88 +23,99 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <Core/Grid/UnknownVariable.h>
+
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
 using namespace Uintah;
-using namespace std;
 
-UnknownVariable::UnknownVariable(const std::string& varname, int dwid,
-                                 const Patch* patch, int matlIndex,
+UnknownVariable::UnknownVariable(const std::string& varname,
+                                 int dwid,
+                                 const Patch* patch,
+                                 int matlIndex,
                                  const std::string& extramsg,
                                  const char* file,
                                  int line)
+  : Exception()
 {
-   std::ostringstream s;
-   s << "An UnknownVariable exception was thrown.\n";
-   s << file << ":" << line << "\n";
+  std::ostringstream s;
+  s << "An UnknownVariable exception was thrown.\n";
+  s << file << ":" << line << "\n";
 
-   s << "Unknown variable: " << varname;
+  s << "Unknown variable: " << varname;
 
-   if (dwid!=-1) s << " requested from DW " << dwid;
-   if (patch != NULL) {
-      s << ", Level "<< patch->getLevel()->getIndex()
-        << ", patch " << patch->getID()
-        << "(" << patch->toString() << ")";
-   }
-   
-   s << ", material index: " << matlIndex;
+  if (dwid != -1) {
+    s << " requested from DW " << dwid;
+  }
+  if (patch != nullptr) {
+    s << ", Level " << patch->getLevel()->getIndex() << ", patch "
+      << patch->getID() << "(" << patch->toString() << ")";
+  }
 
-   if(extramsg != "")
-      s << " (" << extramsg << ")";
-   d_msg = s.str();
+  s << ", material index: " << matlIndex;
+
+  if (extramsg != "") {
+    s << " (" << extramsg << ")";
+  }
+  d_msg = s.str();
 
 #ifdef EXCEPTIONS_CRASH
-   std::cout << d_msg << "\n";
+  std::cout << d_msg << "\n";
 #endif
 }
 
-UnknownVariable::UnknownVariable(const std::string& varname, int dwid,
-                                 const Level* level, int matlIndex,
+UnknownVariable::UnknownVariable(const std::string& varname,
+                                 int dwid,
+                                 const Level* level,
+                                 int matlIndex,
                                  const std::string& extramsg,
-                                 const char* file,
-                                 int line)
+                                 [[maybe_unused]] const char* file,
+                                 [[maybe_unused]] int line)
+  : Exception()
 {
-   ostringstream s;
-   s << "Unknown variable: " << varname;
+  std::ostringstream s;
+  s << "Unknown variable: " << varname;
 
-   if (dwid!=-1) s << " requested from DW " << dwid;
-   if (level != NULL) {
-     s << " on level " << level->getIndex();
-   }
-   
-   s << ", material index: " << matlIndex;
+  if (dwid != -1) {
+    s << " requested from DW " << dwid;
+  }
+  if (level != nullptr) {
+    s << " on level " << level->getIndex();
+  }
 
-   if(extramsg != "")
-      s << " (" << extramsg << ")";
-   d_msg = s.str();
+  s << ", material index: " << matlIndex;
+
+  if (extramsg != "") {
+    s << " (" << extramsg << ")";
+  }
+  d_msg = s.str();
 
 #ifdef EXCEPTIONS_CRASH
-   std::cout << "An UnknownVariable exception was thrown.\n";
-   std::cout << file << ":" << line << "\n";
-   std::cout << d_msg << "\n";
+  std::cout << "An UnknownVariable exception was thrown.\n";
+  std::cout << file << ":" << line << "\n";
+  std::cout << d_msg << "\n";
 #endif
 }
 
 UnknownVariable::UnknownVariable(const UnknownVariable& copy)
-    : d_msg(copy.d_msg)
+  : Exception()
+  , d_msg(copy.d_msg)
 {
 }
 
-UnknownVariable::~UnknownVariable()
+UnknownVariable::~UnknownVariable() {}
+
+const char*
+UnknownVariable::message() const
 {
+  return d_msg.c_str();
 }
 
-const char* UnknownVariable::message() const
+const char*
+UnknownVariable::type() const
 {
-    return d_msg.c_str();
-}
-
-const char* UnknownVariable::type() const
-{
-    return "Uintah::Exceptions::UnknownVariable";
+  return "Uintah::Exceptions::UnknownVariable";
 }

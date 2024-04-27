@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -38,7 +38,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -98,10 +98,10 @@ HypoElasticFortran::HypoElasticFortran(const HypoElasticFortran* cm)
   d_modelParam.K = cm->d_modelParam.K;
 }
 
-HypoElasticFortran*
+std::unique_ptr<ConstitutiveModel>
 HypoElasticFortran::clone()
 {
-  return scinew HypoElasticFortran(*this);
+  return std::make_unique<HypoElasticFortran>(*this);
 }
 
 void
@@ -364,8 +364,8 @@ HypoElasticFortran::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 0
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR HypoElasticFortran"
-       << endl;
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR HypoElasticFortran"
+       << std::endl;
 #endif
 }
 
@@ -385,8 +385,8 @@ HypoElasticFortran::computePressEOSCM(double rho_cur, double& pressure,
   tmp = bulk / rho_cur; // speed of sound squared
 
 #if 0
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR HypoElasticFortran"
-       << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR HypoElasticFortran"
+       << std::endl;
 #endif
 }
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -35,7 +35,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
@@ -197,10 +197,10 @@ ShellMaterial::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("includeFlowWork", d_includeFlowWork);
 }
 
-ShellMaterial*
+std::unique_ptr<ConstitutiveModel>
 ShellMaterial::clone()
 {
-  return scinew ShellMaterial(*this);
+  return std::make_unique<ShellMaterial>(*this);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -408,11 +408,11 @@ ShellMaterial::computeStableTimestep(const Patch* patch,
   int dwi = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
 
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -424,10 +424,10 @@ ShellMaterial::computeStableTimestep(const Patch* patch,
     particleIndex idx = *iter;
 
     // Compute wave speed at each particle, store the maximum
-    c_dil = sqrt((bulk + 4.0 * mu / 3.0) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    c_dil = sqrt((bulk + 4.0 * mu / 3.0) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   Vector dx = patch->dCell();
   WaveSpeed = dx / WaveSpeed;
@@ -473,7 +473,7 @@ ShellMaterial::interpolateParticleRotToGrid(const PatchSubset* patches,
   constParticleVariable<Point> pX;
   constParticleVariable<Vector> pRotRate;
   constParticleVariable<Matrix3> pSize;
-  constParticleVariable<Matrix3> deformationGradient;
+  constParticleVariable<Matrix3> pDefGrad;
   constNCVariable<double> gMass;
 
   // Create arrays for the grid data
@@ -484,8 +484,8 @@ ShellMaterial::interpolateParticleRotToGrid(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     ParticleSubset* pset =
       old_dw->getParticleSubset(dwi, patch, gan, NGN, lb->pXLabel);
@@ -494,7 +494,7 @@ ShellMaterial::interpolateParticleRotToGrid(const PatchSubset* patches,
     old_dw->get(pMass, lb->pMassLabel, pset);
     old_dw->get(pX, lb->pXLabel, pset);
     old_dw->get(pSize, lb->pSizeLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(pRotRate, pNormalRotRateLabel, pset);
     new_dw->get(gMass, lb->gMassLabel, dwi, patch, gan, NGN);
 
@@ -509,7 +509,7 @@ ShellMaterial::interpolateParticleRotToGrid(const PatchSubset* patches,
     for (int idx : *pset) {
       // Get the node indices that surround the cell
       interpolator->findCellAndWeights(pX[idx], ni, S, pSize[idx],
-                                       deformationGradient[idx]);
+                                       pDefGrad[idx]);
 
       // Calculate momentum
       pMom = pRotRate[idx] * pMass[idx];
@@ -603,8 +603,8 @@ ShellMaterial::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(pp);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Read the datawarehouse
     int dwi = matl->getDWIndex();
@@ -751,50 +751,50 @@ ShellMaterial::computeStressTensor(const PatchSubset* patches,
       // (we call this condition, roughly, plane stress)
       Matrix3 sigTop(0.0), sigBot(0.0), sigCen(0.0);
       if (!computePlaneStressAndDefGrad(defGradTop_new, sigTop, bulk, shear)) {
-        cerr << "----------------------------------- " << endl;
-        cerr << "Particle = " << idx << endl << endl;
-        cerr << "Velocity Gradient = " << endl;
-        cerr << velGrad << endl;
-        cerr << "Rotation Gradient = " << endl;
-        cerr << rotGrad << endl;
-        cerr << "In-plane Velocity Gradient (top) = " << endl;
-        cerr << velGradTop << endl;
-        cerr << "In-plane Velocity Gradient (cen) = " << endl;
-        cerr << velGradCen << endl;
-        cerr << "In-plane Velocity Gradient (bot) = " << endl;
-        cerr << velGradBot << endl;
-        cerr << "In-plane Def Gradient Inc (top) = " << endl;
-        cerr << defGradIncTop << endl;
-        cerr << "In-plane Def Gradient Inc (cen) = " << endl;
-        cerr << defGradIncCen << endl;
-        cerr << "In-plane Def Gradient Inc (bot) = " << endl;
-        cerr << defGradIncBot << endl;
-        cerr << "New In-plane Def Gradient (top) = " << endl;
-        cerr << defGradTop_new << endl;
-        cerr << "New In-plane Def Gradient (cen) = " << endl;
-        cerr << defGradCen_new << endl;
-        cerr << "New In-plane Def Gradient (bot) = " << endl;
-        cerr << defGradBot_new << endl;
-        cerr << "Normal = " << pNormal[idx] << endl;
-        cerr << "R = " << R << endl;
-        cerr << "defGradTop = " << defGradTop_new << endl;
-        cerr << "SigTop = " << sigTop << endl;
+        std::cerr <<  "----------------------------------- " << std::endl;
+        std::cerr <<  "Particle = " << idx << std::endl << std::endl;
+        std::cerr <<  "Velocity Gradient = " << std::endl;
+        std::cerr <<  velGrad << std::endl;
+        std::cerr <<  "Rotation Gradient = " << std::endl;
+        std::cerr <<  rotGrad << std::endl;
+        std::cerr <<  "In-plane Velocity Gradient (top) = " << std::endl;
+        std::cerr <<  velGradTop << std::endl;
+        std::cerr <<  "In-plane Velocity Gradient (cen) = " << std::endl;
+        std::cerr <<  velGradCen << std::endl;
+        std::cerr <<  "In-plane Velocity Gradient (bot) = " << std::endl;
+        std::cerr <<  velGradBot << std::endl;
+        std::cerr <<  "In-plane Def Gradient Inc (top) = " << std::endl;
+        std::cerr <<  defGradIncTop << std::endl;
+        std::cerr <<  "In-plane Def Gradient Inc (cen) = " << std::endl;
+        std::cerr <<  defGradIncCen << std::endl;
+        std::cerr <<  "In-plane Def Gradient Inc (bot) = " << std::endl;
+        std::cerr <<  defGradIncBot << std::endl;
+        std::cerr <<  "New In-plane Def Gradient (top) = " << std::endl;
+        std::cerr <<  defGradTop_new << std::endl;
+        std::cerr <<  "New In-plane Def Gradient (cen) = " << std::endl;
+        std::cerr <<  defGradCen_new << std::endl;
+        std::cerr <<  "New In-plane Def Gradient (bot) = " << std::endl;
+        std::cerr <<  defGradBot_new << std::endl;
+        std::cerr <<  "Normal = " << pNormal[idx] << std::endl;
+        std::cerr <<  "R = " << R << std::endl;
+        std::cerr <<  "defGradTop = " << defGradTop_new << std::endl;
+        std::cerr <<  "SigTop = " << sigTop << std::endl;
         exit(1);
       }
       if (!computePlaneStressAndDefGrad(defGradCen_new, sigCen, bulk, shear)) {
-        cerr << "Normal = " << pNormal[idx] << endl;
-        cerr << "R = " << R << endl;
-        cerr << "defGradCen = " << defGradCen_new << endl;
-        cerr << "SigCen = " << sigCen << endl;
+        std::cerr <<  "Normal = " << pNormal[idx] << std::endl;
+        std::cerr <<  "R = " << R << std::endl;
+        std::cerr <<  "defGradCen = " << defGradCen_new << std::endl;
+        std::cerr <<  "SigCen = " << sigCen << std::endl;
         exit(1);
       }
       if (!computePlaneStressAndDefGrad(defGradBot_new, sigBot, bulk, shear)) {
-        if (d_world->myrank() == 16) {
-          cerr << "Current Processor = " << d_world->myrank() << endl;
-          cerr << "Normal = " << pNormal[idx] << endl;
-          cerr << "R = " << R << endl;
-          cerr << "defGradBot = " << defGradBot_new << endl;
-          cerr << "SigBot = " << sigBot << endl;
+        if (d_world->myRank() == 16) {
+          std::cerr <<  "Current Processor = " << d_world->myRank() << std::endl;
+          std::cerr <<  "Normal = " << pNormal[idx] << std::endl;
+          std::cerr <<  "R = " << R << std::endl;
+          std::cerr <<  "defGradBot = " << defGradBot_new << std::endl;
+          std::cerr <<  "SigBot = " << sigBot << std::endl;
         }
         exit(1);
       }
@@ -931,9 +931,9 @@ ShellMaterial::computeRotInternalMoment(const PatchSubset* patches,
       old_dw->getParticleSubset(dwi, patch, gan, NGN, lb->pXLabel);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get stuff from datawarehouse
     constParticleVariable<Point> pX;
@@ -1018,9 +1018,9 @@ ShellMaterial::computeRotAcceleration(const PatchSubset* patches,
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<double> S(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get stuff from datawarehouse
     constParticleVariable<Point> pX;
@@ -1236,7 +1236,7 @@ ShellMaterial::calcIncrementalRotation(const Vector& r, const Vector& n,
                                        double delT)
 {
   if (debug.active())
-    debug << "r = " << r << " n = " << n << " delT = " << delT << endl;
+    debug << "r = " << r << " n = " << n << " delT = " << delT << std::endl;
 
   Matrix3 I;
   I.Identity();
@@ -1250,7 +1250,7 @@ ShellMaterial::calcIncrementalRotation(const Vector& r, const Vector& n,
   double len = a.length();
 
   if (debug.active())
-    debug << "ShellMaterial::1198: a = " << a << "len = " << len << endl;
+    debug << "ShellMaterial::1198: a = " << a << "len = " << len << std::endl;
 
   if (len <= 0.0)
     return I;
@@ -1382,7 +1382,7 @@ ShellMaterial::computePlaneStressAndDefGrad(Matrix3& F, Matrix3& sig,
   // Calculate Jacobian
   J = F.Determinant();
   if (!(J > 0.0)) {
-    cerr << "** ERROR ** F = " << F << " det F = " << J << endl;
+    std::cerr <<  "** ERROR ** F = " << F << " det F = " << J << std::endl;
     return false;
   }
 
@@ -1412,8 +1412,8 @@ ShellMaterial::computePlaneStressAndDefGrad(Matrix3& F, Matrix3& sig,
     // Calculate Jacobian
     J = F.Determinant();
     if (!(J > 0.0)) {
-      cerr << "** ERROR ** F(new) = " << F << " det F = " << J << endl;
-      cerr << " tau = " << tau << endl;
+      std::cerr <<  "** ERROR ** F(new) = " << F << " det F = " << J << std::endl;
+      std::cerr <<  " tau = " << tau << std::endl;
       return false;
     }
 
@@ -1456,7 +1456,7 @@ ShellMaterial::computePlaneStressAndDefGrad(Matrix3& F, Matrix3& sig,
     // Central value
     J = F.Determinant();
     if (!(J > 0.0)) {
-       cerr << "** ERROR ** F = " << F << " det F = " << J << endl;
+       std::cerr <<  "** ERROR ** F = " << F << " det F = " << J << std::endl;
        return false;
     }
     //ASSERT(J > 0.0);
@@ -1469,7 +1469,7 @@ ShellMaterial::computePlaneStressAndDefGrad(Matrix3& F, Matrix3& sig,
     Fp(2,2) = 1.00001*F(2,2);
     Jp = Fp.Determinant();
     if (!(Jp > 0.0)) {
-       cerr << "** ERROR ** Fp = " << Fp << " det Fp = " << Jp << endl;
+       std::cerr <<  "** ERROR ** Fp = " << Fp << " det Fp = " << Jp << std::endl;
        return false;
     }
     //ASSERT(Jp > 0.0);
@@ -1482,10 +1482,10 @@ ShellMaterial::computePlaneStressAndDefGrad(Matrix3& F, Matrix3& sig,
     Fm(2,2) = 0.99999*F(2,2);
     Jm = Fm.Determinant();
     if (!(Jm > 0.0)) {
-       if (d_world->myrank() == 16) {
-         cerr << "Current Processor = " << d_world->myrank() << endl;
-         cerr << "** ERROR ** F = " << F << " det F = " << J << endl;
-         cerr << "** ERROR ** Fm = " << Fm << " det Fm = " << Jm << endl;
+       if (d_world->myRank() == 16) {
+         std::cerr <<  "Current Processor = " << d_world->myRank() << std::endl;
+         std::cerr <<  "** ERROR ** F = " << F << " det F = " << J << std::endl;
+         std::cerr <<  "** ERROR ** Fm = " << Fm << " det Fm = " << Jm << std::endl;
        }
        return false;
     }
@@ -1505,7 +1505,7 @@ ShellMaterial::computePlaneStressAndDefGrad(Matrix3& F, Matrix3& sig,
   // Calculate the stress
   J = F.Determinant();
   if (!(J > 0.0)) {
-    cerr << "** ERROR ** F(upd) = " << F << " det F = " << J << endl;
+    std::cerr <<  "** ERROR ** F(upd) = " << F << " det F = " << J << std::endl;
     return false;
   }
   p = (0.5*bulk)*(J - 1.0/J);

@@ -82,10 +82,10 @@
           </manufacturedSolution> 
         </customInitialization>
            
-        <TimeStepControl>
+        <TimestepControl>
           <Scheme_for_delT_calc> aggressive   </Scheme_for_delT_calc>
           <knob_for_speedSound>  0.00         </knob_for_speedSound>
-        </TimeStepControl>
+        </TimestepControl>
         
         <ImplicitSolver>
            <max_outer_iterations>      20    </max_outer_iterations>

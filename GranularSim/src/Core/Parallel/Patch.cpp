@@ -8,6 +8,27 @@
 #include <set>
 #include <ostream>
 
+
+/* Testing error handling*/
+#ifdef TEST_MPI_ERR_HANDLER
+namespace dem 
+{
+
+static int errHandlerCalls = 0;
+static int errHandlerErrs = 0;
+
+static void patchCommErrorHandler(MPI_Comm* comm, int* err, ...)
+{
+  if (*err != MPI_ERR_OTHER) {
+    errHandlerErrs++;
+    std::cout << "**ERROR** Unexpected MPI error" << std::endl;
+  }
+  errHandlerCalls++;
+}
+
+} // end namespace dem
+#endif
+
 using namespace dem;
 
 template<typename TArray>
@@ -17,7 +38,13 @@ PatchNeighborComm<TArray>::setNeighbor(MPI_Comm& cartComm, int myRank,
                                       PatchBoundary boundaryFlag) 
 {
   int neighborRank = -1;
-  MPI_Errhandler_set(cartComm, MPI_ERRORS_RETURN);
+
+  #ifdef TEST_MPI_ERR_HANDLER
+    MPI_Errhandler errHandler;
+    MPI_Comm_create_errhandler(dem::patchCommErrorHandler, &errHandler);
+    MPI_Comm_set_errhandler(cartComm, errHandler);
+  #endif
+  MPI_Comm_set_errhandler(cartComm, MPI_ERRORS_RETURN);
   int status = MPI_Cart_rank(cartComm, neighborCoords.data(), &neighborRank);
   if (status != MPI_SUCCESS) {
     //char error_string[1000];

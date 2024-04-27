@@ -79,7 +79,7 @@ ProgressiveWarning::ProgressiveWarning(std::string message, int multiplier /* =-
 
 bool ProgressiveWarning::invoke(int numTimes /* =-1*/)
 {
-  bool warning_printed = false;
+  [[maybe_unused]] bool warning_printed = false;
   d_numOccurences += numTimes;
   if (d_numOccurences >= d_nextOccurence && (!d_warned || d_multiplier != -1)) {
     d_warned = true;

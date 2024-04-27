@@ -67,12 +67,12 @@ FieldDiag::has_mass(DataArchive * da, const Patch * patch,
 {
   switch(fieldtype) 
     {
-    case TypeDescription::NCVariable: {
+    case TypeDescription::Type::NCVariable: {
       NCVariable<double> Mvalue;
       da->query(Mvalue, "g.mass", imat, patch, index);
       return (Mvalue[pt]>numeric_limits<float>::epsilon());
     }
-    case TypeDescription::CCVariable: {
+    case TypeDescription::Type::CCVariable: {
       CCVariable<double> Mvalue;
       da->query(Mvalue, "g.mass", imat, patch, index);
       return (Mvalue[pt]>numeric_limits<float>::epsilon());

@@ -73,7 +73,7 @@ void launchGPUSchedulerTestKernel(dim3 dimGrid,
 
 namespace Uintah {
 
-  class SimpleMaterial;
+  class EmptyMaterial;
 
 
 /**************************************
@@ -115,7 +115,7 @@ Warning
     virtual void problemSetup(const ProblemSpecP& params, 
                               const ProblemSpecP& restart_prob_spec, 
                               GridP& grid,
-                              SimulationStateP& simState);
+                              MaterialManagerP& simState);
 
     virtual void scheduleInitialize(const LevelP& level, SchedulerP& sched);
                                     
@@ -127,9 +127,9 @@ Warning
 			   	           SchedulerP& sched) {}
 
   private:
-    SimulationStateP  sharedState_;
+    MaterialManagerP  sharedState_;
     double            delt_;
-    SimpleMaterial*   simpleMaterial_;
+    EmptyMaterial*   simpleMaterial_;
     const VarLabel*   phi_label;
     const VarLabel*   residual_label;
 

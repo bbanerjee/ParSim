@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -183,7 +183,7 @@ protected:
 
   // Model factories
   // bool d_useEOSFactory;
-  Vaango::MPMEquationOfState* d_eos;
+  std::unique_ptr<Vaango::MPMEquationOfState> d_eos;
 
   ///////////////
   // Functions //
@@ -195,6 +195,7 @@ public:
   HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* flag);
   HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* flag, bool plas, bool dam);
   HyperelasticPlastic(const HyperelasticPlastic* cm);
+  HyperelasticPlastic(const HyperelasticPlastic& cm) = delete;
   HyperelasticPlastic& operator=(const HyperelasticPlastic& cm) = delete;
 
   ModelType modelType() const override
@@ -206,7 +207,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  HyperelasticPlastic* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   // destructor
   ~HyperelasticPlastic() override;

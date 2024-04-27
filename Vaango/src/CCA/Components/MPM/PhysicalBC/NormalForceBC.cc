@@ -51,7 +51,7 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 using namespace Uintah;
-using namespace std;
+
 
 NormalForceBC::NormalForceBC(ProblemSpecP& ps)
 {

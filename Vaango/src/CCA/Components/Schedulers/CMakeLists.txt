@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -25,37 +25,41 @@
 # CMakeLists.txt for Vaango/src/CCA/Components/Schedulers
 
 SET(Vaango_CCA_Components_Schedulers_SRCS
-  CommRecMPI.cc 
+  DependencyBatch.cc 
   DependencyException.cc 
+  DetailedDependency.cc 
+  DetailedTask.cc 
   DetailedTasks.cc 
   DynamicMPIScheduler.cc 
-  IncorrectAllocation.cc 
+  KokkosOpenMPScheduler.cc
   MemoryLog.cc 
-  MessageLog.cc 
   MPIScheduler.cc 
   OnDemandDataWarehouse.cc 
   Relocate.cc 
+  RuntimeStats.cpp 
   SchedulerCommon.cc 
   SchedulerFactory.cc 
   SendState.cc 
-  SingleProcessorScheduler.cc 
   TaskGraph.cc 
-  ThreadedMPIScheduler.cc 
   UnifiedScheduler.cc 
-  Util.cc 
-  templates.cc
 )
 
 if (CUDA)
   set(Vaango_CCA_Components_Schedulers_SRCS
     ${Vaango_CCA_Components_Schedulers_SRCS}
     GPUDataWarehouse.cu
+    GPUGridVariableInfo.cc
+    GPUGridVariableGhosts.cc
+    GPUMemoryPool.cc
   )
+  set(CUDA_OBJECT
+      GPUDataWarehouse.o
+     )
 endif (CUDA)
 
-ADD_LIBRARY(Vaango_CCA_Components_Schedulers ${Vaango_CCA_Components_Schedulers_SRCS})
+add_library(Vaango_CCA_Components_Schedulers ${Vaango_CCA_Components_Schedulers_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Schedulers
+target_link_libraries(Vaango_CCA_Components_Schedulers
   Vaango_CCA_Components_ProblemSpecification
   Vaango_Core_Grid
   Vaango_Core_Util
@@ -63,7 +67,7 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Schedulers
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  Vaango_Core_Thread
+  
   ${XML2_LIBRARY}
   ${TAU_LIBRARY}
   ${MPI_LIBS}
@@ -73,5 +77,5 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Schedulers
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Schedulers)
+  add_definitions(-DBUILD_Vaango_CCA_Components_Schedulers)
 ENDIF(BUILD_SHARED_LIBS)

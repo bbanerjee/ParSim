@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -64,13 +64,14 @@ public:
   // header in Kayenta.cc
   struct WeibParameters
   {
-    bool Perturb; // 'True' for perturbed parameter
-    double
-      WeibMed; // Medain distrib. value OR const value depending on bool Perturb
-    int WeibSeed;         // seed for random number generator
-    double WeibMod;       // Weibull modulus
-    double WeibRefVol;    // Reference Volume
-    std::string WeibDist; // String for Distribution
+    bool Perturb{ false }; // 'True' for perturbed parameter
+    double WeibMed{
+      0.0
+    }; // Medain distrib. value OR const value depending on bool Perturb
+    int WeibSeed{ 12345 };      // seed for random number generator
+    double WeibMod{ 0.0 };      // Weibull modulus
+    double WeibRefVol{ 0.0 };   // Reference Volume
+    std::string WeibDist{ "" }; // String for Distribution
   };
 
   // Create datatype for storing model parameters
@@ -153,36 +154,44 @@ private:
   bool d_initializeWithBodyForce;
   Point d_surfaceRefPoint;
 
-  void initializeLocalMPMLabels();
+  void
+  initializeLocalMPMLabels();
 
 public:
   // constructor
   Arenisca3(ProblemSpecP& ps, MPMFlags* flag);
   Arenisca3(const Arenisca3* cm);
-  Arenisca3& operator=(const Arenisca3& cm) = delete;
+  Arenisca3&
+  operator=(const Arenisca3& cm) = delete;
 
   // destructor
   ~Arenisca3() override;
 
-  ModelType modelType() const override
+  ModelType
+  modelType() const override
   {
     return ModelType::RATE_FORM;
   }
 
-  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
+  void
+  outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  Arenisca3* clone() override;
+  std::unique_ptr<ConstitutiveModel>
+  clone() override;
 
   // compute stable timestep for this patch
-  virtual void computeStableTimestep(const Patch* patch,
-                                     const MPMMaterial* matl,
-                                     DataWarehouse* new_dw);
+  virtual void
+  computeStableTimestep(const Patch* patch,
+                        const MPMMaterial* matl,
+                        DataWarehouse* new_dw);
 
   // compute stress at each particle in the patch
-  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
-                           DataWarehouse* old_dw,
-                           DataWarehouse* new_dw) override;
+  void
+  computeStressTensor(const PatchSubset* patches,
+                      const MPMMaterial* matl,
+                      DataWarehouse* old_dw,
+                      DataWarehouse* new_dw) override;
 
 private: // non-uintah mpm constitutive specific functions
   struct AreniscaState
@@ -195,37 +204,40 @@ private: // non-uintah mpm constitutive specific functions
 
     AreniscaState()
     {
-      capX = 0.0;
+      capX  = 0.0;
       kappa = 0.0;
-      zeta = 0.0;
+      zeta  = 0.0;
       sigma = Matrix3(0.0);
-      ep = Matrix3(0.0);
+      ep    = Matrix3(0.0);
     }
 
-    AreniscaState(const double& capX_in, const double& kappa_in,
-                  const double& zeta_in, const Matrix3& sigma_in,
+    AreniscaState(const double& capX_in,
+                  const double& kappa_in,
+                  const double& zeta_in,
+                  const Matrix3& sigma_in,
                   const Matrix3& ep_in)
     {
-      capX = capX_in;
+      capX  = capX_in;
       kappa = kappa_in;
-      zeta = zeta_in;
+      zeta  = zeta_in;
       sigma = sigma_in;
-      ep = ep_in;
+      ep    = ep_in;
     }
 
     AreniscaState(const AreniscaState& state)
     {
-      capX = state.capX;
+      capX  = state.capX;
       kappa = state.kappa;
-      zeta = state.zeta;
+      zeta  = state.zeta;
       sigma = state.sigma;
-      ep = state.ep;
+      ep    = state.ep;
     }
 
-    AreniscaState& operator=(const AreniscaState& state) = default;
+    AreniscaState&
+    operator=(const AreniscaState& state) = default;
 
-    friend std::ostream& operator<<(std::ostream& os,
-                                    const AreniscaState& state)
+    friend std::ostream&
+    operator<<(std::ostream& os, const AreniscaState& state)
     {
       os << "I1 = " << state.sigma.Trace() << ", evp = " << state.ep.Trace()
          << ", X = " << state.capX << ", kappa = " << state.kappa
@@ -253,113 +265,167 @@ private: // non-uintah mpm constitutive specific functions
       S = stress - one_third * Identity * I1; // Pa
 
       // Compute the second invariant
-      J2 = 0.5 * S.Contract(S); // Pa^2
-      J2 = (J2 < 1e-16 * (I1 * I1 + J2)) ? 0.0 : J2;
+      J2  = 0.5 * S.Contract(S); // Pa^2
+      J2  = (J2 < 1e-16 * (I1 * I1 + J2)) ? 0.0 : J2;
       rJ2 = sqrt(J2);
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Invariants& inv)
+    friend std::ostream&
+    operator<<(std::ostream& os, const Invariants& inv)
     {
       os << "I1 = " << inv.I1 << ", sqrt(J2) = " << inv.rJ2 << std::endl;
       return os;
     }
   };
 
-  bool computeStep(particleIndex idx, long64 particleID, const Matrix3& D,
-                   const double& dt, const AreniscaState& state_n,
-                   const double& coher, const double& P3,
-                   AreniscaState& state_p, long64 ParticleID);
+  bool
+  computeStep(particleIndex idx,
+              long64 particleID,
+              const Matrix3& D,
+              const double& dt,
+              const AreniscaState& state_n,
+              const double& coher,
+              const double& P3,
+              AreniscaState& state_p,
+              long64 ParticleID);
 
-  void computeElasticProperties(double& bulk, double& shear);
+  void
+  computeElasticProperties(double& bulk, double& shear);
 
-  void computeElasticProperties(const AreniscaState& state, const double& P3,
-                                double& bulk, double& shear);
+  void
+  computeElasticProperties(const AreniscaState& state,
+                           const double& P3,
+                           double& bulk,
+                           double& shear);
 
-  void computeElasticProperties(const Matrix3& sigma, const Matrix3& ep,
-                                const double& P3, double& bulk, double& shear);
+  void
+  computeElasticProperties(const Matrix3& sigma,
+                           const Matrix3& ep,
+                           const double& P3,
+                           double& bulk,
+                           double& shear);
 
-  Matrix3 computeTrialStress(const Matrix3& sigma_old, // old stress
-                             const Matrix3& d_e,       // Strain increment
-                             const double& bulk,       // bulk modulus
-                             const double& shear);     // shear modulus
+  Matrix3
+  computeTrialStress(const Matrix3& sigma_old, // old stress
+                     const Matrix3& d_e,       // Strain increment
+                     const double& bulk,       // bulk modulus
+                     const double& shear);     // shear modulus
 
-  int computeStepDivisions(particleIndex idx, long64 particleID,
-                           const AreniscaState& state, const double& P3,
-                           const Matrix3& sigma_trial);
+  int
+  computeStepDivisions(particleIndex idx,
+                       long64 particleID,
+                       const AreniscaState& state,
+                       const double& P3,
+                       const Matrix3& sigma_trial);
 
-  bool computeSubstep(
-    particleIndex idx, long64 particleID,
-    const Matrix3& d_e,             // total strain increment for substep
-    const AreniscaState& state_old, // state at start of substep
-    const double& coher,            // scalar valued coher
-    const double& P3,               // initial disaggregation strain
-    AreniscaState& state_new        // state at end of substep
-    );
+  bool
+  computeSubstep(particleIndex idx,
+                 long64 particleID,
+                 const Matrix3& d_e, // total strain increment for substep
+                 const AreniscaState& state_old, // state at start of substep
+                 const double& coher,            // scalar valued coher
+                 const double& P3,        // initial disaggregation strain
+                 AreniscaState& state_new // state at end of substep
+  );
 
-  double computeX(const double& evp, const double& P3);
+  double
+  computeX(const double& evp, const double& P3);
 
-  double computedZetadevp(double Zeta, double evp);
+  double
+  computedZetadevp(double Zeta, double evp);
 
-  double computePorePressure(const double ev);
+  double
+  computePorePressure(const double ev);
 
-  int nonHardeningReturn(const Invariants& invar_trial,
-                         const Invariants& invar_old, const Matrix3& d_e,
-                         const AreniscaState& state, const double& coher,
-                         const double& bulk, const double& shear,
-                         Invariants& invar_new, Matrix3& d_ep_new,
-                         double& kappa);
+  int
+  nonHardeningReturn(const Invariants& invar_trial,
+                     const Invariants& invar_old,
+                     const Matrix3& d_e,
+                     const AreniscaState& state,
+                     const double& coher,
+                     const double& bulk,
+                     const double& shear,
+                     Invariants& invar_new,
+                     Matrix3& d_ep_new,
+                     double& kappa);
 
-  void transformedBisection(double& z_0, double& r_0, const double& z_trial,
-                            const double& r_trial, const AreniscaState& state,
-                            const double& coher,
-                            const double limitParameters[4], // XXX
-                            const double& r_to_rJ2, double& kappa);
+  void
+  transformedBisection(double& z_0,
+                       double& r_0,
+                       const double& z_trial,
+                       const double& r_trial,
+                       const AreniscaState& state,
+                       const double& coher,
+                       const double limitParameters[4], // XXX
+                       const double& r_to_rJ2,
+                       double& kappa);
 
-  int transformedYieldFunction(const double& z, const double& r,
-                               const AreniscaState& state, const double& coher,
-                               const double limitParameters[4], // XXX
-                               const double& r_to_rJ2, double& kappa);
+  int
+  transformedYieldFunction(const double& z,
+                           const double& r,
+                           const AreniscaState& state,
+                           const double& coher,
+                           const double limitParameters[4], // XXX
+                           const double& r_to_rJ2,
+                           double& kappa);
 
-  int computeYieldFunction(const Invariants& invariants,
-                           const AreniscaState& state, const double& coher,
-                           const double limitParameters[4],
-                           double& kappa // XXX
-                           );
+  int
+  computeYieldFunction(const Invariants& invariants,
+                       const AreniscaState& state,
+                       const double& coher,
+                       const double limitParameters[4],
+                       double& kappa // XXX
+  );
 
-  int computeYieldFunction(const double& I1, const double& rJ2,
-                           const AreniscaState& state, const double& coher,
-                           const double limitParameters[4],
-                           double& kappa // XXX
-                           );
+  int
+  computeYieldFunction(const double& I1,
+                       const double& rJ2,
+                       const AreniscaState& state,
+                       const double& coher,
+                       const double limitParameters[4],
+                       double& kappa // XXX
+  );
 
-  void computeLimitParameters(double* limitParameters,
-                              const double& coher // XXX
-                              );
-  void checkInputParameters();
+  void
+  computeLimitParameters(double* limitParameters,
+                         const double& coher // XXX
+  );
+  void
+  checkInputParameters();
 
 public: // Uintah MPM constitutive model specific functions
   ////////////////////////////////////////////////////////////////////////
   /* Make the value for pLocalized computed locally available outside of the
    * model. */
   ////////////////////////////////////////////////////////////////////////
-  void addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
-                                  const PatchSet* patches) const override;
+  void
+  addRequiresDamageParameter(Task* task,
+                             const MPMMaterial* matl,
+                             const PatchSet* patches) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /* Make the value for pLocalized computed locally available outside of the
    * model */
   ////////////////////////////////////////////////////////////////////////
-  void getDamageParameter(const Patch* patch, ParticleVariable<int>& damage,
-                          int dwi, DataWarehouse* old_dw,
-                          DataWarehouse* new_dw) override;
+  void
+  getDamageParameter(const Patch* patch,
+                     ParticleVariable<int>& damage,
+                     int dwi,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw) override;
 
   // carry forward CM data for RigidMPM
-  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
+  void
+  carryForward(const PatchSubset* patches,
+               const MPMMaterial* matl,
+               DataWarehouse* old_dw,
+               DataWarehouse* new_dw) override;
 
   // initialize  each particle's constitutive model data
-  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
-                        DataWarehouse* new_dw) override;
+  void
+  initializeCMData(const Patch* patch,
+                   const MPMMaterial* matl,
+                   DataWarehouse* new_dw) override;
 
   ///////////////////////////////////////////////////////////////////////
   /*!
@@ -373,32 +439,50 @@ public: // Uintah MPM constitutive model specific functions
    *                the significant extra effort.
    */
   ///////////////////////////////////////////////////////////////////////
-  void initializeStressAndDefGradFromBodyForce(
-    const Patch* patch, const MPMMaterial* matl,
-    DataWarehouse* new_dw) const override;
+  void
+  initializeStressAndDefGradFromBodyForce(const Patch* patch,
+                                          const MPMMaterial* matl,
+                                          DataWarehouse* new_dw) const override;
 
-  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                     const PatchSet* patches) const override;
+  void
+  addInitialComputesAndRequires(Task* task,
+                                const MPMMaterial* matl,
+                                const PatchSet* patches) const override;
 
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const override;
+  void
+  addComputesAndRequires(Task* task,
+                         const MPMMaterial* matl,
+                         const PatchSet* patches) const override;
 
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches, const bool recursion,
-                              const bool dummy) const override;
+  void
+  addComputesAndRequires(Task* task,
+                         const MPMMaterial* matl,
+                         const PatchSet* patches,
+                         const bool recursion,
+                         const bool dummy) const override;
 
-  void addParticleState(std::vector<const VarLabel*>& from,
-                        std::vector<const VarLabel*>& to) override;
+  void
+  addParticleState(std::vector<const VarLabel*>& from,
+                   std::vector<const VarLabel*>& to) override;
 
-  double computeRhoMicroCM(double pressure, const double p_ref,
-                           const MPMMaterial* matl, double temperature,
-                           double rho_guess) override;
+  double
+  computeRhoMicroCM(double pressure,
+                    const double p_ref,
+                    const MPMMaterial* matl,
+                    double temperature,
+                    double rho_guess) override;
 
-  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                         double& dp_drho, double& ss_new,
-                         const MPMMaterial* matl, double temperature) override;
+  void
+  computePressEOSCM(double rho_m,
+                    double& press_eos,
+                    double p_ref,
+                    double& dp_drho,
+                    double& ss_new,
+                    const MPMMaterial* matl,
+                    double temperature) override;
 
-  double getCompressibility() override;
+  double
+  getCompressibility() override;
 
   // Weibull input parser that accepts a structure of input
   // parameters defined as:
@@ -409,14 +493,17 @@ public: // Uintah MPM constitutive model specific functions
   // double WeibMod       Weibull modulus
   // double WeibScale     Scale parameter
   // std::string WeibDist  String for Distribution
-  virtual void WeibullParser(WeibParameters& iP);
+  virtual void
+  WeibullParser(WeibParameters& iP);
 
   /*! This is for adding/deleting particles when a particle is switched
       from one material to another */
-  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
-                         ParticleLabelVariableMap* newState,
-                         ParticleSubset* delset,
-                         DataWarehouse* old_dw) override;
+  void
+  allocateCMDataAdd(DataWarehouse* new_dw,
+                    ParticleSubset* addset,
+                    ParticleLabelVariableMap* newState,
+                    ParticleSubset* delset,
+                    DataWarehouse* old_dw) override;
 };
 } // End namespace Uintah
 

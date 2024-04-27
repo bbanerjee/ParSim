@@ -50,9 +50,9 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/Scheduler.h>
@@ -62,7 +62,7 @@
 
 #include <sci_defs/cuda_defs.h>
 
-using namespace std;
+
 using namespace Uintah;
 
 //______________________________________________________________________
@@ -84,14 +84,14 @@ PoissonGPU1::~PoissonGPU1() {
 void PoissonGPU1::problemSetup(const ProblemSpecP& params,
                                const ProblemSpecP& restart_prob_spec,
                                GridP& /*grid*/,
-                               SimulationStateP& sharedState) {
+                               MaterialManagerP& mat_manager) {
   sharedState_ = sharedState;
   ProblemSpecP poisson = params->findBlock("Poisson");
 
   poisson->require("delt", delt_);
 
-  mymat_ = scinew SimpleMaterial();
-  sharedState->registerSimpleMaterial(mymat_);
+  mymat_ = scinew EmptyMaterial();
+  d_materialManager->registerEmptyMaterial(mymat_);
 }
 //______________________________________________________________________
 //
@@ -101,7 +101,7 @@ void PoissonGPU1::scheduleInitialize(const LevelP& level, SchedulerP& sched) {
 
   task->computes(phi_label);
   task->computes(residual_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -110,8 +110,8 @@ void PoissonGPU1::scheduleComputeStableTimestep(const LevelP& level, SchedulerP&
   Task * task = scinew Task("PoissonGPU1::computeStableTimestep", this, &PoissonGPU1::computeStableTimestep);
 
   task->requires(Task::NewDW, residual_label);
-  task->computes(sharedState_->get_delt_label(), level.get_rep());
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  task->computes(getDelTLabel(), level.get_rep());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -122,7 +122,7 @@ void PoissonGPU1::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched) {
   task->requires(Task::OldDW, phi_label, Ghost::AroundNodes, 1);
   task->computes(phi_label);
   task->computes(residual_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -132,13 +132,13 @@ void PoissonGPU1::computeStableTimestep(const ProcessorGroup* pg,
                                         DataWarehouse*,
                                         DataWarehouse* new_dw) {
 
-  if (pg->myrank() == 0) {
+  if (pg->myRank() == 0) {
     sum_vartype residual;
     new_dw->get(residual, residual_label);
-    cerr << "Residual=" << residual << endl;
+    std::cerr <<  "Residual=" << residual << std::endl;
   }
 
-  new_dw->put(delt_vartype(delt_), sharedState_->get_delt_label(), getLevel(patches));
+  new_dw->put(delt_vartype(delt_), getDelTLabel(), getLevel(patches));
 }
 //______________________________________________________________________
 //
@@ -271,12 +271,12 @@ void PoissonGPU1::timeAdvance1DP(const ProcessorGroup*,
     int ystride = yhigh + numGhostCells;
     int xstride = xhigh + numGhostCells;
 
-    cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << endl;
+    std::cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << std::endl;
 
     for (int k = l.z(); k < zhigh; k++) {
       for (int j = l.y(); j < yhigh; j++) {
         for (int i = l.x(); i < xhigh; i++) {
-          cout << "(x,y,z): " << k << "," << j << "," << i << endl;
+          std::cout << "(x,y,z): " << k << "," << j << "," << i << std::endl;
           // For an array of [ A ][ B ][ C ], we can index it thus:
           // (a * B * C) + (b * C) + (c * 1)
           int idx = i + (j * xstride) + (k * xstride * ystride);

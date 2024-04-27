@@ -2240,9 +2240,9 @@ else
   SCI_TRY_LINK(XML2,xml2 library and headers,libxml/tree.h libxml/parser.h,
                 $includes,$XML2_LDFLAGS,$XML2_LIB_PATH,,[
   #if defined(LIBXML_TREE_ENABLED) && defined(LIBXML_OUTPUT_ENABLED)
-  xmlDocPtr doc = NULL;       /* document pointer */
-  xmlNodePtr root_node = NULL, node = NULL, node1 = NULL;/* node pointers */
-  xmlDtdPtr dtd = NULL;       /* DTD pointer */
+  xmlDocPtr doc = nullptr;       /* document pointer */
+  xmlNodePtr root_node = nullptr, node = nullptr, node1 = nullptr;/* node pointers */
+  xmlDtdPtr dtd = nullptr;       /* DTD pointer */
   char buff[256];
   int i, j;
 
@@ -2252,7 +2252,7 @@ else
     * Creates a new document, a node and set it as a root node
     */
   doc = xmlNewDoc(BAD_CAST "1.0");
-  root_node = xmlNewNode(NULL, BAD_CAST "root");
+  root_node = xmlNewNode(nullptr, BAD_CAST "root");
   xmlDocSetRootElement(doc, root_node);
   #else
   //create compile error so configure fails
@@ -2580,7 +2580,7 @@ fi
 
 SCI_TRY_LINK(UNP,unp socket library and headers,extern_C unpv12e/unp.h unpv12e/unpthread.h,$_sci_inc,
              unp scisock,$_sci_lib,,[
-  Connect(0, NULL, 0);
+  Connect(0, nullptr, 0);
 ],optional)
 
 AC_SUBST(UNP_LIB_FLAG)

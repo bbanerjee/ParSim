@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2018-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2018-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -1893,14 +1893,14 @@ operator<<(std::ostream& out, const YieldCond_TabularCap& yc)
   try {
     pvals =
       yc.d_yield.table.getIndependentVarData("Pressure", IndexKey(0, 0, 0, 0));
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
   }
 
   try {
     qvals =
       yc.d_yield.table.getDependentVarData("SqrtJ2", IndexKey(0, 0, 0, 0));
-  } catch (Uintah::InvalidValue e) {
+  } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
   }
 

@@ -25,7 +25,7 @@
 #ifndef __VAANGO_CONTACT_MODEL_BASE_H__
 #define __VAANGO_CONTACT_MODEL_BASE_H__
 
-#include <Core/Parallel/UintahParallelComponent.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <CCA/Ports/SchedulerP.h>
 #include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
@@ -53,12 +53,13 @@ namespace Vaango {
   */
   /////////////////////////////////////////////////////////////////////////////
 
-  class ContactModelBase : public Uintah::UintahParallelComponent {
+  class ContactModelBase {
 
   public:
 
     // Constructor
     ContactModelBase(const Uintah::ProcessorGroup* myworld, 
+                     const Uintah::MaterialManagerP& mat_manager,
                      PeridynamicsLabel* labels, 
                      PeridynamicsFlags* flags,
                      Uintah::ProblemSpecP ps);
@@ -90,6 +91,7 @@ namespace Vaango {
          
   protected:
 
+    const Uintah::MaterialManagerP& d_mat_manager;
     PeridynamicsLabel* d_labels;
     PeridynamicsFlags* d_flags;
          

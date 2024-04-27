@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited
+ * Copyright (c) 2015-2023 Parresia Research Limited
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -32,22 +32,31 @@ namespace Uintah {
 class MPM_UpdateStressLast : public SerialMPM
 {
 public:
-  MPM_UpdateStressLast(const ProcessorGroup* myworld);
+  MPM_UpdateStressLast(const ProcessorGroup* myworld,
+                       const MaterialManagerP& mat_manager);
+  virtual ~MPM_UpdateStressLast() = default;
+
   MPM_UpdateStressLast(const MPM_UpdateStressLast&) = delete;
-  MPM_UpdateStressLast& operator=(const MPM_UpdateStressLast&) = delete;
-  virtual ~MPM_UpdateStressLast();
+  MPM_UpdateStressLast(MPM_UpdateStressLast&&)      = delete;
+  MPM_UpdateStressLast&
+  operator=(const MPM_UpdateStressLast&) = delete;
+  MPM_UpdateStressLast&
+  operator=(MPM_UpdateStressLast&&) = delete;
 
-  virtual void scheduleTimeAdvance(const LevelP& level, SchedulerP&) override;
+  virtual void
+  scheduleTimeAdvance(const LevelP& level, SchedulerP&) override;
 
-  virtual void scheduleInterpolateToParticlesAndUpdate(SchedulerP&,
-                                                       const PatchSet*,
-                                                       const MaterialSet*) override;
+  virtual void
+  scheduleInterpolateToParticlesAndUpdate(SchedulerP&,
+                                          const PatchSet*,
+                                          const MaterialSet*) override;
 
-  virtual void interpolateToParticlesAndUpdate(const ProcessorGroup*,
-                                                 const PatchSubset* patches,
-                                                 const MaterialSubset* matls,
-                                                 DataWarehouse* old_dw,
-                                                 DataWarehouse* new_dw) override;
+  virtual void
+  interpolateToParticlesAndUpdate(const ProcessorGroup*,
+                                  const PatchSubset* patches,
+                                  const MaterialSubset* matls,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw) override;
 };
 
 } // end namespace Uintah

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,166 +24,135 @@
  * IN THE SOFTWARE.
  */
 
-
-/*
- *  Point.cc: ?
- *
- *  Written by:
- *   Author ?
- *   Department of Computer Science
- *   University of Utah
- *   Date ?
- *
- */
-
-#include <Core/Util/FETypeDescription.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
-#include <Core/Util/Assert.h>
-#include <Core/Persistent/Persistent.h>
 #include <Core/Math/MinMax.h>
 #include <Core/Math/MiscMath.h>
-#include <iostream>
+#include <Core/Util/Assert.h>
 #include <cstdio>
-
-using std::cerr;
-using std::endl;
-using std::istream;
-using std::ostream;
+#include <iostream>
 
 namespace Uintah {
 
-
-Point Interpolate(const Point& p1, const Point& p2, double w)
+Point
+Interpolate(const Point& p1, const Point& p2, double w)
 {
-    return Point(
-	Interpolate(p1.x_, p2.x_, w),
-	Interpolate(p1.y_, p2.y_, w),
-	Interpolate(p1.z_, p2.z_, w));
+  return Point(Interpolate(p1.x_, p2.x_, w),
+               Interpolate(p1.y_, p2.y_, w),
+               Interpolate(p1.z_, p2.z_, w));
 }
 
-string Point::get_string() const
+string
+Point::get_string() const
 {
-    char buf[100];
-    sprintf(buf, "[%g, %g, %g]", x_, y_, z_);
-    return buf;
+  char buf[100];
+  sprintf(buf, "[%g, %g, %g]", x_, y_, z_);
+  return buf;
 }
 
-int Point::operator==(const Point& p) const
+int
+Point::operator==(const Point& p) const
 {
-    return p.x_ == x_ && p.y_ == y_ && p.z_ == z_;
+  return p.x_ == x_ && p.y_ == y_ && p.z_ == z_;
 }
 
-int Point::operator!=(const Point& p) const
+int
+Point::operator!=(const Point& p) const
 {
-    return p.x_ != x_ || p.y_ != y_ || p.z_ != z_;
+  return p.x_ != x_ || p.y_ != y_ || p.z_ != z_;
 }
 
 Point::Point(double x, double y, double z, double w)
 {
-    if(w==0){
-	cerr << "degenerate point!" << endl;
-	x_=y_=z_=0;
-    } else {
-	x_=x/w;
-	y_=y/w;
-	z_=z/w;
-    }
+  if (w == 0) {
+    std::cerr << "degenerate point!" << std::endl;
+    x_ = y_ = z_ = 0;
+  } else {
+    x_ = x / w;
+    y_ = y / w;
+    z_ = z / w;
+  }
 }
 
-Point AffineCombination(const Point& p1, double w1,
-			const Point& p2, double w2)
+Point
+AffineCombination(const Point& p1, double w1, const Point& p2, double w2)
 {
-    return Point(p1.x_*w1+p2.x_*w2,
-		 p1.y_*w1+p2.y_*w2,
-		 p1.z_*w1+p2.z_*w2);
+  return Point(p1.x_ * w1 + p2.x_ * w2,
+               p1.y_ * w1 + p2.y_ * w2,
+               p1.z_ * w1 + p2.z_ * w2);
 }
 
-Point AffineCombination(const Point& p1, double w1,
-			const Point& p2, double w2,
-			const Point& p3, double w3)
+Point
+AffineCombination(const Point& p1,
+                  double w1,
+                  const Point& p2,
+                  double w2,
+                  const Point& p3,
+                  double w3)
 {
-    return Point(p1.x_*w1+p2.x_*w2+p3.x_*w3,
-		 p1.y_*w1+p2.y_*w2+p3.y_*w3,
-		 p1.z_*w1+p2.z_*w2+p3.z_*w3);
+  return Point(p1.x_ * w1 + p2.x_ * w2 + p3.x_ * w3,
+               p1.y_ * w1 + p2.y_ * w2 + p3.y_ * w3,
+               p1.z_ * w1 + p2.z_ * w2 + p3.z_ * w3);
 }
 
-Point AffineCombination(const Point& p1, double w1,
-			const Point& p2, double w2,
-			const Point& p3, double w3,
-			const Point& p4, double w4)
+Point
+AffineCombination(const Point& p1,
+                  double w1,
+                  const Point& p2,
+                  double w2,
+                  const Point& p3,
+                  double w3,
+                  const Point& p4,
+                  double w4)
 {
-    return Point(p1.x_*w1+p2.x_*w2+p3.x_*w3+p4.x_*w4,
-		 p1.y_*w1+p2.y_*w2+p3.y_*w3+p4.y_*w4,
-		 p1.z_*w1+p2.z_*w2+p3.z_*w3+p4.z_*w4);
+  return Point(p1.x_ * w1 + p2.x_ * w2 + p3.x_ * w3 + p4.x_ * w4,
+               p1.y_ * w1 + p2.y_ * w2 + p3.y_ * w3 + p4.y_ * w4,
+               p1.z_ * w1 + p2.z_ * w2 + p3.z_ * w3 + p4.z_ * w4);
 }
 
-ostream& operator<<( ostream& os, const Point& p )
+std::ostream&
+operator<<(std::ostream& os, const Point& p)
 {
   os << '[' << p.x() << ' ' << p.y() << ' ' << p.z() << ']';
   return os;
 }
 
-istream& operator>>( istream& is, Point& v)
+std::istream&
+operator>>(std::istream& is, Point& v)
 {
-    double x, y, z;
-    char st;
+  double x, y, z;
+  char st;
   is >> st >> x >> st >> y >> st >> z >> st;
-  v=Point(x,y,z);
+  v = Point(x, y, z);
   return is;
 }
 
 int
-Point::Overlap( double a, double b, double e )
+Point::Overlap(double a, double b, double e)
 {
   double hi, lo, h, l;
-  
+
   hi = a + e;
   lo = a - e;
   h  = b + e;
   l  = b - e;
 
-  if ( ( hi > l ) && ( lo < h ) )
+  if ((hi > l) && (lo < h)) {
     return 1;
-  else
+  } else {
     return 0;
-}
-  
-int
-Point::InInterval( Point a, double epsilon )
-{
-  if ( Overlap( x_, a.x(), epsilon ) &&
-      Overlap( y_, a.y(), epsilon )  &&
-      Overlap( z_, a.z(), epsilon ) )
-    return 1;
-  else
-    return 0;
-}
-
-void Pio(Piostream& stream, Point& p)
-{
-
-    stream.begin_cheap_delim();
-    Pio(stream, p.x_);
-    Pio(stream, p.y_);
-    Pio(stream, p.z_);
-    stream.end_cheap_delim();
-}
-
-const string& 
-Point::get_h_file_path() {
-  static const string path(FETypeDescription::cc_to_h(__FILE__));
-  return path;
-}
-
-const FETypeDescription* get_fetype_description(Point*)
-{
-  static FETypeDescription* td = 0;
-  if(!td){
-    td = scinew FETypeDescription("Point", Point::get_h_file_path(), 
-				"Uintah", FETypeDescription::DATA_E);
   }
-  return td;
+}
+
+int
+Point::InInterval(Point a, double epsilon)
+{
+  if (Overlap(x_, a.x(), epsilon) && Overlap(y_, a.y(), epsilon) &&
+      Overlap(z_, a.z(), epsilon)) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 } // End namespace Uintah

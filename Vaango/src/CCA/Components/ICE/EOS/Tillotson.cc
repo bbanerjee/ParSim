@@ -103,9 +103,9 @@ double Tillotson::computeRhoMicro(double press, double,
 
   double rho=rho_guess;
 
-//  cout << setprecision(12);
-//  cout << "rhoin = " << rho-rho0 << endl;
-//  cout << "pressin = " << press << endl;
+//  std::cout << setprecision(12);
+//  std::cout << "rhoin = " << rho-rho0 << std::endl;
+//  std::cout << "pressin = " << press << std::endl;
 
   double epsilon = 1.e-15;
   double delta = 1.;
@@ -141,14 +141,14 @@ double Tillotson::computeRhoMicro(double press, double,
 
     delta = -relfac*(f/df_drho);
     rho+=delta;
-//    cout << "delta = " << delta << endl;
-//    cout << "fhigh = " << fhigh << endl;
-//    cout << "flow = " << flow << endl;
-//    cout << "delrho = " << delrho << endl;
+//    std::cout << "delta = " << delta << std::endl;
+//    std::cout << "fhigh = " << fhigh << std::endl;
+//    std::cout << "flow = " << flow << std::endl;
+//    std::cout << "delrho = " << delrho << std::endl;
     count++;
   }
-//  cout << "count_first = " << count << endl;
-//  cout << "rhoout_first = " << rho-rho0 << endl;
+//  std::cout << "count_first = " << count << std::endl;
+//  std::cout << "rhoout_first = " << rho-rho0 << std::endl;
 
   delta = 1., count = 0;
                                                                                 
@@ -184,13 +184,13 @@ double Tillotson::computeRhoMicro(double press, double,
                                                                                 
     delta = -relfac*(f/df_drho);
     rho+=delta;
-//    cout << "delta = " << delta << endl;
+//    std::cout << "delta = " << delta << std::endl;
     count++;
   }
   
-//  cout << "rhoout_last = " << rho << endl;
-//  cout << "df_drho = " << df_drho << endl;
-//  cout << "count_last = " << count << endl;
+//  std::cout << "rhoout_last = " << rho << std::endl;
+//  std::cout << "df_drho = " << df_drho << std::endl;
+//  std::cout << "count_last = " << count << std::endl;
 
   return rho;
 }
@@ -199,8 +199,8 @@ double Tillotson::computeRhoMicro(double press, double,
 void Tillotson::computePressEOS(double rho, double, double, double,
                           double& press, double& dp_drho, double& dp_de)
 {
-//  cout << setprecision(12);
-//  cout << "RHOin = " << rho-rho0 << endl;
+//  std::cout << setprecision(12);
+//  std::cout << "RHOin = " << rho-rho0 << std::endl;
 
 #if 0
   double delrho=1.e-5;
@@ -224,7 +224,7 @@ void Tillotson::computePressEOS(double rho, double, double, double,
              + b*E*rhosq*((3.*(E*rho0sq/E0 + rhosq) - 2.*rhosq)/
                           ((E*rho0sq/E0 + rhosq)*(E*rho0sq/E0 + rhosq)))
              + A/rho0 + (2.*B/rho0)*mu;
-//     cout << "eta>=1" << endl;
+//     std::cout << "eta>=1" << std::endl;
    }
    else{
      double AA=A*0.;
@@ -239,14 +239,14 @@ void Tillotson::computePressEOS(double rho, double, double, double,
              + b*E*rho/(E/(E0*etasq)+1.)*(2.*alpha*(rho0/rho - 1)*
                (rho0/rhosq)*expterm);
 
-//     cout << "eta<1" << endl;
+//     std::cout << "eta<1" << std::endl;
    }
 #endif
 
   dp_de   = 0.0;
 
-//  cout << "press_out = " << press << endl;
-//  cout << "dp_drho_out = " << dp_drho << endl;
+//  std::cout << "press_out = " << press << std::endl;
+//  std::cout << "dp_drho_out = " << dp_drho << std::endl;
 }
 
 //______________________________________________________________________
@@ -271,7 +271,7 @@ void Tillotson::hydrostaticTempAdjustment(Patch::FaceType,
 //  The following is commented out because this EOS is not temperature
 //  dependent, so I'm not adjusting the temperature.
 
-//   vector<IntVector>::const_iterator iter;
+//   std::vector<IntVector>::const_iterator iter;
 //   for (iter=bound.begin(); iter != bound.end(); iter++) {
 //     IntVector c = *iter;
 //     Temp_CC[c] += plusMinusOne * dx_grav/( (gamma[c] - 1.0) * cv[c] );

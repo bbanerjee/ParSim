@@ -40,7 +40,7 @@ add_executable(testDEMParticle testDEMParticle.cpp)
 
 target_link_libraries(testDEMParticle
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -61,7 +61,7 @@ add_executable(testDEMParticleCreator testDEMParticleCreator.cpp)
 
 target_link_libraries(testDEMParticleCreator
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -82,7 +82,7 @@ add_executable(testDEMPeriodicParticleBC testDEMPeriodicParticleBC.cpp)
 
 target_link_libraries(testDEMPeriodicParticleBC
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -103,7 +103,7 @@ add_executable(testDEMBoundaryConditions testDEMBoundaryConditions.cpp)
 
 target_link_libraries(testDEMBoundaryConditions
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -124,7 +124,7 @@ add_executable(testDEMTiming testDEMTiming.cpp)
 
 target_link_libraries(testDEMTiming
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}

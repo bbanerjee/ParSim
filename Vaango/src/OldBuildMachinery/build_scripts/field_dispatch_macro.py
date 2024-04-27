@@ -132,7 +132,7 @@ def recurse_macro(n, orig_num, ind, out) :
     if f == fields[len(fields) -1] : 
       out.append(indent(ind) + '} else if (disp_error) {\\\n')
       ind = ind + 1
-      out.append(indent(ind) + 'cerr << "Error: " << disp_msg << endl;\\\n')
+      out.append(indent(ind) + 'cerr << "Error: " << disp_msg << std::endl;\\\n')
       ind = ind - 1
       out.append(indent(ind) + '}\\\n')
     else :

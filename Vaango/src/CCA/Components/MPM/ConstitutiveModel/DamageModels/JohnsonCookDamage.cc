@@ -121,7 +121,7 @@ JohnsonCookDamage::computeScalarDamage(const double& epdot,
   double sigMean = stress.Trace() / 3.0;
   Matrix3 sig_dev = stress - I * sigMean;
   double sigEquiv = sqrt((sig_dev.NormSquared()) * 1.5);
-  // cout << "sigMean = " << sigMean << " sigEquiv = " << sigEquiv;
+  // std::cout << "sigMean = " << sigMean << " sigEquiv = " << sigEquiv;
 
   double sigStar = 0.0;
   if (sigEquiv != 0)
@@ -131,25 +131,25 @@ JohnsonCookDamage::computeScalarDamage(const double& epdot,
     sigStar = 1.5;
   if (sigStar < -1.5)
     sigStar = -1.5;
-  // cout << " sigStar = " << sigStar;
+  // std::cout << " sigStar = " << sigStar;
   double stressPart =
     d_initialData.D1 + d_initialData.D2 * exp(d_initialData.D3 * sigStar);
-  // cout << " stressPart = " << stressPart;
+  // std::cout << " stressPart = " << stressPart;
 
   double strainRatePart = 1.0;
-  // cout << " epdot = " << epdot;
+  // std::cout << " epdot = " << epdot;
   if (epdot < 1.0)
     strainRatePart = pow((1.0 + epdot), d_initialData.D4);
   else
     strainRatePart = 1.0 + d_initialData.D4 * log(epdot);
-  // cout << " epdotPart = " << strainRatePart;
+  // std::cout << " epdotPart = " << strainRatePart;
 
   double Tr = matl->getRoomTemperature();
   double Tm = matl->getMeltTemperature();
-  // cout << " Tr = " << Tr << " Tm = " << Tm << " T = " << T << endl;
+  // std::cout << " Tr = " << Tr << " Tm = " << Tm << " T = " << T << std::endl;
   double Tstar = (T - Tr) / (Tm - Tr);
   double tempPart = 1.0 + d_initialData.D5 * Tstar;
-  // cout << " tempPart = " << tempPart;
+  // std::cout << " tempPart = " << tempPart;
 
   // Calculate the updated scalar damage parameter
   double epsFrac = stressPart * strainRatePart * tempPart;
@@ -162,13 +162,13 @@ JohnsonCookDamage::computeScalarDamage(const double& epdot,
   if (damage_new < tolerance)
     damage_new = 0.0;
   /*
-  cout << "sigstar = " << sigStar << " epdotStar = " << epdot
-       << " Tstar = " << Tstar << endl;
-  cout << "Ep_dot = " << epdot
+  std::cout << "sigstar = " << sigStar << " epdotStar = " << epdot
+       << " Tstar = " << Tstar << std::endl;
+  std::cout << "Ep_dot = " << epdot
        << " e_inc = " << epsInc
        << " e_f = " << epsFrac
        << " D_n = " << damage_old
-       << " D_n+1 = " << damage_new << endl;
+       << " D_n+1 = " << damage_new << std::endl;
   */
   return damage_new;
 }

@@ -78,7 +78,7 @@ using namespace TNT;
                 L = chol.getL();
 
         else
-                cout << "factorization was not complete.\n";
+                std::cout << "factorization was not complete.\n";
 
         </pre>
 

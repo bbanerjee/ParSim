@@ -110,7 +110,7 @@ TEST_F(YieldCondTabularCapTest, constructorTest)
 {
   try {
     IntVar_TabularCap intvar(ps_intvar);
-  } catch (Uintah::ProblemSetupException e) {
+  } catch (const Uintah::ProblemSetupException& e) {
     std::cout << e.message() << "\n";
   }
   // Create a model

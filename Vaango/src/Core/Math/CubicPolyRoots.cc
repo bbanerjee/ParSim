@@ -73,7 +73,7 @@ int cubic_poly_roots(double b, double c, double d,
   double m = c - b2/3;
   double n = -2*b3/27 + b*c/3 - d;
 
-  //cout << "y^3 + " << m << "*y = " << n << endl; 
+  //cout << "y^3 + " << m << "*y = " << n << std::endl; 
 
   // (t - u)^3 = t^3 - 3*t^2*u + 3*t*u^2 - u^3
   // (t-u)^3 + 3*t*u*(t-u) = t^3 - u^3
@@ -184,7 +184,7 @@ bool test(double b, double c, double d, double x)
   else
     Sx_relative = Sx/fabs(d);
     
-  //cout << "relative Sx = " << Sx_relative << endl;
+  //cout << "relative Sx = " << Sx_relative << std::endl;
   if (Sx_relative < 1e-3)
     return true;
   else {
@@ -198,18 +198,18 @@ double newtons_method(double b, double c, double d, double x)
 {
   // f(x) = x^3 + b*x^2 + c*x + d
   // f'(x) = 3*x^2 + 2*b*x + c
-  cout << "Newton's Method\n";
-  cout << "x = " << x << endl;;
+  std::cout << "Newton's Method\n";
+  std::cout << "x = " << x << std::endl;;
   double f = evaluate_cubic(b, c, d, x);
-  cout << "Error = " << f << endl;
+  std::cout << "Error = " << f << std::endl;
   while (fabs(f) > 1e-5) {
     double lastx = x;
     x = x - f / evaluate_quadratic(3, 2*b, c, x);
-    cout << "x = " << x << endl;
+    std::cout << "x = " << x << std::endl;
 
     f = evaluate_cubic(b, c, d, x);
 
-    cout << "Error = " << f << endl;
+    std::cout << "Error = " << f << std::endl;
     if (lastx - x < 1e-25) {
       break;
     }

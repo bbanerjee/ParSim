@@ -51,7 +51,7 @@
 #include <list>
 
 using namespace Uintah;
-using namespace std;
+
 
 BoxRangeQuerier::~BoxRangeQuerier()
 {
@@ -59,9 +59,9 @@ BoxRangeQuerier::~BoxRangeQuerier()
 }
 
 void BoxRangeQuerier::query(const IntVector& low, const IntVector& high,
-			    list<const Box*>& foundBoxes)
+			     std::list<const Box*>& foundBoxes)
 {
-  list<BoxPoint*> foundPoints;
+   std::list<BoxPoint*> foundPoints;
 
   // Note: factor of 2 is to make calculations simple and not
   // require rounding, but think of this as doing a query on
@@ -97,7 +97,7 @@ void
 BoxRangeQuerier::queryNeighbors(const IntVector& low, const IntVector& high,
 				list<const Box*>& foundBoxes)
 {
-  list<BoxPoint*> foundPoints;
+   std::list<BoxPoint*> foundPoints;
   for (int i = 0; i < 3; i++) {
     IntVector sideLow = low; --sideLow[i];
     IntVector sideHigh = high; sideHigh[i] = sideLow[i];
@@ -114,7 +114,7 @@ BoxRangeQuerier::queryNeighbors(const IntVector& low, const IntVector& high,
 /*
 list<const Box*> BoxRangeQuerier::query(const IntVector& low, const IntVector& high)
 {
-  list<const Box*> results;
+   std::list<const Box*> results;
   for (unsigned long i = 0; i < d_boxPoints.size(); i++) {
     const Box* box = d_boxPoints[i].getBox();
     if (box->isInside(low, high))
@@ -125,7 +125,7 @@ list<const Box*> BoxRangeQuerier::query(const IntVector& low, const IntVector& h
 
 list<const Box*> BoxRangeQuerier::queryNeighbors(const IntVector& low, const IntVector& high)
 {
-  list<const Box*> results;
+   std::list<const Box*> results;
   for (unsigned long i = 0; i < d_boxPoints.size(); i++) {
     const Box* box = d_boxPoints[i].getBox();
     if (box->isNeighboring(low, high))

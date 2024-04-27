@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -282,7 +282,7 @@ MieGruneisenEOSEnergy::computePressure(const double& rho_orig,
   csquared = dp_dJ / rho_cur;
 
   if (std::isnan(pressure) || std::abs(dp_dJ) < 1.0e-30) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "pressure = " << -pressure << " rho_cur = " << rho_cur
          << " dp_drho = " << -dp_drho << " c^2 = " << csquared << "\n";
     throw InvalidValue(desc.str(), __FILE__, __LINE__);
@@ -432,7 +432,7 @@ MieGruneisenEOSEnergy::findEtaRidder(pFuncPtr pFunc,
 
     count++;
   }
-  ostringstream desc;
+   std::ostringstream desc;
   desc << "**ERROR** Ridder algorithm did not converge"
        << " pressure = " << p0 << " pp = " << pp << " eta = " << eta << "\n";
   throw ConvergenceFailure(desc.str(),
@@ -484,7 +484,7 @@ MieGruneisenEOSEnergy::findEtaNewton(pFuncPtr pFunc,
   } while (std::abs(f) > tolerance && iter < maxIter);
 
   if (iter >= maxIter) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "**ERROR** Newton algorithm did not converge"
          << " pressure = " << p0 << " eta = " << eta << "\n";
     throw ConvergenceFailure(

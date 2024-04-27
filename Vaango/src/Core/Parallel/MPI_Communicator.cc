@@ -53,10 +53,10 @@
 #include <iostream>
 #include <unistd.h>
 #include <cstdlib>
-#include <Core/Thread/Thread.h>
-#include <Core/Thread/Time.h>
+
+#include <Core/Util/Timers/Timers.hpp>
 #include <Core/Thread/Runnable.h>
-#include <Core/Thread/Mutex.h>
+
 #include <Core/Thread/ConditionVariable.h>
 #include <Core/Malloc/Allocator.h>
 #include <sys/time.h>
@@ -287,7 +287,7 @@ MPI_Communicator::MPI_Communicator()
   wait_time(WAIT_TIME_DEFAULT),
   num_iprobes(NUM_IPROBES_DEFAULT)
 {
-  if(pthread_key_create(&this->thread_running, NULL) != 0){
+  if(pthread_key_create(&this->thread_running, nullptr) != 0){
     cout<<"could not create key in MPI_Communicator"<<"\n";
   }
   pthread_setspecific(this->thread_running,(const void*)0);

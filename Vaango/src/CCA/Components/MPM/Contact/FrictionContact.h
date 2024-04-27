@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,11 +31,11 @@
 
 #include <CCA/Components/MPM/Contact/Contact.h>
 #include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -46,29 +46,57 @@ namespace Uintah {
 
 class FrictionContact : public Contact
 {
+public:
+  // Constructor
+  FrictionContact(const ProcessorGroup* myworld,
+                  const MaterialManagerP& mat_manager,
+                  const MPMLabel* labels,
+                  const MPMFlags* flags,
+                  ProblemSpecP& ps);
+
+  // Destructor
+  virtual ~FrictionContact() = default;
+
+  FrictionContact(const FrictionContact& con) = delete;
+  FrictionContact(FrictionContact&& con)      = delete;
+  FrictionContact&
+  operator=(const FrictionContact& con) = delete;
+  FrictionContact&
+  operator=(FrictionContact&& con) = delete;
+
+  virtual void
+  setContactMaterialAttributes() override;
+
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
+
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
+
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
+
 private:
-  // Prevent copying of this class
-  // copy constructor
-  FrictionContact(const FrictionContact& con);
-  FrictionContact& operator=(const FrictionContact& con);
-
-  SimulationStateP d_sharedState;
-
   // Coefficient of friction
   double d_mu;
-  // Nodal volume fraction that must occur before contact is applied
-  double d_vol_const;
-  int NGP;
-  int NGN;
 
   // For hardcoded normals
   enum class NormalCoordSystem
   {
-    NONE = 0,
+    NONE        = 0,
     CYLINDRICAL = 1,
-    SPHERICAL = 2,
-    CARTESIAN = 3
+    SPHERICAL   = 2,
+    CARTESIAN   = 3
   };
+
   bool d_hardcodedNormals;
   std::vector<int> d_matIndex;
 
@@ -77,24 +105,6 @@ private:
   std::vector<NormalCoordSystem> d_coordType;
   std::vector<Point> d_center;
   std::vector<Vector> d_axisDir;
-
-public:
-  // Constructor
-  FrictionContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
-                  SimulationStateP& d_sS, MPMLabel* lb, MPMFlags* MFlag);
-
-  // Destructor
-  virtual ~FrictionContact();
-
-  void outputProblemSpec(ProblemSpecP& ps) override;
-
-  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
-                        const MaterialSubset* matls, DataWarehouse* old_dw,
-                        DataWarehouse* new_dw, const VarLabel* label) override;
-
-  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
-                              const MaterialSet* matls,
-                              const VarLabel* label) override;
 };
 } // End namespace Uintah
 

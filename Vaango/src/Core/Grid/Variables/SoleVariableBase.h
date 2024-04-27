@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,12 +32,11 @@
 
 namespace Uintah {
 
-
 /**************************************
 
 CLASS
    SoleVariableBase
-   
+
    Short description...
 
 GENERAL INFORMATION
@@ -48,45 +48,74 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    SoleVariableBase
 
 DESCRIPTION
    Long description...
-  
+
 WARNING
-  
+
 ****************************************/
 
-   class SoleVariableBase : public Variable {
+class SoleVariableBase : public Variable
+{
 
-   public:
-      
-      virtual ~SoleVariableBase();
+public:
+  virtual ~SoleVariableBase();
 
-      virtual void copyPointer(Variable&) = 0;
-      virtual SoleVariableBase* clone() const = 0; 
-      virtual const TypeDescription* virtualGetTypeDescription() const;
-      virtual RefCounted* getRefCounted();
-      virtual void getSizeInfo(std::string& elems,unsigned long& totsize,
-                               void*& ptr) const = 0;
-      virtual size_t getDataSize() const = 0;
-      virtual bool copyOut(void* dst) const = 0;
-      virtual void emitNormal(std::ostream& out, const IntVector& l,
-                              const IntVector& h, ProblemSpecP varnode, 
-                              bool outputDoubleAsFloat );
-      virtual void readNormal(std::istream& in, bool swapbytes);      
-      virtual void allocate(const Patch* patch, const IntVector& boundary);
+  virtual void
+  copyPointer(Variable&) override = 0;
 
-   protected:
-      SoleVariableBase(const SoleVariableBase&);
-      SoleVariableBase();
-      
-   private:
-      SoleVariableBase& operator=(const SoleVariableBase&);
-   };
+  virtual SoleVariableBase*
+  clone() const = 0;
+
+  virtual const TypeDescription*
+  virtualGetTypeDescription() const override = 0;
+
+  virtual RefCounted*
+  getRefCounted() override;
+
+  virtual void
+  getSizeInfo(std::string& elems,
+              unsigned long& totsize,
+              void*& ptr) const override = 0;
+
+  virtual size_t
+  getDataSize() const override = 0;
+
+  virtual bool
+  copyOut(void* dst) const override = 0;
+
+  virtual void*
+  getBasePointer() const = 0;
+
+  virtual void
+  emitNormal(std::ostream& out,
+             const IntVector& l,
+             const IntVector& h,
+             ProblemSpecP varnode,
+             bool outputDoubleAsFloat) override = 0;
+
+  virtual void
+  readNormal(std::istream& in, bool swapbytes) override = 0;
+
+  virtual void
+  allocate(const Patch* patch, const IntVector& boundary) override;
+
+  virtual void
+  print(std::ostream&) const = 0;
+
+protected:
+  SoleVariableBase(const SoleVariableBase&) = default;
+  SoleVariableBase();
+
+private:
+  SoleVariableBase&
+  operator=(const SoleVariableBase&) = delete;
+};
 } // End namespace Uintah
 
 #endif

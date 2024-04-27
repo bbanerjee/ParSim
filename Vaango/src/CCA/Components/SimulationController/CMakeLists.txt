@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -29,9 +29,9 @@ SET(Vaango_CCA_Components_SimulationController_SRCS
   AMRSimulationController.cc
 )
 
-ADD_LIBRARY(Vaango_CCA_Components_SimulationController ${Vaango_CCA_Components_SimulationController_SRCS})
+add_library(Vaango_CCA_Components_SimulationController ${Vaango_CCA_Components_SimulationController_SRCS})
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_SimulationController
+target_link_libraries(Vaango_CCA_Components_SimulationController
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions
@@ -42,13 +42,11 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_SimulationController
   Vaango_Core_Util
   Vaango_CCA_Components_DataArchiver
   Vaango_CCA_Components_Regridder
-  Vaango_CCA_Components_ReduceUda
-  Vaango_Core_Thread
-  Vaango_Core_Tracker
+  Vaango_CCA_Components_PostProcessUda
   ${XML2_LIBRARY}
   ${M_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_SimulationController)
+  add_definitions(-DBUILD_Vaango_CCA_Components_SimulationController)
 ENDIF(BUILD_SHARED_LIBS)

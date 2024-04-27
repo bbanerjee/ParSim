@@ -87,7 +87,7 @@ class HyperElasticDamage : public ConstitutiveModel
 private:
   // data areas
   // deformation gradient tensor (3 x 3 Matrix)
-  Matrix3 deformationGradient;
+  Matrix3 pDefGrad;
   // Deviatoric-Elastic Part of the left Cauchy-Green Tensor (3 x 3 Matrix)
   // or CeBar -- a defferent notation
   Matrix3 bElBar;

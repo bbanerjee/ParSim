@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,7 +27,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <cmath>
 #include <iomanip>
 #include <iostream>
@@ -184,7 +184,7 @@ IntVar_Arena::initializeInternalVariable(const Patch* patch,
     phi0   = params.at("phi0");
     Sw0    = params.at("Sw0");
     pf0    = params.at("Pf0");
-  } catch (std::out_of_range) {
+  } catch (const std::out_of_range& e) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters PEAKI1, CR, phi0, Sw0"
         << std::endl;

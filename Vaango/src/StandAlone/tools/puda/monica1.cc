@@ -46,11 +46,11 @@
  * IN THE SOFTWARE.
  */
 
+#include <Core/DataArchive/DataArchive.h>
 #include <StandAlone/tools/puda/monica1.h>
 #include <StandAlone/tools/puda/util.h>
-#include <Core/DataArchive/DataArchive.h>
-#include <iomanip>
 #include <fstream>
+#include <iomanip>
 #include <vector>
 
 using namespace Uintah;
@@ -64,68 +64,76 @@ using namespace std;
 //   step pressures are output to a file called "maxPressures.dat".
 
 void
-Uintah::monica1( DataArchive * da, CommandLineFlags & clf )
+Uintah::monica1(DataArchive* da, CommandLineFlags& clf)
 {
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
-  da->queryVariables(vars, types);
+  std::vector<std::string> vars;
+  std::vector<int> num_matl;
+  std::vector<const Uintah::TypeDescription*> types;
+  da->queryVariables(vars, num_matl, types);
   ASSERTEQ(vars.size(), types.size());
-  cout << "There are " << vars.size() << " variables:\n";
-  for(int i=0;i<(int)vars.size();i++)
-    cout << vars[i] << ": " << types[i]->getName() << endl;
-      
-  vector<int> index;
-  vector<double> times;
+  std::cout << "There are " << vars.size() << " variables:\n";
+  for (int i = 0; i < (int)vars.size(); i++) {
+    std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
+  }
+
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  cout << "There are " << index.size() << " timesteps:\n";
-  for( int i = 0; i < (int)index.size(); i++ ) {
-    cout << index[i] << ": " << times[i] << endl;
+  std::cout << "There are " << index.size() << " timesteps:\n";
+  for (int i = 0; i < (int)index.size(); i++) {
+    std::cout << index[i] << ": " << times[i] << std::endl;
   }
-      
-  findTimestep_loopLimits( clf.tslow_set, clf.tsup_set, times, clf.time_step_lower, clf.time_step_upper);
 
-  ostringstream fnum;
+  findTimestep_loopLimits(clf.tslow_set,
+                          clf.tsup_set,
+                          times,
+                          clf.time_step_lower,
+                          clf.time_step_upper);
+
+  std::ostringstream fnum;
   string filename("maxPressures.dat");
   ofstream outfile(filename.c_str());
 
-  double maxPressure = -9999999;  // the max pressure at any time
+  double maxPressure = -9999999; // the max pressure at any time
 
-  for(unsigned long t=clf.time_step_lower;t<=clf.time_step_upper;t+=clf.time_step_inc){
+  for (unsigned long t = clf.time_step_lower; t <= clf.time_step_upper;
+       t += clf.time_step_inc) {
     double time = times[t];
-    cout << "time = " << time << endl;
+    std::cout << "time = " << time << std::endl;
     GridP grid = da->queryGrid(t);
 
-      double pressure = -9999999.0;  // the max pressure during the timestep
-      LevelP level = grid->getLevel(grid->numLevels()-1);
-      cout << "Level: " << grid->numLevels() - 1 <<  endl;
-      for(Level::const_patchIterator iter = level->patchesBegin();
-          iter != level->patchesEnd(); iter++){
-        const Patch* patch = *iter;
-        int matl = clf.matl_jim; // material number
-        
-        CCVariable<double> press_CC;
-        // get all the pressures from the patch
-        da->query(press_CC, "press_CC",        matl, patch, t);
+    double pressure = -9999999.0; // the max pressure during the timestep
+    LevelP level    = grid->getLevel(grid->numLevels() - 1);
+    std::cout << "Level: " << grid->numLevels() - 1 << endl;
+    for (Level::const_patch_iterator iter = level->patchesBegin();
+         iter != level->patchesEnd();
+         iter++) {
+      const Patch* patch = *iter;
+      int matl           = clf.matl_jim; // material number
 
-        for (CellIterator iter = patch->getCellIterator();!iter.done();iter++){
-           IntVector c = *iter;  // get teh coordinates of the cell
+      CCVariable<double> press_CC;
+      // get all the pressures from the patch
+      da->query(press_CC, "press_CC", matl, patch, t);
 
-           if(press_CC[c] > pressure)
-              pressure = press_CC[c];
+      for (CellIterator iter = patch->getCellIterator(); !iter.done(); iter++) {
+        IntVector c = *iter; // get teh coordinates of the cell
 
-           if(press_CC[c] > maxPressure)
-              maxPressure = press_CC[c];
-          
-        } // for cells
-      }  // for patches
-   
-   cout << "Max pressure for timestep was:\t" << pressure << endl;
+        if (press_CC[c] > pressure) {
+          pressure = press_CC[c];
+        }
 
-   outfile.precision(15);
-   outfile << t << " " << pressure << endl; 
+        if (press_CC[c] > maxPressure) {
+          maxPressure = press_CC[c];
+        }
 
+      } // for cells
+    }   // for patches
+
+    std::cout << "Max pressure for timestep was:\t" << pressure << std::endl;
+
+    outfile.precision(15);
+    outfile << t << " " << pressure << std::endl;
   }
-  cout << "Max pressure overall was:\t" << maxPressure << endl;
+  std::cout << "Max pressure overall was:\t" << maxPressure << std::endl;
 } // end jim2()
-

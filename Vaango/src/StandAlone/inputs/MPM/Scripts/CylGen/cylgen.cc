@@ -50,7 +50,7 @@
 #include <vector>
 #include <iomanip>
 
-using namespace std;
+
 
 bool isCylInsideRVE(double partDia, double RVEsize,
                        double xCent, double yCent);
@@ -60,13 +60,13 @@ bool isCylCenterInsideRVE(double RVEsize,
 //
 bool doesCylIntersectOthers(double partDia, vector<vector<double> > diaLocs,
                             double &xCent, double &yCent,
-                            vector<vector<double> > xLocs, 
-                            vector<vector<double> > yLocs,
+                            std::vector<vector<double> > xLocs, 
+                            std::vector<vector<double> > yLocs,
                             int i_min, int i_max);
 //
 void printCylLocs(vector<vector<double> > xLocs,
-                     vector<vector<double> > yLocs,
-                     vector<vector<double> > diaLocs,
+                     std::vector<vector<double> > yLocs,
+                     std::vector<vector<double> > diaLocs,
                      int n_bins, const double RVEsize, double diam_max);
 int main()
 {
@@ -97,7 +97,7 @@ int main()
 
   // Part of optimizing the search for intersections
   int n_bins = RVEsize/diam_max;
-  cout << "n_bins = " << n_bins << endl;
+  std::cout << "n_bins = " << n_bins << std::endl;
 
   double bin_width = RVEsize/((double) n_bins);
 
@@ -111,8 +111,8 @@ int main()
 
   if(uniform_size_distribution){
     if(specified_size_distribution){
-       cerr << "Both uniform_size_distribution and specified_size_distribution" << endl;
-       cerr << "can't be true.  Specify which you want in the source code and recompile." << endl;
+       std::cerr <<  "Both uniform_size_distribution and specified_size_distribution" << std::endl;
+       std::cerr <<  "can't be true.  Specify which you want in the source code and recompile." << std::endl;
        exit(1);
     }
     // The following assumes an equal distribution.  Specifically
@@ -126,10 +126,10 @@ int main()
       area_of_one_of_each_size += 0.25*M_PI*(diam*diam);
     }
     int num_cyls_each_size = targetArea/area_of_one_of_each_size;
-    cout << "Number cylinders to be created of each size = "
-         << num_cyls_each_size << endl;
-//    cout << "Area of one of each size = "
-//         << area_of_one_of_each_size << endl;
+    std::cout << "Number cylinders to be created of each size = "
+         << num_cyls_each_size << std::endl;
+//    std::cout << "Area of one of each size = "
+//         << area_of_one_of_each_size << std::endl;
 
     // Grains will be created largest to smallest.  TVFS is the 
     // cumulative volume fraction achieved after creating all of the cylinders
@@ -141,15 +141,15 @@ int main()
       vf += num_cyls_each_size*area_of_one_of_this_size/targetArea;
       TVFS[i]=vf;
       TVFS[i]*=targetVF;
-      cout << "TVFS[" << i << "] = " << TVFS[i] << ";" << endl;
-      cout << "sizes[" << i << "] = " << sizes[i] << ";" << endl;
+      std::cout << "TVFS[" << i << "] = " << TVFS[i] << ";" << std::endl;
+      std::cout << "sizes[" << i << "] = " << sizes[i] << ";" << std::endl;
     }
   }  // uniform_distribution
 
   if(specified_size_distribution){
     if(uniform_size_distribution){
-       cerr << "Both uniform_size_distribution and specified_size_distribution" << endl;
-       cerr << "can't be true.  Specify which you want in the source code and recompile." << endl;
+       std::cerr <<  "Both uniform_size_distribution and specified_size_distribution" << std::endl;
+       std::cerr <<  "can't be true.  Specify which you want in the source code and recompile." << std::endl;
        exit(1);
     }
 
@@ -179,10 +179,10 @@ int main()
       tot+=TVFS[i];
     }
     if(tot < .999 || tot > 1.001){
-      cerr << "The sum of the specified TVFS values must add up to 1.0" << endl;
-      cerr << "Thus, the value given for each entry is that size's " << endl;
-      cerr << "fraction of the filled space, not the total space." << endl;
-      cerr << "The sum of the specified area fractions is " << tot << endl;
+      std::cerr <<  "The sum of the specified TVFS values must add up to 1.0" << std::endl;
+      std::cerr <<  "Thus, the value given for each entry is that size's " << std::endl;
+      std::cerr <<  "fraction of the filled space, not the total space." << std::endl;
+      std::cerr <<  "The sum of the specified area fractions is " << tot << std::endl;
       exit(1);
     }
 
@@ -203,17 +203,17 @@ int main()
       double diam=sizes[i];
       double area_of_one_of_this_size = 0.25*M_PI*(diam*diam);
       double total_area_of_this_size = TVFS[i]*targetArea;
-      cout << "total_area_of_this_size = " << total_area_of_this_size << endl;
+      std::cout << "total_area_of_this_size = " << total_area_of_this_size << std::endl;
       num_cyls_this_size[i] = total_area_of_this_size/area_of_one_of_this_size;
       TVFS[i]*=targetVF;
-      cout << "num_cyls_this_size[" << i << "] = " << num_cyls_this_size[i] << endl;
-      cout << "TVFS[" << i << "] = " << TVFS[i] << endl;
+      std::cout << "num_cyls_this_size[" << i << "] = " << num_cyls_this_size[i] << std::endl;
+      std::cout << "TVFS[" << i << "] = " << TVFS[i] << std::endl;
     }
 
-    cout << "TVFS[0] = " << TVFS[0] << endl;
+    std::cout << "TVFS[0] = " << TVFS[0] << std::endl;
     for(int i=1;i<n_sizes;i++){
       TVFS[i]+=TVFS[i-1];
-      cout << "TVFS[ " << i << "] = " << TVFS[i] << endl;
+      std::cout << "TVFS[ " << i << "] = " << TVFS[i] << std::endl;
     }
   }  // specified_distribution
 
@@ -225,9 +225,9 @@ int main()
 
   //Store the locations in n_bins separate vectors, so we have a smaller region
   //to search for intersections
-  vector<vector<double> > xLocs(n_bins);
-  vector<vector<double> > yLocs(n_bins);
-  vector<vector<double> > diaLocs(n_bins);
+  std::vector<vector<double> > xLocs(n_bins);
+  std::vector<vector<double> > yLocs(n_bins);
+  std::vector<vector<double> > diaLocs(n_bins);
 
   double total_cyl_area = 0.0;
   double total_cyl_VF = 0.0;
@@ -238,7 +238,7 @@ int main()
     long int total_intersections = 0;
     double num_extra_bins_d = (sizes[i]+diam_max)/(2.0*bin_width);
     int num_extra_bins = (int) num_extra_bins_d + 1;
-    cout << "NEB = " << num_extra_bins_d << " " << num_extra_bins << endl;
+    std::cout << "NEB = " << num_extra_bins_d << " " << num_extra_bins << std::endl;
     while(total_cyl_VF < TVFS[i] && total_intersections < 20000000){
      // Get two random numbers for the x and y and scale by RVE size
      double xCent = drand48()*RVEsize;
@@ -275,11 +275,11 @@ int main()
           }
 
           if(!(num_cyls%1000)){
-            cout << "Created cyl # " << num_cyls << endl;
-            cout << "Total intersections so far = " 
-                 << total_intersections << endl;
-            cout << "total_cyl_VF = " << total_cyl_VF << endl;
-            cout << "TVFS[" << i << "] = " << TVFS[i] << endl;
+            std::cout << "Created cyl # " << num_cyls << std::endl;
+            std::cout << "Total intersections so far = " 
+                 << total_intersections << std::endl;
+            std::cout << "total_cyl_VF = " << total_cyl_VF << std::endl;
+            std::cout << "TVFS[" << i << "] = " << TVFS[i] << std::endl;
             printCylLocs(xLocs, yLocs, diaLocs,n_bins,RVEsize,diam_max);
           } // end if
         }   // if index...
@@ -290,8 +290,8 @@ int main()
     for(int k = 0;k<n_bins;k++){
       numCyls+=xLocs[k].size();
     }
-    cout << numCyls << endl;
-    cout << total_cyl_area/RVE_area << endl;
+    std::cout << numCyls << std::endl;
+    std::cout << total_cyl_area/RVE_area << std::endl;
   }
 
   printCylLocs(xLocs, yLocs, diaLocs,n_bins,RVEsize,diam_max);
@@ -329,8 +329,8 @@ bool isCylCenterInsideRVE(double RVEsize,
 
 bool doesCylIntersectOthers(double partDia, vector<vector<double> > diaLocs,
                             double &xCent, double &yCent,
-                            vector<vector<double> > xLocs, 
-                            vector<vector<double> > yLocs,
+                            std::vector<vector<double> > xLocs, 
+                            std::vector<vector<double> > yLocs,
                             int i_min, int i_max)
 {
 #if 0
@@ -351,12 +351,12 @@ bool doesCylIntersectOthers(double partDia, vector<vector<double> > diaLocs,
         intersect = true;
 //        hitPart1 = i;
 //        hitIndex1 = k;
-        //cout << tests << endl;
+        //cout << tests << std::endl;
         break;
       }
     }
     if(intersect){
-      //cout << "Intersected in first round" << endl;
+      //cout << "Intersected in first round" << std::endl;
       break;
     }
   }
@@ -390,7 +390,7 @@ bool doesCylIntersectOthers(double partDia, vector<vector<double> > diaLocs,
       double sumRadSq = 0.25*(partDia + diaLocs[k][i])*(partDia + diaLocs[k][i]);
 
       if(sumRadSq > distCentSq){
-        //cout << "Still Intersected in second round :(" << endl;
+        //cout << "Still Intersected in second round :(" << std::endl;
         intersect = true;
         hitPart2 = i;
         hitIndex2 = k;
@@ -398,7 +398,7 @@ bool doesCylIntersectOthers(double partDia, vector<vector<double> > diaLocs,
       }
      }
      if(intersect){
-       //cout << "Intersected in second round" << endl;
+       //cout << "Intersected in second round" << std::endl;
        break;
      }
     }
@@ -408,7 +408,7 @@ bool doesCylIntersectOthers(double partDia, vector<vector<double> > diaLocs,
   }
    // None of the cyls intersected
    if(!intersect){
-      //cout << "Fixed intersection in second round!" << endl;
+      //cout << "Fixed intersection in second round!" << std::endl;
       return false;
   }
   else{
@@ -438,35 +438,35 @@ bool doesCylIntersectOthers(double partDia, vector<vector<double> > diaLocs,
          double sumRadSq = 0.25*(partDia + diaLocs[k][i])*(partDia + diaLocs[k][i]);
 
          if(sumRadSq > distCentSq){
-           //cout << "STILL Intersected in third round :(" << endl;
+           //cout << "STILL Intersected in third round :(" << std::endl;
            return true;
          }
         }
        }
      }
      else{
-       //cout << "STILL Intersected in third round " << endl;
+       //cout << "STILL Intersected in third round " << std::endl;
        return true;
      }
-     //cout << " FIXED Intersection in third round" << endl;
+     //cout << " FIXED Intersection in third round" << std::endl;
      return false;
    }
 #endif
 }
 
 void printCylLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
-                  vector<vector<double> > diaLocs,
+                  std::vector<vector<double> > diaLocs,
                   int n_bins, const double RVEsize, double diam_max)
 {
   //Open file to receive cyl descriptions
   string outfile_name = "Test2D.xml";
   ofstream dest(outfile_name.c_str());
   if(!dest){
-    cerr << "File " << outfile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
   }
 
-  dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << endl;
-  dest << "<Uintah_Include>" << endl;
+  dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << std::endl;
+  dest << "<Uintah_Include>" << std::endl;
   dest << "<union>\n\n";
 
   int cylcount = 0;
@@ -481,12 +481,12 @@ void printCylLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
   }
 
   dest << "</union>\n\n";
-  dest << "</Uintah_Include>" << endl;
+  dest << "</Uintah_Include>" << std::endl;
 
   string outfile_name2 = "Position_Radius.txt";
   ofstream dest2(outfile_name2.c_str());
   if(!dest2){
-    cerr << "File " << outfile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
   }
 
   dest2.precision(15);

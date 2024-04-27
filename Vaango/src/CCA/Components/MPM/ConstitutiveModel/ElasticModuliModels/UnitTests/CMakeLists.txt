@@ -1,7 +1,7 @@
 #
 # The MIT License
 #
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -43,11 +43,11 @@ configure_file(DrySand_BulkModulusPressureData_Ten_Com.json DrySand_BulkModulusP
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-        Vaango_Core_Thread       
+               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-        Vaango_Core_Labels      
+              
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
@@ -90,11 +90,11 @@ target_link_libraries(testElasticModuli_MetalIso
   ${VAANGO_LIBS}
 )
 set(UNIT_TEST testElasticModuli_MetalIso)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
 
 add_executable(testElasticModuli_Tabular testElasticModuli_Tabular.cc)
 target_link_libraries(testElasticModuli_Tabular

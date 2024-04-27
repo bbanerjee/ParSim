@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -54,26 +54,22 @@ WARNING
    * This interface is written for Hypre 1.9.0b (released 2005).
    --------------------------------------------------------------------------*/
 
-#include <CCA/Ports/SolverInterface.h>
-#include <Core/Parallel/UintahParallelComponent.h>
+#include <CCA/Components/Solvers/SolverCommon.h>
+#include <CCA/Components/Solvers/AMR/HypreSolverParams.h>
 
 namespace Uintah {
 
-  class AMRSolver :
-    public SolverInterface, public UintahParallelComponent { 
+  class AMRSolver : public SolverCommon { 
 
-   
   public:
 
     AMRSolver(const ProcessorGroup* myworld);
     virtual ~AMRSolver();
 
-    virtual SolverParameters* readParameters(ProblemSpecP& params,
-                                             const std::string& name,
-                                             SimulationStateP& state);
+    virtual void readParameters(       ProblemSpecP     & params,
+                                 const std::string      & name );
 
-    virtual SolverParameters* readParameters(ProblemSpecP& params,
-                                             const std::string& name);
+    virtual SolverParameters * getParameters(){ return m_params; }
 
     virtual void scheduleSolve( const LevelP           & level,
                                       SchedulerP       & sched,
@@ -86,19 +82,22 @@ namespace Uintah {
                                       Task::WhichDW      which_b_dw,  
                                 const VarLabel         * guess,
                                       Task::WhichDW      which_guess_dw,
-                                const SolverParameters * params,
-                                      bool               modifies_hypre = false );
+                                      bool               isFirstSolve = true );
                                
     virtual std::string getName();
     
     // AMRSolver does not require initialization... but we need an empty
-   // routine to satisfy inheritance.
+    // routine to satisfy inheritance.
     virtual void scheduleInitialize( const LevelP      & level,
                                            SchedulerP  & sched,
                                      const MaterialSet * matls ) {}
 
+    virtual void scheduleRestartInitialize( const LevelP      & level,
+                                                  SchedulerP  & sched,
+                                            const MaterialSet * matls){}
   private:
-
+  
+  HypreSolverParams * m_params = nullptr;
   };
 }
 

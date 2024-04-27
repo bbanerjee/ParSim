@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -49,8 +49,8 @@ public:
   double rinit[100];
   double UI[190];
 
-  vector<const VarLabel*> ISVLabels;
-  vector<const VarLabel*> ISVLabels_preReloc;
+  std::vector<const VarLabel*> ISVLabels;
+  std::vector<const VarLabel*> ISVLabels_preReloc;
   int d_NINSV;
 
 private:
@@ -76,7 +76,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  Diamm* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   // compute stable timestep for this patch
   virtual void computeStableTimestep(const Patch* patch,

@@ -25,7 +25,7 @@
 #include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModelFactory.h>
 
 #include <CCA/Components/Peridynamics/FailureModels/BondDamageModel.h>
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/ProblemSetupException.h>

@@ -53,7 +53,7 @@ using namespace Uintah;
 #include <vector>
 #include <set>
 #include <algorithm>
-using namespace std;
+
 
 int getsign(int i)
 {
@@ -208,7 +208,7 @@ void BNRTask::continueTask()
         if(partner<p_group_.size())
         {
           //Nonblocking recieve msg from partner
-          MPI_Irecv(&flag_info_buffer_[0],flag_info_buffer_.size(),MPI_INT,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());
+          Uintah::MPI::Irecv(&flag_info_buffer_[0],flag_info_buffer_.size(),MPI_INT,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());
         
           status_=UPDATING_FLAG_INFO;
           return;
@@ -237,7 +237,7 @@ void BNRTask::continueTask()
         int partner=p_rank_-stride;
       
         //non blocking send msg of size size to partner
-        MPI_Isend(&flag_info_[0],flag_info_.size(),MPI_INT,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());
+        Uintah::MPI::Isend(&flag_info_[0],flag_info_.size(),MPI_INT,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());
         return;
       }
     }
@@ -328,7 +328,7 @@ void BNRTask::continueTask()
           status_=SUMMING_SIGNATURES;
           
           //Nonblocking recieve msg from partner
-          MPI_Irecv(&sum_[0],sig_size_,MPI_INT,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());
+          Uintah::MPI::Irecv(&sum_[0],sig_size_,MPI_INT,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());
           return;
 
           SUM_SIGNATURES:
@@ -351,7 +351,7 @@ void BNRTask::continueTask()
         partner=p_rank_-stride;
           
         //Nonblocking recieve msg from partner
-        MPI_Isend(&count_[0],sig_size_,MPI_INT,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());
+        Uintah::MPI::Isend(&count_[0],sig_size_,MPI_INT,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());
         return;
       }
     }
@@ -436,7 +436,7 @@ void BNRTask::continueTask()
       }
       else
       {
-        MPI_Irecv(&left_size_,1,MPI_INT,left_->p_group_[0],left_->tag_,MPI_COMM_WORLD,getRequest());
+        Uintah::MPI::Irecv(&left_size_,1,MPI_INT,left_->p_group_[0],left_->tag_,MPI_COMM_WORLD,getRequest());
       }
       if(right_->p_group_[0]==p_group_[0])
       {
@@ -445,7 +445,7 @@ void BNRTask::continueTask()
       }
       else
       {
-        MPI_Irecv(&right_size_,1,MPI_INT,right_->p_group_[0],right_->tag_,MPI_COMM_WORLD,getRequest());
+        Uintah::MPI::Irecv(&right_size_,1,MPI_INT,right_->p_group_[0],right_->tag_,MPI_COMM_WORLD,getRequest());
       }
       //recv's might not be done yet so place back on delay_q
       status_=WAITING_FOR_PATCH_COUNT;  
@@ -462,12 +462,12 @@ void BNRTask::continueTask()
       //recieve patch_sets from children on child tag only if it hasn't been copied already
       if(left_->p_group_[0]!=p_group_[0])
       {
-        MPI_Irecv(&my_patches_[start],left_size_*sizeof(Region),MPI_BYTE,left_->p_group_[0],left_->tag_,MPI_COMM_WORLD,getRequest());    
+        Uintah::MPI::Irecv(&my_patches_[start],left_size_*sizeof(Region),MPI_BYTE,left_->p_group_[0],left_->tag_,MPI_COMM_WORLD,getRequest());    
         start+=left_size_;                        //move recieve buffer forward
       }
       if(right_->p_group_[0]!=p_group_[0])
       {
-        MPI_Irecv(&my_patches_[start],right_size_*sizeof(Region),MPI_BYTE,right_->p_group_[0],right_->tag_,MPI_COMM_WORLD,getRequest());    
+        Uintah::MPI::Irecv(&my_patches_[start],right_size_*sizeof(Region),MPI_BYTE,right_->p_group_[0],right_->tag_,MPI_COMM_WORLD,getRequest());    
       }    
       if(remaining_requests_>0)
         return;
@@ -488,12 +488,12 @@ void BNRTask::continueTask()
       my_size_=my_patches_.size();
   
       //send patch_ count to parent
-      MPI_Isend(&my_size_,1,MPI_INT,parent_->p_group_[0],tag_,MPI_COMM_WORLD,getRequest());
+      Uintah::MPI::Isend(&my_size_,1,MPI_INT,parent_->p_group_[0],tag_,MPI_COMM_WORLD,getRequest());
      
       if(my_size_>0)
       {
         //send patch list to parent
-        MPI_Isend(&my_patches_[0],my_size_*sizeof(Region),MPI_BYTE,parent_->p_group_[0],tag_,MPI_COMM_WORLD,getRequest());
+        Uintah::MPI::Isend(&my_patches_[0],my_size_*sizeof(Region),MPI_BYTE,parent_->p_group_[0],tag_,MPI_COMM_WORLD,getRequest());
       }
     }
   }
@@ -591,12 +591,12 @@ void BNRTask::continueTaskSerial()
       my_size_=my_patches_.size();
   
       //send patch count to parent
-      MPI_Isend(&my_size_,1,MPI_INT,parent_->p_group_[0],tag_,MPI_COMM_WORLD,getRequest());
+      Uintah::MPI::Isend(&my_size_,1,MPI_INT,parent_->p_group_[0],tag_,MPI_COMM_WORLD,getRequest());
      
       if(my_size_>0)
       {
         //send patch list to parent
-        MPI_Isend(&my_patches_[0],my_size_*sizeof(Region),MPI_BYTE,parent_->p_group_[0],tag_,MPI_COMM_WORLD,getRequest());
+        Uintah::MPI::Isend(&my_patches_[0],my_size_*sizeof(Region),MPI_BYTE,parent_->p_group_[0],tag_,MPI_COMM_WORLD,getRequest());
       }
     }
   }
@@ -663,7 +663,7 @@ void BNRTask::BoundSignatures()
     patch_=Region(low,high);
     if(low[0]>high[0] || low[1]>high[1] || low[2]>high[2])
     {
-      cout << "Error negative bounds\n";
+      std::cout << "Error negative bounds\n";
       exit(0);
     }
 }
@@ -843,7 +843,7 @@ bool BNRTask::Broadcast(void *message, int count_, MPI_Datatype datatype)
       if(partner<p_group_.size())
       {
         //Nonblocking send msg to partner
-        MPI_Isend(message,count_,datatype,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());
+        Uintah::MPI::Isend(message,count_,datatype,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());
         return true;
       }
     }
@@ -852,7 +852,7 @@ bool BNRTask::Broadcast(void *message, int count_, MPI_Datatype datatype)
       partner=p_rank_-stride;
         
       //Nonblocking recieve msg from partner
-      MPI_Irecv(message,count_,datatype,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());  
+      Uintah::MPI::Irecv(message,count_,datatype,p_group_[partner],tag_,MPI_COMM_WORLD,getRequest());  
       return true;
     }
     else

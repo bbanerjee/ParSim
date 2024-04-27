@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,41 +25,51 @@
 
 //-- Uintah component includes --//
 #include <CCA/Components/Regridder/RegridderFactory.h>
+
 #include <CCA/Components/Regridder/SingleLevelRegridder.h>
 #include <CCA/Components/Regridder/TiledRegridder.h>
 
 //-- Uintah framework includes --//
+#include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
 
 using namespace Uintah;
 
-RegridderCommon* RegridderFactory::create(ProblemSpecP& ps, const ProcessorGroup* world)
+std::unique_ptr<RegridderCommon>
+RegridderFactory::create(ProblemSpecP& ps, const ProcessorGroup* world)
 {
-  RegridderCommon* regridder = 0;
+  std::unique_ptr<RegridderCommon> regridder = nullptr;
 
   // Parse the AMR/Regridder portion of the input file
   ProblemSpecP amrPS = ps->findBlock("AMR");
-  ProblemSpecP regridderPS = amrPS->findBlock("Regridder");
+  std::string amrType;
+  amrPS->getAttribute("type", amrType);
 
-  if (regridderPS) {
+  if (amrType == "" || amrType == "'Dynamic'") {
+    ProblemSpecP regridderPS = amrPS->findBlock("Regridder");
 
-    std::string regridderName;
-    regridderPS->getAttribute("type", regridderName);
+    if (regridderPS) {
 
-    if (world->myrank() == 0) {
-      std::cout << "Using Regridder " << regridderName << std::endl;
+      std::string regridderName;
+      regridderPS->getAttribute("type", regridderName);
+
+      proc0cout << "Using Regridder " << regridderName << std::endl;
+
+      if (regridderName == "Tiled") {
+        return std::make_unique<TiledRegridder>(world);
+      } else if (regridderName == "SingleLevel") {
+        return std::make_unique<SingleLevelRegridder>(world);
+      }
     }
-    if (regridderName == "Tiled") {
-      regridder = scinew TiledRegridder(world);
-    }
-    else if (regridderName == "SingleLevel") {
-      regridder = scinew SingleLevelRegridder(world);
-    }
-    else {
-      regridder = 0;
+
+    if (regridder == nullptr) {
+      throw ProblemSetupException(
+        "\nERROR<Regridder>: No AMR Regridder block or type specified.\n",
+        __FILE__,
+        __LINE__);
     }
   }
 
   return regridder;
-
 }

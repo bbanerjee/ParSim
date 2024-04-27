@@ -100,9 +100,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Allgather ------------------------
+//-------------------------- Uintah::MPI::Allgather ------------------------
 #define NAME     Allgather
-#define TEXTNAME "MPI_Allgather"
+#define TEXTNAME "Uintah::MPI::Allgather"
 #define CALLSIG  void* arg0, int arg1, MPI_Datatype arg2, void* arg3, int arg4, MPI_Datatype arg5, MPI_Comm arg6
 #define VARS     void* arg0; int arg1; MPI_Datatype arg2; void* arg3; int arg4; MPI_Datatype arg5; MPI_Comm arg6; 
 #define CALLARGS arg0, arg1, arg2, arg3, arg4, arg5, arg6
@@ -118,9 +118,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Allgatherv ------------------------
+//-------------------------- Uintah::MPI::Allgatherv ------------------------
 #define NAME     Allgatherv
-#define TEXTNAME "MPI_Allgatherv"
+#define TEXTNAME "Uintah::MPI::Allgatherv"
 #define CALLSIG  void* arg0, int arg1, MPI_Datatype arg2, void* arg3, int* arg4, int* arg5, MPI_Datatype arg6, MPI_Comm arg7
 #define VARS     void* arg0; int arg1; MPI_Datatype arg2; void* arg3; int* arg4; int* arg5; MPI_Datatype arg6; MPI_Comm arg7; 
 #define CALLARGS arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7
@@ -154,9 +154,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Allreduce ------------------------
+//-------------------------- Uintah::MPI::Allreduce ------------------------
 #define NAME     Allreduce
-#define TEXTNAME "MPI_Allreduce"
+#define TEXTNAME "Uintah::MPI::Allreduce"
 #define CALLSIG  void* arg0, void* arg1, int arg2, MPI_Datatype arg3, MPI_Op arg4, MPI_Comm arg5
 #define VARS     void* arg0; void* arg1; int arg2; MPI_Datatype arg3; MPI_Op arg4; MPI_Comm arg5; 
 #define CALLARGS arg0, arg1, arg2, arg3, arg4, arg5
@@ -172,9 +172,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Alltoall ------------------------
+//-------------------------- Uintah::MPI::Alltoall ------------------------
 #define NAME     Alltoall
-#define TEXTNAME "MPI_Alltoall"
+#define TEXTNAME "Uintah::MPI::Alltoall"
 #define CALLSIG  void* arg0, int arg1, MPI_Datatype arg2, void* arg3, int arg4, MPI_Datatype arg5, MPI_Comm arg6
 #define VARS     void* arg0; int arg1; MPI_Datatype arg2; void* arg3; int arg4; MPI_Datatype arg5; MPI_Comm arg6; 
 #define CALLARGS arg0, arg1, arg2, arg3, arg4, arg5, arg6
@@ -190,9 +190,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Alltoallv ------------------------
+//-------------------------- Uintah::MPI::Alltoallv ------------------------
 #define NAME     Alltoallv
-#define TEXTNAME "MPI_Alltoallv"
+#define TEXTNAME "Uintah::MPI::Alltoallv"
 #define CALLSIG  void* arg0, int* arg1, int* arg2, MPI_Datatype arg3, void* arg4, int* arg5, int* arg6, MPI_Datatype arg7, MPI_Comm arg8
 #define VARS     void* arg0; int* arg1; int* arg2; MPI_Datatype arg3; void* arg4; int* arg5; int* arg6; MPI_Datatype arg7; MPI_Comm arg8; 
 #define CALLARGS arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8
@@ -1018,9 +1018,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Get_count ------------------------
+//-------------------------- Uintah::MPI::Get_count ------------------------
 #define NAME     Get_count
-#define TEXTNAME "MPI_Get_count"
+#define TEXTNAME "Uintah::MPI::Get_count"
 #define CALLSIG  MPI_Status* arg0, MPI_Datatype arg1, int* arg2
 #define VARS     MPI_Status* arg0; MPI_Datatype arg1; int* arg2; 
 #define CALLARGS arg0, arg1, arg2
@@ -1648,9 +1648,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Irecv ------------------------
+//-------------------------- Uintah::MPI::Irecv ------------------------
 #define NAME     Irecv
-#define TEXTNAME "MPI_Irecv"
+#define TEXTNAME "Uintah::MPI::Irecv"
 #define CALLSIG  void* arg0, int arg1, MPI_Datatype arg2, int arg3, int arg4, MPI_Comm arg5, MPI_Request* arg6
 #define VARS     void* arg0; int arg1; MPI_Datatype arg2; int arg3; int arg4; MPI_Comm arg5; MPI_Request* arg6; 
 #define CALLARGS arg0, arg1, arg2, arg3, arg4, arg5, arg6
@@ -1684,9 +1684,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Isend ------------------------
+//-------------------------- Uintah::MPI::Isend ------------------------
 #define NAME     Isend
-#define TEXTNAME "MPI_Isend"
+#define TEXTNAME "Uintah::MPI::Isend"
 #define CALLSIG  void* arg0, int arg1, MPI_Datatype arg2, int arg3, int arg4, MPI_Comm arg5, MPI_Request* arg6
 #define VARS     void* arg0; int arg1; MPI_Datatype arg2; int arg3; int arg4; MPI_Comm arg5; MPI_Request* arg6; 
 #define CALLARGS arg0, arg1, arg2, arg3, arg4, arg5, arg6
@@ -1900,9 +1900,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Reduce ------------------------
+//-------------------------- Uintah::MPI::Reduce ------------------------
 #define NAME     Reduce
-#define TEXTNAME "MPI_Reduce"
+#define TEXTNAME "Uintah::MPI::Reduce"
 #define CALLSIG  void* arg0, void* arg1, int arg2, MPI_Datatype arg3, MPI_Op arg4, int arg5, MPI_Comm arg6
 #define VARS     void* arg0; void* arg1; int arg2; MPI_Datatype arg3; MPI_Op arg4; int arg5; MPI_Comm arg6; 
 #define CALLARGS arg0, arg1, arg2, arg3, arg4, arg5, arg6
@@ -1918,9 +1918,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Reduce_scatter ------------------------
+//-------------------------- Uintah::MPI::Reduce_scatter ------------------------
 #define NAME     Reduce_scatter
-#define TEXTNAME "MPI_Reduce_scatter"
+#define TEXTNAME "Uintah::MPI::Reduce_scatter"
 #define CALLSIG  void* arg0, void* arg1, int* arg2, MPI_Datatype arg3, MPI_Op arg4, MPI_Comm arg5
 #define VARS     void* arg0; void* arg1; int* arg2; MPI_Datatype arg3; MPI_Op arg4; MPI_Comm arg5; 
 #define CALLARGS arg0, arg1, arg2, arg3, arg4, arg5
@@ -2260,9 +2260,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Testsome ------------------------
+//-------------------------- Uintah::MPI::Testsome ------------------------
 #define NAME     Testsome
-#define TEXTNAME "MPI_Testsome"
+#define TEXTNAME "Uintah::MPI::Testsome"
 #define CALLSIG  int arg0, MPI_Request* arg1, int* arg2, int* arg3, MPI_Status* arg4
 #define VARS     int arg0; MPI_Request* arg1; int* arg2; int* arg3; MPI_Status* arg4; 
 #define CALLARGS arg0, arg1, arg2, arg3, arg4
@@ -2602,9 +2602,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Waitall ------------------------
+//-------------------------- Uintah::MPI::Waitall ------------------------
 #define NAME     Waitall
-#define TEXTNAME "MPI_Waitall"
+#define TEXTNAME "Uintah::MPI::Waitall"
 #define CALLSIG  int arg0, MPI_Request* arg1, MPI_Status* arg2
 #define VARS     int arg0; MPI_Request* arg1; MPI_Status* arg2; 
 #define CALLARGS arg0, arg1, arg2
@@ -2620,9 +2620,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Waitany ------------------------
+//-------------------------- Uintah::MPI::Waitany ------------------------
 #define NAME     Waitany
-#define TEXTNAME "MPI_Waitany"
+#define TEXTNAME "Uintah::MPI::Waitany"
 #define CALLSIG  int arg0, MPI_Request* arg1, int* arg2, MPI_Status* arg3
 #define VARS     int arg0; MPI_Request* arg1; int* arg2; MPI_Status* arg3; 
 #define CALLARGS arg0, arg1, arg2, arg3
@@ -2638,9 +2638,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Wait ------------------------
+//-------------------------- Uintah::MPI::Wait ------------------------
 #define NAME     Wait
-#define TEXTNAME "MPI_Wait"
+#define TEXTNAME "Uintah::MPI::Wait"
 #define CALLSIG  MPI_Request* arg0, MPI_Status* arg1
 #define VARS     MPI_Request* arg0; MPI_Status* arg1; 
 #define CALLARGS arg0, arg1
@@ -2656,9 +2656,9 @@ MPI_CLASS_BODY
 #undef VAR_INIT
 #undef RET_TYPE
 
-//-------------------------- MPI_Waitsome ------------------------
+//-------------------------- Uintah::MPI::Waitsome ------------------------
 #define NAME     Waitsome
-#define TEXTNAME "MPI_Waitsome"
+#define TEXTNAME "Uintah::MPI::Waitsome"
 #define CALLSIG  int arg0, MPI_Request* arg1, int* arg2, int* arg3, MPI_Status* arg4
 #define VARS     int arg0; MPI_Request* arg1; int* arg2; int* arg3; MPI_Status* arg4; 
 #define CALLARGS arg0, arg1, arg2, arg3, arg4

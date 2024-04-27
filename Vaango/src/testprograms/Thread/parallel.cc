@@ -46,13 +46,13 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Thread/Thread.h>
+
 #include <Core/Thread/WorkQueue.h>
 #include <Core/Thread/Parallel.h>
 #include <Core/Thread/Runnable.h>
 #include <Core/Thread/ThreadGroup.h>
-//#include <Core/Thread/Mutex.h>
-#include <Core/Thread/Time.h>
+//
+#include <Core/Util/Timers/Timers.hpp>
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -62,7 +62,7 @@
 #include <unistd.h>
 #endif
 
-using namespace std;
+
 using namespace Uintah;
 
 class ParallelWorker {
@@ -88,7 +88,7 @@ public:
   
   void do_work(int proc) {
     //cerr << "Proc: "<<proc<<" of "<<np<<" working\n";
-    cerr << proc;
+    std::cerr <<  proc;
 #if 0
     int start = (int)((float)buff_size / np * proc);
     int end = (int)((float)buff_size / np * (proc+1));
@@ -106,12 +106,12 @@ public:
 
   void print_test() {
     if (buff_size <= 0) {
-      cout << "ParallelWorker is empty\n";
+      std::cout << "ParallelWorker is empty\n";
       return;
     }
     int prev = buffer[0];
-    cout << "ParallelWorker: buff_size("<<buff_size<<"), np("<<np<<")\n";
-    cout << "buffer[0] = "<<prev<<endl;
+    std::cout << "ParallelWorker: buff_size("<<buff_size<<"), np("<<np<<")\n";
+    std::cout << "buffer[0] = "<<prev<<endl;
     for (int i = 0; i < buff_size; i++) {
       if (prev != buffer[i]) {
 	prev = buffer[i];
@@ -137,9 +137,9 @@ int main(int argc, char *argv[]) {
       i++;
       granularity = atoi(argv[i]);
     } else {
-      cout << "parallel -np [int] -size [int]\n";
-      cout << "-np\tnumber of processors/helpers to use.\n";
-      cout << "-size\tsize of array to use\n";
+      std::cout << "parallel -np [int] -size [int]\n";
+      std::cout << "-np\tnumber of processors/helpers to use.\n";
+      std::cout << "-size\tsize of array to use\n";
       return 1;
     }
   }
@@ -148,14 +148,14 @@ int main(int argc, char *argv[]) {
   if (np < 1) np = 1;
   if (buff_size < 1) buff_size = 100;
   if (granularity < 0) granularity = 5;
-  cout <<"np = "<<np<<", buff_size = "<<buff_size<<", granularity = "<<granularity<<endl;
+  std::cout <<"np = "<<np<<", buff_size = "<<buff_size<<", granularity = "<<granularity<<endl;
   
   ParallelWorker worker(buff_size,np,granularity);
   Parallel<ParallelWorker> phelper(&worker, &ParallelWorker::do_work);
   Thread::parallel(phelper, np, true);
 
   worker.print_test();
-  cerr << "Program end\n";
+  std::cerr <<  "Program end\n";
   Thread::exitAll(0);
 
   return 0;

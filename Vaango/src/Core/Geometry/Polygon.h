@@ -102,8 +102,8 @@ using std::vector;
 
 
 class Polygon {
-  vector<Point> vertices;
-  vector<Point> texcoords;
+  std::vector<Point> vertices;
+  std::vector<Point> texcoords;
 public:
 
   // GROUP:  Constructors:

@@ -40,10 +40,11 @@ namespace Uintah {
 
 struct DeformationState
 {
-  Matrix3 D;    // Rate of deformation
-  Matrix3 devD; // Deviatoric part of rate of deformation
-  Matrix3 devStressInc;
-  double viscoElasticWorkRate;
+  Matrix3 D{ 0.0 };    // Rate of deformation
+  Matrix3 devD{ 0.0 }; // Deviatoric part of rate of deformation
+  Matrix3 devStressInc{ 0.0 };
+  double J{ 1.0 };
+  double viscoElasticWorkRate{ 0.0 };
   ~DeformationState() = default;
 };
 } // End namespace Uintah

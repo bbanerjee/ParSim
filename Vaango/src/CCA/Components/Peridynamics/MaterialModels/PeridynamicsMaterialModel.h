@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,8 +26,8 @@
 #ifndef __VAANGO_PERIDYNAMICS_MATERIAL_MODEL_H__
 #define __VAANGO_PERIDYNAMICS_MATERIAL_MODEL_H__
 
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
+#include <Core/Grid/MaterialManagerP.h>
 
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <vector>
@@ -95,9 +96,9 @@ namespace Vaango {
         d_world = myworld;
       }
 
-    inline void setSharedState(Uintah::SimulationState* sharedState)
+    inline void setSharedState(Uintah::MaterialManager* sharedState)
       {
-        d_sharedState = sharedState;
+        d_mat_manager = sharedState;
       }
 
     // Make a clone of the constitutive model
@@ -111,9 +112,9 @@ namespace Vaango {
 
     const Uintah::ProcessorGroup* d_world;
 
-    // don't store SimulationStateP or it will add a reference 
+    // don't store MaterialManagerP or it will add a reference 
     // that will never be removed
-    Uintah::SimulationState* d_sharedState;
+    Uintah::MaterialManager* d_mat_manager;
 
   };
 

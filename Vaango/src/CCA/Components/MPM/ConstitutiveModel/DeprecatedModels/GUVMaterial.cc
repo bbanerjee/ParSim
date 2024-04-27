@@ -58,7 +58,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
@@ -92,7 +92,7 @@ GUVMaterial::GUVMaterial(ProblemSpecP& ps, MPMLabel* Mlb, int n8or27)
   ps->require("bulk_modulus_cholesterol", d_cm.Bulk_cholesterol);
   ps->require("shear_modulus_cholesterol", d_cm.Shear_cholesterol);
   debug_doing << "GUVMaterial::GUVMaterial:: Klipid = " << d_cm.Bulk_lipid
-              << " Kchol = " << d_cm.Bulk_cholesterol << endl;
+              << " Kchol = " << d_cm.Bulk_cholesterol << std::endl;
 }
 
 GUVMaterial::GUVMaterial(const GUVMaterial* cm)
@@ -120,7 +120,7 @@ void
 GUVMaterial::addParticleState(std::vector<const VarLabel*>& from,
                               std::vector<const VarLabel*>& to)
 {
-  debug_doing << "GUVMaterial:: Adding particle state." << endl;
+  debug_doing << "GUVMaterial:: Adding particle state." << std::endl;
   from.push_back(lb->pTypeLabel);
   from.push_back(lb->pThickTopLabel);
   from.push_back(lb->pInitialThickTopLabel);
@@ -151,7 +151,7 @@ void
 GUVMaterial::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
                                            const PatchSet*) const
 {
-  debug_doing << "GUVMaterial:: Adding Initial Computes and Requires." << endl;
+  debug_doing << "GUVMaterial:: Adding Initial Computes and Requires." << std::endl;
   const MaterialSubset* matlset = matl->thisMaterial();
 
   task->computes(lb->pTypeLabel, matlset);
@@ -171,7 +171,7 @@ void
 GUVMaterial::initializeCMData(const Patch* patch, const MPMMaterial* matl,
                               DataWarehouse* new_dw)
 {
-  debug_doing << "GUVMaterial:: Initializing CM Data." << endl;
+  debug_doing << "GUVMaterial:: Initializing CM Data." << std::endl;
 
   // Put stuff in here to initialize each particle's
   // constitutive model parameters and deformationMeasure
@@ -285,26 +285,26 @@ void
 GUVMaterial::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
                                    DataWarehouse* new_dw)
 {
-  debug_doing << "GUVMaterial:: Computing Stable Timestep." << endl;
+  debug_doing << "GUVMaterial:: Computing Stable Timestep." << std::endl;
 
   int dwi = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
 
   constParticleVariable<int> pType;
-  constParticleVariable<double> pThick, pmass, pvolume;
-  constParticleVariable<Vector> pNormal, pvelocity;
+  constParticleVariable<double> pThick, pMass, pVolume;
+  constParticleVariable<Vector> pNormal, pVelocity;
   new_dw->get(pType, lb->pTypeLabel, pset);
   new_dw->get(pNormal, lb->pNormalLabel, pset);
   new_dw->get(pThick, lb->pThickTopLabel, pset);
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
 
   debug_data << "GUVMaterial::computeStableTimestep: patch = " << patch
-             << " matl = " << matl << " new_dw = " << new_dw << endl;
+             << " matl = " << matl << " new_dw = " << new_dw << std::endl;
 
   double mu_lipid = d_cm.Shear_lipid;
   double K_lipid = d_cm.Bulk_lipid;
@@ -316,18 +316,18 @@ GUVMaterial::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
 
     debug_data << "GUVMaterial::computeStableTimestep: particle = " << idx
                << " type = " << pType[idx] << " thick = " << pThick[idx]
-               << " normal = " << pNormal[idx] << endl;
+               << " normal = " << pNormal[idx] << std::endl;
 
     // Compute wave speed at each particle, store the maximum
     if (pType[idx] == Lipid)
       c_dil =
-        sqrt((K_lipid + 4.0 * mu_lipid / 3.0) * pvolume[idx] / pmass[idx]);
+        sqrt((K_lipid + 4.0 * mu_lipid / 3.0) * pVolume[idx] / pMass[idx]);
     else
-      c_dil = sqrt((K_cholesterol + 4.0 * mu_cholesterol / 3.0) * pvolume[idx] /
-                   pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+      c_dil = sqrt((K_cholesterol + 4.0 * mu_cholesterol / 3.0) * pVolume[idx] /
+                   pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   Vector dx = patch->dCell();
   WaveSpeed = dx / WaveSpeed;
@@ -343,7 +343,7 @@ void
 GUVMaterial::addComputesAndRequires(Task* task, const MPMMaterial* matl,
                                     const PatchSet*) const
 {
-  debug_doing << "GUVMaterial:: Adding Computes and requires." << endl;
+  debug_doing << "GUVMaterial:: Adding Computes and requires." << std::endl;
   Ghost::GhostType gnone = Ghost::None;
   Ghost::GhostType gac = Ghost::AroundCells;
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -385,7 +385,7 @@ GUVMaterial::computeStressTensor(const PatchSubset* patches,
                                  const MPMMaterial* matl, DataWarehouse* old_dw,
                                  DataWarehouse* new_dw)
 {
-  debug_doing << "GUVMaterial:: computing stress tensor." << endl;
+  debug_doing << "GUVMaterial:: computing stress tensor." << std::endl;
 
   // Initialize contants
   Matrix3 One;
@@ -489,31 +489,31 @@ GUVMaterial::computeStressTensor(const PatchSubset* patches,
       }
       debug_extra << "GUVMaterial::compStress:: Particle = " << idx
                   << " velGrad = " << velGrad << " rotGrad = " << rotGrad
-                  << endl;
+                  << std::endl;
 
       // Project the velocity gradient and rotation gradient on
       // to surface of the shell
       calcInPlaneGradient(pNormal[idx], velGrad, rotGrad);
       debug_extra << "GUVMaterial::compStress:: Particle = " << idx
                   << " in-plane velGrad = " << velGrad
-                  << " in-plane rotGrad = " << rotGrad << endl;
+                  << " in-plane rotGrad = " << rotGrad << std::endl;
 
       // Calculate the layer-wise velocity gradient for stress
       // calculations
       Matrix3 rn(pRotRate[idx], pNormal[idx]);
       debug_extra << "GUVMaterial::compStress:: Particle = " << idx
                   << " pNormal = " << pNormal[idx]
-                  << " pRotRate = " << pRotRate[idx] << endl;
+                  << " pRotRate = " << pRotRate[idx] << std::endl;
 
       Matrix3 velGradCen = velGrad + rn;
       debug_extra << "GUVMaterial::compStress:: Particle = " << idx
-                  << " r.n = " << rn << " velGradCen = " << velGradCen << endl;
+                  << " r.n = " << rn << " velGradCen = " << velGradCen << std::endl;
 
       // Compute the deformation gradient increment using the time_step
       // velocity gradient (F_n^np1 = dudx * dt + Identity).
       Matrix3 defGradIncCen = velGradCen * delT + One;
       debug << "GUVMaterial::compStress:: Particle = " << idx
-            << " defGradIncCen = " << defGradIncCen << endl;
+            << " defGradIncCen = " << defGradIncCen << std::endl;
 
       // Calculate the top and bottom Deformation gradient increments
       double h = pThick[idx];
@@ -524,7 +524,7 @@ GUVMaterial::computeStressTensor(const PatchSubset* patches,
       // Update the deformation gradient tensor to its time n+1 value.
       Matrix3 defGradCen_new = defGradIncCen * pDefGrad[idx];
       debug << "GUVMaterial::compStress:: Particle = " << idx
-            << " defGradCen_new = " << defGradCen_new << endl;
+            << " defGradCen_new = " << defGradCen_new << std::endl;
 
       // Assume that difference in deformation gradient is very small
       // between top and bottom
@@ -537,10 +537,10 @@ GUVMaterial::computeStressTensor(const PatchSubset* patches,
       R.Identity();
       calcTotalRotation(Vector(0, 0, 1), pNormal[idx], R);
       debug << "GUVMaterial::compStress:: Particle = " << idx << " R = " << R
-            << endl;
+            << std::endl;
       defGradCen_new = R * defGradCen_new * R.Transpose();
       debug << "GUVMaterial::compStress:: Particle = " << idx
-            << " rotated  defGradCen_new = " << defGradCen_new << endl;
+            << " rotated  defGradCen_new = " << defGradCen_new << std::endl;
 
       defGradTop = R * defGradTop * R.Transpose();
       defGradBot = R * defGradBot * R.Transpose();
@@ -557,33 +557,33 @@ GUVMaterial::computeStressTensor(const PatchSubset* patches,
       }
       Matrix3 sigCen(0.0);
       if (!computePlaneStressAndDefGrad(defGradCen_new, sigCen, K, mu)) {
-        cerr << "Normal = " << pNormal[idx] << endl;
-        cerr << "R = " << R << endl;
-        cerr << "defGradCen = " << defGradCen_new << endl;
-        cerr << "SigCen = " << sigCen << endl;
+        std::cerr <<  "Normal = " << pNormal[idx] << std::endl;
+        std::cerr <<  "R = " << R << std::endl;
+        std::cerr <<  "defGradCen = " << defGradCen_new << std::endl;
+        std::cerr <<  "SigCen = " << sigCen << std::endl;
         exit(1);
       }
       if (idx == 1)
-        cout << "GUVMaterial::compStress:: Particle = " << idx
-             << " \n F = " << defGradCen_new << " \n sig = " << sigCen << endl;
+        std::cout << "GUVMaterial::compStress:: Particle = " << idx
+             << " \n F = " << defGradCen_new << " \n sig = " << sigCen << std::endl;
       debug << "GUVMaterial::compStress:: Particle = " << idx
-            << " sigCen = " << sigCen << endl;
+            << " sigCen = " << sigCen << std::endl;
 
       Matrix3 sigTop(0.0);
       if (!computePlaneStressAndDefGrad(defGradTop, sigTop, K, mu)) {
-        cerr << "Normal = " << pNormal[idx] << endl;
-        cerr << "R = " << R << endl;
-        cerr << "defGradTop = " << defGradTop << endl;
-        cerr << "SigTop = " << sigTop << endl;
+        std::cerr <<  "Normal = " << pNormal[idx] << std::endl;
+        std::cerr <<  "R = " << R << std::endl;
+        std::cerr <<  "defGradTop = " << defGradTop << std::endl;
+        std::cerr <<  "SigTop = " << sigTop << std::endl;
         exit(1);
       }
 
       Matrix3 sigBot(0.0);
       if (!computePlaneStressAndDefGrad(defGradBot, sigBot, K, mu)) {
-        cerr << "Normal = " << pNormal[idx] << endl;
-        cerr << "R = " << R << endl;
-        cerr << "defGradBot = " << defGradBot << endl;
-        cerr << "SigBot = " << sigBot << endl;
+        std::cerr <<  "Normal = " << pNormal[idx] << std::endl;
+        std::cerr <<  "R = " << R << std::endl;
+        std::cerr <<  "defGradBot = " << defGradBot << std::endl;
+        std::cerr <<  "SigBot = " << sigBot << std::endl;
         exit(1);
       }
 
@@ -592,7 +592,7 @@ GUVMaterial::computeStressTensor(const PatchSubset* patches,
       sigCen = R.Transpose() * sigCen * R;
       debug << "GUVMaterial::compStress:: Particle = " << idx
             << " back-rotated defGradCen_new = " << defGradCen_new
-            << " sigCen = " << sigCen << endl;
+            << " sigCen = " << sigCen << std::endl;
 
       sigTop = R.Transpose() * sigTop * R;
       sigBot = R.Transpose() * sigBot * R;
@@ -605,13 +605,13 @@ GUVMaterial::computeStressTensor(const PatchSubset* patches,
       pVolume_new[idx] = (pMass[idx] / rho_orig) * Je;
       debug << "GUVMaterial::compStress:: Particle = " << idx << " Je = " << Je
             << " mass = " << pMass[idx] << " volume = " << pVolume_new[idx]
-            << endl;
+            << std::endl;
 
       // Calculate the average stress over the thickness of the shell
       pNDotAvSig[idx] = (pNormal[idx] * sigCen) * pVolume_new[idx];
       debug << "GUVMaterial::compStress:: Particle = " << idx
             << " normal = " << pNormal[idx] << " n.sig = " << pNDotAvSig[idx]
-            << endl;
+            << std::endl;
 
       // Copy variables
       pType_new[idx] = pType[idx];
@@ -631,7 +631,7 @@ GUVMaterial::computeStressTensor(const PatchSubset* patches,
       pRotMass[idx] = pMass[idx] * h * h / 12.0;
       debug << "GUVMaterial::compStress:: Particle = " << idx
             << " pAvMoment = " << pAvMoment[idx]
-            << " pRotMass = " << pRotMass[idx] << endl;
+            << " pRotMass = " << pRotMass[idx] << std::endl;
 
       // Compute the strain energy for all the particles
       Matrix3 be = pDefGrad_new[idx] * pDefGrad_new[idx].Transpose();
@@ -665,7 +665,7 @@ GUVMaterial::addComputesRequiresRotRateUpdate(Task* task,
                                               const PatchSet*)
 {
   debug_doing << "GUVMaterial:: Adding computes/requires for rot rate Update."
-              << endl;
+              << std::endl;
   Ghost::GhostType gnone = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::OldDW, lb->delTLabel);
@@ -692,7 +692,7 @@ GUVMaterial::particleNormalRotRateUpdate(const PatchSubset* patches,
                                          DataWarehouse* old_dw,
                                          DataWarehouse* new_dw)
 {
-  debug_doing << "GUVMaterial:: computing normal rot rate Update." << endl;
+  debug_doing << "GUVMaterial:: computing normal rot rate Update." << std::endl;
 
   // Constants
   Matrix3 One;
@@ -744,13 +744,13 @@ GUVMaterial::particleNormalRotRateUpdate(const PatchSubset* patches,
       Vector rotRateTilde = pRotAcc[idx] * delT;
       debug << "GUVMaterial::RotRateUpd:: Particle = " << idx
             << " pRotAcc = " << pRotAcc[idx] << " delT = " << delT
-            << " rotRateTilde = " << rotRateTilde << endl;
+            << " rotRateTilde = " << rotRateTilde << std::endl;
 
       // Calculate the in-surface identity tensor
       Matrix3 nn(pNormal[idx], pNormal[idx]);
       Matrix3 Is = One - nn;
       debug << "GUVMaterial::RotRateUpd:: Particle = " << idx << " nn = " << nn
-            << " Is = " << Is << endl;
+            << " Is = " << Is << std::endl;
 
       // The small value of thickness requires the following
       // implicit correction step (** WARNING ** Taken from cfdlib code)
@@ -773,7 +773,7 @@ GUVMaterial::particleNormalRotRateUpdate(const PatchSubset* patches,
       debug << "GUVMaterial::RotRateUpd:: Particle = " << idx
             << " pRotRate = " << pRotRate[idx]
             << " corrRotRateTilde = " << corrRotRateTilde
-            << " pRotRate_new = " << pRotRate_new[idx] << endl;
+            << " pRotRate_new = " << pRotRate_new[idx] << std::endl;
 
       // Calculate the incremental rotation matrix and store
       Matrix3 Rinc =
@@ -883,7 +883,7 @@ GUVMaterial::computePlaneStressAndDefGrad(Matrix3& F, Matrix3& sig, double bulk,
   // Calculate Jacobian
   double J = F.Determinant();
   if (!(J > 0.0)) {
-    cerr << "GUVMaterial::** ERROR ** F = " << F << " det F = " << J << endl;
+    std::cerr <<  "GUVMaterial::** ERROR ** F = " << F << " det F = " << J << std::endl;
     return false;
   }
 

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -304,7 +304,7 @@ ElasticModuli_SupportVector::loadJSON(std::stringstream& inputStream,
   nlohmann::json doc;
   try {
     inputStream >> doc;
-  } catch (std::invalid_argument err) {
+  } catch (const std::invalid_argument& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Cannot parse support vector regression JSON file " << filename << "\n"
@@ -324,7 +324,7 @@ ElasticModuli_SupportVector::getDoubleJSON(const nlohmann::json& object,
   try {
     data = object.at(key);
     //std::cout << "Data = " << data << std::endl;
-  } catch (std::out_of_range err) {
+  } catch (const std::invalid_argument& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \"" << key << "\" not found in support vector regression JSON file "
@@ -337,7 +337,7 @@ ElasticModuli_SupportVector::getDoubleJSON(const nlohmann::json& object,
     val = data.get<double>();
     //std::cout << key << ":";
     //std::cout << val << " " << "\n";
-  } catch (std::exception err) {
+  } catch (const std::exception& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \"" << key << "\" contains data in the wrong format in JSON file "
@@ -358,7 +358,7 @@ ElasticModuli_SupportVector::getVector1dJSON(const nlohmann::json& object,
   try {
     data = object.at(key);
     //std::cout << "Data = " << data << std::endl;
-  } catch (std::out_of_range err) {
+  } catch (const std::invalid_argument& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \"" << key << "\" not found in support vector regression JSON file "
@@ -374,7 +374,7 @@ ElasticModuli_SupportVector::getVector1dJSON(const nlohmann::json& object,
     //  std::cout << val << " ";
     //}
     //std::cout << std::endl;
-  } catch (std::exception err) {
+  } catch (const std::exception& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \"" << key << "\" contains data in the wrong format in JSON file "
@@ -395,7 +395,7 @@ ElasticModuli_SupportVector::getVector2dJSON(const nlohmann::json& object,
   try {
     data = object.at(key);
     //std::cout << "Data = " << data << std::endl;
-  } catch (std::out_of_range err) {
+  } catch (const std::invalid_argument& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \"" << key << "\" not found in support vector regression JSON file "
@@ -411,7 +411,7 @@ ElasticModuli_SupportVector::getVector2dJSON(const nlohmann::json& object,
     //  std::cout << val << " ";
     //}
     //std::cout << std::endl;
-  } catch (std::exception err) {
+  } catch (const std::exception& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \"" << key << "\" contains data in the wrong format in JSON file "
@@ -449,7 +449,7 @@ ElasticModuli_SupportVector::getMatrixN1dJSON(const nlohmann::json& object,
     }
     std::cout << std::endl;
     */
-  } catch (std::exception err) {
+  } catch (const std::exception& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \"" << key << "\" contains data in the wrong format in JSON file " 
@@ -494,7 +494,7 @@ ElasticModuli_SupportVector::getMatrixN2dJSON(const nlohmann::json& object,
     }
     std::cout << std::endl;
     */
-  } catch (std::exception err) {
+  } catch (const std::exception& err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \"" << key << "\" contains data in the wrong format in JSON file "

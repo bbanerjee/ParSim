@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,63 +25,70 @@
  */
 
 #include <CCA/Components/MPM/ParticleCreator/ImplicitParticleCreator.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <Core/GeometryPiece/GeometryObject.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/AMRMPMLabel.h>
+#include <CCA/Components/MPM/Core/HydroMPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
+#include <Core/GeometryPiece/FileGeometryPiece.h>
+#include <Core/GeometryPiece/GeometryObject.h>
+#include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Grid/Box.h>
-#include <Core/Labels/MPMLabel.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/GeometryPiece/GeometryPiece.h>
-#include <Core/GeometryPiece/FileGeometryPiece.h>
 #include <algorithm>
 
 using namespace Uintah;
-using std::vector;
 using std::find;
+using std::vector;
 
 #define HEAT
-//#undef HEAT
+// #undef HEAT
 
 ImplicitParticleCreator::ImplicitParticleCreator(MPMMaterial* matl,
                                                  MPMFlags* flags)
-  :  ParticleCreator(matl,flags)
+  : ParticleCreator(matl, flags)
 {
   registerPermanentParticleState(matl);
 }
 
-ImplicitParticleCreator::~ImplicitParticleCreator()
-{
-}
+ImplicitParticleCreator::~ImplicitParticleCreator() {}
 
-void 
+void
 ImplicitParticleCreator::initializeParticle(const Patch* patch,
                                             GeometryObject* obj,
                                             MPMMaterial* matl,
-                                            Point p, IntVector cell_idx,
+                                            Point p,
+                                            IntVector cell_idx,
                                             particleIndex i,
                                             CCVariable<short int>& cellNAPI,
                                             ParticleVars& pvars)
 {
 
-  ParticleCreator::initializeParticle(patch,obj,matl,p,cell_idx,i,cellNAPI, pvars);
+  ParticleCreator::initializeParticle(patch,
+                                      obj,
+                                      matl,
+                                      p,
+                                      cell_idx,
+                                      i,
+                                      cellNAPI,
+                                      pvars);
 }
 
-
-ParticleSubset* 
-ImplicitParticleCreator::allocateVariables(particleIndex numParticles, 
-                                           int dwi,const Patch* patch,
+ParticleSubset*
+ImplicitParticleCreator::allocateVariables(particleIndex numParticles,
+                                           int dwi,
+                                           const Patch* patch,
                                            DataWarehouse* new_dw,
                                            ParticleVars& pvars)
 {
 
-  ParticleSubset* subset = ParticleCreator::allocateVariables(numParticles,
-                                                              dwi,patch,
-                                                              new_dw, pvars);
+  ParticleSubset* subset =
+    ParticleCreator::allocateVariables(numParticles, dwi, patch, new_dw, pvars);
 
   return subset;
-
 }
 
 void
@@ -89,7 +96,7 @@ ImplicitParticleCreator::registerPermanentParticleState(MPMMaterial* /*matl*/)
 
 {
 #if 0
-  vector<const VarLabel*>::iterator r3,r4;
+  std::vector<const VarLabel*>::iterator r3,r4;
 
   if(d_useLoadCurves){
     r3 = find(particle_state.begin(), particle_state.end(),

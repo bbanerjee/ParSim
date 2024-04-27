@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,685 +27,705 @@
 #ifndef VAANGO_CCA_COMPONENTS_MPM_SERIALMPM_H
 #define VAANGO_CCA_COMPONENTS_MPM_SERIALMPM_H
 
-#include <Core/Parallel/UintahParallelComponent.h>
+#include <CCA/Components/MPM/Core/MPMCommon.h>
+#include <CCA/Components/SimulationCommon/SimulationCommon.h>
+#include <Core/Grid/MaterialManagerP.h>
+
 #include <CCA/Ports/DataWarehouseP.h>
 #include <CCA/Ports/Output.h>
 #include <CCA/Ports/SimulationInterface.h>
 #include <CCA/Ports/SwitchingCriteria.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
+
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
+
 // put here to avoid template problems
+#include <CCA/Components/MPM/Contact/Contact.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
+#include <CCA/Components/MPM/GradientComputer/DeformationGradientComputer.h>
+#include <CCA/Components/MPM/PhysicalBC/LoadCurve.h>
+#include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>
+#include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
+#include <Core/Geometry/Vector.h>
+#include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
-#include <Core/Labels/MPMLabel.h>
-#include <CCA/Components/MPM/Contact/Contact.h>
-#include <CCA/Components/MPM/MPMCommon.h>
-#include <Core/Geometry/Vector.h>
-#include <CCA/Components/MPM/MPMFlags.h>
-#include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBC.h>
-#include <CCA/Components/MPM/PhysicalBC/LoadCurve.h>
-#include <CCA/Components/OnTheFlyAnalysis/AnalysisModule.h>
-#include <CCA/Components/MPM/GradientComputer/DeformationGradientComputer.h>
-#include <Core/Grid/Variables/ParticleVariable.h>
-
-
 
 namespace Uintah {
 
-  class ThermalContact;
-  class HeatConduction;
-  class AnalysisModule;
+class ThermalContact;
+class HeatConduction;
+class AnalysisModule;
+class SDInterfaceModel;
+class SDInterfaceTasks;
+class FluxBCModel;
+class CZLabel;
+class CohesiveZoneTasks;
+class ScalarDiffusionTasks;
+class HeatConductionTasks;
 
-/**************************************
+class SerialMPM
+  : public SimulationCommon
+  , public MPMCommon
+{
+public:
+  std::unique_ptr<Contact> contactModel{ nullptr };
 
-CLASS
-   SerialMPM
-   
-   Short description...
+public:
+  SerialMPM(const ProcessorGroup* myworld, const MaterialManagerP& matManager);
 
-GENERAL INFORMATION
+  ~SerialMPM() noexcept(false) override;
 
-   SerialMPM.h
+  // No copy or move allowed
+  SerialMPM(const SerialMPM&) = delete;
+  SerialMPM(SerialMPM&&)      = delete;
+  auto
+  operator=(const SerialMPM&) -> SerialMPM& = delete;
+  auto
+  operator=(SerialMPM&&) -> SerialMPM& = delete;
 
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
+  double
+  recomputeDelT(double delT) override
+  {
+    return delT * 0.1;
+  }
 
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-   
-KEYWORDS
-   SerialMPM
+  void
+  problemSetup(const ProblemSpecP& params,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid,
+               const std::string& input_ups_dir = "") override;
 
-DESCRIPTION
-   Long description...
-  
-WARNING
-  
-****************************************/
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
-  class SerialMPM : public MPMCommon, public SimulationInterface, public UintahParallelComponent {
-  public:
-    SerialMPM(const ProcessorGroup* myworld);
-    virtual ~SerialMPM();
+  void
+  scheduleInitialize(const LevelP& level, SchedulerP&) override;
 
-    Contact*         contactModel;
-    ThermalContact*  thermalContactModel;
-    HeatConduction* heatConductionModel;
- 
-    virtual void problemSetup(const ProblemSpecP& params, 
-                              const ProblemSpecP& restart_prob_spec, GridP&,
-                              SimulationStateP&);
+  void
+  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched) override;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
+  virtual void
+  scheduleDeleteGeometryObjects(const LevelP& level, SchedulerP& sched);
 
-    virtual void scheduleInitialize(const LevelP& level,
-                                    SchedulerP&);
+  void
+  scheduleComputeStableTimestep(const LevelP& level, SchedulerP&) override;
 
-    virtual void addMaterial(const ProblemSpecP& params,
-                             GridP& grid,
-                             SimulationStateP&);
+  void
+  scheduleTimeAdvance(const LevelP& level, SchedulerP&) override;
 
-    virtual void scheduleInitializeAddedMaterial(const LevelP& level, SchedulerP&);
+  void
+  scheduleRefine(const PatchSet* patches, SchedulerP& scheduler) override;
 
-    virtual void scheduleRestartInitialize(const LevelP& level,
-                                           SchedulerP& sched);
-    virtual void restartInitialize();
+  void
+  scheduleRefineInterface(const LevelP& fineLevel,
+                          SchedulerP& scheduler,
+                          bool needCoarse,
+                          bool needFine) override;
 
-    void schedulePrintParticleCount(const LevelP& level, SchedulerP& sched);
-  
-    void scheduleTotalParticleCount(SchedulerP& sched,
+  void
+  scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched) override;
+
+  /// Schedule to mark flags for AMR regridding
+  void
+  scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched) override;
+
+  /// Schedule to mark initial flags for AMR regridding
+  void
+  scheduleInitialErrorEstimate(const LevelP& coarseLevel,
+                               SchedulerP& sched) override;
+
+  void
+  scheduleSwitchTest(const LevelP& level, SchedulerP& sched) override;
+
+  void
+  setMPMLabel(MPMLabel* Mlb)
+  {
+    d_mpm_labels.reset(Mlb);
+  };
+
+  void
+  setWithICE()
+  {
+    d_mpm_flags->d_withICE = true;
+  };
+
+public:
+  enum IntegratorType
+  {
+    Explicit,
+    Implicit,
+    Fracture
+  };
+
+protected:
+  friend class MPMICE;
+  friend class SingleHydroMPM;
+
+  void
+  schedulePrintParticleCount(const LevelP& level, SchedulerP& sched);
+
+  void
+  scheduleTotalParticleCount(SchedulerP& sched,
+                             const PatchSet* patches,
+                             const MaterialSet* matls);
+
+  /*!
+   * Schedule the initialization of the stress and deformation gradient
+   * based on the body forces (which also have to be computed)
+   */
+  void
+  scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
+                                                  SchedulerP& sched);
+
+  void
+  scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched);
+
+  void
+  scheduleInitializeMomentBCs(const LevelP& level, SchedulerP& sched);
+
+  void
+  scheduleComputeParticleBodyForce(SchedulerP& sched,
+                                   const PatchSet* patches,
+                                   const MaterialSet* matls);
+
+  void
+  scheduleComputeCurrentParticleSize(SchedulerP& sched,
+                                     const PatchSet* patches,
+                                     const MaterialSet* matls);
+
+  void
+  scheduleApplyExternalLoads(SchedulerP& sched,
+                             const PatchSet* patches,
+                             const MaterialSet* matls);
+
+  virtual void
+  scheduleInterpolateParticlesToGrid(SchedulerP& sched,
+                                     const PatchSet* patches,
+                                     const MaterialSet* matls);
+
+  virtual void
+  scheduleComputeNormals(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls);
+
+  virtual void
+  scheduleFindSurfaceParticles(SchedulerP& sched,
+                               const PatchSet* patches,
+                               const MaterialSet* matls);
+
+  virtual void
+  scheduleComputeLogisticRegression(SchedulerP& sched,
                                     const PatchSet* patches,
                                     const MaterialSet* matls);
 
-    /*!
-     * Schedule the initialization of the stress and deformation gradient
-     * based on the body forces (which also have to be computed)
-     */
-    void scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level, 
-                                                         SchedulerP& sched);
-    /*!
-     * Actually initialize the body force acceleration
-     */
-    void initializeBodyForce(const ProcessorGroup* ,
-                             const PatchSubset* patches,
-                             const MaterialSubset*,
-                             DataWarehouse*,
-                             DataWarehouse* new_dw);
-    /*!
-     * Actually initialize the stress and deformation gradient assuming linear
-     * elastic behavior after computing the body force acceleration
-     *
-     * **WARNING** Assumes zero shear stresses and that body forces are aligned
-     *             with coordinate directions
-     */
-    void initializeStressAndDefGradFromBodyForce(const ProcessorGroup* ,
-                                                 const PatchSubset* patches,
-                                                 const MaterialSubset*,
-                                                 DataWarehouse*,
-                                                 DataWarehouse* new_dw);
-    virtual void scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);
+  virtual void
+  scheduleMomentumExchangeInterpolated(SchedulerP& sched,
+                                       const PatchSet* patches,
+                                       const MaterialSet* matls);
 
-    virtual void scheduleTimeAdvance(const LevelP& level, SchedulerP&);
+  virtual void
+  scheduleComputeContactArea(SchedulerP& sched,
+                             const PatchSet* patches,
+                             const MaterialSet* matls);
 
-    virtual void scheduleRefine(const PatchSet* patches, SchedulerP& scheduler);
+  virtual void
+  scheduleComputeInternalForce(SchedulerP& sched,
+                               const PatchSet* patches,
+                               const MaterialSet* matls);
 
-    virtual void scheduleRefineInterface(const LevelP& fineLevel, SchedulerP& scheduler,
-                                         bool needCoarse, bool needFine);
+  virtual void
+  scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
+                                          const PatchSet* patches,
+                                          const MaterialSet* matls);
 
-    virtual void scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched);
+  virtual void
+  scheduleMomentumExchangeIntegrated(SchedulerP& sched,
+                                     const PatchSet* patches,
+                                     const MaterialSet* matls);
 
-    /// Schedule to mark flags for AMR regridding
-    virtual void scheduleErrorEstimate(const LevelP& coarseLevel, 
-                                       SchedulerP& sched);
-  
-    /// Schedule to mark initial flags for AMR regridding
-    void scheduleInitialErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched);
+  void
+  scheduleSetGridBoundaryConditions(SchedulerP& sched,
+                                    const PatchSet* patches,
+                                    const MaterialSet* matls);
 
+  virtual void
+  scheduleSetPrescribedMotion(SchedulerP& sched,
+                              const PatchSet* patches,
+                              const MaterialSet* matls);
 
-    void setMPMLabel(MPMLabel* Mlb)
-      {
-        delete lb;
-        lb = Mlb;
-      };
+  /*!----------------------------------------------------------------------
+   * scheduleComputeXPICVelocities
+   *-----------------------------------------------------------------------*/
+  void
+  scheduleComputeXPICVelocities(SchedulerP& sched,
+                                const PatchSet* patches,
+                                const MaterialSet* matls);
 
-    void setWithICE()
-      {
-        flags->d_withICE = true;
-      };
+  void
+  scheduleReduceVars(SchedulerP& sched,
+                     const PatchSet* patches,
+                     const MaterialSet* matls);
 
-    enum IntegratorType {
-      Explicit,
-      Implicit,
-      Fracture
-    };
+  virtual void
+  scheduleInterpolateToParticlesAndUpdate(SchedulerP&,
+                                          const PatchSet*,
+                                          const MaterialSet*);
 
+  void
+  scheduleComputeDeformationGradient(SchedulerP&,
+                                     const PatchSet*,
+                                     const MaterialSet*);
 
-  protected:
-    friend class MPMICE;
- 
-    virtual void actuallyInitialize(const ProcessorGroup*,
-                                    const PatchSubset* patches,
-                                    const MaterialSubset* matls,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw);
+  virtual void
+  scheduleComputeStressTensor(SchedulerP& sched,
+                              const PatchSet* pacthes,
+                              const MaterialSet* matls);
 
-    virtual void actuallyInitializeAddedMaterial(const ProcessorGroup*,
-                                                 const PatchSubset* patches,
-                                                 const MaterialSubset* matls,
-                                                 DataWarehouse* old_dw,
-                                                 DataWarehouse* new_dw);
+  void
+  scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
+                                           const PatchSet* patches,
+                                           const MaterialSet* matls);
 
-    void printParticleCount(const ProcessorGroup*,
-                            const PatchSubset* patches,
-                            const MaterialSubset* matls,
-                            DataWarehouse* old_dw,
-                            DataWarehouse* new_dw);
-                          
-    void totalParticleCount(const ProcessorGroup*,
-                            const PatchSubset* patches,
-                            const MaterialSubset* matls,
-                            DataWarehouse* old_dw,
-                            DataWarehouse* new_dw);
+  void
+  scheduleRotateStress(SchedulerP& sched,
+                       const PatchSet* patches,
+                       const MaterialSet* matls);
 
-    //////////
-    // Initialize particle data with a default values in the
-    // new datawarehouse
-    template<typename T>
-    void setParticleDefault(ParticleVariable<T>& pvar,
-                            const VarLabel* label,
-                            ParticleSubset* pset,
-                            DataWarehouse* new_dw,
-                            const T& val);
+  void
+  scheduleComputeBasicDamage(SchedulerP&, const PatchSet*, const MaterialSet*);
 
-    void printParticleLabels(vector<const VarLabel*> label,DataWarehouse* dw,
-                             int dwi, const Patch* patch);
+  void
+  scheduleUpdateErosionParameter(SchedulerP& sched,
+                                 const PatchSet* patches,
+                                 const MaterialSet* matls);
 
-    void scheduleInitializePressureBCs(const LevelP& level, SchedulerP&);
+  void
+  scheduleFindRogueParticles(SchedulerP& sched,
+                             const PatchSet* patches,
+                             const MaterialSet* matls);
 
-    void scheduleInitializeMomentBCs(const LevelP& level, SchedulerP&);
+  void
+  scheduleComputeAccStrainEnergy(SchedulerP&,
+                                 const PatchSet*,
+                                 const MaterialSet*);
 
-    void countMaterialPointsPerLoadCurve(const ProcessorGroup*,
-                                         const PatchSubset* patches,
-                                         const MaterialSubset* matls,
-                                         DataWarehouse* old_dw,
-                                         DataWarehouse* new_dw);
+  /*! Final particle update schedule and actual */
+  virtual void
+  scheduleFinalParticleUpdate(SchedulerP& sched,
+                              const PatchSet* patches,
+                              const MaterialSet* matls);
 
-    void initializePressureBC(const ProcessorGroup*,
-                              const PatchSubset* patches,
-                              const MaterialSubset* matls,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw);
+  virtual void
+  scheduleInsertParticles(SchedulerP& sched,
+                          const PatchSet* patches,
+                          const MaterialSet* matls);
 
-    void initializeMomentBC(const ProcessorGroup*,
-                            const PatchSubset* patches,
-                            const MaterialSubset* matls,
-                            DataWarehouse* old_dw,
-                            DataWarehouse* new_dw);
+  /*! Add new particles to the simulation based on criteria TBD: */
+  virtual void
+  scheduleAddParticles(SchedulerP& sched,
+                       const PatchSet* patches,
+                       const MaterialSet* matls);
 
-    void actuallyComputeStableTimestep(const ProcessorGroup*,
-                                       const PatchSubset* patches,
-                                       const MaterialSubset* matls,
-                                       DataWarehouse* old_dw,
-                                       DataWarehouse* new_dw);
+  virtual void
+  scheduleComputeParticleScaleFactor(SchedulerP& sched,
+                                     const PatchSet* patches,
+                                     const MaterialSet* matls);
 
-    virtual void interpolateParticlesToGrid(const ProcessorGroup*,
-                                            const PatchSubset* patches,
-                                            const MaterialSubset* matls,
-                                            DataWarehouse* old_dw,
-                                            DataWarehouse* new_dw);
+  virtual void
+  scheduleParticleRelocation(SchedulerP& sched,
+                             const LevelP& level,
+                             const PatchSet* patches,
+                             const MaterialSet* matls);
 
-    virtual void computeNormals(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset* ,
-                                DataWarehouse* old_dw,
-                                DataWarehouse* new_dw);
+private:
+protected:
+  virtual void
+  actuallyInitialize(const ProcessorGroup*,
+                     const PatchSubset* patches,
+                     const MaterialSubset* matls,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw);
 
-    void findSurfaceParticles(const ProcessorGroup*,
-                              const PatchSubset* patches,
-                              const MaterialSubset* ,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw);
+  virtual void
+  restartInitialize(const ProcessorGroup*,
+                    const PatchSubset* patches,
+                    const MaterialSubset*,
+                    DataWarehouse* old_dw,
+                    DataWarehouse* new_dw);
 
-    void computeLogisticRegression(const ProcessorGroup*,
-                                   const PatchSubset* patches,
-                                   const MaterialSubset* ,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw);
+  void
+  deleteGeometryObjects(const ProcessorGroup*,
+                        const PatchSubset* patches,
+                        const MaterialSubset*,
+                        DataWarehouse*,
+                        DataWarehouse* new_dw);
 
-    virtual void addCohesiveZoneForces(const ProcessorGroup*,
-                                       const PatchSubset* patches,
-                                       const MaterialSubset* matls,
-                                       DataWarehouse* old_dw,
-                                       DataWarehouse* new_dw);
+  void
+  printParticleCount(const ProcessorGroup*,
+                     const PatchSubset* patches,
+                     const MaterialSubset* matls,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw);
 
-    void computeUnrotatedStressAndDeformationRate(const ProcessorGroup*, 
-                                                  const PatchSubset* patches,
-                                                  const MaterialSubset*, 
-                                                  DataWarehouse* old_dw,
-                                                  DataWarehouse* new_dw);
+  void
+  totalParticleCount(const ProcessorGroup*,
+                     const PatchSubset* patches,
+                     const MaterialSubset* matls,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw);
 
-    virtual void computeStressTensor(const ProcessorGroup*,
-                                     const PatchSubset* patches,
-                                     const MaterialSubset* matls,
-                                     DataWarehouse* old_dw,
-                                     DataWarehouse* new_dw);
+  /*!
+   * Actually initialize the body force acceleration
+   */
+  void
+  initializeBodyForce(const ProcessorGroup*,
+                      const PatchSubset* patches,
+                      const MaterialSubset*,
+                      DataWarehouse*,
+                      DataWarehouse* new_dw);
 
-    void computeRotatedStress(const ProcessorGroup*, 
-                              const PatchSubset* patches,
-                              const MaterialSubset*, 
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw);
+  /*!
+   * Actually initialize the stress and deformation gradient assuming linear
+   * elastic behavior after computing the body force acceleration
+   *
+   * **WARNING** Assumes zero shear stresses and that body forces are aligned
+   *             with coordinate directions
+   */
+  void
+  initializeStressAndDefGradFromBodyForce(const ProcessorGroup*,
+                                          const PatchSubset* patches,
+                                          const MaterialSubset*,
+                                          DataWarehouse*,
+                                          DataWarehouse* new_dw);
+  //////////
+  // Initialize particle data with a default values in the
+  // new datawarehouse
+  template<typename T>
+  void
+  setParticleDefault(ParticleVariable<T>& pvar,
+                     const VarLabel* label,
+                     ParticleSubset* pset,
+                     DataWarehouse* new_dw,
+                     const T& val);
 
-    /*! Compute the velocity gradient ad deformation gradient */
-    void computeDeformationGradient(const ProcessorGroup*,
-                                    const PatchSubset* patches,
-                                    const MaterialSubset* matls,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw);
+  void
+  printParticleLabels(vector<const VarLabel*> label,
+                      DataWarehouse* dw,
+                      int dwi,
+                      const Patch* patch);
 
-    /*! Compute the basic damage variables */
-    void computeBasicDamage(const ProcessorGroup*,
-                            const PatchSubset* patches,
-                            const MaterialSubset* matls,
-                            DataWarehouse* old_dw,
-                            DataWarehouse* new_dw);
-
-    /*! Update the erosion parameter if mass is to be removed */
-    void updateErosionParameter(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset* ,
-                                DataWarehouse* old_dw,
-                                DataWarehouse* new_dw);
-
-    /*! Find particles that should be deleted */
-    void findRogueParticles(const ProcessorGroup*,
-                            const PatchSubset* patches,
-                            const MaterialSubset* ,
-                            DataWarehouse* old_dw,
-                            DataWarehouse* new_dw);
-
-    //////////
-    // Compute Accumulated Strain Energy
-    void computeAccStrainEnergy(const ProcessorGroup*,
-                                const PatchSubset*,
-                                const MaterialSubset*,
-                                DataWarehouse* old_dw,
-                                DataWarehouse* new_dw);
-
-    virtual void computeContactArea(const ProcessorGroup*,
-                                    const PatchSubset* patches,
-                                    const MaterialSubset* matls,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw);
-  
-    virtual void computeInternalForce(const ProcessorGroup*,
-                                      const PatchSubset* patches,
-                                      const MaterialSubset* matls,
-                                      DataWarehouse* old_dw,
-                                      DataWarehouse* new_dw);
-
-    virtual void computeAndIntegrateAcceleration(const ProcessorGroup*,
-                                                 const PatchSubset* patches,
-                                                 const MaterialSubset* matls,
-                                                 DataWarehouse* old_dw,
-                                                 DataWarehouse* new_dw);
-
-    void setGridBoundaryConditions(const ProcessorGroup*,
-                                   const PatchSubset* patches,
-                                   const MaterialSubset* ,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw);
-
-    /*!  Compute body forces for each particle.  Needed for rotating 
-      objects */
-    void computeParticleBodyForce(const ProcessorGroup*,
+  void
+  countMaterialPointsPerLoadCurve(const ProcessorGroup*,
                                   const PatchSubset* patches,
-                                  const MaterialSubset* ,
+                                  const MaterialSubset* matls,
                                   DataWarehouse* old_dw,
                                   DataWarehouse* new_dw);
 
-    //////////
-    // This task is to be used for setting particle external force
-    // and external heat rate.  I'm creating a separate task so that
-    // user defined schemes for setting these can be implemented without
-    // editing the core routines
-    void applyExternalLoads(const ProcessorGroup*,
+  void
+  initializePressureBC(const ProcessorGroup*,
+                       const PatchSubset* patches,
+                       const MaterialSubset* matls,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw);
+
+  void
+  initializeMomentBC(const ProcessorGroup*,
+                     const PatchSubset* patches,
+                     const MaterialSubset* matls,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw);
+
+  void
+  actuallyComputeStableTimestep(const ProcessorGroup*,
+                                const PatchSubset* patches,
+                                const MaterialSubset* matls,
+                                DataWarehouse* old_dw,
+                                DataWarehouse* new_dw);
+
+  virtual void
+  interpolateParticlesToGrid(const ProcessorGroup*,
+                             const PatchSubset* patches,
+                             const MaterialSubset* matls,
+                             DataWarehouse* old_dw,
+                             DataWarehouse* new_dw);
+
+  virtual void
+  computeNormals(const ProcessorGroup*,
+                 const PatchSubset* patches,
+                 const MaterialSubset*,
+                 DataWarehouse* old_dw,
+                 DataWarehouse* new_dw);
+
+  void
+  findSurfaceParticles(const ProcessorGroup*,
+                       const PatchSubset* patches,
+                       const MaterialSubset*,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw);
+
+  void
+  computeLogisticRegression(const ProcessorGroup*,
                             const PatchSubset* patches,
-                            const MaterialSubset* ,
+                            const MaterialSubset*,
                             DataWarehouse* old_dw,
                             DataWarehouse* new_dw);
 
-    void addNewParticles(const ProcessorGroup*,
+  void
+  computeUnrotatedStressAndDeformationRate(const ProcessorGroup*,
+                                           const PatchSubset* patches,
+                                           const MaterialSubset*,
+                                           DataWarehouse* old_dw,
+                                           DataWarehouse* new_dw);
+
+  virtual void
+  computeStressTensor(const ProcessorGroup*,
+                      const PatchSubset* patches,
+                      const MaterialSubset* matls,
+                      DataWarehouse* old_dw,
+                      DataWarehouse* new_dw);
+
+  void
+  computeRotatedStress(const ProcessorGroup*,
+                       const PatchSubset* patches,
+                       const MaterialSubset*,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw);
+
+  /*! Compute the velocity gradient ad deformation gradient */
+  void
+  computeDeformationGradient(const ProcessorGroup*,
+                             const PatchSubset* patches,
+                             const MaterialSubset* matls,
+                             DataWarehouse* old_dw,
+                             DataWarehouse* new_dw);
+
+  /*! Compute the basic damage variables */
+  void
+  computeBasicDamage(const ProcessorGroup*,
+                     const PatchSubset* patches,
+                     const MaterialSubset* matls,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw);
+
+  /*! Update the erosion parameter if mass is to be removed */
+  void
+  updateErosionParameter(const ProcessorGroup*,
                          const PatchSubset* patches,
-                         const MaterialSubset* matls,
+                         const MaterialSubset*,
                          DataWarehouse* old_dw,
                          DataWarehouse* new_dw);
 
+  /*! Find particles that should be deleted */
+  void
+  findRogueParticles(const ProcessorGroup*,
+                     const PatchSubset* patches,
+                     const MaterialSubset*,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw);
 
-    /*!  Convert the localized particles into particles of a new material
-      with a different velocity field */
-    void convertLocalizedParticles(const ProcessorGroup*,
-                                   const PatchSubset* patches,
-                                   const MaterialSubset* matls,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw);
+  //////////
+  // Compute Accumulated Strain Energy
+  void
+  computeAccStrainEnergy(const ProcessorGroup*,
+                         const PatchSubset*,
+                         const MaterialSubset*,
+                         DataWarehouse* old_dw,
+                         DataWarehouse* new_dw);
 
-    virtual void interpolateToParticlesAndUpdate(const ProcessorGroup*,
-                                                 const PatchSubset* patches,
-                                                 const MaterialSubset* matls,
-                                                 DataWarehouse* old_dw,
-                                                 DataWarehouse* new_dw);
+  virtual void
+  computeContactArea(const ProcessorGroup*,
+                     const PatchSubset* patches,
+                     const MaterialSubset* matls,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw);
 
+  virtual void
+  computeInternalForce(const ProcessorGroup*,
+                       const PatchSubset* patches,
+                       const MaterialSubset* matls,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw);
 
-    /*! Final particle update schedule and actual */
-    virtual void scheduleFinalParticleUpdate(SchedulerP&, 
-                                             const PatchSet*,
-                                             const MaterialSet*);
-    virtual void finalParticleUpdate(const ProcessorGroup*,
-                                     const PatchSubset* patches,
-                                     const MaterialSubset* matls,
-                                     DataWarehouse* old_dw,
-                                     DataWarehouse* new_dw);
+  virtual void
+  computeAndIntegrateAcceleration(const ProcessorGroup*,
+                                  const PatchSubset* patches,
+                                  const MaterialSubset* matls,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw);
 
-    virtual void updateCohesiveZones(const ProcessorGroup*,
-                                     const PatchSubset* patches,
-                                     const MaterialSubset* matls,
-                                     DataWarehouse* old_dw,
-                                     DataWarehouse* new_dw);
+  void
+  setGridBoundaryConditions(const ProcessorGroup*,
+                            const PatchSubset* patches,
+                            const MaterialSubset*,
+                            DataWarehouse* old_dw,
+                            DataWarehouse* new_dw);
 
-    virtual void setPrescribedMotion(const ProcessorGroup*,
-                                     const PatchSubset* patches,
-                                     const MaterialSubset* matls,
-                                     DataWarehouse* old_dw,
-                                     DataWarehouse* new_dw);
+  /*!  Compute body forces for each particle.  Needed for rotating
+    objects */
+  void
+  computeParticleBodyForce(const ProcessorGroup*,
+                           const PatchSubset* patches,
+                           const MaterialSubset*,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw);
 
-    //////////
-    // Allow blocks of particles to be moved according to a prescribed schedule:
-    virtual void insertParticles(const ProcessorGroup*,
-                                 const PatchSubset* patches,
-                                 const MaterialSubset* matls,
-                                 DataWarehouse* old_dw,
-                                 DataWarehouse* new_dw);
+  //////////
+  // This task is to be used for setting particle external force
+  // and external heat rate.  I'm creating a separate task so that
+  // user defined schemes for setting these can be implemented without
+  // editing the core routines
+  void
+  applyExternalLoads(const ProcessorGroup*,
+                     const PatchSubset* patches,
+                     const MaterialSubset*,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw);
 
-    /*! Add new particles to the simulation based on criteria TBD: */
-    virtual void scheduleAddParticles(SchedulerP&, 
-                                      const PatchSet*,
-                                      const MaterialSet*);
-    virtual void addParticles(const ProcessorGroup*,
-                              const PatchSubset* patches,
-                              const MaterialSubset* matls,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw);
+  void
+  computeCurrentParticleSize(const ProcessorGroup*,
+                             const PatchSubset* patches,
+                             const MaterialSubset*,
+                             DataWarehouse* old_dw,
+                             DataWarehouse* new_dw);
 
-    // Used to compute the particles initial physical size
-    // for use in deformed particle visualization
-    virtual void computeParticleScaleFactor(const ProcessorGroup*,
-                                            const PatchSubset* patches,
-                                            const MaterialSubset* matls,
-                                            DataWarehouse* old_dw,
-                                            DataWarehouse* new_dw);
+  virtual void
+  interpolateToParticlesAndUpdate(const ProcessorGroup*,
+                                  const PatchSubset* patches,
+                                  const MaterialSubset* matls,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw);
 
-    void refine(const ProcessorGroup*,
+  virtual void
+  finalParticleUpdate(const ProcessorGroup*,
+                      const PatchSubset* patches,
+                      const MaterialSubset* matls,
+                      DataWarehouse* old_dw,
+                      DataWarehouse* new_dw);
+
+  virtual void
+  setPrescribedMotion(const ProcessorGroup*,
+                      const PatchSubset* patches,
+                      const MaterialSubset* matls,
+                      DataWarehouse* old_dw,
+                      DataWarehouse* new_dw);
+
+  //////////
+  // Allow blocks of particles to be moved according to a prescribed schedule:
+  virtual void
+  insertParticles(const ProcessorGroup*,
+                  const PatchSubset* patches,
+                  const MaterialSubset* matls,
+                  DataWarehouse* old_dw,
+                  DataWarehouse* new_dw);
+
+  virtual void
+  addParticles(const ProcessorGroup*,
+               const PatchSubset* patches,
+               const MaterialSubset* matls,
+               DataWarehouse* old_dw,
+               DataWarehouse* new_dw);
+
+  // Used to compute the particles initial physical size
+  // for use in deformed particle visualization
+  virtual void
+  computeParticleScaleFactor(const ProcessorGroup*,
+                             const PatchSubset* patches,
+                             const MaterialSubset* matls,
+                             DataWarehouse* old_dw,
+                             DataWarehouse* new_dw);
+
+  void
+  refine(const ProcessorGroup*,
+         const PatchSubset* patches,
+         const MaterialSubset* matls,
+         DataWarehouse*,
+         DataWarehouse* new_dw);
+
+  void
+  errorEstimate(const ProcessorGroup*,
                 const PatchSubset* patches,
                 const MaterialSubset* matls,
                 DataWarehouse*,
                 DataWarehouse* new_dw);
 
-    void errorEstimate(const ProcessorGroup*,
+  void
+  initialErrorEstimate(const ProcessorGroup*,
                        const PatchSubset* patches,
                        const MaterialSubset* matls,
                        DataWarehouse*,
                        DataWarehouse* new_dw);
 
-    void initialErrorEstimate(const ProcessorGroup*,
+  /*!----------------------------------------------------------------------
+   * computeParticleVelocityXPIC
+   *-----------------------------------------------------------------------*/
+  void
+  computeParticleVelocityXPIC(const ProcessorGroup*,
                               const PatchSubset* patches,
-                              const MaterialSubset* matls,
-                              DataWarehouse*,
+                              const MaterialSubset*,
+                              DataWarehouse* old_dw,
                               DataWarehouse* new_dw);
+  /*!----------------------------------------------------------------------
+   * computeGridVelocityXPIC
+   *-----------------------------------------------------------------------*/
+  void
+  computeGridVelocityXPIC(const ProcessorGroup*,
+                          const PatchSubset* patches,
+                          const MaterialSubset*,
+                          DataWarehouse* old_dw,
+                          DataWarehouse* new_dw);
 
-    virtual void scheduleInterpolateParticlesToGrid(SchedulerP&, const PatchSet*,
-                                                    const MaterialSet*);
+  void
+  readPrescribedDeformations(string filename);
 
-    virtual void scheduleComputeNormals(SchedulerP& sched,
-                                        const PatchSet* patches,
-                                        const MaterialSet* matls );
+  void
+  readInsertParticlesFile(string filename);
 
-    virtual void scheduleFindSurfaceParticles(SchedulerP& sched,
-                                              const PatchSet* patches,
-                                              const MaterialSet* matls );
+protected:
+  double d_nextOutputTime{ 0.0 };
+  double d_SMALL_NUM_MPM{ 1.0e-200 };
+  int d_numGhostParticles{ 1 }; // Number of ghost particles needed.
+  int d_numGhostNodes{ 1 };     // Number of ghost nodes     needed.
+  bool d_fracture{ false };
+  bool d_recompile{ false };
+  bool d_isRestart{ false };
 
-    virtual void scheduleComputeLogisticRegression(SchedulerP& sched,
-                                                   const PatchSet* patches,
-                                                   const MaterialSet* matls );
+  IntegratorType d_integrator;
+  MaterialSubset* d_loadCurveIndex{ nullptr };
 
-    virtual void scheduleAddCohesiveZoneForces(SchedulerP&, 
-                                               const PatchSet*,
-                                               const MaterialSubset*,
-                                               const MaterialSubset*,
-                                               const MaterialSet*);
+  std::unique_ptr<MPMLabel> d_mpm_labels{ nullptr };
+  std::unique_ptr<CZLabel> d_czLabels{ nullptr };
+  std::unique_ptr<MPMFlags> d_mpm_flags{ nullptr };
 
-    virtual void scheduleComputeHeatExchange(SchedulerP&, const PatchSet*,
-                                             const MaterialSet*);
+  std::unique_ptr<DeformationGradientComputer> d_defGradComputer{ nullptr };
+  std::unique_ptr<CohesiveZoneTasks> d_cohesiveZoneTasks{ nullptr };
+  std::unique_ptr<ScalarDiffusionTasks> d_diffusionTasks{ nullptr };
+  std::unique_ptr<HeatConductionTasks> d_heatConductionTasks{ nullptr };
+  std::vector<std::unique_ptr<AnalysisModule>> d_analysisModules;
 
-    virtual void scheduleExMomInterpolated(SchedulerP&, const PatchSet*,
-                                           const MaterialSet*);
+  // Ports
+  SwitchingCriteria* d_switchCriteria{ nullptr };
 
-    void scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
-                                                  const PatchSet* patches,
-                                                  const MaterialSet* matls);
+  std::list<Patch::FaceType>
+    d_boundaryTractionFaces; // list of xminus, xplus, yminus, ...
+  std::vector<MPMPhysicalBC*> d_physicalBCs;
 
-    virtual void scheduleComputeStressTensor(SchedulerP&, const PatchSet*,
-                                             const MaterialSet*);
+  std::vector<double> d_prescribedTimes; // These three are used only if
+  std::vector<double> d_prescribedAngle; // d_prescribeDeformation
+  std::vector<Vector>
+    d_prescribedRotationAxis; // is "true".  It is "false" by default.
+  std::vector<Matrix3> d_prescribedF;
 
-    void scheduleRotateStress(SchedulerP& sched,
-                              const PatchSet* patches,
-                              const MaterialSet* matls);
-  
-    /*!----------------------------------------------------------------------
-     * scheduleComputeXPICVelocities
-     *-----------------------------------------------------------------------*/
-    void scheduleComputeXPICVelocities(SchedulerP& sched,
-                                       const PatchSet* patches,
-                                       const MaterialSet* matls);
-    /*!----------------------------------------------------------------------
-     * computeParticleVelocityXPIC
-     *-----------------------------------------------------------------------*/
-    void computeParticleVelocityXPIC(const ProcessorGroup*,
-                                     const PatchSubset* patches,
-                                     const MaterialSubset* ,
-                                     DataWarehouse* old_dw,
-                                     DataWarehouse* new_dw);
-    /*!----------------------------------------------------------------------
-     * computeGridVelocityXPIC
-     *-----------------------------------------------------------------------*/
-    void computeGridVelocityXPIC(const ProcessorGroup*,
-                                 const PatchSubset* patches,
-                                 const MaterialSubset* ,
-                                 DataWarehouse* old_dw,
-                                 DataWarehouse* new_dw);
+  // The following are used iff the d_insertParticles flag is true.
+  std::vector<double> d_IPTimes;
+  std::vector<double> d_IPColor;
+  std::vector<Vector> d_IPTranslate;
+  std::vector<Vector> d_IPVelNew;
+};
 
-    void scheduleComputeDeformationGradient(SchedulerP&, const PatchSet*,
-                                            const MaterialSet*);
-  
-    void scheduleComputeBasicDamage(SchedulerP&, const PatchSet*,
-                                    const MaterialSet*);
-
-    void scheduleUpdateErosionParameter(SchedulerP& sched,
-                                        const PatchSet* patches,
-                                        const MaterialSet* matls);
-
-    void scheduleFindRogueParticles(SchedulerP& sched,
-                                    const PatchSet* patches,
-                                    const MaterialSet* matls);
-
-    void scheduleComputeAccStrainEnergy(SchedulerP&, const PatchSet*,
-                                        const MaterialSet*);
-
-    virtual void scheduleComputeContactArea(SchedulerP&, const PatchSet*,
-                                            const MaterialSet*);
-  
-    virtual void scheduleComputeInternalForce(SchedulerP&, const PatchSet*,
-                                              const MaterialSet*);
-
-    virtual void scheduleComputeInternalHeatRate(SchedulerP&, const PatchSet*,
-                                                 const MaterialSet*);
-                                          
-    virtual void scheduleComputeNodalHeatFlux(SchedulerP&, const PatchSet*,
-                                              const MaterialSet*);
-
-    virtual void scheduleSolveHeatEquations(SchedulerP&, const PatchSet*,
-                                            const MaterialSet*);
-
-    virtual void scheduleComputeAndIntegrateAcceleration(SchedulerP&,
-                                                         const PatchSet*,
-                                                         const MaterialSet*);
-
-    virtual void scheduleIntegrateTemperatureRate(SchedulerP&, const PatchSet*,
-                                                  const MaterialSet*);
-
-    virtual void scheduleExMomIntegrated(SchedulerP&, const PatchSet*,
-                                         const MaterialSet*);
-
-    void scheduleSetGridBoundaryConditions(SchedulerP&, const PatchSet*,
-                                           const MaterialSet* matls);
-                                                 
-    void scheduleComputeParticleBodyForce(SchedulerP&, const PatchSet*,
-                                          const MaterialSet*);
-
-    void scheduleApplyExternalLoads(SchedulerP&, const PatchSet*,
-                                    const MaterialSet*);
-
-    virtual void scheduleInterpolateToParticlesAndUpdate(SchedulerP&, 
-                                                         const PatchSet*,
-                                                         const MaterialSet*);
-
-    virtual void scheduleUpdateCohesiveZones(SchedulerP&, 
-                                             const PatchSet*,
-                                             const MaterialSubset*,
-                                             const MaterialSubset*,
-                                             const MaterialSet*);
-
-    virtual void scheduleSetPrescribedMotion(SchedulerP&, 
-                                             const PatchSet*,
-                                             const MaterialSet*);
-
-    void scheduleAddNewParticles(SchedulerP&, const PatchSet*,const MaterialSet*);
-
-    void scheduleConvertLocalizedParticles(SchedulerP&, const PatchSet*,
-                                           const MaterialSet*);
-
-    void scheduleCheckNeedAddMPMMaterial(SchedulerP&,
-                                         const PatchSet* patches,
-                                         const MaterialSet*);
-
-    virtual void scheduleInterpolateToParticlesAndUpdateMom1(SchedulerP&, 
-                                                             const PatchSet*,
-                                                             const MaterialSet*);
-
-    virtual void scheduleInterpolateParticleVelToGridMom(SchedulerP&, 
-                                                         const PatchSet*,
-                                                         const MaterialSet*);
-
-    virtual void scheduleInterpolateToParticlesAndUpdateMom2(SchedulerP&, 
-                                                             const PatchSet*,
-                                                             const MaterialSet*);
-
-    virtual void scheduleInsertParticles(SchedulerP&, 
-                                         const PatchSet*,
-                                         const MaterialSet*);
-
-    virtual void scheduleComputeParticleScaleFactor(SchedulerP&, 
-                                                    const PatchSet*,
-                                                    const MaterialSet*);
-
-    virtual void interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
-                                                     const PatchSubset* patches,
-                                                     const MaterialSubset* matls,
-                                                     DataWarehouse* old_dw,
-                                                     DataWarehouse* new_dw);
-
-    virtual void interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
-                                                     const PatchSubset* patches,
-                                                     const MaterialSubset* matls,
-                                                     DataWarehouse* old_dw,
-                                                     DataWarehouse* new_dw);
-
-    virtual void interpolateParticleVelToGridMom(const ProcessorGroup*,
-                                                 const PatchSubset* patches,
-                                                 const MaterialSubset* matls,
-                                                 DataWarehouse* old_dw,
-                                                 DataWarehouse* new_dw);
-
-    void checkNeedAddMPMMaterial(const ProcessorGroup*,
-                                 const PatchSubset* patches,
-                                 const MaterialSubset* matls,
-                                 DataWarehouse* old_dw,
-                                 DataWarehouse* new_dw);
-
-    void scheduleSetNeedAddMaterialFlag(SchedulerP&,
-                                        const LevelP& level,
-                                        const MaterialSet*);
-  
-  
-    void setNeedAddMaterialFlag(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset* matls,
-                                DataWarehouse*,
-                                DataWarehouse*);
-  
-    bool needRecompile(double time, double dt,
-                       const GridP& grid);
-
-    void readPrescribedDeformations(string filename);
-
-    void readInsertParticlesFile(string filename);
-  
-    virtual void scheduleSwitchTest(const LevelP& level, SchedulerP& sched);
-                   
-
-  
-    SimulationStateP d_sharedState;
-    MPMLabel* lb;
-    MPMFlags* flags;
-    Output* dataArchiver;
-    DeformationGradientComputer* d_defGradComputer;
-
-    double           d_nextOutputTime;
-    double           d_SMALL_NUM_MPM;
-    int              NGP;      // Number of ghost particles needed.
-    int              NGN;      // Number of ghost nodes     needed.
-  
-    std::list<Patch::FaceType>  d_boundaryTractionFaces; // list of xminus, xplus, yminus, ...
-    std::vector<MPMPhysicalBC*> d_physicalBCs;
-
-    std::vector<double>   d_prescribedTimes;    // These three are used only if
-    std::vector<double>  d_prescribedAngle;  // d_prescribeDeformation
-    std::vector<Vector>  d_prescribedRotationAxis; // is "true".  It is "false" by default.
-    std::vector<Matrix3>  d_prescribedF;
-
-    // The following are used iff the d_insertParticles flag is true.
-    std::vector<double> d_IPTimes;
-    std::vector<double> d_IPColor;
-    std::vector<Vector> d_IPTranslate;
-    std::vector<Vector> d_IPVelNew;
-
-    bool             d_fracture;
-    bool             d_recompile;
-    IntegratorType   d_integrator;
-    MaterialSubset*  d_loadCurveIndex;
-  
-    std::vector<AnalysisModule*> d_analysisModules;
-    SwitchingCriteria* d_switchCriteria;
-  
-  private:
-
-    SerialMPM(const SerialMPM&);
-    SerialMPM& operator=(const SerialMPM&);
-  };
-      
 } // end namespace Uintah
 
 #endif

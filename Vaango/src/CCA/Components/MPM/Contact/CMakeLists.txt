@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -23,20 +23,35 @@
 # IN THE SOFTWARE.
 #
 
-SET(Vaango_CCA_Components_MPM_SRCS
-  ${Vaango_CCA_Components_MPM_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/SpecifiedBodyContact.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/SingleVelContact.cc 
+SET(Vaango_CCA_Components_MPM_Contact_SRCS
+  ${CMAKE_CURRENT_SOURCE_DIR}/Contact.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/CompositeContact.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ContactMaterialSpec.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ApproachContact.cc  
+  ${CMAKE_CURRENT_SOURCE_DIR}/FluidContact.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/FrictionContact.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/FrictionContactBard.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/FrictionContactLR.cc  
+  ${CMAKE_CURRENT_SOURCE_DIR}/FrictionContactLRGuilkey.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/NodalSVFContact.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ApproachContact.cc  
-  ${CMAKE_CURRENT_SOURCE_DIR}/ContactFactory.cc   
-  ${CMAKE_CURRENT_SOURCE_DIR}/CompositeContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/NullContact.cc      
-  ${CMAKE_CURRENT_SOURCE_DIR}/ContactMaterialSpec.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Contact.cc
-  PARENT_SCOPE
+  ${CMAKE_CURRENT_SOURCE_DIR}/SpecifiedBodyContact.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/SpecifiedBodyFrictionContact.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/SingleVelContact.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ContactFactory.cc   
 )
 
+set(LIBS
+    ${LIBS}
+    Vaango_Core_OS
+    MPM_Core
+   )
+
+add_library(MPM_Contact 
+            ${Vaango_CCA_Components_MPM_Contact_SRCS})
+
+target_link_libraries(MPM_Contact ${LIBS})
+
+IF(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_MPM_Contact)
+ENDIF(BUILD_SHARED_LIBS)

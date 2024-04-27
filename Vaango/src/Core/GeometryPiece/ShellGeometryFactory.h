@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,17 +31,17 @@
 
 namespace Uintah {
 
-  class GeometryPiece;
+class GeometryPiece;
 
-  class ShellGeometryFactory
-  {
-  public:
-    // This function has a switch for all shell go_types It returns a
-    // pointer to the piece that it creates, NULL if does not know how
-    // to create the piece.
-    static GeometryPiece * create( ProblemSpecP& ps );
-  };
+class ShellGeometryFactory {
+ public:
+  // This function has a switch for all shell go_types It returns a
+  // pointer to the piece that it creates, nullptr if does not know how
+  // to create the piece.
+  static GeometryPieceP
+  create(ProblemSpecP& ps);
+};
 
-} // End namespace Uintah
+}  // End namespace Uintah
 
 #endif /* __SHELL_GEOM_FACTORY_H__ */

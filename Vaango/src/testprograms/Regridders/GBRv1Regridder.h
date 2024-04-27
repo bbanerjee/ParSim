@@ -67,15 +67,15 @@ Region GBRv1Regridder::computeBounds(std::list<IntVector> &flags)
   if(flags.size()==0)
     bounds=Region(IntVector(INT_MAX,INT_MAX,INT_MAX),IntVector(INT_MIN,INT_MIN,INT_MIN));
 
-  //cout << getpid() << " local flags: " << endl;
+  //cout << getpid() << " local flags: " << std::endl;
   //for(std::list<IntVector>::iterator iter=flags.begin();iter!=flags.end();iter++)
-  //  cout << "      " << getpid() << " " << *iter << endl;
-  //cout << getpid() << " local bounds: " << bounds << endl;
+  //  std::cout << "      " << getpid() << " " << *iter << std::endl;
+  //cout << getpid() << " local bounds: " << bounds << std::endl;
  
   Region gbounds;
   //all reduce bounds
-  MPI_Allreduce(&bounds,&gbounds,sizeof(Region),MPI_BYTE,BOUNDS_OP,MPI_COMM_WORLD);
-  //cout << getpid() << " global bounds: " << bounds << endl;
+  Uintah::MPI::Allreduce(&bounds,&gbounds,sizeof(Region),MPI_BYTE,BOUNDS_OP,MPI_COMM_WORLD);
+  //cout << getpid() << " global bounds: " << bounds << std::endl;
   return gbounds;
 }
     
@@ -85,8 +85,8 @@ int GBRv1Regridder::computeNumFlags(std::list<IntVector> &flags)
   unsigned int ngflags;
   
   //all reduce bounds
-  MPI_Allreduce(&nflags,&ngflags,1,MPI_UNSIGNED,MPI_SUM,MPI_COMM_WORLD);
-  //cout << " num local flags: " << nflags << " global: " << ngflags << endl;
+  Uintah::MPI::Allreduce(&nflags,&ngflags,1,MPI_UNSIGNED,MPI_SUM,MPI_COMM_WORLD);
+  //cout << " num local flags: " << nflags << " global: " << ngflags << std::endl;
   return ngflags;
 }
     
@@ -100,7 +100,7 @@ void GBRv1Regridder::computeHistogram(std::list<IntVector> &flags, const Region 
   for(size_t d=0;d<hist.size();d++)
   {
     hist[d].resize(lhist[d].size());
-    MPI_Allreduce(&lhist[d][0],&hist[d][0],lhist[d].size(),MPI_UNSIGNED,MPI_SUM,MPI_COMM_WORLD);
+    Uintah::MPI::Allreduce(&lhist[d][0],&hist[d][0],lhist[d].size(),MPI_UNSIGNED,MPI_SUM,MPI_COMM_WORLD);
   }
 }
 

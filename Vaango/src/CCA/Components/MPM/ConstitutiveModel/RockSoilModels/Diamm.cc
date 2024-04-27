@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,7 +37,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -86,7 +86,7 @@ void DMMRXV(double UI[], double UJ[], double UK[], int& nx, char* namea[],
 
 // End fortran functions.
 ////////////////////////////////////////////////////////////////////////////////
-using namespace std;
+
 using namespace Uintah;
 
 Diamm::Diamm(ProblemSpecP& ps, MPMFlags* Mflag)
@@ -119,7 +119,7 @@ Diamm::Diamm(ProblemSpecP& ps, MPMFlags* Mflag)
   DMMRXV(UI, UI, UI, nx, namea, keya, rinit, rdim, iadvct, itype);
 
   d_NINSV = nx;
-  //  cout << "d_NINSV = " << d_NINSV << endl;
+  //  std::cout << "d_NINSV = " << d_NINSV << std::endl;
 
   initializeLocalMPMLabels();
 }
@@ -213,10 +213,10 @@ Diamm::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("DC13", UI[dcprop + 13]); //
 }
 
-Diamm*
+std::unique_ptr<ConstitutiveModel>
 Diamm::clone()
 {
-  return scinew Diamm(*this);
+  return std::make_unique<Diamm>(*this);
 }
 
 void
@@ -231,7 +231,7 @@ Diamm::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
   std::vector<ParticleVariable<double>> ISVs(d_NINSV + 1);
 
-  cout << "In initializeCMData" << endl;
+  std::cout << "In initializeCMData" << std::endl;
   for (int i = 0; i < d_NINSV; i++) {
     new_dw->allocateAndPut(ISVs[i], ISVLabels[i], pset);
     ParticleSubset::iterator iter = pset->begin();
@@ -304,12 +304,12 @@ Diamm::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   Vector dx = patch->dCell();
   int dwi = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
 
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
@@ -318,10 +318,10 @@ Diamm::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   double G = UI[3];
   for (int idx : *pset) {
     // Compute wave speed at each particle, store the maximum
-    c_dil = sqrt((bulk + 4. * G / 3.) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    c_dil = sqrt((bulk + 4. * G / 3.) * pVolume[idx] / pMass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pVelocity[idx].z()), WaveSpeed.z()));
   }
   // UI[14]=matl->getInitialDensity();
   // UI[15]=matl->getRoomTemperature();
@@ -342,9 +342,9 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     Matrix3 pDefGradInc, Identity, zero(0.), One(1.);
     double c_dil = 0.0;
@@ -360,10 +360,10 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
     constParticleVariable<Point> px;
     constParticleVariable<Matrix3> pDefGrad, pstress;
     ParticleVariable<Matrix3> pstress_new;
-    constParticleVariable<double> pmass, pvolume, ptemperature;
-    constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
-    constNCVariable<Vector> gvelocity;
+    constParticleVariable<double> pMass, pVolume, ptemperature;
+    constParticleVariable<Vector> pVelocity;
+    constParticleVariable<Matrix3> pSize;
+    constNCVariable<Vector> gVelocity;
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
@@ -371,16 +371,16 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
 
     old_dw->get(px, lb->pXLabel, pset);
     old_dw->get(pstress, lb->pStressLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(pvolume, lb->pVolumeLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
+    old_dw->get(pVolume, lb->pVolumeLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(ptemperature, lb->pTemperatureLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
-    constParticleVariable<double> pvolume_new;
+    constParticleVariable<double> pVolume_new;
     constParticleVariable<Matrix3> velGrad, pDefGrad_new;
-    new_dw->get(pvolume_new, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
@@ -389,7 +389,7 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
       old_dw->get(ISVs[i], ISVLabels[i], pset);
     }
 
-    new_dw->get(gvelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
+    new_dw->get(gVelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
 
     ParticleVariable<double> pdTdt, p_q;
 
@@ -416,16 +416,16 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
       double J = pDefGrad_new[idx].Determinant();
       // Check 1: Look at Jacobian
       if (!(J > 0.0)) {
-        cerr << getpid();
+        std::cerr <<  getpid();
         constParticleVariable<long64> pParticleID;
         old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
-        cerr << "**ERROR** Negative Jacobian of deformation gradient"
-             << " in particle " << pParticleID[idx] << endl;
-        cerr << "l = " << velGrad[idx] << endl;
-        cerr << "F_old = " << pDefGrad[idx] << endl;
-        cerr << "F_inc = " << pDefGradInc << endl;
-        cerr << "F_new = " << pDefGrad_new[idx] << endl;
-        cerr << "J = " << J << endl;
+        std::cerr <<  "**ERROR** Negative Jacobian of deformation gradient"
+             << " in particle " << pParticleID[idx] << std::endl;
+        std::cerr <<  "l = " << velGrad[idx] << std::endl;
+        std::cerr <<  "F_old = " << pDefGrad[idx] << std::endl;
+        std::cerr <<  "F_inc = " << pDefGradInc << std::endl;
+        std::cerr <<  "F_new = " << pDefGrad_new[idx] << std::endl;
+        std::cerr <<  "J = " << J << std::endl;
         throw InternalError("Negative Jacobian", __FILE__, __LINE__);
       }
 
@@ -494,7 +494,7 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
       pstress_new[idx] = (tensorR * tensorSig) * (tensorR.Transpose());
 
 #if 0
-      cout << pstress_new[idx] << endl;
+      std::cout << pstress_new[idx] << std::endl;
 #endif
 
       c_dil = sqrt(USM / rho_cur);
@@ -506,15 +506,15 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
                   D(2, 2) * AvgStress(2, 2) +
                   2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
                         D(1, 2) * AvgStress(1, 2))) *
-                 pvolume_new[idx] * delT;
+                 pVolume_new[idx] * delT;
 
       se += e;
 
       // Compute wave speed at each particle, store the maximum
-      Vector pvelocity_idx = pvelocity[idx];
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
+      Vector pVelocity_idx = pVelocity[idx];
+      WaveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pVelocity_idx.y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pVelocity_idx.z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {
@@ -582,7 +582,7 @@ Diamm::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
 
-  cout << "In add InitialComputesAnd" << endl;
+  std::cout << "In add InitialComputesAnd" << std::endl;
 
   // Other constitutive model and input dependent computes and requires
   for (int i = 0; i < d_NINSV; i++) {
@@ -628,7 +628,7 @@ Diamm::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 1
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Diamm" << endl;
+  std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Diamm" << std::endl;
 #endif
 }
 
@@ -647,7 +647,7 @@ Diamm::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
   tmp = bulk / rho_cur; // speed of sound squared
 
 #if 1
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Diamm" << endl;
+  std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Diamm" << std::endl;
 #endif
 }
 
@@ -716,7 +716,7 @@ Diamm::getInputParameters(ProblemSpecP& ps)
 void
 Diamm::initializeLocalMPMLabels()
 {
-  vector<string> ISVNames;
+  std::vector<std::string> ISVNames;
 
   ISVNames.push_back("EQDOT");
   ISVNames.push_back("I1");

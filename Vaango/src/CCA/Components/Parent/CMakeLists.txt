@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -31,11 +31,11 @@ SET(Vaango_CCA_Components_Parent_SRCS
 
 SET(COMPONENTS Vaango_CCA_Components)
 
-ADD_LIBRARY(Vaango_CCA_Components_Parent ${Vaango_CCA_Components_Parent_SRCS})
+add_library(Vaango_CCA_Components_Parent ${Vaango_CCA_Components_Parent_SRCS})
 
 SET(LIBS
   Vaango_CCA_Ports
-  Vaango_CCA_Components_ReduceUda
+  Vaango_CCA_Components_PostProcessUda
   Vaango_Core_Exceptions
   Vaango_Core_Grid
   Vaango_Core_Math
@@ -46,6 +46,7 @@ SET(LIBS
   ${COMPONENTS}_ProblemSpecification
   ${COMPONENTS}_Solvers
   ${COMPONENTS}_SwitchingCriteria
+  ${COMPONENTS}_SimulationCommon
   ${XML2_LIBRARY}
 )
 
@@ -61,9 +62,9 @@ ENDIF(MPM)
 
 SET(LIBS ${LIBS} ${COMPONENTS}_Peridynamics)
 
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Parent ${LIBS})
+target_link_libraries(Vaango_CCA_Components_Parent ${LIBS})
 
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Parent)
+  add_definitions(-DBUILD_Vaango_CCA_Components_Parent)
 ENDIF(BUILD_SHARED_LIBS)

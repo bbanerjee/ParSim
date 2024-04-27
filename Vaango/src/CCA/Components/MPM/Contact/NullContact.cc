@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -30,34 +30,36 @@
 // be used for example when a single velocity field is
 // present in the problem, so doing contact wouldn't make
 // sense.
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+
 #include <CCA/Components/MPM/Contact/NullContact.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Grid.h>
+#include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationState.h>
-#include <Core/Grid/SimulationStateP.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
-#include <Core/Labels/MPMLabel.h>
 
 using namespace Uintah;
 
-NullContact::NullContact(const ProcessorGroup* myworld, SimulationStateP& d_sS,
-                         MPMLabel* Mlb, MPMFlags* MFlags)
-  : Contact(myworld, Mlb, MFlags, 0)
+NullContact::NullContact(const ProcessorGroup* myworld,
+                         const MaterialManagerP& mat_manager,
+                         const MPMLabel* labels,
+                         const MPMFlags* flags,
+                         ProblemSpecP& ps)
+  : Contact(myworld, mat_manager, labels, flags, ps)
 {
-  // Constructor
-  d_sharedState = d_sS;
-  lb = Mlb;
-  flag = MFlags;
 }
 
-NullContact::~NullContact()
+void
+NullContact::setContactMaterialAttributes()
 {
 }
 
@@ -70,19 +72,23 @@ NullContact::outputProblemSpec(ProblemSpecP& ps)
 }
 
 void
-NullContact::exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
+NullContact::exchangeMomentum(const ProcessorGroup*,
+                              const PatchSubset* patches,
                               const MaterialSubset* matls,
-                              DataWarehouse* old_dw, DataWarehouse* new_dw,
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw,
                               const VarLabel* gVelocity_label)
 {
 }
 
 void
-NullContact::addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
+NullContact::addComputesAndRequires(SchedulerP& sched,
+                                    const PatchSet* patches,
                                     const MaterialSet* matls,
                                     const VarLabel* gVelocity_label)
 {
-  Task* t = scinew Task("NullContact::exchangeMomentum", this,
+  Task* t = scinew Task("NullContact::exchangeMomentum",
+                        this,
                         &NullContact::exchangeMomentum,
                         gVelocity_label);
 

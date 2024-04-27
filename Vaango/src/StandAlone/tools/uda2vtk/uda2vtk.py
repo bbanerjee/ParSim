@@ -1415,7 +1415,7 @@ class Patch:
           r2=np.zeros((num_particles,dim),float)                                # particle Rvectors 
           r3=np.zeros((num_particles,dim),float)                                # particle Rvectors 
           centroid=[]
-          psize=[]
+          pSize=[]
           pscalefactor=[]
           defgrad=[]
           for variable in self.variables:
@@ -1436,7 +1436,7 @@ class Patch:
                       pscalefactor = list(chunks(elem.text.split(),tensor))
                     elif variable.name == 'p.size' and not gotPsize:
                       gotPsize=True
-                      psize = list(chunks(elem.text.split(),tensor))
+                      pSize = list(chunks(elem.text.split(),tensor))
                     elif variable.name == 'p.deformationMeasure' and not gotDefgrad:
                       gotDefgrad=True
                       defgrad =list(chunks(elem.text.split(),tensor))
@@ -1453,14 +1453,14 @@ class Patch:
               r1[p] = (pscalefactor[p][0],pscalefactor[p][3],pscalefactor[p][6])
               r2[p] = (pscalefactor[p][1],pscalefactor[p][4],pscalefactor[p][7])
               r3[p] = (pscalefactor[p][2],pscalefactor[p][5],pscalefactor[p][8])
-              # append particle domain corners (perhaps need to have identity in defgrad and psize?)
+              # append particle domain corners (perhaps need to have identity in defgrad and pSize?)
               xpc[p] = calcDomain(centroid[p], r1[p], r2[p], r3[p],interpolator)
               #print "particle domains from p.scalefactor"
             elif args.do_size and (gotPsize or gotDefgrad):
               if gotPsize:
-                r1[p] = (psize[p][0],psize[p][3],psize[p][6])
-                r2[p] = (psize[p][1],psize[p][4],psize[p][7])
-                r3[p] = (psize[p][2],psize[p][5],psize[p][8])
+                r1[p] = (pSize[p][0],pSize[p][3],pSize[p][6])
+                r2[p] = (pSize[p][1],pSize[p][4],pSize[p][7])
+                r3[p] = (pSize[p][2],pSize[p][5],pSize[p][8])
               else:
                 r1[p] = (1.0,0.0,0.0)
                 r2[p] = (0.0,1.0,0.0)

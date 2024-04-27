@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,13 +50,13 @@ generate geometry for FileGeometryPiece.
 int main(int argc, char *argv[])
 {
   // Establish physical size of the image
-  vector<double> X(3);
+  std::vector<double> X(3);
   X[0]=1.;
   X[1]=1.;
   X[2]=1.;
 
   // image resolution
-  vector<int> res(3);
+  std::vector<int> res(3);
   res[0]=256;
   res[1]=256;
   res[2]=256;
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 
   // Read data from file
   double xc, yc, zc, r;
-  vector<double> xcen,ycen,zcen,rad;
+  std::vector<double> xcen,ycen,zcen,rad;
   while(fp >> xc >> yc >> zc >> r){
    xcen.push_back(xc);
    ycen.push_back(yc);

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,79 +24,46 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <Core/Geometry/IntVector.h>
-#include <Core/Persistent/Persistent.h>
-#include <Core/Util/FETypeDescription.h>
 #include <Core/Util/XMLUtils.h>
 
-#include <stdlib.h>
 #include <iostream>
-using std::ostream;
+#include <stdlib.h>
 
-namespace Uintah{
+namespace Uintah {
 
-  void
-  Pio(Piostream& stream, IntVector& p)
-  {
-    stream.begin_cheap_delim();
-    Pio(stream, p.value_[0]);
-    Pio(stream, p.value_[1]);
-    Pio(stream, p.value_[2]);
-    stream.end_cheap_delim();
-  }
+std::ostream&
+operator<<(std::ostream& out, const IntVector& v)
+{
+  out << "[int " << v.x() << ", " << v.y() << ", " << v.z() << ']';
+  return out;
+}
 
+IntVector
+IntVector::fromString(const string& source)
+{
+  IntVector result;
 
+  // Parse out the [num,num,num]
 
-  const string& 
-  IntVector::get_h_file_path() {
-    static const string path(FETypeDescription::cc_to_h(__FILE__));
-    return path;
-  }
+  string::size_type i1 = source.find("[");
+  string::size_type i2 = source.find_first_of(",");
+  string::size_type i3 = source.find_last_of(",");
+  string::size_type i4 = source.find("]");
 
-  const FETypeDescription*
-  get_fetype_description(IntVector*)
-  {
-    static FETypeDescription* td = 0;
-    if(!td){
-      td = scinew FETypeDescription("IntVector", IntVector::get_h_file_path(), "Uintah");
-    }
-    return td;
-  }
+  string x_val(source, i1 + 1, i2 - i1 - 1);
+  string y_val(source, i2 + 1, i3 - i2 - 1);
+  string z_val(source, i3 + 1, i4 - i3 - 1);
 
-  ostream&
-  operator<<(std::ostream& out, const Uintah::IntVector& v)
-  {
-    out << "[int " << v.x() << ", " << v.y() << ", " << v.z() << ']';
-    return out;
-  }
+  validateType(x_val, UintahXML::INT_TYPE);
+  validateType(y_val, UintahXML::INT_TYPE);
+  validateType(z_val, UintahXML::INT_TYPE);
 
-  IntVector
-  IntVector::fromString( const string & source )
-  {
-    IntVector result;
+  result.x(atoi(x_val.c_str()));
+  result.y(atoi(y_val.c_str()));
+  result.z(atoi(z_val.c_str()));
 
-    // Parse out the [num,num,num]
+  return result;
+}
 
-    string::size_type i1 = source.find("[");
-    string::size_type i2 = source.find_first_of(",");
-    string::size_type i3 = source.find_last_of(",");
-    string::size_type i4 = source.find("]");
-  
-    string x_val(source,i1+1,i2-i1-1);
-    string y_val(source,i2+1,i3-i2-1);
-    string z_val(source,i3+1,i4-i3-1);
-
-    validateType( x_val, Uintah::UintahXML::INT_TYPE );
-    validateType( y_val, Uintah::UintahXML::INT_TYPE );
-    validateType( z_val, Uintah::UintahXML::INT_TYPE );
-          
-    result.x( atoi(x_val.c_str()) );
-    result.y( atoi(y_val.c_str()) );
-    result.z( atoi(z_val.c_str()) );
-
-    return result;
-  }
-
-} //end namespace Uintah
-
+} // end namespace Uintah

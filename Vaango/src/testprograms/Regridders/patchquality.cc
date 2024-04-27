@@ -26,7 +26,7 @@
 #include <iostream>
 #include <ostream>
 #include <fstream>
-using namespace std;
+
 
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
   if(argc!=5)
   {
     if(rank==0)
-      cout << "Usage: benchmark patch_size max_patches flag_inner_rad(0-1) flag_outter_rad(0-1)\n";
+      std::cout << "Usage: benchmark patch_size max_patches flag_inner_rad(0-1) flag_outter_rad(0-1)\n";
     MPI_Finalize();
     return 1;
   }
@@ -84,27 +84,27 @@ int main(int argc, char **argv)
 
     Sphere2 s(cells.asVector()/Vector(2,2,2),radin,radout);
 
-    //cout << "num patches:" << num_patches << endl;
-    //cout << "cells: " << cells << endl;
-    //cout << "rad: " << rad << endl;
+    //cout << "num patches:" << num_patches << std::endl;
+    //cout << "cells: " << cells << std::endl;
+    //cout << "rad: " << rad << std::endl;
 
     //create coarse patch set
-    vector<Region> patches;
-    vector<CCVariable<int> * > flags;
-    vector<IntVector> gflags;
-    vector<list<IntVector> > lflags;
+    std::vector<Region> patches;
+    std::vector<CCVariable<int> * > flags;
+    std::vector<IntVector> gflags;
+    std::vector<list<IntVector> > lflags;
 
     int total_patches=num_patches.x()*num_patches.y()*num_patches.z();
     int div=total_patches/num_procs;
     int mod=total_patches%num_procs;
 
-    //cout << "total patches: " << total_patches << endl;
-    //cout << "div: " << div << " mod: " << mod << endl;
+    //cout << "total patches: " << total_patches << std::endl;
+    //cout << "div: " << div << " mod: " << mod << std::endl;
     int p=0;
     int p_assigned=0;
     int to_assign=div+int(mod>0);
     int idx=0;
-    //cout << "to_assign=" << to_assign << endl;
+    //cout << "to_assign=" << to_assign << std::endl;
 
     for(int i=0;i<num_patches.x();i++)
     {
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
           if(p_assigned==to_assign)
           { 
             //if(rank==0)
-            //  cout << p << " assigned: " << to_assign << " patches\n"; 
+            //  std::cout << p << " assigned: " << to_assign << " patches\n"; 
             p++;
             p_assigned=0;
             to_assign=div+int(mod>p);
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
     }
 
     //for(unsigned int i=0;i<patches.size();i++)
-    //  cout << rank << " patch: " << patches[i] << endl;
+    //  std::cout << rank << " patch: " << patches[i] << std::endl;
 
     //create refinement flags
     flags.resize(patches.size());
@@ -182,7 +182,7 @@ int main(int argc, char **argv)
     long long fflags=getTotalNumFlags(gflags)*rr[0]*rr[1]*rr[2];
 
 
-    vector<Region> fine_patches,global_patches;
+    std::vector<Region> fine_patches,global_patches;
 
     TiledRegridder tiled(patch_size,rr);
     BNRRegridder bnr(.85,rr);
@@ -200,10 +200,10 @@ int main(int argc, char **argv)
       vol=0;
       for(size_t i=0;i<global_patches.size();i++)
         vol+=global_patches[i].getVolume();
-      cout << "0 " << cells[0]*cells[1]*cells[2] << " " << global_patches.size() <<  " " << vol << " " << fflags << endl;
+      std::cout << "0 " << cells[0]*cells[1]*cells[2] << " " << global_patches.size() <<  " " << vol << " " << fflags << std::endl;
       if(vol<fflags)
       {
-        cout << "Error\n";
+        std::cout << "Error\n";
         MPI_Abort(MPI_COMM_WORLD,0);
       }
     }
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
       vol=0;
       for(size_t i=0;i<fine_patches.size();i++)
         vol+=fine_patches[i].getVolume();
-      cout << "1 " << cells[0]*cells[1]*cells[2] << " " << fine_patches.size() <<  " " << vol << " " << fflags << endl;
+      std::cout << "1 " << cells[0]*cells[1]*cells[2] << " " << fine_patches.size() <<  " " << vol << " " << fflags << std::endl;
     }
 #endif
 
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
       vol=0;
       for(size_t i=0;i<fine_patches.size();i++)
         vol+=fine_patches[i].getVolume();
-      cout << "1 " << cells[0]*cells[1]*cells[2] << " " << fine_patches.size() <<  " " << vol << " " << fflags << endl;
+      std::cout << "1 " << cells[0]*cells[1]*cells[2] << " " << fine_patches.size() <<  " " << vol << " " << fflags << std::endl;
     }
 #endif
 
@@ -248,7 +248,7 @@ int main(int argc, char **argv)
       vol=0;
       for(size_t i=0;i<global_patches.size();i++)
         vol+=global_patches[i].getVolume();
-      cout << "2 " << cells[0]*cells[1]*cells[2] << " " << global_patches.size() <<  " " << vol << " " << fflags << endl;
+      std::cout << "2 " << cells[0]*cells[1]*cells[2] << " " << global_patches.size() <<  " " << vol << " " << fflags << std::endl;
     }
 #endif
   }

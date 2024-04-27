@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,87 +24,128 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __UNIFORM_GRID_H__
-#define __UNIFORM_GRID_H__
+#ifndef __VAANGO_CORE_GEOMPIECE_UNIFORM_GRID_H__
+#define __VAANGO_CORE_GEOMPIECE_UNIFORM_GRID_H__
 
 #include <Core/GeometryPiece/GeometryPiece.h>
-#include <Core/Grid/Box.h>
-#include <Core/Grid/Variables/Array3.h>
-#include <Core/Geometry/Point.h>
-#include <Core/Geometry/Ray.h>
+
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Plane.h>
-#include <vector>
+#include <Core/Geometry/Point.h>
+
+#include <Core/Grid/Box.h>
+#include <Core/Grid/Variables/Array3.h>
+
 #include <list>
+#include <vector>
 
 namespace Uintah {
 
-/**************************************
-CLASS
-   UniformGrid
-	
-GENERAL INFORMATION
-	
-   UniformGrid.h
-	
-   John A. Schmidt
-   Department of Mechanical Engineering
-   University of Utah
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-****************************************/
-
-
-class Triangle {
-
+class Triangle
+{
 public:
+  enum class Coord
+  {
+    X = 0,
+    Y = 1,
+    Z = 2
+  };
 
- enum class Coord {
-   X = 0,
-   Y = 1,
-   Z = 2
- };
+  Triangle(Point& p1, Point& p2, Point& p3);
+  Triangle()  = default;
+  ~Triangle() = default;
 
- Triangle(Point& p1, Point& p2, Point& p3);
- Triangle() = default;
- ~Triangle() = default;
- Point centroid();
- Point vertex(int i);
+  Point
+  centroid();
 
- using TriangleList = std::list<Triangle>;
- TriangleList makeTriangleList(std::vector<IntVector>& connectivity, 
-                               std::vector<Point>& coordinates);
- bool inside(Point& p);
- Plane plane();
+  Point
+  vertex(int i);
+
+  using TriangleList = std::list<Triangle>;
+  TriangleList
+  makeTriangleList(std::vector<IntVector>& connectivity,
+                   std::vector<Point>& coordinates);
+  bool
+  inside(Point& p) const;
+
+  Plane
+  plane() const;
 
 private:
-
- Point d_points[3];
- Plane d_plane;
+  Point d_points[3];
+  Plane d_plane;
 };
 
-class UniformGrid {
- 
+class LineSeg
+{
+
 public:
+  enum coord
+  {
+    X = 0,
+    Y = 1,
+    Z = 2
+  };
 
- UniformGrid(Box& bound_box);
- UniformGrid& operator=(const UniformGrid&);
- UniformGrid(const UniformGrid&);
- ~UniformGrid() = default;
+  LineSeg(Point& p1, Point& p2);
+  LineSeg();
+  ~LineSeg();
 
- IntVector cellID(Point point);
+  Point
+  centroid();
 
- using TriangleList = std::list<Triangle>;
- void buildUniformGrid(TriangleList& polygons);
- void countIntersections(const Point& ray, int& crossings);
-    
+  Point
+  vertex(int i);
+
 private:
-
- Array3<TriangleList> d_grid;
- Box d_bound_box;
- Vector d_max_min;
+  Point d_points[2];
 };
 
+class UniformGrid
+{
+public:
+  UniformGrid(Box& bound_box);
+  ~UniformGrid() = default;
+
+  UniformGrid&
+  operator=(const UniformGrid&);
+  UniformGrid(const UniformGrid&);
+
+  IntVector
+  cellID(Point point);
+
+  using TriangleList = std::list<Triangle>;
+  void
+  buildUniformGrid(TriangleList& polygons);
+
+  /** @brief Assume the ray goes to infinity **/
+  void
+  countIntersections(const Point& ray, int& crossings);
+
+  void
+  countIntersectionsx(const Point& pt, int& crossings);
+
+  void
+  countIntersectionsy(const Point& pt, int& crossings);
+
+  void
+  countIntersectionsz(const Point& pt, int& crossings);
+
+  /** @brief Let the user specify the second point to define the ray (pt ->
+     pt_away). This returns the total number of crossing and the min distance
+     from pt **/
+  void
+  countIntersections(const Point& pt,
+                     const Point& pt_away,
+                     int& crossings,
+                     double& min_distance);
+
+private:
+  Array3<TriangleList> d_grid;
+  Box d_bound_box;
+  Vector d_max_min;
+};
 
 } // End namespace Uintah
 
-#endif // __UNIFORM_GRID_H__
+#endif // __VAANGO_CORE_GEOMPIECE_UNIFORM_GRID_H__

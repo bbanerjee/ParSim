@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,105 +23,95 @@
  * IN THE SOFTWARE.
  */
 
-
-#ifndef UINTAH_HOMEBREW_Reductions_H
-#define UINTAH_HOMEBREW_Reductions_H
+#ifndef __CORE_GRID_VARIABLES_REDUCTIONS_H__
+#define __CORE_GRID_VARIABLES_REDUCTIONS_H__
 
 #include <Core/Disclosure/TypeUtils.h>
 
 namespace Uintah {
-   /**************************************
-     
-     CLASS
-       Reductions
-      
-       Short Description...
-      
-     GENERAL INFORMATION
-      
-       Reductions.h
-      
-       Steven G. Parker
-       Department of Computer Science
-       University of Utah
-      
-       Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-      
-      
-     KEYWORDS
-       Reductions
-      
-     DESCRIPTION
-       Long description...
-      
-     WARNING
-      
-     ****************************************/
-    
-   class Reductions {
+
+class Reductions {
+ public:
+  Reductions(const Reductions&) = delete;
+  Reductions&
+  operator=(const Reductions&) = delete;
+
+  template <class T>
+  class Min {
    public:
-      template<class T> class Min {
-      public:
-         T operator()(T a, T b) const {
-            return a<b?a:b;
-         }
-         T getBenignValue() const {
-           T tmp;
-           fun_getLargeValue(&tmp);
-           return tmp;
-         }
-      };
+    T
+    operator()(T a, T b) const {
+      return a < b ? a : b;
+    }
+    T
+    getBenignValue() const {
+      T tmp;
+      fun_getLargeValue(&tmp);
+      return tmp;
+    }
+  };
 
-      public:
-      template<class T> class Max {
-      public:
-         T operator()(T a, T b) const {
-            return a>b?a:b;
-         }
-         T getBenignValue() const {
-           T tmp;
-           fun_getSmallValue(&tmp);
-           return tmp;
-         }
-      };
-
-      template<class T> class Sum {
-      public:
-         T operator()(T a, T b) const {
-            return a+b;
-         }
-         T getBenignValue() const {
-           T tmp;
-           fun_getZeroValue(&tmp);
-           return tmp;
-         }
-      };
-
-      template<class T> class And {
-      public:
-        T operator()(T a, T b) const {
-          return a && b;
-         }
-         T getBenignValue() const {
-           T tmp;
-           fun_getLargeValue(&tmp);
-           return tmp;
-         }
-      };
-
-   private:
-      Reductions(const Reductions&);
-      Reductions& operator=(const Reductions&);
-
-#ifdef __GNUG__      
+  template <class T>
+  class Max {
    public:
-       // Keep gcc quiet, to avoid:
-       // warning: all member functions in class `Packages/Uintah::Reductions' are private
-       Reductions(Reductions*);
-#endif
-   };
+    T
+    operator()(T a, T b) const {
+      return a > b ? a : b;
+    }
+    T
+    getBenignValue() const {
+      T tmp;
+      fun_getSmallValue(&tmp);
+      return tmp;
+    }
+  };
 
-} // End namespace Uintah
+  template <class T>
+  class Sum {
+   public:
+    T
+    operator()(T a, T b) const {
+      return a + b;
+    }
+    T
+    getBenignValue() const {
+      T tmp;
+      fun_getZeroValue(&tmp);
+      return tmp;
+    }
+  };
 
-#endif
+  template <class T>
+  class And {
+   public:
+    T
+    operator()(T a, T b) const {
+      return a && b;
+    }
+    T
+    getBenignValue() const {
+      T tmp;
+      fun_getLargeValue(&tmp);
+      return tmp;
+    }
+  };
 
+  template <class T>
+  class Or {
+   public:
+    T
+    operator()(T a, T b) const {
+      return a || b;
+    }
+    T
+    getBenignValue() const {
+      T tmp;
+      fun_getSmallValue(&tmp);
+      return tmp;
+    }
+  };
+};
+
+}  // End namespace Uintah
+
+#endif  //__CORE_GRID_VARIABLES_REDUCTIONS_H__

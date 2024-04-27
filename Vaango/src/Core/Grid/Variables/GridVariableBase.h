@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,89 +27,120 @@
 #ifndef UINTAH_HOMEBREW_GRIDVARIABLE_H
 #define UINTAH_HOMEBREW_GRIDVARIABLE_H
 
+#include <Core/Geometry/IntVector.h>
 #include <Core/Grid/Variables/Variable.h>
 #include <Core/Parallel/BufferInfo.h>
-#include <Core/Geometry/IntVector.h>
 namespace Uintah {
 
-  using Uintah::IntVector;
+using Uintah::IntVector;
 
-  /**************************************
+/**************************************
 
 CLASS
-   GridVariable
-   
-   Short description...
+ GridVariable
+
+ Short description...
 
 GENERAL INFORMATION
 
-   GridVariable.h
+ GridVariable.h
 
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
+ Steven G. Parker
+ Department of Computer Science
+ University of Utah
 
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+ Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+
 
 KEYWORDS
-   GridVariable
+ GridVariable
 
 DESCRIPTION
-   Long description...
-  
+ Long description...
+
 WARNING
-  
+
 ****************************************/
 
-  class GridVariableBase : public Variable {
-  public:
-    virtual ~GridVariableBase() {}
-      
-    virtual bool rewindow(const IntVector& low, const IntVector& high) = 0;
-    virtual void offset(const IntVector& offset) = 0;
+class GridVariableBase : public Variable
+{
+public:
+  virtual ~GridVariableBase() {}
 
-    virtual GridVariableBase* cloneType() const = 0;
+  virtual bool
+  rewindow(const IntVector& low, const IntVector& high) = 0;
+  
+  virtual void
+  offset(const IntVector& offset) = 0;
 
-    using Variable::allocate; // Quiets PGI compiler warning about hidden virtual function...
-    virtual void allocate(const IntVector& lowIndex, const IntVector& highIndex) = 0;
-    virtual void allocate(const GridVariableBase* src) { allocate(src->getLow(), src->getHigh()); }
-    virtual void allocate(const Patch* patch, const IntVector& boundary) = 0;
-    
-    virtual void getMPIBuffer(BufferInfo& buffer,
-                              const IntVector& low, const IntVector& high);
+  virtual GridVariableBase*
+  cloneType() const = 0;
 
-    virtual void getSizes(IntVector& low, IntVector& high,
-                          IntVector& siz) const = 0;
-    virtual void getSizes(IntVector& low, IntVector& high,
-                          IntVector& dataLow, IntVector& siz,
-                          IntVector& strides) const = 0;
+  using Variable::allocate; // Quiets PGI compiler warning about hidden virtual
+                            // function...
 
-    virtual size_t getDataSize() const = 0;
+  virtual void
+  allocate(const IntVector& lowIndex, const IntVector& highIndex) = 0;
 
-    virtual bool copyOut(void* dst) const = 0;
+  virtual void
+  allocate(const GridVariableBase* src)
+  {
+    allocate(src->getLow(), src->getHigh());
+  }
 
-    //////////
-    // Insert Documentation Here:
-    virtual void copyPatch(const GridVariableBase* src,
-                           const IntVector& lowIndex,
-                           const IntVector& highIndex) = 0;
-    
-    virtual void copyData(const GridVariableBase* src) = 0;
-    
-    virtual void* getBasePointer() const = 0;
-    virtual IntVector getLow() const = 0;
-    virtual IntVector getHigh() const = 0;
+  virtual void
+  allocate(const Patch* patch, const IntVector& boundary) override = 0;
 
-    virtual const GridVariableBase* clone() const = 0;
-    virtual GridVariableBase* clone() = 0;
+  virtual void
+  getMPIBuffer(BufferInfo& buffer, const IntVector& low, const IntVector& high);
 
-  protected:
-    GridVariableBase() {}
-    GridVariableBase(const GridVariableBase&);
-  private:
-    GridVariableBase& operator=(const GridVariableBase&);    
-  };
+  virtual void
+  getSizes(IntVector& low, IntVector& high, IntVector& siz) const = 0;
+
+  virtual void
+  getSizes(IntVector& low,
+           IntVector& high,
+           IntVector& dataLow,
+           IntVector& siz,
+           IntVector& strides) const = 0;
+
+  virtual size_t
+  getDataSize() const override = 0;
+
+  virtual bool
+  copyOut(void* dst) const override = 0;
+
+  virtual void
+  copyPatch(const GridVariableBase* src,
+            const IntVector& lowIndex,
+            const IntVector& highIndex) = 0;
+
+  virtual void
+  copyData(const GridVariableBase* src) = 0;
+
+  virtual void*
+  getBasePointer() const = 0;
+
+  virtual IntVector
+  getLow() const = 0;
+
+  virtual IntVector
+  getHigh() const = 0;
+
+  virtual const GridVariableBase*
+  clone() const = 0;
+
+  virtual GridVariableBase*
+  clone() = 0;
+
+protected:
+  GridVariableBase() = default;
+  GridVariableBase(const GridVariableBase&) = default;
+
+private:
+  GridVariableBase&
+  operator=(const GridVariableBase&) = delete;
+};
 
 } // namespace Uintah
 #endif

@@ -25,7 +25,7 @@
  */
 
 #include <CCA/Components/MPM/PhysicalBC/MomentBC.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/GeometryPiece/BoxGeometryPiece.h>
@@ -40,7 +40,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+
 
 // Store the geometry object and the load curve
 MomentBC::MomentBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags)
@@ -91,7 +91,7 @@ MomentBC::MomentBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags)
       lower[2] = gp->getBoundingBox().lower().z();
     }
     else {
-      cout << "error" << endl; // TODO error.
+      std::cout << "error" << std::endl; // TODO error.
     }
 
     // Compute L1 and L2, distance from normal plane to either side of the boundary.
@@ -100,13 +100,13 @@ MomentBC::MomentBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flags)
     d_norm_L1L2 = pow(abs(d_norm_L1),3) + pow(abs(d_norm_L2),3);
 
     // TODO DC comment
-    /* cout << "plane normal: " << d_norm_norm.x() << " " << d_norm_norm.y() << " " << d_norm_norm.z() << endl;
-       cout << "face normal: " << normal.x() << " " << normal.y() << " " << normal.z() << endl;
-       cout << "box: [" << gp->getBoundingBox().lower().x() << ", " << gp->getBoundingBox().lower().y() << ", " << gp->getBoundingBox().lower().z() <<
-       "], [" << gp->getBoundingBox().upper().x() << ", " << gp->getBoundingBox().upper().y() << ", " << gp->getBoundingBox().upper().z() << "]" << endl;
-       cout << "lower: " << lower.x() << " " << lower.y() << " " << lower.z() << " " << endl;
-       cout << "upper: " << upper.x() << " " << upper.y() << " " << upper.z() << " " << endl;
-       cout << "d_norm_L1: " << d_norm_L1 << " d_norm_L2: " << d_norm_L2 << endl; */
+    /* std::cout << "plane normal: " << d_norm_norm.x() << " " << d_norm_norm.y() << " " << d_norm_norm.z() << std::endl;
+       std::cout << "face normal: " << normal.x() << " " << normal.y() << " " << normal.z() << std::endl;
+       std::cout << "box: [" << gp->getBoundingBox().lower().x() << ", " << gp->getBoundingBox().lower().y() << ", " << gp->getBoundingBox().lower().z() <<
+       "], [" << gp->getBoundingBox().upper().x() << ", " << gp->getBoundingBox().upper().y() << ", " << gp->getBoundingBox().upper().z() << "]" << std::endl;
+       std::cout << "lower: " << lower.x() << " " << lower.y() << " " << lower.z() << " " << std::endl;
+       std::cout << "upper: " << upper.x() << " " << upper.y() << " " << upper.z() << " " << std::endl;
+       std::cout << "d_norm_L1: " << d_norm_L1 << " d_norm_L2: " << d_norm_L2 << std::endl; */
 
   } else {
     throw ParameterNotFound("** ERROR ** No surface specified for moment BC.",
@@ -235,11 +235,11 @@ MomentBC::getForceVector(const Point& px,
     force = normalRefConfig*force_m;
 
     // TODO DC comment
-    /* cout << "px_dist: " << px_dist << endl;
-       cout << "force_m: " << force_m << endl;
-       cout << "force: " << force.x() << " " << force.y() << " " << force.z() << endl;
-       cout << "L1^3+L2^3: " << d_norm_L1L2 << endl;
-       cout << "forcePerParticle: " << forcePerParticle << endl; */
+    /* std::cout << "px_dist: " << px_dist << std::endl;
+       std::cout << "force_m: " << force_m << std::endl;
+       std::cout << "force: " << force.x() << " " << force.y() << " " << force.z() << std::endl;
+       std::cout << "L1^3+L2^3: " << d_norm_L1L2 << std::endl;
+       std::cout << "forcePerParticle: " << forcePerParticle << std::endl; */
 
   } else {
     throw ParameterNotFound("ERROR: Unknown surface specified for moment BC",
@@ -252,7 +252,7 @@ MomentBC::getForceVector(const Point& px,
 // Calculate the force vector to be applied to a particular
 // material point location
 Vector
-MomentBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
+MomentBC::getForceVectorCBDI(const Point& px, const Matrix3& pSize,
 			     const Matrix3& pDeformationMeasure,
 			     double forcePerParticle,const double time,
 			     Point& pExternalForceCorner1,
@@ -280,7 +280,7 @@ MomentBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
   }
   // determine four boundary-corners of the particle
   int i1=0,i2=0;
-  Matrix3 dsize=pDeformationMeasure*psize;
+  Matrix3 dsize=pDeformationMeasure*pSize;
   Point px1;
   for (int i = 0; i < 3; ++i) {
     Vector dummy=Vector(dsize(0,i)*dxCell[0],dsize(1,i)*dxCell[1],
@@ -309,8 +309,8 @@ MomentBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
 			      px1.y()+dsize(1,i1)*dxCell[1]/2.0+dsize(1,i2)*dxCell[1]/2.0,
 			      px1.z()+dsize(2,i1)*dxCell[2]/2.0+dsize(2,i2)*dxCell[2]/2.0);
   // Recalculate the force based on area changes (current vs. initial)
-  Vector iniVec1(psize(0,i1),psize(1,i1),psize(2,i1));
-  Vector iniVec2(psize(0,i2),psize(1,i2),psize(2,i2));
+  Vector iniVec1(pSize(0,i1),pSize(1,i1),pSize(2,i1));
+  Vector iniVec2(pSize(0,i2),pSize(1,i2),pSize(2,i2));
   Vector curVec1(dsize(0,i1),dsize(1,i1),dsize(2,i1));
   Vector curVec2(dsize(0,i2),dsize(1,i2),dsize(2,i2));
   Vector iniA = Cross(iniVec1,iniVec2);
@@ -323,24 +323,24 @@ MomentBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
 
 namespace Uintah {
 // A method to print out the moment bcs
-  ostream& operator<<(ostream& out, const MomentBC& bc)
+  ostream& operator<<(std::ostream& out, const MomentBC& bc)
   {
-    out << "Begin MPM Moment BC # = " << bc.loadCurveID() << endl;
+    out << "Begin MPM Moment BC # = " << bc.loadCurveID() << std::endl;
     std::string surfType = bc.getSurfaceType();
-    out << "    Surface of application = " << surfType << endl;
+    out << "    Surface of application = " << surfType << std::endl;
     // TODO sphere and cylinder
     if (surfType == "box") {
       Box box = (bc.getSurface())->getBoundingBox();
-      out << "        " << box << endl;
+      out << "        " << box << std::endl;
     }
-    out << "    Time vs. Load = " << endl;
+    out << "    Time vs. Load = " << std::endl;
     LoadCurve<double>* lc = bc.getLoadCurve();
     int numPts = lc->numberOfPointsOnLoadCurve();
     for (int ii = 0; ii < numPts; ++ii) {
       out << "        time = " << lc->getTime(ii)
-	  << " moment = " << lc->getLoad(ii) << endl;
+	  << " moment = " << lc->getLoad(ii) << std::endl;
     }
-    out << "End MPM Moment BC # = " << bc.loadCurveID() << endl;
+    out << "End MPM Moment BC # = " << bc.loadCurveID() << std::endl;
     return out;
   }
 

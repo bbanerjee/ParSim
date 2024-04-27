@@ -32,7 +32,7 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Task.h>
 
 namespace Vaango {
@@ -55,7 +55,7 @@ namespace Vaango {
 
     SingleVelocityContact(const Uintah::ProcessorGroup* myworld,
                           Uintah::ProblemSpecP& ps,
-                          Uintah::SimulationStateP& d_sS,
+                          Uintah::MaterialManagerP& mat_manager,
                           PeridynamicsLabel* labels,
                           PeridynamicsFlags* flags);
          
@@ -82,15 +82,11 @@ namespace Vaango {
     virtual void addComputesAndRequiresIntegrated(Uintah::SchedulerP & sched,
                                                   const Uintah::PatchSet* patches,
                                                   const Uintah::MaterialSet* matls);
-  protected:
-
-    Uintah::SimulationStateP    d_sharedState;
-
   private:
          
     // Prevent copying of this class
-    SingleVelocityContact(const SingleVelocityContact &con);
-    SingleVelocityContact& operator=(const SingleVelocityContact &con);
+    SingleVelocityContact(const SingleVelocityContact &con) = delete;
+    SingleVelocityContact& operator=(const SingleVelocityContact &con) = delete;
 
   };
 } // End namespace Vaango

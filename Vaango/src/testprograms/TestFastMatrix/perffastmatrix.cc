@@ -50,11 +50,11 @@
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Rand48.h>
 #include <Core/Math/MiscMath.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Timers/Timers.hpp>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
-using namespace std;
+
 using namespace Uintah;
 
 int main(int argc, char* argv[])
@@ -72,12 +72,12 @@ int main(int argc, char* argv[])
     }
   }
   FastMatrix minv(size, size);
-  vector<double> b(size);
-  vector<double> b2(size);
+  std::vector<double> b(size);
+  std::vector<double> b2(size);
   for(int i=0;i<size;i++)
     b[i] = b2[i] = drand48();
-  vector<double> x(size);
-  vector<double> x2(size);
+  std::vector<double> x(size);
+  std::vector<double> x2(size);
   double start = Time::currentSeconds();
 #if 0
   for(int i=0;i<reps;i++){
@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
   }
 #endif
   double dt = Time::currentSeconds()-start;
-  cerr << reps << " in " << dt << " seconds, " << dt/reps*1000000 << " us/rep\n";
+  std::cerr <<  reps << " in " << dt << " seconds, " << dt/reps*1000000 << " us/rep\n";
   exit(0);
 }
 

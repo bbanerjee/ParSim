@@ -1,0 +1,20 @@
+# Tested on clang-format 3.9
+
+BasedOnStyle: Mozilla
+
+AlignAfterOpenBracket: Align
+
+AlignConsecutiveAssignments: true
+
+AllowAllArgumentsOnNextLine: true
+
+AlwaysBreakAfterReturnType: All
+
+BinPackArguments: false
+
+BinPackParameters: false
+
+FixNamespaceComments: true
+
+InsertBraces: true
+

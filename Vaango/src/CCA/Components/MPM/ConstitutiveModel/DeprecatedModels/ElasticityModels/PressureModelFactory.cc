@@ -34,7 +34,7 @@
 #include <iostream>
 #include <string>
 
-using namespace std;
+
 using namespace Uintah;
 
 PressureModel*
@@ -42,16 +42,16 @@ PressureModelFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("pressure_model");
   if (!child) {
-    ostringstream msg;
-    msg << "No <pressure_model> tag in input file." << endl;
+     std::ostringstream msg;
+    msg << "No <pressure_model> tag in input file." << std::endl;
     throw ProblemSetupException(msg.str(), _FILE__, __LINE__);
   }
   string model_type;
   if (!child->getAttribute("type", model_type)) {
-    ostringstream msg;
+     std::ostringstream msg;
     msg
       << "No type has been specified for <pressure_model type=?> in input file."
-      << endl;
+      << std::endl;
     throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
   }
 
@@ -62,9 +62,9 @@ PressureModelFactory::create(ProblemSpecP& ps)
   else if (model_type == "borja")
     return (scinew BorjaHyperelasticPressure(child));
   else {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "Unknown type in <pressure_model type=" << model_type
-        << "> in input file." << endl;
+        << "> in input file." << std::endl;
     throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
   }
 }
@@ -82,9 +82,9 @@ PressureModelFactory::createCopy(const PressureModel* smm)
     return (scinew BorjaHyperelasticPressure(
       dynamic_cast<const BorjaHyperelasticPressure*>(smm)));
   else {
-    ostringstream msg;
+     std::ostringstream msg;
     msg << "The type in <pressure_model type=" << model_type
-        << "> does not exist." << endl;
+        << "> does not exist." << std::endl;
     throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
   }
 }

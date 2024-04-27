@@ -59,7 +59,7 @@
 #  include <process.h>
 #endif
 
-using namespace std;
+
 using namespace Uintah;
 
 void doMatrixSolvingTests(Suite& suite);
@@ -111,47 +111,47 @@ int main()
                     drand48(),drand48(),drand48(),
                     drand48(),drand48(),drand48());
 
-    cout << "testmat = " << endl;
-    cout << testmat << endl;
+    std::cout << "testmat = " << std::endl;
+    std::cout << testmat << std::endl;
 
     if(testmat.Determinant()<=0.0){
-      cout << "Skipping this singular test matrix" << endl;
-      cout << "Det(testmat) = " << testmat.Determinant() << endl;
+      std::cout << "Skipping this singular test matrix" << std::endl;
+      std::cout << "Det(testmat) = " << testmat.Determinant() << std::endl;
     } else{
 
       Matrix3 R, U;
 
       testmat.polarDecomposition(U,R,1e-10,true);
 
-      cout << "U = " << endl;
-      cout << U  << endl;
+      std::cout << "U = " << std::endl;
+      std::cout << U  << std::endl;
 
-      cout << "R = " << endl;
-      cout << R  << endl;
+      std::cout << "R = " << std::endl;
+      std::cout << R  << std::endl;
 
-      cout << "R^T*R = " << endl;
-      cout << R.Transpose()*R  << endl;
+      std::cout << "R^T*R = " << std::endl;
+      std::cout << R.Transpose()*R  << std::endl;
 
-      cout << "R*U = " << endl;
-      cout << R*U  << endl;
+      std::cout << "R*U = " << std::endl;
+      std::cout << R*U  << std::endl;
 
 
       testmat.polarDecompositionRMB(U,R);
 //  testmat.polarRotationRMB(R);
 
-      cout << "U = " << endl;
-      cout << U  << endl;
+      std::cout << "U = " << std::endl;
+      std::cout << U  << std::endl;
 
-      cout << "R = " << endl;
-      cout << R  << endl;
+      std::cout << "R = " << std::endl;
+      std::cout << R  << std::endl;
 
-      cout << "R^T*R = " << endl;
-      cout << R.Transpose()*R  << endl;
+      std::cout << "R^T*R = " << std::endl;
+      std::cout << R.Transpose()*R  << std::endl;
 
-      cout << "R*U = " << endl;
-      cout << R*U  << endl;
+      std::cout << "R*U = " << std::endl;
+      std::cout << R*U  << std::endl;
 
-      cout << "Success!" << endl;
+      std::cout << "Success!" << std::endl;
    }
   }
 
@@ -187,13 +187,13 @@ void displayEigen(Matrix3 M)
   double e[3];
   int n = M.getEigenValues(e[0], e[1], e[2]);
   for (int i = 0; i < n; i++) {
-    cout << "Eigen value: " << e[i] << endl;
+    std::cout << "Eigen value: " << e[i] << std::endl;
     std::vector<Vector> eigenVectors = M.getEigenVectors(e[i], M.MaxAbsElem());
-    cout << "Eigen vectors:\n";
+    std::cout << "Eigen vectors:\n";
     for (int j = 0; j < (int)eigenVectors.size(); j++)
-      cout << eigenVectors[j] << endl;
+      std::cout << eigenVectors[j] << std::endl;
   }
-  cout << endl;
+  std::cout << std::endl;
 }
 
 void doMatrixSolvingTests(Suite& suite)
@@ -332,47 +332,47 @@ void doPolarDecompTests(Suite& suite)
                     drand48(),drand48(),drand48(),
                     drand48(),drand48(),drand48());
 
-    cout << "testmat = " << endl;
-    cout << testmat << endl;
+    std::cout << "testmat = " << std::endl;
+    std::cout << testmat << std::endl;
 
     if(testmat.Determinant()<=0.0){
-      cout << "Skipping this singular test matrix" << endl;
-      cout << "Det(testmat) = " << testmat.Determinant() << endl;
+      std::cout << "Skipping this singular test matrix" << std::endl;
+      std::cout << "Det(testmat) = " << testmat.Determinant() << std::endl;
     } else{
 
       Matrix3 R, U;
 
       testmat.polarDecomposition(U,R,1e-10,true);
 
-      cout << "U = " << endl;
-      cout << U  << endl;
+      std::cout << "U = " << std::endl;
+      std::cout << U  << std::endl;
 
-      cout << "R = " << endl;
-      cout << R  << endl;
+      std::cout << "R = " << std::endl;
+      std::cout << R  << std::endl;
 
-      cout << "R^T*R = " << endl;
-      cout << R.Transpose()*R  << endl;
+      std::cout << "R^T*R = " << std::endl;
+      std::cout << R.Transpose()*R  << std::endl;
 
-      cout << "R*U = " << endl;
-      cout << R*U  << endl;
+      std::cout << "R*U = " << std::endl;
+      std::cout << R*U  << std::endl;
 
 
       testmat.polarDecompositionRMB(U,R);
 //  testmat.polarRotationRMB(R);
 
-      cout << "U = " << endl;
-      cout << U  << endl;
+      std::cout << "U = " << std::endl;
+      std::cout << U  << std::endl;
 
-      cout << "R = " << endl;
-      cout << R  << endl;
+      std::cout << "R = " << std::endl;
+      std::cout << R  << std::endl;
 
-      cout << "R^T*R = " << endl;
-      cout << R.Transpose()*R  << endl;
+      std::cout << "R^T*R = " << std::endl;
+      std::cout << R.Transpose()*R  << std::endl;
 
-      cout << "R*U = " << endl;
-      cout << R*U  << endl;
+      std::cout << "R*U = " << std::endl;
+      std::cout << R*U  << std::endl;
 
-      cout << "Success!" << endl;
+      std::cout << "Success!" << std::endl;
    }
   }
 
@@ -480,8 +480,8 @@ void addSolveTests(Suite& suite, const string& test_name, const Matrix3& M,
     suite.findOrAddTest(test_name + ", xp", equal_enough(M * xp, rhs,
 							 rel_scale));
     /*    if (!equal_enough(M * xp, rhs, rel_scale)) {
-      cout << rel_scale << endl;
-      cout << xp << " != " << rhs << endl;
+      std::cout << rel_scale << std::endl;
+      std::cout << xp << " != " << rhs << std::endl;
     }*/
 	
 

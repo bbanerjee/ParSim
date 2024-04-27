@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -30,7 +30,7 @@
 // Namespace Uintah::
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -215,31 +215,31 @@ Arena::checkInputParameters()
 
   if (d_cm.consistency_bisection_tolerance < 1.0e-16 ||
       d_cm.consistency_bisection_tolerance > 1.0e-2) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Consistency bisection tolerance should be in range [1.0e-16, "
             "1.0e-2].  Default = 1.0e-4"
-         << endl;
+         << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
   if (d_cm.subcycling_characteristic_number < 1) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Subcycling characteristic number should be > 1. Default = 256"
-         << endl;
+         << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
   if (d_cm.yield_scale_fac < 1.0 || d_cm.yield_scale_fac > 1.0e6) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Yield surface scaling factor should be between 1 and 1.0e6. "
             "Default = 1."
-         << endl;
+         << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
   /*
   if (d_cm.use_disaggregation_algorithm) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Disaggregation algorithm not currently supported with partial
   saturation model"<<endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -252,8 +252,8 @@ Arena::checkInputParameters()
 Arena::Arena(const Arena* cm)
   : ConstitutiveModel(cm)
 {
-  d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
-  d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
+  d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic.get());
+  d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield.get());
 
   // Density-based scaling
   d_modulus_scale_fac = cm->d_modulus_scale_fac;
@@ -418,9 +418,6 @@ Arena::~Arena()
   VarLabel::destroy(pCoherenceLabel_preReloc);
   VarLabel::destroy(pTGrowLabel);
   VarLabel::destroy(pTGrowLabel_preReloc);
-
-  delete d_yield;
-  delete d_elastic;
 }
 
 // adds problem specification values to checkpoint data for restart
@@ -473,10 +470,10 @@ Arena::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS);
 }
 
-Arena*
+std::unique_ptr<ConstitutiveModel>
 Arena::clone()
 {
-  return scinew Arena(*this);
+  return std::make_unique<Arena>(this);
 }
 
 // When a particle is pushed from patch to patch, carry information needed for
@@ -2893,7 +2890,7 @@ Arena::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
 {
   std::cout
     << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arena"
-    << endl;
+    << std::endl;
 }
 
 /*!
@@ -2959,6 +2956,6 @@ Arena::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
 double
 Arena::getCompressibility()
 {
-  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arena" << endl;
+  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arena" << std::endl;
   return 1.0 / d_cm.K0_Murnaghan_EOS;
 }

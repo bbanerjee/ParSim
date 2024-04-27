@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -71,19 +72,19 @@ WARNING
       
     //////////
     // Insert Documentation Here:
-    const TypeDescription* virtualGetTypeDescription() const 
+    const TypeDescription* virtualGetTypeDescription() const override
     { return getTypeDescription(); }
     static const TypeDescription* getTypeDescription();
     
 
-    virtual GridVariableBase* clone();
-    virtual const GridVariableBase* clone() const;
-    virtual GridVariableBase* cloneType() const
+    virtual GridVariableBase* clone() override;
+    virtual const GridVariableBase* clone() const override;
+    virtual GridVariableBase* cloneType() const override
     { return scinew SFCYVariable<T>(); }
     
     // allocate(IntVector, IntVector) is hidden without this
     using GridVariable<T>::allocate;
-    virtual void allocate(const Patch* patch, const IntVector& boundary)
+    virtual void allocate(const Patch* patch, const IntVector& boundary) override
     {      
       IntVector l,h;
       patch->computeVariableExtents(Patch::YFaceBased, boundary, 
@@ -116,7 +117,7 @@ WARNING
   SFCYVariable<T>::getTypeDescription()
   {
     if(!td){
-      td = scinew TypeDescription(TypeDescription::SFCYVariable,
+      td = scinew TypeDescription(TypeDescription::Type::SFCYVariable,
                                   "SFCYVariable", &maker,
                                   fun_getTypeDescription((T*)0));
     }

@@ -1,30 +1,30 @@
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
 
-#include <CCA/Components/ProblemSpecification/ProblemSpecReader.h>
-#include <CCA/Components/SimulationController/AMRSimulationController.h>
-#include <CCA/Components/Regridder/RegridderCommon.h>
-#include <CCA/Components/Solvers/SolverFactory.h>
-#include <CCA/Components/Parent/ComponentFactory.h>
+#include <CCA/Components/DataArchiver/DataArchiver.h>
 #include <CCA/Components/LoadBalancers/LoadBalancerCommon.h>
 #include <CCA/Components/LoadBalancers/LoadBalancerFactory.h>
-#include <CCA/Components/DataArchiver/DataArchiver.h>
+#include <CCA/Components/Parent/ComponentFactory.h>
+#include <CCA/Components/ProblemSpecification/ProblemSpecReader.h>
+#include <CCA/Components/Regridder/RegridderCommon.h>
 #include <CCA/Components/Schedulers/SchedulerCommon.h>
 #include <CCA/Components/Schedulers/SchedulerFactory.h>
+#include <CCA/Components/SimulationController/AMRSimulationController.h>
+#include <CCA/Components/Solvers/SolverFactory.h>
 
-#include <CCA/Ports/SolverInterface.h>
-#include <CCA/Ports/SimulationInterface.h>
 #include <CCA/Ports/Output.h>
+#include <CCA/Ports/SimulationInterface.h>
+#include <CCA/Ports/SolverInterface.h>
 
+#include <Core/Exceptions/Exception.h>
+#include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Malloc/Allocator.h>
+#include <Core/OS/Dir.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/UintahParallelComponent.h>
-#include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Exceptions/Exception.h>
-#include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/Exceptions/InvalidValue.h>
 #include <Core/Util/Environment.h>
-#include <Core/OS/Dir.h>
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
@@ -38,61 +38,68 @@
 
 using namespace Vaango;
 using nlohmann::json;
+using Uintah::AMRSimulationController;
+using Uintah::ComponentFactory;
+using Uintah::DataArchiver;
 using Uintah::Dir;
+using Uintah::Exception;
+using Uintah::InvalidValue;
+using Uintah::LoadBalancerCommon;
+using Uintah::LoadBalancerFactory;
+using Uintah::Output;
+using Uintah::ProblemSetupException;
 using Uintah::ProblemSpec;
 using Uintah::ProblemSpecP;
 using Uintah::ProblemSpecReader;
-using Uintah::Exception;
-using Uintah::ProblemSetupException;
-using Uintah::InvalidValue;
 using Uintah::ProcessorGroup;
-using Uintah::SimulationController;
-using Uintah::AMRSimulationController;
 using Uintah::RegridderCommon;
-using Uintah::SolverInterface;
-using Uintah::SolverFactory;
-using Uintah::UintahParallelComponent;
-using Uintah::ComponentFactory;
-using Uintah::SimulationInterface;
-using Uintah::LoadBalancerCommon;
-using Uintah::LoadBalancerFactory;
-using Uintah::DataArchiver;
-using Uintah::Output;
 using Uintah::SchedulerCommon;
 using Uintah::SchedulerFactory;
+using Uintah::SimulationController;
+using Uintah::SimulationInterface;
+using Uintah::SolverFactory;
+using Uintah::SolverInterface;
+using Uintah::UintahParallelComponent;
 
-class VaangoEnv : public ::testing::Environment {
+class VaangoEnv : public ::testing::Environment
+{
 public:
-
   int d_argc;
   char** d_argv;
   char** d_env;
 
-  explicit VaangoEnv(int argc, char** argv, char* env[]) {
+  explicit VaangoEnv(int argc, char** argv, char* env[])
+  {
     d_argc = argc;
     d_argv = argv;
-    d_env = env;
+    d_env  = env;
   }
 
   virtual ~VaangoEnv() {}
 
-  virtual void SetUp() {
-    Uintah::Parallel::determineIfRunningUnderMPI(d_argc, d_argv);
+  virtual void
+  SetUp()
+  {
+    // Uintah::Parallel::determineIfRunningUnderMPI(d_argc, d_argv);
     Uintah::Parallel::initializeManager(d_argc, d_argv);
-    Uintah::create_sci_environment(d_env, 0, true );
+    Uintah::create_sci_environment(d_env, 0, true);
   }
 
-  virtual void TearDown() {
+  virtual void
+  TearDown()
+  {
     Uintah::Parallel::finalizeManager();
   }
 
-  static ProblemSpecP createInput() {
+  static ProblemSpecP
+  createInput()
+  {
 
     char currPath[2000];
     if (!getcwd(currPath, sizeof(currPath))) {
       std::cout << "Current path not found\n";
     }
-    //std::cout << "Dir = " << currPath << std::endl;
+    // std::cout << "Dir = " << currPath << std::endl;
 
     // Create a new document
     xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
@@ -103,11 +110,12 @@ public:
 
     // Meta
     auto meta = xmlNewChild(rootNode, nullptr, BAD_CAST "Meta", BAD_CAST "");
-    xmlNewChild(meta, nullptr, BAD_CAST "title", BAD_CAST "Unit test Tabular Plasticity");
+    xmlNewChild(
+      meta, nullptr, BAD_CAST "title", BAD_CAST "Unit test Tabular Plasticity");
 
-    // Simulation component 
-    auto simComp = xmlNewChild(rootNode, nullptr, BAD_CAST "SimulationComponent",
-                               BAD_CAST "");
+    // Simulation component
+    auto simComp = xmlNewChild(
+      rootNode, nullptr, BAD_CAST "SimulationComponent", BAD_CAST "");
     xmlNewProp(simComp, BAD_CAST "type", BAD_CAST "mpm");
 
     // Time
@@ -120,62 +128,79 @@ public:
     xmlNewChild(time, nullptr, BAD_CAST "max_timesteps", BAD_CAST "5");
 
     // DataArchiver
-    auto da = xmlNewChild(rootNode, nullptr, BAD_CAST "DataArchiver", BAD_CAST "");
-    xmlNewChild(da, nullptr, BAD_CAST "filebase", BAD_CAST "UniaxialStrainRotateTabularPlasticity.uda");
+    auto da =
+      xmlNewChild(rootNode, nullptr, BAD_CAST "DataArchiver", BAD_CAST "");
+    xmlNewChild(da,
+                nullptr,
+                BAD_CAST "filebase",
+                BAD_CAST "UniaxialStrainRotateTabularPlasticity.uda");
     xmlNewChild(da, nullptr, BAD_CAST "outputTimestepInterval", BAD_CAST "1");
-    auto save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    auto save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST "");
     xmlNewProp(save, BAD_CAST "label", BAD_CAST "g.mass");
-    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST "");
     xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.x");
-    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST "");
     xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.color");
-    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST "");
     xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.temperature");
-    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST "");
     xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.velocity");
-    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST "");
     xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.particleID");
-    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST "");
     xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.stress");
-    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST "");
     xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.deformationGradient");
-    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST "");
     xmlNewProp(save, BAD_CAST "label", BAD_CAST "g.acceleration");
     save = xmlNewChild(da, nullptr, BAD_CAST "checkpoint", BAD_CAST "");
     xmlNewProp(save, BAD_CAST "cycle", BAD_CAST "2");
     xmlNewProp(save, BAD_CAST "timestepInterval", BAD_CAST "4000");
 
     // MPM
-    std::string prescribed = 
-      std::string(currPath) + "/" + "UniaxialStrainRotate_PrescribedDeformation.inp";
+    std::string prescribed = std::string(currPath) + "/" +
+                             "UniaxialStrainRotate_PrescribedDeformation.inp";
     auto mpm = xmlNewChild(rootNode, nullptr, BAD_CAST "MPM", BAD_CAST "");
     xmlNewChild(mpm, nullptr, BAD_CAST "time_integrator", BAD_CAST "explicit");
     xmlNewChild(mpm, nullptr, BAD_CAST "interpolator", BAD_CAST "linear");
     xmlNewChild(mpm, nullptr, BAD_CAST "use_load_curves", BAD_CAST "false");
-    xmlNewChild(mpm, nullptr, BAD_CAST "minimum_particle_mass", BAD_CAST "1.0e-15");
-    xmlNewChild(mpm, nullptr, BAD_CAST "minimum_mass_for_acc", BAD_CAST "1.0e-15");
-    xmlNewChild(mpm, nullptr, BAD_CAST "maximum_particle_velocity", BAD_CAST "1.0e5");
-    xmlNewChild(mpm, nullptr, BAD_CAST "artificial_damping_coeff", BAD_CAST "0.0");
+    xmlNewChild(
+      mpm, nullptr, BAD_CAST "minimum_particle_mass", BAD_CAST "1.0e-15");
+    xmlNewChild(
+      mpm, nullptr, BAD_CAST "minimum_mass_for_acc", BAD_CAST "1.0e-15");
+    xmlNewChild(
+      mpm, nullptr, BAD_CAST "maximum_particle_velocity", BAD_CAST "1.0e5");
+    xmlNewChild(
+      mpm, nullptr, BAD_CAST "artificial_damping_coeff", BAD_CAST "0.0");
     xmlNewChild(mpm, nullptr, BAD_CAST "artificial_viscosity", BAD_CAST "true");
-    xmlNewChild(mpm, nullptr, BAD_CAST "artificial_viscosity_heating", BAD_CAST "false");
-    xmlNewChild(mpm, nullptr, BAD_CAST "do_contact_friction_heating", BAD_CAST "false");
-    xmlNewChild(mpm, nullptr, BAD_CAST "create_new_particles", BAD_CAST "false");
+    xmlNewChild(
+      mpm, nullptr, BAD_CAST "artificial_viscosity_heating", BAD_CAST "false");
+    xmlNewChild(
+      mpm, nullptr, BAD_CAST "do_contact_friction_heating", BAD_CAST "false");
+    xmlNewChild(
+      mpm, nullptr, BAD_CAST "create_new_particles", BAD_CAST "false");
     xmlNewChild(mpm, nullptr, BAD_CAST "use_momentum_form", BAD_CAST "false");
     xmlNewChild(mpm, nullptr, BAD_CAST "with_color", BAD_CAST "true");
-    xmlNewChild(mpm, nullptr, BAD_CAST "use_prescribed_deformation", BAD_CAST "true");
-    xmlNewChild(mpm, nullptr, BAD_CAST "prescribed_deformation_file", BAD_CAST prescribed.c_str());
-    xmlNewChild(mpm, nullptr, BAD_CAST "minimum_subcycles_for_F", BAD_CAST "-2");
+    xmlNewChild(
+      mpm, nullptr, BAD_CAST "use_prescribed_deformation", BAD_CAST "true");
+    xmlNewChild(mpm,
+                nullptr,
+                BAD_CAST "prescribed_deformation_file",
+                BAD_CAST prescribed.c_str());
+    xmlNewChild(
+      mpm, nullptr, BAD_CAST "minimum_subcycles_for_F", BAD_CAST "-2");
     auto ero = xmlNewChild(mpm, nullptr, BAD_CAST "erosion", BAD_CAST "");
     xmlNewProp(ero, BAD_CAST "algorithm", BAD_CAST "none");
 
     // Physical constants
-    auto pc = xmlNewChild(rootNode, nullptr, BAD_CAST "PhysicalConstants", BAD_CAST "");
+    auto pc =
+      xmlNewChild(rootNode, nullptr, BAD_CAST "PhysicalConstants", BAD_CAST "");
     xmlNewChild(pc, nullptr, BAD_CAST "gravity", BAD_CAST "[0,0,0]");
 
     // Material properties
-    auto matProp = 
-      xmlNewChild(rootNode, nullptr, BAD_CAST "MaterialProperties", BAD_CAST "");
-    mpm = xmlNewChild(matProp, nullptr, BAD_CAST "MPM", BAD_CAST "");
+    auto matProp = xmlNewChild(
+      rootNode, nullptr, BAD_CAST "MaterialProperties", BAD_CAST "");
+    mpm      = xmlNewChild(matProp, nullptr, BAD_CAST "MPM", BAD_CAST "");
     auto mat = xmlNewChild(mpm, nullptr, BAD_CAST "material", BAD_CAST "");
     xmlNewProp(mat, BAD_CAST "name", BAD_CAST "TabularPlastic");
 
@@ -183,79 +208,81 @@ public:
     xmlNewChild(mat, nullptr, BAD_CAST "density", BAD_CAST "1050");
     xmlNewChild(mat, nullptr, BAD_CAST "melt_temp", BAD_CAST "3695.0");
     xmlNewChild(mat, nullptr, BAD_CAST "room_temp", BAD_CAST "294.0");
-    xmlNewChild(mat, nullptr, BAD_CAST "thermal_conductivity", BAD_CAST "174.0e-7");
+    xmlNewChild(
+      mat, nullptr, BAD_CAST "thermal_conductivity", BAD_CAST "174.0e-7");
     xmlNewChild(mat, nullptr, BAD_CAST "specific_heat", BAD_CAST "134.0e-8");
-    auto cm = xmlNewChild(mat, nullptr, BAD_CAST "constitutive_model", BAD_CAST "");
+    auto cm =
+      xmlNewChild(mat, nullptr, BAD_CAST "constitutive_model", BAD_CAST "");
     xmlNewProp(cm, BAD_CAST "type", BAD_CAST "tabular_plasticity");
 
     // Elastic properties
-    std::string table_elastic = 
+    std::string table_elastic =
       std::string(currPath) + "/" + "tabular_linear_elastic.json";
-    auto elastic = xmlNewChild(cm, nullptr, BAD_CAST "elastic_moduli_model", 
-                               BAD_CAST "");
+    auto elastic =
+      xmlNewChild(cm, nullptr, BAD_CAST "elastic_moduli_model", BAD_CAST "");
     xmlNewProp(elastic, BAD_CAST "type", BAD_CAST "tabular");
-    xmlNewChild(elastic, nullptr, BAD_CAST "filename", 
-                BAD_CAST table_elastic.c_str());
-    xmlNewChild(elastic, nullptr, BAD_CAST "independent_variables", 
+    xmlNewChild(
+      elastic, nullptr, BAD_CAST "filename", BAD_CAST table_elastic.c_str());
+    xmlNewChild(elastic,
+                nullptr,
+                BAD_CAST "independent_variables",
                 BAD_CAST "PlasticStrainVol, TotalStrainVol");
-    xmlNewChild(elastic, nullptr, BAD_CAST "dependent_variables", 
-                BAD_CAST "Pressure");
-    auto interp_elastic = xmlNewChild(elastic, nullptr, BAD_CAST "interpolation",
-                                      BAD_CAST "");
+    xmlNewChild(
+      elastic, nullptr, BAD_CAST "dependent_variables", BAD_CAST "Pressure");
+    auto interp_elastic =
+      xmlNewChild(elastic, nullptr, BAD_CAST "interpolation", BAD_CAST "");
     xmlNewProp(interp_elastic, BAD_CAST "type", BAD_CAST "linear");
-    xmlNewChild(elastic, nullptr, BAD_CAST "G0", 
-                BAD_CAST "1.0e4");
-    xmlNewChild(elastic, nullptr, BAD_CAST "nu", 
-              BAD_CAST "0.2");
+    xmlNewChild(elastic, nullptr, BAD_CAST "G0", BAD_CAST "1.0e4");
+    xmlNewChild(elastic, nullptr, BAD_CAST "nu", BAD_CAST "0.2");
 
     // Cap evolution
-    std::string table_cap = 
-      std::string(currPath) + "/" + "tabular_cap.json";
-    auto cap = xmlNewChild(cm, nullptr, BAD_CAST "internal_variable_model", 
-                           BAD_CAST "");
+    std::string table_cap = std::string(currPath) + "/" + "tabular_cap.json";
+    auto cap =
+      xmlNewChild(cm, nullptr, BAD_CAST "internal_variable_model", BAD_CAST "");
     xmlNewProp(cap, BAD_CAST "type", BAD_CAST "tabular_cap");
-    xmlNewChild(cap, nullptr, BAD_CAST "filename", 
-                BAD_CAST table_cap.c_str());
-    xmlNewChild(cap, nullptr, BAD_CAST "independent_variables", 
+    xmlNewChild(cap, nullptr, BAD_CAST "filename", BAD_CAST table_cap.c_str());
+    xmlNewChild(cap,
+                nullptr,
+                BAD_CAST "independent_variables",
                 BAD_CAST "PlasticStrainVol");
-    xmlNewChild(cap, nullptr, BAD_CAST "dependent_variables", 
-                BAD_CAST "Pressure");
-    auto cap_interp = xmlNewChild(cap, nullptr, BAD_CAST "interpolation",
-                                  BAD_CAST "");
+    xmlNewChild(
+      cap, nullptr, BAD_CAST "dependent_variables", BAD_CAST "Pressure");
+    auto cap_interp =
+      xmlNewChild(cap, nullptr, BAD_CAST "interpolation", BAD_CAST "");
     xmlNewProp(cap_interp, BAD_CAST "type", BAD_CAST "linear");
 
     // Yield criterion
-    std::string table_yield = 
+    std::string table_yield =
       std::string(currPath) + "/" + "tabular_von_mises.json";
-    auto yield = xmlNewChild(cm, nullptr, BAD_CAST "yield_condition", 
-                             BAD_CAST "");
+    auto yield =
+      xmlNewChild(cm, nullptr, BAD_CAST "yield_condition", BAD_CAST "");
     xmlNewProp(yield, BAD_CAST "type", BAD_CAST "tabular");
-    xmlNewChild(yield, nullptr, BAD_CAST "filename", 
-                BAD_CAST table_yield.c_str());
-    xmlNewChild(yield, nullptr, BAD_CAST "independent_variables", 
-                BAD_CAST "Pressure");
-    xmlNewChild(yield, nullptr, BAD_CAST "dependent_variables", 
-                BAD_CAST "SqrtJ2");
-    auto yield_interp = xmlNewChild(yield, nullptr, BAD_CAST "interpolation",
-                              BAD_CAST "");
+    xmlNewChild(
+      yield, nullptr, BAD_CAST "filename", BAD_CAST table_yield.c_str());
+    xmlNewChild(
+      yield, nullptr, BAD_CAST "independent_variables", BAD_CAST "Pressure");
+    xmlNewChild(
+      yield, nullptr, BAD_CAST "dependent_variables", BAD_CAST "SqrtJ2");
+    auto yield_interp =
+      xmlNewChild(yield, nullptr, BAD_CAST "interpolation", BAD_CAST "");
     xmlNewProp(yield_interp, BAD_CAST "type", BAD_CAST "linear");
 
     // Hydrostat
-    std::string table_hydrostat = 
+    std::string table_hydrostat =
       std::string(currPath) + "/" + "DrySand_HydrostatData.json";
-    xmlNewChild(cm, nullptr, BAD_CAST "filename", 
-                BAD_CAST table_hydrostat.c_str());
-    xmlNewChild(cm, nullptr, BAD_CAST "independent_variables", 
-                BAD_CAST "TotalStrainVol");
-    xmlNewChild(cm, nullptr, BAD_CAST "dependent_variables", 
-                BAD_CAST "Pressure");
-    auto cm_interp = xmlNewChild(cm, nullptr, BAD_CAST "interpolation",
-                              BAD_CAST "");
+    xmlNewChild(
+      cm, nullptr, BAD_CAST "filename", BAD_CAST table_hydrostat.c_str());
+    xmlNewChild(
+      cm, nullptr, BAD_CAST "independent_variables", BAD_CAST "TotalStrainVol");
+    xmlNewChild(
+      cm, nullptr, BAD_CAST "dependent_variables", BAD_CAST "Pressure");
+    auto cm_interp =
+      xmlNewChild(cm, nullptr, BAD_CAST "interpolation", BAD_CAST "");
     xmlNewProp(cm_interp, BAD_CAST "type", BAD_CAST "linear");
-    
+
     // Geometry
     auto geom = xmlNewChild(mat, nullptr, BAD_CAST "geom_object", BAD_CAST "");
-    auto box = xmlNewChild(geom, nullptr, BAD_CAST "box", BAD_CAST "");
+    auto box  = xmlNewChild(geom, nullptr, BAD_CAST "box", BAD_CAST "");
     xmlNewProp(box, BAD_CAST "label", BAD_CAST "Plate1");
     xmlNewChild(box, nullptr, BAD_CAST "min", BAD_CAST "[0.0,0.0,0.0]");
     xmlNewChild(box, nullptr, BAD_CAST "max", BAD_CAST "[1.0,1.0,1.0]");
@@ -274,7 +301,7 @@ public:
     auto grid = xmlNewChild(rootNode, nullptr, BAD_CAST "Grid", BAD_CAST "");
     xmlNewChild(grid, nullptr, BAD_CAST "BoundaryConditions", BAD_CAST "");
     auto level = xmlNewChild(grid, nullptr, BAD_CAST "Level", BAD_CAST "");
-    box = xmlNewChild(level, nullptr, BAD_CAST "Box", BAD_CAST "");
+    box        = xmlNewChild(level, nullptr, BAD_CAST "Box", BAD_CAST "");
     xmlNewProp(box, BAD_CAST "label", BAD_CAST "1");
     xmlNewChild(box, nullptr, BAD_CAST "lower", BAD_CAST "[-2,-2,-2]");
     xmlNewChild(box, nullptr, BAD_CAST "upper", BAD_CAST "[3,3,3]");
@@ -283,9 +310,9 @@ public:
     xmlNewChild(box, nullptr, BAD_CAST "patches", BAD_CAST "[1,1,1]");
 
     // Print the document to stdout
-    //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
-    std::string ups_file = std::string(currPath) + "/" + 
-                           "UniaxialStrainRotateTabularPlasticity.ups";
+    // xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+    std::string ups_file =
+      std::string(currPath) + "/" + "UniaxialStrainRotateTabularPlasticity.ups";
     xmlSaveFormatFileEnc(ups_file.c_str(), doc, "ISO-8859-1", 1);
 
     // Create a ProblemSpec
@@ -300,7 +327,9 @@ public:
   }
 };
 
-int main(int argc, char** argv, char* env[]) {
+int
+main(int argc, char** argv, char* env[])
+{
 
   ::testing::InitGoogleTest(&argc, argv);
   ::testing::AddGlobalTestEnvironment(new VaangoEnv(argc, argv, env));
@@ -313,62 +342,95 @@ TEST(TabularPlasticityTest, singleParticleTest)
   if (!getcwd(currPath, sizeof(currPath))) {
     std::cout << "Current path not found\n";
   }
-  std::string ups_file = std::string(currPath) + "/" + 
-                         "UniaxialStrainRotateTabularPlasticity.ups";
-  //std::cout << "Created Filename = " << ups_file << std::endl;
+  std::string ups_file =
+    std::string(currPath) + "/" + "UniaxialStrainRotateTabularPlasticity.ups";
+  // std::cout << "Created Filename = " << ups_file << std::endl;
 
   // Remove existing uda
-  std::string uda_file = std::string(currPath) + "/" + 
+  std::string uda_file = std::string(currPath) + "/" +
                          "UniaxialStrainRotateTabularPlasticity.uda.000";
   Dir::removeDir(uda_file.c_str());
 
-  char * start_addr = (char*)sbrk(0);
-  bool thrownException = false;
+  char* start_addr                      = (char*)sbrk(0);
+  [[maybe_unused]] bool thrownException = false;
 
   try {
-    ProblemSpecP ups = VaangoEnv::createInput();
-    ups->getNode()->_private = (void *) ups_file.c_str();
-    //std::cout << "Filename = " << static_cast<char*>(ups->getNode()->_private) << std::endl;
+    ProblemSpecP ups         = VaangoEnv::createInput();
+    ups->getNode()->_private = (void*)ups_file.c_str();
+    // std::cout << "Filename = " <<
+    // static_cast<char*>(ups->getNode()->_private) << std::endl;
 
     const ProcessorGroup* world = Uintah::Parallel::getRootProcessorGroup();
-    SimulationController* ctl = scinew AMRSimulationController(world, false, ups);
-    
-    RegridderCommon* reg = 0;
-    SolverInterface* solve = SolverFactory::create(ups, world, "");
 
-    UintahParallelComponent* comp = ComponentFactory::create(ups, world, false, "");
-    SimulationInterface* sim = dynamic_cast<SimulationInterface*>(comp);
-    ctl->attachPort("sim", sim);
-    comp->attachPort("solver", solve);
-    comp->attachPort("regridder", reg);
+    std::unique_ptr<SimulationController> ctl =
+      std::make_unique<AMRSimulationController>(world, ups);
 
-    LoadBalancerCommon* lbc = LoadBalancerFactory::create(ups, world);
-    lbc->attachPort("sim", sim);
+    std::unique_ptr<UintahParallelComponent> simComp =
+      ComponentFactory::create(ups, world, nullptr, "");
 
-    DataArchiver* dataarchiver = scinew DataArchiver(world, -1);
-    Output* output = dataarchiver;
-    ctl->attachPort("output", dataarchiver);
-    dataarchiver->attachPort("load balancer", lbc);
-    comp->attachPort("output", dataarchiver);
-    dataarchiver->attachPort("sim", sim);
+    SimulationInterface* simulator =
+      dynamic_cast<SimulationInterface*>(simComp.get());
+    simulator->problemSetup(ups);
+    ctl->attachPort("simulator", simulator);
 
-    SchedulerCommon* sched = SchedulerFactory::create(ups, world, output);
-    sched->attachPort("load balancer", lbc);
+    std::shared_ptr<SolverInterface> solver =
+      SolverFactory::create(ups, world, "");
+
+    UintahParallelComponent* solverComp =
+      dynamic_cast<UintahParallelComponent*>(solver.get());
+    simComp->attachPort("solver", solver.get());
+    solverComp->attachPort("simulator", simulator);
+
+    std::unique_ptr<LoadBalancerCommon> lbc =
+      LoadBalancerFactory::create(ups, world);
+
+    lbc->attachPort("simulator", simulator);
+    ctl->attachPort("load balancer", lbc.get());
+    simComp->attachPort("load balancer", lbc.get());
+
+    SchedulerCommon* sched = SchedulerFactory::create(ups, world);
+    sched->attachPort("load balancer", lbc.get());
+    sched->attachPort("simulator", simulator);
+
     ctl->attachPort("scheduler", sched);
+    simComp->attachPort("scheduler", sched);
     lbc->attachPort("scheduler", sched);
-    comp->attachPort("scheduler", sched);
-    sched->setStartAddr( start_addr );
+
+    sched->setStartAddr(start_addr);
     sched->addReference();
 
+    std::unique_ptr<DataArchiver> dataarchiver =
+      std::make_unique<DataArchiver>(world, -1);
+
+    dataarchiver->attachPort("simulator", simulator);
+    dataarchiver->attachPort("load balancer", lbc.get());
+
+    ctl->attachPort("output", dataarchiver.get());
+    simComp->attachPort("output", dataarchiver.get());
+    sched->attachPort("output", dataarchiver.get());
+
+    sched->getComponents();
+    lbc->getComponents();
+    solverComp->getComponents();
+    dataarchiver->getComponents();
+
+    simComp->getComponents();
+    ctl->getComponents();
+
+    ups = nullptr;
+
     ctl->run();
-    delete ctl;
+
+    dataarchiver->releaseComponents();
+    sched->releaseComponents();
+    lbc->releaseComponents();
+    solverComp->releaseComponents();
+    simComp->releaseComponents();
+    ctl->releaseComponents();
 
     sched->removeReference();
+
     delete sched;
-    delete lbc;
-    delete sim;
-    delete solve;
-    delete output; 
 
   } catch (ProblemSetupException& e) {
     std::cout << e.message() << std::endl;
@@ -384,4 +446,14 @@ TEST(TabularPlasticityTest, singleParticleTest)
     throw;
   }
 
+  Uintah::Parallel::finalizeManager(thrownException
+                                      ? Uintah::Parallel::Abort
+                                      : Uintah::Parallel::NormalShutdown);
+
+  if (thrownException) {
+    if (Uintah::Parallel::getMPIRank() == 0) {
+      std::cout << "\n\nAN EXCEPTION WAS THROWN... Goodbye.\n\n";
+    }
+    Uintah::Parallel::exitAll(1);
+  }
 }

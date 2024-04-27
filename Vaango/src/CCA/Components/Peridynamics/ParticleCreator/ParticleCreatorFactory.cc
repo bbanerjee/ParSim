@@ -24,7 +24,7 @@
 
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreatorFactory.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/ProblemSetupException.h>

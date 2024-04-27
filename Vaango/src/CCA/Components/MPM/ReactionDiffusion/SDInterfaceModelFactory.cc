@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2014 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,52 +23,63 @@
  * IN THE SOFTWARE.
  */
 #include <CCA/Components/MPM/ReactionDiffusion/SDInterfaceModelFactory.h>
-#include <CCA/Components/MPM/ReactionDiffusion/SDInterfaceModel.h>
-#include <CCA/Components/MPM/ReactionDiffusion/CommonIFConcDiff.h>
 
-#include <CCA/Components/MPM/MPMFlags.h>
-
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
-#include <fstream>
-#include <iostream>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionInterfaces/CommonIFConcDiff.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionInterfaces/SDInterfaceModel.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionInterfaces/SimpleDiffusionContact.h>
 #include <string>
 
-using namespace std;
 using namespace Uintah;
 
-SDInterfaceModel* SDInterfaceModelFactory::create(ProblemSpecP& ps,
-                                                          SimulationStateP& ss,
-                                                          MPMFlags* flags)
+std::unique_ptr<SDInterfaceModel>
+SDInterfaceModelFactory::create(ProblemSpecP& ps,
+                                const MaterialManager* ss,
+                                const MPMFlags* flags,
+                                const MPMLabel* mpm_lb)
 {
-  ProblemSpecP mpm_ps = 
-     ps->findBlockWithOutAttribute("MaterialProperties")->findBlock("MPM");
-	if(!mpm_ps)
-    throw ProblemSetupException("Cannot find scalar_diffuion_model tag", __FILE__, __LINE__);
+  ProblemSpecP mpm_ps =
+    ps->findBlockWithOutAttribute("MaterialProperties")->findBlock("MPM");
+  if (!mpm_ps) {
+    throw ProblemSetupException("Cannot MPM material subsection.",
+                                __FILE__,
+                                __LINE__);
+  }
 
+  // Default to a null interface model
   ProblemSpecP child = mpm_ps->findBlock("diffusion_interface");
 
-  if(!child)
-    throw ProblemSetupException("Cannot find diffusion_interface tag", __FILE__, __LINE__);
-	
-  string diff_interface_type;
-  if(!child->getWithDefault("type",diff_interface_type, "null"))
-    throw ProblemSetupException("No type for diffusion_interface", __FILE__, __LINE__);
+  // If we don't specify a diffusion interface, assume null.
+  std::string diff_interface_type = "null";
 
-  if(flags->d_integratorType == "implicit"){
-    string txt="MPM:  Implicit Scalar Diffusion is not working yet!";
+  if (child) {
+    child->getWithDefault("type", diff_interface_type, "null");
+  }
+
+  if (flags->d_integratorType == "implicit") {
+    std::string txt = "MPM:  Implicit Scalar Diffusion is not working yet!";
     throw ProblemSetupException(txt, __FILE__, __LINE__);
   }
 
-  if (diff_interface_type == "common"){
-    return(scinew CommonIFConcDiff(mpm_ps, ss, flags));
-  }else if (diff_interface_type == "paired"){
-    return(scinew SDInterfaceModel(child, ss, flags));
-  }else{
-    throw ProblemSetupException("Unknown Scalar Interface Type ("+diff_interface_type+")", __FILE__, __LINE__);
+  if (diff_interface_type == "common") {
+    return std::make_unique<CommonIFConcDiff>(child, ss, flags, mpm_lb);
   }
 
-  return 0;
+  if (diff_interface_type == "null") {
+    return std::make_unique<SDInterfaceModel>(child, ss, flags, mpm_lb);
+  }
+
+  if (diff_interface_type == "simple") {
+    return std::make_unique<SimpleSDInterface>(child, ss, flags, mpm_lb);
+  }
+
+  throw ProblemSetupException("Unknown Scalar Interface Type (" +
+                                diff_interface_type + ")",
+                              __FILE__,
+                              __LINE__);
+  return nullptr;
 }

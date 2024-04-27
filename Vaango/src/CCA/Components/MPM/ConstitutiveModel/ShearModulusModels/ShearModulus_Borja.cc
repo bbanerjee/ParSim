@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -58,6 +58,7 @@ ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps,
   d_alpha                 = eosParams["alpha"];
   d_p0                    = eosParams["p0"];
   d_kappatilde            = eosParams["kappatilde"];
+  d_kappahat              = eosParams["kappahat"];
   d_epse_v0               = eosParams["epse_v0"];
 
   ps->require("mu0", d_mu0);
@@ -74,6 +75,7 @@ ShearModulus_Borja::ShearModulus_Borja(const ShearModulus_Borja* smm)
   d_p0           = smm->d_p0;
   d_epse_v0      = smm->d_epse_v0;
   d_kappatilde   = smm->d_kappatilde;
+  d_kappahat     = smm->d_kappahat;
   d_shearModulus = smm->d_shearModulus;
 }
 
@@ -219,7 +221,7 @@ ShearModulus_Borja::computeDqDepse_v(const ModelStateBase* state_input) const
 double
 ShearModulus_Borja::evalShearModulus(const double& epse_v) const
 {
-  double mu_vol = d_alpha * d_p0 * exp(-(epse_v - d_epse_v0) / d_kappatilde);
+  double mu_vol = d_alpha * d_p0 * exp(-(epse_v - d_epse_v0) / d_kappahat);
   return mu_vol;
 }
 
@@ -239,7 +241,7 @@ ShearModulus_Borja::evalDqDepse_v(const double& epse_v,
                                   const double& epse_s) const
 {
   double mu_vol      = evalShearModulus(epse_v);
-  double dmu_depse_v = mu_vol / d_kappatilde;
+  double dmu_depse_v = mu_vol / d_kappahat;
   double dq_depse_v  = 3.0 * dmu_depse_v * epse_s;
   return dq_depse_v;
 }

@@ -27,7 +27,7 @@
 #include <ostream>
 #include <fstream>
 #include <iomanip>
-using namespace std;
+
 
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
@@ -61,11 +61,11 @@ int main(int argc, char **argv)
   {
     if(rank==0)
     {
-      cout << "Usage: benchmark patch_size number_of_patches flag_inner_rad(0-1) flag_outter_rad(0-1)\n";
-      cout << " Command was: ";
+      std::cout << "Usage: benchmark patch_size number_of_patches flag_inner_rad(0-1) flag_outter_rad(0-1)\n";
+      std::cout << " Command was: ";
       for(int i=0;i<argc;i++)
-        cout << argv[i] << " ";
-      cout << endl;
+        std::cout << argv[i] << " ";
+      std::cout << std::endl;
     }
     MPI_Finalize();
     return 1;
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
     num_patches[d]*=2;
     d=(d+1)%3;
   }
-  //cout << "Num patches: " << num_patches << " total:" << num_patches[0]*num_patches[1]*num_patches[2] << endl;
+  //cout << "Num patches: " << num_patches << " total:" << num_patches[0]*num_patches[1]*num_patches[2] << std::endl;
   IntVector cells;
   cells[0]=cells[1]=cells[2]=num_patches[0]*patch_size[0];
   IntVector rr(4,4,4);
@@ -99,27 +99,27 @@ int main(int argc, char **argv)
 
   Sphere2 s(cells.asVector()/Vector(2,2,2),radin,radout);
   
-  //cout << "num patches:" << num_patches << endl;
-  //cout << "cells: " << cells << endl;
-  //cout << "rad: " << rad << endl;
+  //cout << "num patches:" << num_patches << std::endl;
+  //cout << "cells: " << cells << std::endl;
+  //cout << "rad: " << rad << std::endl;
 
   //create coarse patch set
-  vector<Region> patches;
-  vector<CCVariable<int> * > flags;
-  vector<IntVector> gflags;
-  vector<list<IntVector> > lflags;
+  std::vector<Region> patches;
+  std::vector<CCVariable<int> * > flags;
+  std::vector<IntVector> gflags;
+  std::vector<list<IntVector> > lflags;
 
   int total_patches=num_patches.x()*num_patches.y()*num_patches.z();
   int div=total_patches/num_procs;
   int mod=total_patches%num_procs;
 
-  //cout << "total patches: " << total_patches << endl;
-  //cout << "div: " << div << " mod: " << mod << endl;
+  //cout << "total patches: " << total_patches << std::endl;
+  //cout << "div: " << div << " mod: " << mod << std::endl;
   int p=0;
   int p_assigned=0;
   int to_assign=div+int(mod>0);
   int idx=0;
-  //cout << "to_assign=" << to_assign << endl;
+  //cout << "to_assign=" << to_assign << std::endl;
 
   for(int i=0;i<num_patches.x();i++)
   {
@@ -139,7 +139,7 @@ int main(int argc, char **argv)
         if(p_assigned==to_assign)
         { 
           //if(rank==0)
-          //  cout << p << " assigned: " << to_assign << " patches\n"; 
+          //  std::cout << p << " assigned: " << to_assign << " patches\n"; 
           p++;
           p_assigned=0;
           to_assign=div+int(mod>p);
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
   }
 
   //for(unsigned int i=0;i<patches.size();i++)
-  //  cout << rank << " patch: " << patches[i] << endl;
+  //  std::cout << rank << " patch: " << patches[i] << std::endl;
 
   //create refinement flags
   flags.resize(patches.size());
@@ -185,14 +185,14 @@ int main(int argc, char **argv)
 
   ofstream fout;
   
-  vector<Region> fine_patches,global_patches;
+  std::vector<Region> fine_patches,global_patches;
 
   TiledRegridder tiled(patch_size,rr);
   LBNRRegridder lbnr(.85,rr);
   GBRv1Regridder gbrv1(.85,rr,rank,num_procs);
   GBRv2Regridder gbrv2(.85,rr,rank,num_procs);
 
-  cout << setprecision(20);
+  std::cout << setprecision(20);
   clock_t start;
   double time;
 #if 1
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
   outputTime(time,1);
 #endif
 #if 1
-  vector<IntVector> tmpflags;
+  std::vector<IntVector> tmpflags;
   MPI_Barrier(MPI_COMM_WORLD);
   start=clock();
   for(int i=0;i<REPEAT2;i++)
@@ -259,9 +259,9 @@ int main(int argc, char **argv)
 
 void getTime(double time, double &mint, double &maxt, double &avgt)
 {
-  MPI_Allreduce(&time,&mint,1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
-  MPI_Allreduce(&time,&maxt,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
-  MPI_Allreduce(&time,&avgt,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  Uintah::MPI::Allreduce(&time,&mint,1,MPI_DOUBLE,MPI_MIN,MPI_COMM_WORLD);
+  Uintah::MPI::Allreduce(&time,&maxt,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+  Uintah::MPI::Allreduce(&time,&avgt,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
   avgt/=num_procs;
 }
 
@@ -271,7 +271,7 @@ void outputTime(double time, int alg)
   getTime(time,mint,maxt,avgt);
 
   if(rank==0)
-    cout << num_procs << " " << alg << " " << avgt << " " << mint << " " << maxt << endl; 
+    std::cout << num_procs << " " << alg << " " << avgt << " " << mint << " " << maxt << std::endl; 
 
 }
 

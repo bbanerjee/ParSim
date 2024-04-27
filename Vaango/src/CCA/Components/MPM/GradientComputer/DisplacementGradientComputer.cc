@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,39 +27,39 @@
 
 using namespace Uintah;
 
-DisplacementGradientComputer::DisplacementGradientComputer(MPMFlags* Mflag) 
+DisplacementGradientComputer::DisplacementGradientComputer(const MPMFlags* Mflag)
   : GradientComputer(Mflag)
 {
 }
 
-DisplacementGradientComputer::DisplacementGradientComputer(const DisplacementGradientComputer* gc)
+DisplacementGradientComputer::DisplacementGradientComputer(
+  const DisplacementGradientComputer* gc)
   : GradientComputer(gc)
 {
 }
 
-DisplacementGradientComputer* DisplacementGradientComputer::clone()
+DisplacementGradientComputer*
+DisplacementGradientComputer::clone()
 {
   return scinew DisplacementGradientComputer(*this);
 }
 
-DisplacementGradientComputer::~DisplacementGradientComputer()
-{
-}
+DisplacementGradientComputer::~DisplacementGradientComputer() {}
 
 // Actually compute displacement gradient
-void 
+void
 DisplacementGradientComputer::computeDispGrad(ParticleInterpolator* interp,
                                               const double* oodx,
                                               const Point& px,
-                                              const Matrix3& psize,
+                                              const Matrix3& pSize,
                                               const Matrix3& pDefGrad_old,
                                               constNCVariable<Vector> gDisp,
                                               Matrix3& dispGrad_new)
 {
   // Get the node indices that surround the cell
-  vector<IntVector> ni(interp->size());
-  vector<Vector> d_S(interp->size());
-  interp->findCellAndShapeDerivatives(px, ni, d_S, psize, pDefGrad_old);
+  std::vector<IntVector> ni(interp->size());
+  std::vector<Vector> d_S(interp->size());
+  interp->findCellAndShapeDerivatives(px, ni, d_S, pSize, pDefGrad_old);
 
   // Compute the gradient
   computeGrad(dispGrad_new, ni, d_S, oodx, gDisp);

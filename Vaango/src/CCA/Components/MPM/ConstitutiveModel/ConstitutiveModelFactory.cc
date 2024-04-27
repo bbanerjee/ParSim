@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -36,13 +36,14 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/TransIsoHyper.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/TransIsoHyperImplicit.h>
 
+#include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/MurnaghanMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ProgramBurn.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ViscoSCRAMHotSpot.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ElasticPlasticHP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/UCNH.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/IsoMetalPlasticityExplicit.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/PorousModels/P_Alpha.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PorousModels/SoilFoam.h>
@@ -85,7 +86,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoElasticFortran.h>
 #endif
 
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
@@ -95,24 +96,19 @@
 #include <iostream>
 #include <string>
 
-using std::cerr;
-using std::ifstream;
-using std::ofstream;
-using std::ostringstream;
+namespace Uintah {
 
-using namespace Uintah;
-
-ConstitutiveModel*
+std::unique_ptr<ConstitutiveModel>
 ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
 {
   ProblemSpecP child = ps->findBlock("constitutive_model");
   if (!child)
-    throw ProblemSetupException("Cannot find constitutive_model tag", __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "Cannot find constitutive_model tag", __FILE__, __LINE__);
   string mat_type;
   if (!child->getAttribute("type", mat_type))
-    throw ProblemSetupException("No type for constitutive_model", __FILE__,
-                                __LINE__);
+    throw ProblemSetupException(
+      "No type for constitutive_model", __FILE__, __LINE__);
 
   if (flags->d_integratorType != "implicit" &&
       flags->d_integratorType != "explicit" &&
@@ -128,179 +124,181 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
   }
 
   if (mat_type == "rigid")
-    return (scinew RigidMaterial(child, flags));
+    return std::make_unique<RigidMaterial>(child, flags);
 
   else if (mat_type == "comp_mooney_rivlin")
-    return (scinew CompMooneyRivlin(child, flags));
+    return std::make_unique<CompMooneyRivlin>(child, flags);
 
   else if (mat_type == "nonlocal_drucker_prager")
-    return (scinew NonLocalDruckerPrager(child, flags));
+    return std::make_unique<NonLocalDruckerPrager>(child, flags);
 
   else if (mat_type == "Arenisca")
-    return (scinew Arenisca(child, flags));
+    return std::make_unique<Arenisca>(child, flags);
 
   else if (mat_type == "Arenisca3")
-    return (scinew Arenisca3(child, flags));
+    return std::make_unique<Arenisca3>(child, flags);
 
   else if (mat_type == "arena")
-    return (scinew Vaango::Arena(child, flags));
+    return std::make_unique<Vaango::Arena>(child, flags);
 
   else if (mat_type == "arena_mixture")
-    return (scinew Vaango::ArenaMixture(child, flags));
+    return std::make_unique<Vaango::ArenaMixture>(child, flags);
 
   else if (mat_type == "Arenisca4")
-    return (scinew Arenisca4(child, flags));
+    return std::make_unique<Arenisca4>(child, flags);
 
   else if (mat_type == "soil_model_brannon")
-    return (scinew SoilModelBrannon(child, flags));
+    return std::make_unique<SoilModelBrannon>(child, flags);
 
   else if (mat_type == "tabular_eos")
-    return (scinew Vaango::TabularEquationOfState(child, flags));
+    return std::make_unique<Vaango::TabularEquationOfState>(child, flags);
 
   else if (mat_type == "tabular_plasticity")
-    return (scinew Vaango::TabularPlasticity(child, flags));
+    return std::make_unique<Vaango::TabularPlasticity>(child, flags);
 
   else if (mat_type == "tabular_plasticity_cap")
-    return (scinew Vaango::TabularPlasticityCap(child, flags));
+    return std::make_unique<Vaango::TabularPlasticityCap>(child, flags);
 
-  else if (mat_type == "mohr_coulomb") 
-    return (scinew MohrCoulomb(child, flags));
+  else if (mat_type == "mohr_coulomb")
+    return std::make_unique<MohrCoulomb>(child, flags);
 
   else if (mat_type == "comp_neo_hook") {
     if (flags->d_integratorType == "explicit" ||
         flags->d_integratorType == "fracture")
-      return (scinew UCNH(child, flags, false, false));
+      return std::make_unique<UCNH>(child, flags, false, false);
     else if (flags->d_integratorType == "implicit")
-      return (scinew UCNH(child, flags));
+      return std::make_unique<UCNH>(child, flags);
   } else if (mat_type == "cnh_damage")
-    return (scinew UCNH(child, flags, false, true));
+    return std::make_unique<UCNH>(child, flags, false, true);
 
   else if (mat_type == "UCNH")
-    return (scinew UCNH(child, flags));
+    return std::make_unique<UCNH>(child, flags);
 
   else if (mat_type == "cnh_mms")
-    return (scinew CNH_MMS(child, flags));
+    return std::make_unique<CNH_MMS>(child, flags);
 
   else if (mat_type == "cnhp_damage")
-    return (scinew UCNH(child, flags, true, true));
+    return std::make_unique<UCNH>(child, flags, true, true);
 
   else if (mat_type == "trans_iso_hyper") {
     if (flags->d_integratorType == "explicit" ||
         flags->d_integratorType == "fracture")
-      return (scinew TransIsoHyper(child, flags));
+      return std::make_unique<TransIsoHyper>(child, flags);
     else if (flags->d_integratorType == "implicit")
-      return (scinew TransIsoHyperImplicit(child, flags));
+      return std::make_unique<TransIsoHyperImplicit>(child, flags);
   }
 
   else if (mat_type == "visco_trans_iso_hyper") {
     if (flags->d_integratorType == "explicit" ||
         flags->d_integratorType == "fracture")
-      return (scinew ViscoTransIsoHyper(child, flags));
+      return std::make_unique<ViscoTransIsoHyper>(child, flags);
     else if (flags->d_integratorType == "implicit")
-      return (scinew ViscoTransIsoHyperImplicit(child, flags));
+      return std::make_unique<ViscoTransIsoHyperImplicit>(child, flags);
   }
 
   else if (mat_type == "ideal_gas")
-    return (scinew IdealGasMP(child, flags));
+    return std::make_unique<IdealGasMP>(child, flags);
 
   else if (mat_type == "p_alpha")
-    return (scinew P_Alpha(child, flags));
+    return std::make_unique<P_Alpha>(child, flags);
 
   else if (mat_type == "water")
-    return (scinew Water(child, flags));
+    return std::make_unique<Water>(child, flags);
 
   else if (mat_type == "comp_neo_hook_plastic")
-    return (scinew UCNH(child, flags, true, false));
+    return std::make_unique<UCNH>(child, flags, true, false);
 
   else if (mat_type == "visco_scram") {
     if (flags->d_integratorType == "explicit" ||
         flags->d_integratorType == "fracture")
-      return (scinew ViscoScram(child, flags));
+      return std::make_unique<ViscoScram>(child, flags);
     else if (flags->d_integratorType == "implicit")
-      return (scinew ViscoScramImplicit(child, flags));
+      return std::make_unique<ViscoScramImplicit>(child, flags);
   }
 
   else if (mat_type == "viscoSCRAM_hs")
-    return (scinew ViscoSCRAMHotSpot(child, flags));
+    return std::make_unique<ViscoSCRAMHotSpot>(child, flags);
 
   else if (mat_type == "hypo_elastic") {
     if (flags->d_integratorType == "explicit")
-      return (scinew HypoElastic(child, flags));
+      return std::make_unique<HypoElastic>(child, flags);
 
     else if (flags->d_integratorType == "implicit") {
       if (!flags->d_doGridReset) {
-        ostringstream msg;
+         std::ostringstream msg;
         msg << "\n ERROR: One may not use HypoElastic along with \n"
             << " <do_grid_reset>false</do_grid_reset> \n";
         throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
       }
-      return (scinew HypoElasticImplicit(child, flags));
+      return std::make_unique<HypoElasticImplicit>(child, flags);
     }
   }
 
-  else if (mat_type == "hypo_elastic_fracture") 
-    return (scinew HypoElasticFracture(child, flags));
+  else if (mat_type == "hypo_elastic_fracture")
+    return std::make_unique<HypoElasticFracture>(child, flags);
 
 #if !defined(NO_FORTRAN)
   else if (mat_type == "hypo_elastic_fortran")
-    return (scinew HypoElasticFortran(child, flags));
+    return std::make_unique<HypoElasticFortran>(child, flags);
 
   else if (mat_type == "kayenta")
-    return (scinew Kayenta(child, flags));
+    return std::make_unique<Kayenta>(child, flags);
 
   else if (mat_type == "diamm")
-    return (scinew Diamm(child, flags));
+    return std::make_unique<Diamm>(child, flags);
 
   else if (mat_type == "viscoelastic_fortran")
-    return (scinew Vaango::ViscoElasticFortran(child, flags));
+    return std::make_unique<Vaango::ViscoElasticFortran>(child, flags);
 #endif
 
   else if (mat_type == "mw_visco_elastic")
-    return (scinew MWViscoElastic(child, flags));
+    return std::make_unique<MWViscoElastic>(child, flags);
 
   else if (mat_type == "membrane")
-    return (scinew Membrane(child, flags));
+    return std::make_unique<Membrane>(child, flags);
 
   else if (mat_type == "murnaghanMPM")
-    return (scinew MurnaghanMPM(child, flags));
+    return std::make_unique<MurnaghanMPM>(child, flags);
 
   else if (mat_type == "program_burn")
-    return (scinew ProgramBurn(child, flags));
+    return std::make_unique<ProgramBurn>(child, flags);
 
   else if (mat_type == "shell_CNH")
-    return (scinew ShellMaterial(child, flags));
+    return std::make_unique<ShellMaterial>(child, flags);
 
   else if (mat_type == "elastic_plastic")
-    return (scinew ElasticPlasticHP(child, flags));
+    return std::make_unique<IsoMetalPlasticityExplicit>(child, flags);
 
   else if (mat_type == "elastic_plastic_hp")
-    return (scinew ElasticPlasticHP(child, flags));
+    return std::make_unique<ElasticPlasticHP>(child, flags);
 
   else if (mat_type == "soil_foam")
-    return (scinew SoilFoam(child, flags));
+    return std::make_unique<SoilFoam>(child, flags);
 
   else if (mat_type == "visco_plastic")
-    return (scinew ViscoPlastic(child, flags));
+    return std::make_unique<ViscoPlastic>(child, flags);
 
   else if (mat_type == "murnaghanMPM")
-    return (scinew MurnaghanMPM(child, flags));
+    return std::make_unique<MurnaghanMPM>(child, flags);
 
   else if (mat_type == "jwlpp_mpm")
-    return (scinew JWLppMPM(child, flags));
+    return std::make_unique<JWLppMPM>(child, flags);
 
   else if (mat_type == "camclay")
-    return (scinew CamClay(child, flags));
+    return std::make_unique<CamClay>(child, flags);
 
   else if (mat_type == "polar_orthotropic_hypoelastic")
-    return (scinew PolarOrthotropicHypoElastic(child, flags));
+    return std::make_unique<PolarOrthotropicHypoElastic>(child, flags);
 
   else if (mat_type == "hypo_elastic_mms") {
-    return (scinew HypoElastic_MMS(child, flags));
+    return std::make_unique<HypoElastic_MMS>(child, flags);
   }
 
   else
-    throw ProblemSetupException("Unknown Material Type R (" + mat_type + ")",
-                                __FILE__, __LINE__);
+    throw ProblemSetupException(
+      "Unknown Material Type R (" + mat_type + ")", __FILE__, __LINE__);
 
   return nullptr;
 }
+
+} // end namespace Uintah

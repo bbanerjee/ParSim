@@ -39,7 +39,7 @@ add_executable(testBoundaryFileWriter testBoundaryFileWriter.cpp)
 
 target_link_libraries(testBoundaryFileWriter
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -60,7 +60,7 @@ add_executable(testBoundaryFileReader testBoundaryFileReader.cpp)
 
 target_link_libraries(testBoundaryFileReader
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -81,7 +81,7 @@ add_executable(testBoundaryConditionCurve testBoundaryConditionCurve.cpp)
 
 target_link_libraries(testBoundaryConditionCurve
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
@@ -102,7 +102,7 @@ add_executable(testPlaneBoundary testPlaneBoundary.cpp)
 
 target_link_libraries(testPlaneBoundary
   ${TEST_LIB}
-  ELLIP3D_LIB
+  ellip3d_lib
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}

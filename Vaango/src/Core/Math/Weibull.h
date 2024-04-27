@@ -45,11 +45,11 @@
 #include <random>
 
 #include <Core/Math/MusilRNG.h>
-#include <Core/Math/share.h>
+
 
 namespace Uintah {
 
-class SCISHARE Weibull {
+class  Weibull {
 
   public:
     double d_mean;               // Mean of the Weibull distributed variable

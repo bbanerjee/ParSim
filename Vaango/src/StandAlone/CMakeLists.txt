@@ -6,7 +6,7 @@
 #  Copyright (c) 2004 Scientific Computing and Imaging Institute,
 #  University of Utah.
 #  Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-#  Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+#  Copyright (c) 2015-2023 Biswajit Banerjee
 #  
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -30,17 +30,28 @@
 message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
-ADD_EXECUTABLE(vaango vaango.cc)
-ADD_EXECUTABLE(compare_uda compare_uda.cc)
+set(VAANGO_UTILS_SRC
+    Utils/vaango_utils.cc
+    Utils/vaango_options.cc
+)
+
+set(COMPARE_UDA_UTILS_SRC
+    Utils/compare_uda_utils.cc
+    Utils/compare_uda_options.cc
+    Utils/MaterialParticleVarData.cc
+    Utils/MaterialParticleData.cc
+    Utils/FieldComparator.cc
+)
+
+ADD_EXECUTABLE(vaango vaango.cc ${VAANGO_UTILS_SRC})
+ADD_EXECUTABLE(compare_uda compare_uda.cc ${COMPARE_UDA_UTILS_SRC})
 ADD_EXECUTABLE(slb slb.cc)
 ADD_EXECUTABLE(restart_merger restart_merger.cc)
 
 SET(VAANGO_LIBS 
-        Vaango_Core_Thread       
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-        Vaango_Core_Labels      
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
@@ -67,9 +78,9 @@ IF(PETSC)
   SET(VAANGO_LIBS ${VAANGO_LIBS} ${PETSC_LIBRARY})
 ENDIF()
 
-TARGET_LINK_LIBRARIES(vaango ${VAANGO_LIBS})
+target_link_libraries(vaango ${VAANGO_LIBS})
 
-TARGET_LINK_LIBRARIES(compare_uda ${VAANGO_LIBS})
+target_link_libraries(compare_uda ${VAANGO_LIBS})
 
 set(RESTART_LIBS
   Vaango_Core_DataArchive
@@ -78,13 +89,14 @@ set(RESTART_LIBS
   Vaango_CCA_Components_Parent 
 #  Vaango_Core_ProblemSpec
   Vaango_CCA_Components_DataArchiver
+  MPM_ParticleCreator
 )
 IF(HYPRE)
   SET(RESTART_LIBS ${RESTART_LIBS} ${HYPRE_LIBRARY})
 ENDIF()
-TARGET_LINK_LIBRARIES(restart_merger ${RESTART_LIBS})
+target_link_libraries(restart_merger ${RESTART_LIBS})
   
-TARGET_LINK_LIBRARIES(slb
+target_link_libraries(slb
   Vaango_Core_GeometryPiece
   Vaango_Core_Grid
   Vaango_Core_ProblemSpec

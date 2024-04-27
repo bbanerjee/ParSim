@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,97 +24,65 @@
  */
 
 #include <Core/Grid/Variables/NeighborList.h>
+
 #include <Core/Disclosure/TypeDescription.h>
+#include <Core/Malloc/Allocator.h>
 #include <Core/Util/Endian.h>
 #include <Core/Util/FancyAssert.h>
-#include <Core/Malloc/Allocator.h>
 
-using namespace Uintah;
+namespace Uintah {
 
-const std::string& 
-NeighborList::get_h_file_path()
+std::ostream&
+operator<<(std::ostream& out, const Uintah::NeighborList& family)
 {
-  static const std::string path(Uintah::FETypeDescription::cc_to_h(__FILE__));
-  return path;
+  for (int ii = 0; ii < 216; ii++) {
+    out << family.d_family[ii] << " ";
+  }
+  return out;
 }
 
-namespace Uintah {
-
-  std::ostream& operator<<(std::ostream &out, 
-                           const Uintah::NeighborList& family) 
-  {
-    for (int ii = 0; ii < 216; ii++) {
-      out << family.d_family[ii] << " ";
-    }
-    return out;
+void
+swapbytes(Uintah::NeighborList& family)
+{
+  Uintah::ParticleID* ptr = (Uintah::ParticleID*)(&family);
+  SWAP_8(*ptr);
+  for (int ii = 1; ii < 216; ii++) {
+    SWAP_8(*++ptr);
   }
 }
 
-// Added for compatibility with core types
-namespace Uintah {
+template<>
+const std::string
+find_type_name(Uintah::NeighborList*)
+{
+  static const std::string name = "NeighborList";
+  return name;
+}
 
-  void 
-  swapbytes(Uintah::NeighborList& family)
-  {
-    Uintah::ParticleID* ptr = (Uintah::ParticleID*) (&family);
-    SWAP_8(*ptr);
-    for (int ii = 1; ii < 216; ii++) {
-      SWAP_8(*++ptr);
-    }
+//* TODO: Serialize **/
+MPI_Datatype
+makeMPI_NeighborList()
+{
+  ASSERTEQ(sizeof(NeighborList), sizeof(ParticleID) * 216);
+
+  MPI_Datatype mpitype;
+  MPI_Type_vector(1, 216, 216, MPI_LONG_LONG_INT, &mpitype);
+  MPI_Type_commit(&mpitype);
+
+  return mpitype;
+}
+
+const TypeDescription*
+fun_getTypeDescription(NeighborList*)
+{
+  static TypeDescription* td = 0;
+  if (!td) {
+    td = scinew TypeDescription(TypeDescription::Type::NeighborList,
+                                "NeighborList",
+                                true,
+                                &makeMPI_NeighborList);
   }
-
-  template<> const std::string 
-  find_type_name(Uintah::NeighborList*)
-  {
-    static const std::string name = "NeighborList";
-    return name;
-  }
-
-  const FETypeDescription* 
-  get_fetype_description(Uintah::NeighborList*)
-  {
-    static FETypeDescription* td = 0;
-    if (!td) {
-      td = scinew FETypeDescription("NeighborList", 
-                                  Uintah::NeighborList::get_h_file_path(),
-                                  "Uintah");
-    }
-    return td;
-  }
-
-  void 
-  Pio(Piostream& stream, Uintah::NeighborList& family)
-  {
-    stream.begin_cheap_delim();
-    for (int ii = 0; ii < 216; ii++) {
-      Pio(stream, family[ii]);
-    }
-    stream.end_cheap_delim();
-  }
-
-} // namespace Uintah
-
-namespace Uintah {
-  //* TODO: Serialize **/
-  MPI_Datatype makeMPI_NeighborList()
-  {
-    ASSERTEQ(sizeof(NeighborList), sizeof(ParticleID)*216);
-
-    MPI_Datatype mpitype;
-    MPI_Type_vector(1, 216, 216, MPI_LONG_LONG_INT, &mpitype);
-    MPI_Type_commit(&mpitype);
-
-    return mpitype;
-  }
-
-  const TypeDescription* fun_getTypeDescription(NeighborList*)
-  {
-    static TypeDescription* td = 0;
-    if(!td){
-      td = scinew TypeDescription(TypeDescription::NeighborList, "NeighborList", true,
-                                  &makeMPI_NeighborList);
-    }
-    return td;
-  }
+  return td;
+}
 
 } // End namespace Uintah

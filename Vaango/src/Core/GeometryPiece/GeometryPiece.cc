@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,47 +24,38 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Util/DebugStream.h>
 
-using namespace Uintah;
+namespace Uintah {
 
-
-static DebugStream dbg( "GeometryPiece", false );
-
-GeometryPiece::GeometryPiece() :
-  nameSet_( false ),
-  firstOutput_( true )
-{
-}
-
-GeometryPiece::~GeometryPiece()
-{
-}
+static DebugStream dbg("GeometryPiece", false);
 
 void
-GeometryPiece::outputProblemSpec( ProblemSpecP & ps ) const
-{
-  ProblemSpecP child_ps = ps->appendChild( getType().c_str() );
+GeometryPiece::outputProblemSpec(ProblemSpecP& ps) const {
+  ProblemSpecP child_ps = ps->appendChild(getType().c_str());
 
-  if( nameSet_ ) {
-    child_ps->setAttribute( "label", name_ );
+  if (d_nameSet) {
+    child_ps->setAttribute("label", d_name);
 
-    if( firstOutput_ ) {
+    if (d_firstOutput) {
       // If geom obj is named, then only output data the first time.
-      dbg << "GP::outputProblemSpec(): Full description of: " << name_ << " -- " << getType() << "\n";
-      outputHelper( child_ps );
-      firstOutput_ = false;
+      dbg << "GP::outputProblemSpec(): Full description of: " << d_name
+          << " -- " << getType() << "\n";
+      outputHelper(child_ps);
+      d_firstOutput = false;
 
     } else {
-      dbg << "GP::outputProblemSpec(): Reference to: " << name_ << " -- " << getType() << "\n";
+      dbg << "GP::outputProblemSpec(): Reference to: " << d_name << " -- "
+          << getType() << "\n";
     }
 
   } else {
-    dbg << "GP::outputProblemSpec(): Full Description Of: " << name_ << " -- " << getType() << "\n";
+    dbg << "GP::outputProblemSpec(): Full Description Of: " << d_name << " -- "
+        << getType() << "\n";
     // If no name, then always print out all data.
-    outputHelper( child_ps );
+    outputHelper(child_ps);
   }
 }
 
+}  // end namespace Uintah

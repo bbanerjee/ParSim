@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,44 +26,65 @@
 #ifndef Packages_Uintah_CCA_Components_Solvers_CGSolver_h
 #define Packages_Uintah_CCA_Components_Solvers_CGSolver_h
 
-#include <CCA/Ports/SolverInterface.h>
-#include <Core/Parallel/UintahParallelComponent.h>
+#include <CCA/Components/Solvers/SolverCommon.h>
+#include <CCA/Components/Solvers/CGSolverParams.h>
+
+#include <memory>
 
 namespace Uintah {
-  class CGSolver : public SolverInterface, public UintahParallelComponent { 
 
-  public:
+class CGSolver : public SolverCommon
+{
 
-    CGSolver( const ProcessorGroup * myworld );
-    virtual ~CGSolver();
+public:
+  CGSolver(const ProcessorGroup* myworld);
+  virtual ~CGSolver() = default;
 
-    virtual SolverParameters* readParameters(       ProblemSpecP     & params,
-                                              const std::string      & name,
-                                                    SimulationStateP & state );
+  virtual void
+  readParameters(ProblemSpecP& params, const std::string& name);
 
-    virtual void scheduleSolve( const LevelP           & level,
-                                      SchedulerP       & sched,
-                                const MaterialSet      * matls,
-                                const VarLabel         * A,    
-                                      Task::WhichDW      which_A_dw,  
-                                const VarLabel         * x,
-                                      bool               modifies_x,
-                                const VarLabel         * b,    
-                                      Task::WhichDW      which_b_dw,  
-                                const VarLabel         * guess,
-                                      Task::WhichDW      which_guess_dw,
-                                const SolverParameters * params,
-                                      bool               modifies_hypre = false );
+  virtual SolverParameters*
+  getParameters()
+  {
+    return d_params.get();
+  }
 
-    virtual std::string getName();
+  virtual void
+  scheduleSolve(const LevelP& level,
+                SchedulerP& sched,
+                const MaterialSet* matls,
+                const VarLabel* A,
+                Task::WhichDW which_A_dw,
+                const VarLabel* x,
+                bool modifies_x,
+                const VarLabel* b,
+                Task::WhichDW which_b_dw,
+                const VarLabel* guess,
+                Task::WhichDW which_guess_dw,
+                bool isFirstSolve = true);
 
-    // CGSolver does not require initialization... but we need an empty
-    // routine to satisfy inheritance.
-    virtual void scheduleInitialize( const LevelP      & level,
-                                           SchedulerP  & sched,
-                                     const MaterialSet * matls ) {}
+  virtual std::string
+  getName();
 
-  };
+  // CGSolver does not require initialization... but we need an empty
+  // routine to satisfy inheritance.
+  virtual void
+  scheduleInitialize(const LevelP& level,
+                     SchedulerP& sched,
+                     const MaterialSet* matls)
+  {
+  }
+
+  virtual void
+  scheduleRestartInitialize(const LevelP& level,
+                            SchedulerP& sched,
+                            const MaterialSet* matls)
+  {
+  }
+
+private:
+  std::unique_ptr<CGSolverParams> d_params{ nullptr };
+};
 
 } // end namespace Uintah
 

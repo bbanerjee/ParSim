@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,26 +24,25 @@
  */
 
 #include <CCA/Components/MPM/PhysicalBC/ScalarFluxBC.h>
-#include <CCA/Components/MPM/MPMFlags.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
+
 #include <Core/Exceptions/ParameterNotFound.h>
+#include <Core/Geometry/BBox.h>
 #include <Core/GeometryPiece/BoxGeometryPiece.h>
 #include <Core/GeometryPiece/CylinderGeometryPiece.h>
-#include <Core/GeometryPiece/SphereGeometryPiece.h>
 #include <Core/GeometryPiece/DifferenceGeometryPiece.h>
-#include <Core/Malloc/Allocator.h>
+#include <Core/GeometryPiece/SphereGeometryPiece.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Level.h>
-#include <Core/Geometry/BBox.h>
-#include <Core/Math/Matrix3.h>
+#include <Core/Malloc/Allocator.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
 
 // Store the geometry object and the load curve
-ScalarFluxBC::ScalarFluxBC(ProblemSpecP& ps, const GridP& grid,
-                       const MPMFlags* flags)
+ScalarFluxBC::ScalarFluxBC(ProblemSpecP& ps,
+                           const GridP& grid,
+                           const MPMFlags* flags)
 {
   // First read the geometry information
   // d_surface is the geometry object containing the surface to be loaded.
@@ -56,39 +56,41 @@ ScalarFluxBC::ScalarFluxBC(ProblemSpecP& ps, const GridP& grid,
   }
 #endif
 
-  d_dxpp = Vector(1.,1.,1.);  // Only needed for axisymmetric end, see below
-  ProblemSpecP adult = ps->findBlock("geom_object");
-  ProblemSpecP child = adult->findBlock();
+  d_dxpp = Vector(1., 1., 1.); // Only needed for axisymmetric end, see below
+  ProblemSpecP adult  = ps->findBlock("geom_object");
+  ProblemSpecP child  = adult->findBlock();
   std::string go_type = child->getNodeName();
-  //std::cerr << "ScalarFluxBC::go_type = " << go_type << endl;
+  // std::cerr << "ScalarFluxBC::go_type = " << go_type << endl;
   if (go_type == "box") {
     d_surface = scinew BoxGeometryPiece(child);
-    //Box box = d_surface->getBoundingBox();
+    // Box box = d_surface->getBoundingBox();
     d_surfaceType = "box";
   } else if (go_type == "sphere") {
-    d_surface = scinew SphereGeometryPiece(child);
+    d_surface     = scinew SphereGeometryPiece(child);
     d_surfaceType = "sphere";
   } else if (go_type == "cylinder") {
-    d_surface = scinew CylinderGeometryPiece(child);
+    d_surface     = scinew CylinderGeometryPiece(child);
     d_surfaceType = "cylinder";
-    CylinderGeometryPiece* cgp =dynamic_cast<CylinderGeometryPiece*>(d_surface);
-    d_cylinder_end=cgp->cylinder_end();
-    d_axisymmetric_end=cgp->axisymmetric_end();
-    d_axisymmetric_side=cgp->axisymmetric_side();
-    if(d_axisymmetric_end){
-      ps->require("res",d_res);
+    CylinderGeometryPiece* cgp =
+      dynamic_cast<CylinderGeometryPiece*>(d_surface);
+    d_cylinder_end      = cgp->cylinder_end();
+    d_axisymmetric_end  = cgp->axisymmetric_end();
+    d_axisymmetric_side = cgp->axisymmetric_side();
+    if (d_axisymmetric_end) {
+      ps->require("res", d_res);
       Vector dx = grid->getLevel(0)->dCell();
-      d_dxpp =  Vector(dx.x()/((double) d_res.x()),
-                       dx.y()/((double) d_res.y()),
-                       dx.z()/((double) d_res.z()));
+      d_dxpp    = Vector(dx.x() / ((double)d_res.x()),
+                      dx.y() / ((double)d_res.y()),
+                      dx.z() / ((double)d_res.z()));
     }
   } else {
     throw ParameterNotFound("* ERROR *: No surface specified for ScalarFluxBC.",
-                            __FILE__, __LINE__);
+                            __FILE__,
+                            __LINE__);
   }
 
-  d_numMaterialPoints = 0;  // this value is read in on a restart
-  ps->get("numberOfParticlesOnLoadSurface",d_numMaterialPoints);
+  d_numMaterialPoints = 0; // this value is read in on a restart
+  ps->get("numberOfParticlesOnLoadSurface", d_numMaterialPoints);
 
   // Read and save the load curve information
   d_loadCurve = scinew LoadCurve<double>(ps);
@@ -99,26 +101,28 @@ ScalarFluxBC::ScalarFluxBC(ProblemSpecP& ps, const GridP& grid,
   Box boundingBox = d_surface->getBoundingBox();
   BBox compDomain;
   grid->getSpatialRange(compDomain);
-  
+
   Point BB_min = boundingBox.lower();
   Point CD_min = compDomain.min();
   Point BB_max = boundingBox.upper();
-  Point CD_max = compDomain.max(); 
-  
-  if( ( BB_min.x() < CD_min.x() ) ||
-      ( BB_min.y() < CD_min.y() ) || 
-      ( BB_min.z() < CD_min.z() ) ||
-      ( BB_max.x() > CD_max.x() ) ||
-      ( BB_max.y() > CD_max.y() ) ||
-      ( BB_max.z() > CD_max.z() ) ){
-     if(!d_axisymmetric_end && !d_axisymmetric_side){
-      proc0cout <<"_________________________________________________________\n";
+  Point CD_max = compDomain.max();
+
+  if ((BB_min.x() < CD_min.x()) || (BB_min.y() < CD_min.y()) ||
+      (BB_min.z() < CD_min.z()) || (BB_max.x() > CD_max.x()) ||
+      (BB_max.y() > CD_max.y()) || (BB_max.z() > CD_max.z())) {
+    if (!d_axisymmetric_end && !d_axisymmetric_side) {
+      proc0cout
+        << "_________________________________________________________\n";
       proc0cout << "\n Input File WARNING: <PhysicalBC : MPM : ScalarFlux> \n"
-                << " The geometry Object ["<<d_surface->getType() << "] exceeds the dimensions of the computational domain.\n"
+                << " The geometry Object [" << d_surface->getType()
+                << "] exceeds the dimensions of the computational domain.\n"
                 << " \n Please change the parameters so it doesn't. \n\n"
-                << " There is a flaw in the surface area calculation for the geometry object,\n"
-                << " it does not take into account that the object exceeds the domain\n";
-      proc0cout <<"_________________________________________________________\n";
+                << " There is a flaw in the surface area calculation for the "
+                   "geometry object,\n"
+                << " it does not take into account that the object exceeds the "
+                   "domain\n";
+      proc0cout
+        << "_________________________________________________________\n";
     }
   }
 }
@@ -130,101 +134,123 @@ ScalarFluxBC::~ScalarFluxBC()
   delete d_loadCurve;
 }
 
-void ScalarFluxBC::outputProblemSpec(ProblemSpecP& ps)
+void
+ScalarFluxBC::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP press_ps = ps->appendChild("scalar_flux");
-  ProblemSpecP geom_ps = press_ps->appendChild("geom_object");
+  ProblemSpecP geom_ps  = press_ps->appendChild("geom_object");
   d_surface->outputProblemSpec(geom_ps);
-  press_ps->appendElement("numberOfParticlesOnLoadSurface",d_numMaterialPoints);
+  press_ps->appendElement("numberOfParticlesOnLoadSurface",
+                          d_numMaterialPoints);
   d_loadCurve->outputProblemSpec(press_ps);
-  press_ps->appendElement("outward_normal",d_outwardNormal);
-  if(d_axisymmetric_end){
-    press_ps->appendElement("res",d_res);
+  press_ps->appendElement("outward_normal", d_outwardNormal);
+  if (d_axisymmetric_end) {
+    press_ps->appendElement("res", d_res);
   }
 }
 
 // Get the type of this object for BC application
-std::string 
+std::string
 ScalarFluxBC::getType() const
 {
   return "ScalarFlux";
 }
 
 // Locate and flag the material points to which this ScalarFlux BC is
-// to be applied. Assumes that the "checkForSurface" function in ParticleCreator.cc
-// has been used to identify this material point as being on the surface of the body.
-// WARNING : For this logic to work, the surface object should be a 
-// box (zero volume), cylinder, sphere geometry piece that touches
+// to be applied. Assumes that the "checkForSurface" function in
+// ParticleCreator.cc has been used to identify this material point as being on
+// the surface of the body. WARNING : For this logic to work, the surface object
+// should be a box (zero volume), cylinder, sphere geometry piece that touches
 // contains the surface on which the ScalarFlux is to be applied.
 bool
-ScalarFluxBC::flagMaterialPoint(const Point& p, 
-                              const Vector& dxpp)
+ScalarFluxBC::flagMaterialPoint(const Point& p,
+                                const Vector& dxpp,
+                                Vector& areacomps)
 {
 
   bool flag = false;
   if (d_surfaceType == "box") {
     // Create box that is min-dxpp, max+dxpp;
     Box box = d_surface->getBoundingBox();
-    GeometryPiece* volume = scinew BoxGeometryPiece(box.lower()-dxpp, 
-                                                    box.upper()+dxpp);
+    GeometryPiece* volume =
+      scinew BoxGeometryPiece(box.lower() - dxpp, box.upper() + dxpp);
 
-    if (volume->inside(p)){
-      flag = true;
+    if (volume->inside(p)) {
+      flag        = true;
+      Vector diff = box.upper() - box.lower();
+      if (diff.minComponent() == diff.x()) {
+        areacomps = Vector(1.0, 0.0, 0.0);
+      } else if (diff.minComponent() == diff.y()) {
+        areacomps = Vector(0.0, 1.0, 0.0);
+      } else if (diff.minComponent() == diff.z()) {
+        areacomps = Vector(0.0, 0.0, 1.0);
+      }
     }
     delete volume;
 
   } else if (d_surfaceType == "cylinder") {
-    double tol = 0.9*dxpp.minComponent();
-    CylinderGeometryPiece* cgp =dynamic_cast<CylinderGeometryPiece*>(d_surface);
+    double tol = 0.9 * dxpp.minComponent();
+    CylinderGeometryPiece* cgp =
+      dynamic_cast<CylinderGeometryPiece*>(d_surface);
 
-    if(!d_cylinder_end && !d_axisymmetric_end){  // Not a cylinder end
+    if (!d_cylinder_end && !d_axisymmetric_end) { // Not a cylinder end
       // Create a cylindrical annulus with radius-|dxpp|, radius+|dxpp|
-      GeometryPiece* outer = scinew CylinderGeometryPiece(cgp->top(), 
-                                                       cgp->bottom(), 
-                                                       cgp->radius()+tol);
-      GeometryPiece* inner = scinew CylinderGeometryPiece(cgp->top(), 
-                                                       cgp->bottom(), 
-                                                       cgp->radius()-tol);
+      auto outer = std::make_shared<CylinderGeometryPiece>(cgp->top(),
+                                                           cgp->bottom(),
+                                                           cgp->radius() + tol);
+      auto inner = std::make_shared<CylinderGeometryPiece>(cgp->top(),
+                                                           cgp->bottom(),
+                                                           cgp->radius() - tol);
 
       GeometryPiece* volume = scinew DifferenceGeometryPiece(outer, inner);
 
-      if (volume->inside(p)){
+      if (volume->inside(p)) {
         flag = true;
       }
+      double normalX = p.x() - 0.5 * (cgp->bottom() + cgp->top()).x();
+      double normalY = p.y() - 0.5 * (cgp->bottom() + cgp->top()).y();
+      double length  = sqrt(normalX * normalX + normalY * normalY);
+      areacomps      = Vector(normalX / length, normalY / length, 0.0);
       delete volume;
 
-    }else if(d_cylinder_end || d_axisymmetric_end){
-      Vector add_ends = tol*(cgp->top()-cgp->bottom())
-                           /(cgp->top()-cgp->bottom()).length();
+    } else if (d_cylinder_end || d_axisymmetric_end) {
+      Vector add_ends = tol * (cgp->top() - cgp->bottom()) /
+                        (cgp->top() - cgp->bottom()).length();
 
-      GeometryPiece* end = scinew CylinderGeometryPiece(cgp->top()   +add_ends, 
-                                                        cgp->bottom()-add_ends,
-                                                        cgp->radius());
-      if (end->inside(p)){
-         flag = true;
+      GeometryPiece* end =
+        scinew CylinderGeometryPiece(cgp->top() + add_ends,
+                                     cgp->bottom() - add_ends,
+                                     cgp->radius());
+      if (end->inside(p)) {
+        flag = true;
       }
+      areacomps = Vector(0.0, 0.0, 1.0); // Area normal to the axial direction
       delete end;
     }
   } else if (d_surfaceType == "sphere") {
     // Create a spherical shell with radius-|dxpp|, radius+|dxpp|
-    double tol = dxpp.length();
+    double tol               = dxpp.length();
     SphereGeometryPiece* sgp = dynamic_cast<SphereGeometryPiece*>(d_surface);
-    GeometryPiece* outer = scinew SphereGeometryPiece(sgp->origin(), 
-                                                   sgp->radius()+tol);
-    GeometryPiece* inner = scinew SphereGeometryPiece(sgp->origin(), 
-                                                   sgp->radius()-tol);
+    auto outer =
+      std::make_shared<SphereGeometryPiece>(sgp->origin(), sgp->radius() + tol);
+    auto inner =
+      std::make_shared<SphereGeometryPiece>(sgp->origin(), sgp->radius() - tol);
     GeometryPiece* volume = scinew DifferenceGeometryPiece(outer, inner);
-    if (volume->inside(p)) flag = true;
+    if (volume->inside(p)) {
+      flag = true;
+    }
+    areacomps = Vector(1.0, 0.0, 0.0); // Area normal to the radial direction
     delete volume;
 
   } else {
     throw ParameterNotFound("ERROR: Unknown surface specified for ScalarFluxBC",
-                            __FILE__, __LINE__);
+                            __FILE__,
+                            __LINE__);
   }
-  
   return flag;
 }
 
+#if 0
 // Calculate the area of the surface on which the scalar flux BC
 // is applied
 double
@@ -259,8 +285,7 @@ ScalarFluxBC::getSurfaceArea() const
 }
 
 // Calculate the flux per particle at a certain time
-double 
-ScalarFluxBC::fluxPerParticle(double time) const
+double ScalarFluxBC::fluxPerParticle(double time) const
 {
   if (d_numMaterialPoints < 1) return 0.0;
 
@@ -273,176 +298,57 @@ ScalarFluxBC::fluxPerParticle(double time) const
   // Calculate the forec per particle
   return (flux*area)/static_cast<double>(d_numMaterialPoints);
 }
-
-#if 0
-// Calculate the force vector to be applied to a particular
-// material point location
-Vector
-ScalarFluxBC::getForceVector(const Point& px, double forcePerParticle,
-                           const double time) const
-{
-
-  Vector force(0.0,0.0,0.0);
-  if (d_surfaceType == "box") {
-    BoxGeometryPiece* gp = dynamic_cast<BoxGeometryPiece*>(d_surface);
-    Vector normal(0.0, 0.0, 0.0);
-    normal[gp->thicknessDirection()] = 1.0;
-    force = normal*forcePerParticle;
-  } else if (d_surfaceType == "cylinder") {
-    CylinderGeometryPiece* gp = dynamic_cast<CylinderGeometryPiece*>(d_surface);
-    Vector normal = gp->radialDirection(px);
-    force = normal*forcePerParticle;
-    if(d_cylinder_end || d_axisymmetric_end){
-      normal = (gp->top()-gp->bottom())
-              /(gp->top()-gp->bottom()).length();
-      if(!d_axisymmetric_end){
-        force = normal*forcePerParticle;
-      }else{  // It IS on an axisymmetric end
-        double pArea = px.x()*d_dxpp.x()*1.0; /*(theta = 1 radian)*/
-        double press = ScalarFlux(time);
-        double fpP = pArea*press;
-        force = normal*fpP;
-      }
-    }
-  } else if (d_surfaceType == "sphere") {
-    SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
-    Vector normal = gp->radialDirection(px);
-    force = normal*forcePerParticle;
-  } else {
-    throw ParameterNotFound("ERROR: Unknown surface specified for ScalarFluxBC",
-                            __FILE__, __LINE__);
-  }
-  return force;
-}
-
-// Calculate the force vector to be applied to a particular
-// material point location
-Vector
-ScalarFluxBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
-                              const Matrix3& pDeformationMeasure,
-                              double forcePerParticle,const double time,
-                              Point& pExternalForceCorner1,
-                              Point& pExternalForceCorner2,
-                              Point& pExternalForceCorner3,
-                              Point& pExternalForceCorner4,
-                              const Vector& dx) const
-{
-  Vector force(0.0,0.0,0.0);
-  Vector normal(0.0, 0.0, 0.0);
-  if (d_surfaceType == "box") {
-    BoxGeometryPiece* gp = dynamic_cast<BoxGeometryPiece*>(d_surface);
-    normal[gp->thicknessDirection()] = 1.0;
-    force = normal*forcePerParticle;
-  } else if (d_surfaceType == "cylinder") {
-    CylinderGeometryPiece* gp = dynamic_cast<CylinderGeometryPiece*>(d_surface);
-    normal = gp->radialDirection(px);
-    force = normal*forcePerParticle;
-    if(d_cylinder_end || d_axisymmetric_end){
-      normal = (gp->top()-gp->bottom())
-              /(gp->top()-gp->bottom()).length();
-      if(!d_axisymmetric_end){
-        force = normal*forcePerParticle;
-      }else{  // It IS on an axisymmetric end
-        double pArea = px.x()*d_dxpp.x()*1.0; /*(theta = 1 radian)*/
-        double press = ScalarFlux(time);
-        double fpP = pArea*press;
-        force = normal*fpP;
-      }
-    }
-  } else if (d_surfaceType == "sphere") {
-    SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
-    normal = gp->radialDirection(px);
-    force = normal*forcePerParticle;
-  } else {
-    throw ParameterNotFound("ERROR: Unknown surface specified for ScalarFluxBC",
-                            __FILE__, __LINE__);
-  }
-  // 25% of total particle force goes to each corner
-  force = force*0.25;
-  // modify the sign of force if outward normal is not correctly defined
-  if (!d_outwardNormal) {
-    normal = normal*(-1.0);
-  }
-  // determine four boundary-corners of the particle
-  // px1 is the position of the center of the boundary particle face
-  // that is on the physical boundary.
-  // The direction to px1 is determined by taking the dot product of the
-  // normal vector with each of the r-vectors.  the one with a unity dot product
-  // is the winner.  Then just go out to that surface.
-  // TODO:  Bailing out of the loop as soon as px1 is found.  
-  int i1=0,i2=0;
-  Matrix3 dsize=pDeformationMeasure*psize;
-  Point px1;
-  for (int i = 0; i < 3; ++i) {
-   Vector dummy=Vector(dsize(0,i)*dx[0],dsize(1,i)*dx[1],dsize(2,i)*dx[2])*0.5;
-   if (abs(Dot(normal,dummy)/(normal.length()*dummy.length())-1.0)<0.1) {
-    px1=Point(px.x()+dummy[0],px.y()+dummy[1],px.z()+dummy[2]);
-    i1=(i+1)%3;
-    i2=(i+2)%3;
-   } else if (abs(Dot(normal,dummy)/(normal.length()*dummy.length())+1.0)<0.1) {
-    px1 = Point(px.x()-dummy[0],px.y()-dummy[1],px.z()-dummy[2]);
-    i1=(i+1)%3;
-    i2=(i+2)%3;
-   }
-  }
-  pExternalForceCorner1=Point(px1.x()-.5*(dsize(0,i1)*dx[0]-dsize(0,i2)*dx[0]),
-                              px1.y()-.5*(dsize(1,i1)*dx[1]-dsize(1,i2)*dx[1]),
-                              px1.z()-.5*(dsize(2,i1)*dx[2]-dsize(2,i2)*dx[2]));
-  pExternalForceCorner2=Point(px1.x()+.5*(dsize(0,i1)*dx[0]-dsize(0,i2)*dx[0]),
-                              px1.y()+.5*(dsize(1,i1)*dx[1]-dsize(1,i2)*dx[1]),
-                              px1.z()+.5*(dsize(2,i1)*dx[2]-dsize(2,i2)*dx[2]));
-  pExternalForceCorner3=Point(px1.x()-.5*(dsize(0,i1)*dx[0]+dsize(0,i2)*dx[0]),
-                              px1.y()-.5*(dsize(1,i1)*dx[1]+dsize(1,i2)*dx[1]),
-                              px1.z()-.5*(dsize(2,i1)*dx[2]+dsize(2,i2)*dx[2]));
-  pExternalForceCorner4=Point(px1.x()+.5*(dsize(0,i1)*dx[0]+dsize(0,i2)*dx[0]),
-                              px1.y()+.5*(dsize(1,i1)*dx[1]+dsize(1,i2)*dx[1]),
-                              px1.z()+.5*(dsize(2,i1)*dx[2]+dsize(2,i2)*dx[2]));
-
-  // Recalculate the force based on area changes (current vs. initial)
-  Vector iniVec1(psize(0,i1),psize(1,i1),psize(2,i1));
-  Vector iniVec2(psize(0,i2),psize(1,i2),psize(2,i2));
-  Vector curVec1(dsize(0,i1),dsize(1,i1),dsize(2,i1));
-  Vector curVec2(dsize(0,i2),dsize(1,i2),dsize(2,i2));
-  Vector iniA = Cross(iniVec1,iniVec2);
-  Vector curA = Cross(curVec1,curVec2);
-  double iniArea=iniA.length();
-  double curArea=curA.length();
-  force=force*(curArea/iniArea);
-  return force;
-}
 #endif
+
+// Calculate the flux at a certain time given the area of a particular particle
+double
+ScalarFluxBC::fluxPerParticle(double time, double area) const
+{
+  if (d_numMaterialPoints < 1) {
+    return 0.0;
+  }
+
+  // Get the initial scalar flux that is applied ( t = 0.0 )
+  double flux = ScalarFlux(time);
+
+  // Calculate dC/dt per particle -- JBH, 9/26/2017
+  // Fixme TODO Make sure area is correct!
+  return flux * area;
+}
 
 namespace Uintah {
 // A method to print out the scalar flux bcs
-ostream& operator<<(ostream& out, const ScalarFluxBC& bc) 
+ostream&
+operator<<(ostream& out, const ScalarFluxBC& bc)
 {
-   out << "Begin MPM ScalarFlux BC # = " << bc.loadCurveID() << endl;
-   std::string surfType = bc.getSurfaceType();
-   out << "    Surface of application = " << surfType << endl;
-   if (surfType == "box") {
-      Box box = (bc.getSurface())->getBoundingBox();
-      out << "        " << box << endl;
-   } else if (surfType == "cylinder") {
-      CylinderGeometryPiece* cgp = 
-         dynamic_cast<CylinderGeometryPiece*>(bc.getSurface());
-      out << "        " << "radius = " << cgp->radius() 
-                        << " top = " << cgp->top() 
-                        << " bottom = " << cgp->bottom() << endl;
-   } else if (surfType == "sphere") {
-      SphereGeometryPiece* sgp = 
-         dynamic_cast<SphereGeometryPiece*>(bc.getSurface());
-      out << "        " << "radius = " << sgp->radius() 
-                        << " origin = " << sgp->origin() << endl;
-   }
-   out << "    Time vs. Load = " << endl;
-   LoadCurve<double>* lc = bc.getLoadCurve();
-   int numPts = lc->numberOfPointsOnLoadCurve();
-   for (int ii = 0; ii < numPts; ++ii) {
-     out << "        time = " << lc->getTime(ii) 
-         << " scalar flux = " << lc->getLoad(ii) << endl;
-   }
-   out << "End MPM ScalarFlux BC # = " << bc.loadCurveID() << endl;
-   return out;
+  out << "Begin MPM ScalarFlux BC # = " << bc.loadCurveID() << endl;
+  std::string surfType = bc.getSurfaceType();
+  out << "    Surface of application = " << surfType << endl;
+  if (surfType == "box") {
+    Box box = (bc.getSurface())->getBoundingBox();
+    out << "        " << box << endl;
+  } else if (surfType == "cylinder") {
+    CylinderGeometryPiece* cgp =
+      dynamic_cast<CylinderGeometryPiece*>(bc.getSurface());
+    out << "        "
+        << "radius = " << cgp->radius() << " top = " << cgp->top()
+        << " bottom = " << cgp->bottom() << endl;
+  } else if (surfType == "sphere") {
+    SphereGeometryPiece* sgp =
+      dynamic_cast<SphereGeometryPiece*>(bc.getSurface());
+    out << "        "
+        << "radius = " << sgp->radius() << " origin = " << sgp->origin()
+        << endl;
+  }
+  out << "    Time vs. Load = " << endl;
+  LoadCurve<double>* lc = bc.getLoadCurve();
+  int numPts            = lc->numberOfPointsOnLoadCurve();
+  for (int ii = 0; ii < numPts; ++ii) {
+    out << "        time = " << lc->getTime(ii)
+        << " scalar flux = " << lc->getLoad(ii) << endl;
+  }
+  out << "End MPM ScalarFlux BC # = " << bc.loadCurveID() << endl;
+  return out;
 }
 
 } // end namespace Uintah

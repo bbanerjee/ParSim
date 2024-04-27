@@ -76,7 +76,7 @@
 #include <iostream>
 #include <string>
 
-#include <Core/Util/share.h>
+
 
 namespace Uintah {
 
@@ -92,7 +92,7 @@ DESCRIPTION
   
 ****************************************/
 
-  class SCISHARE ProgressiveWarning {
+  class  ProgressiveWarning {
   public:
     //! Pass the message to output as a warning.  The multiplier is the amount to multiply the
     //! next occurence by when we output the warning.  -1 will mean to only output once.

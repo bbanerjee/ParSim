@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -34,9 +34,9 @@ add_subdirectory(HyprePreconds)
 
 # message(STATUS "XML2 library is ${XML2_LIBRARY}")
 # message(STATUS "Hypre library is ${HYPRE_LIBRARY}")
-ADD_LIBRARY(Vaango_CCA_Components_Solvers_AMR ${Vaango_CCA_Components_Solvers_AMR_SRCS})
-TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers_AMR
-  Vaango_Core_Thread
+add_library(Vaango_CCA_Components_Solvers_AMR ${Vaango_CCA_Components_Solvers_AMR_SRCS})
+target_link_libraries(Vaango_CCA_Components_Solvers_AMR
+  
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
   Vaango_Core_Grid
@@ -52,5 +52,5 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers_AMR
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Solvers_AMR)
+  add_definitions(-DBUILD_Vaango_CCA_Components_Solvers_AMR)
 ENDIF(BUILD_SHARED_LIBS)

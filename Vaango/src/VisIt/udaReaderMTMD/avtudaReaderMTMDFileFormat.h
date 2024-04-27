@@ -154,7 +154,7 @@ protected:
 
   // DATA MEMBERS
   bool useExtraCells;
-  int currTimeStep;
+  int currTimestep;
 
   //VisIt meshes (see https://visitbugs.ornl.gov/issues/52)
   std::map<std::string, void_ref_ptr> mesh_domains;
@@ -166,7 +166,7 @@ protected:
 
   // data that is dependent on time
   GridP *grid;
-  TimeStepInfo *stepInfo;
+  TimestepInfo *stepInfo;
         
   // interface to the uda2vis library
   void  * libHandle;
@@ -178,7 +178,7 @@ protected:
   void             (*releaseGrid)(GridP*);
 
   std::vector<double>   (*getCycleTimes)(DataArchive*);
-  TimeStepInfo*    (*getTimeStepInfo)(DataArchive*, GridP*, int, bool);
+  TimestepInfo*    (*getTimestepInfo)(DataArchive*, GridP*, int, bool);
 
   GridDataRaw*     (*getGridData)(DataArchive*, GridP*, int, int, std::string, int, int, int[3], int[3]);
   ParticleDataRaw* (*getParticleData)(DataArchive*, GridP*, int, int, std::string, int, int);

@@ -26,7 +26,7 @@ IF(NOT WIN32)
   # doesn't build on windows....
   ADD_EXECUTABLE(graphview graphview.cc DaVinci.cc GV_TaskGraph.cc)
 
-  TARGET_LINK_LIBRARIES(graphview
+  target_link_libraries(graphview
     Vaango_Core_DataArchive
     Vaango_Core_ProblemSpec
     Vaango_Core_Util

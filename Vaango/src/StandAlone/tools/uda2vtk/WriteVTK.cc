@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2014-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2014-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -409,7 +409,7 @@ WriteVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
     std::cout << " contains point data with " << pd->GetNumberOfArrays() << " arrays." << std::endl;
     for (int i = 0; i < pd->GetNumberOfArrays(); i++) {
       std::cout << "\tArray " << i << " is named "
-                << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
+                << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "nullptr")
                 << std::endl;
     }
   }
@@ -483,7 +483,7 @@ WriteVTK::createVTKUnstructuredDataSet(const Domain& domain,
     std::cout << " contains point data with " << pd->GetNumberOfArrays() << " arrays." << std::endl;
     for (int i = 0; i < pd->GetNumberOfArrays(); i++) {
       std::cout << "\tArray " << i << " is named "
-                << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
+                << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "nullptr")
                 << std::endl;
     }
   }

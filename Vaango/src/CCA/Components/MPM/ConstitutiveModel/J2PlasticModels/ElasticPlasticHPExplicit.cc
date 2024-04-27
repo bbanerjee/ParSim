@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -45,7 +45,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Gaussian.h>
@@ -101,7 +101,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_yield = YieldConditionFactory::create(ps);
   if (!d_yield) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -115,7 +115,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_flow = FlowStressModelFactory::create(ps);
   if (!d_flow) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the FlowModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -125,7 +125,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_damage = DamageModelFactory::create(ps);
   if (!d_damage) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the DamageModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -136,7 +136,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
   d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Jim.  "
@@ -146,7 +146,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_shear = Vaango::ShearModulusModelFactory::create(ps);
   if (!d_shear) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "ElasticPlasticHP::Error in shear modulus model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
@@ -154,7 +154,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "ElasticPlasticHP::Error in melting temp model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
@@ -304,12 +304,11 @@ ElasticPlasticHP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("scalar_damage_seed", d_scalarDam.seed);
 }
 
-ElasticPlasticHP*
+std::unique_ptr<ConstitutiveModel>
 ElasticPlasticHP::clone()
 {
-  return scinew ElasticPlasticHP(*this);
+  return std::make_unique<ElasticPlasticHP>(*this);
 }
-
 //______________________________________________________________________
 //
 void
@@ -559,7 +558,7 @@ ElasticPlasticHP::computeStableTimestep(const Patch* patch,
   Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
   for (auto idx : *pset) {
 
-    Vector pvelocity_idx = pVelocity[idx];
+    Vector pVelocity_idx = pVelocity[idx];
     if (pMass[idx] > 0) {
       double c_dil = std::sqrt(modulus * pVolume[idx] / pMass[idx]);
       Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;

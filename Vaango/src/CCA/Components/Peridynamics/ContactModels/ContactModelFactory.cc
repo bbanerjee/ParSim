@@ -27,8 +27,8 @@
 #include <CCA/Components/Peridynamics/ContactModels/NullContact.h>
 #include <CCA/Components/Peridynamics/ContactModels/SingleVelocityContact.h>
 #include <CCA/Components/Peridynamics/ContactModels/ContactModelList.h>
-#include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsLabel.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
 
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -40,7 +40,7 @@ using namespace Vaango;
 ContactModelBase* 
 ContactModelFactory::create(const Uintah::ProcessorGroup* myworld,
                             const Uintah::ProblemSpecP& ps, 
-                            Uintah::SimulationStateP &ss,
+                            Uintah::MaterialManagerP &ss,
                             PeridynamicsLabel* labels, 
                             PeridynamicsFlags* flags)
 {

@@ -219,8 +219,18 @@ materials, the equation of state is the bulk part of the constitutive response
 temperature).  If one attempts to equate the isotropic part of the stress
 with the fluid pressure, there exist regions in pressure-volume space for
 which Eq. (\ref{eq:mmeos}) has no physical solutions (because the gas pressure
-is only positive).  This can be seen schematically in Fig.~\ref{vpfig}, which
+is only positive).  This can be seen schematically in Fig.~\ref{fig:vpfig}, which
 sketches equations of state for a gas and a solid, at an arbitrary temperature.
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.5\textwidth]{Figs/mpmice/v_p_new.pdf}
+  \caption{Specific volume \textit{vs} pressure for a gas phase material 
+          and a solid phase material.  Light dashed line reflects an 
+          altered solid phase equation of state to keep all materials
+          in positive equilibration pressure space.}
+  \label{fig:vpfig}
+\end{figure}
 
 Recall that the isothermal compressiblity is the negative slope of the
 specific volume versus pressure.  Embedded structures considered here are
@@ -245,12 +255,3 @@ according to the fluid equation of state (due to the greater compressibility)
 while in regions of pure condensed phase material $p$ tends rapidly toward
 zero and the full material stress dominates the dynamics as it should.
 
-\begin{figure}[t]
- \hskip 1.0 true in
-  \scalebox{0.5}{\includegraphics{Figs/mpmice/v_p_new.pdf}}
- \caption{Specific volume {\it vs} pressure for a gas phase material 
-          and a solid phase material.  Light dashed line reflects an 
-          altered solid phase equation of state to keep all materials
-          in positive equilibration pressure space.}
- \label{vpfig}
-\end{figure}

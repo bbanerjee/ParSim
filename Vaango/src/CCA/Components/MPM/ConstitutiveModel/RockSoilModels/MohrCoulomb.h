@@ -4,7 +4,7 @@
  * Copyright (c) 1997-2019 Center for the Simulation of Accidental Fires and
  * Explosions (CSAFE), and  Scientific Computing and Imaging Institute (SCI),
  * University of Utah.
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * License for the specific language governing rights and limitations under
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -65,7 +65,7 @@ public:
   virtual void outputProblemSpec(ProblemSpecP& ps,
                                  bool output_cm_tag = true) override;
 
-  MohrCoulomb* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   void addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to) override;

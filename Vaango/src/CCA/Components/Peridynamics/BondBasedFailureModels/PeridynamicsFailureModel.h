@@ -25,7 +25,7 @@
 #ifndef __VAANGO_PERIDYNAMICS_FAILURE_MODEL_H__
 #define __VAANGO_PERIDYNAMICS_FAILURE_MODEL_H__
 
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
 
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <vector>

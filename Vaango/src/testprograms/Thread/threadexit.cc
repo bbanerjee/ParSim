@@ -46,15 +46,15 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Thread/Thread.h>
+
 #include <Core/Thread/WorkQueue.h>
-#include <Core/Thread/Mutex.h>
+
 #include <Core/Thread/Parallel.h>
 #include <Core/Thread/Runnable.h>
 #include <Core/Thread/Barrier.h>
 #include <Core/Thread/ThreadGroup.h>
-//#include <Core/Thread/Mutex.h>
-#include <Core/Thread/Time.h>
+//
+#include <Core/Util/Timers/Timers.hpp>
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -64,7 +64,7 @@
 #include <unistd.h>
 #endif
 
-using namespace std;
+
 using namespace Uintah;
 
 class Globals {
@@ -133,12 +133,12 @@ public:
 
   void print_test() {
     if (buff_size <= 0) {
-      cout << "ParallelWorker is empty\n";
+      std::cout << "ParallelWorker is empty\n";
       return;
     }
     int prev = buffer_display[0];
-    cout << "ParallelWorker: buff_size("<<buff_size<<"), np("<<globals->np<<")\n";
-    cout << "buffer_display[0] = "<<prev<<endl;
+    std::cout << "ParallelWorker: buff_size("<<buff_size<<"), np("<<globals->np<<")\n";
+    std::cout << "buffer_display[0] = "<<prev<<endl;
     for (int i = 0; i < buff_size; i++) {
       if (prev != buffer_display[i]) {
 	prev = buffer_display[i];
@@ -215,9 +215,9 @@ int main(int argc, char *argv[]) {
       i++;
       stopper = atoi(argv[i]);
     } else {
-      cout << "parallel -np [int] -size [int]\n";
-      cout << "-np\tnumber of processors/helpers to use.\n";
-      cout << "-size\tsize of array to use\n";
+      std::cout << "parallel -np [int] -size [int]\n";
+      std::cout << "-np\tnumber of processors/helpers to use.\n";
+      std::cout << "-size\tsize of array to use\n";
       return 1;
     }
   }
@@ -225,7 +225,7 @@ int main(int argc, char *argv[]) {
   // validate parameters
   if (np < 1) np = 1;
   if (buff_size < 1) buff_size = 100;
-  cout <<"np = "<<np<<", buff_size = "<<buff_size<<endl;
+  std::cout <<"np = "<<np<<", buff_size = "<<buff_size<<endl;
 
   ThreadGroup *group = new ThreadGroup("threadexit group");
   WorkQueue *work = new WorkQueue("threadexit workqueue");
@@ -243,7 +243,7 @@ int main(int argc, char *argv[]) {
   group->detach();
 #else
    group->join();
-   cout << "Threads exited" << endl;
+   std::cout << "Threads exited" << std::endl;
 #endif
    
   return 0;

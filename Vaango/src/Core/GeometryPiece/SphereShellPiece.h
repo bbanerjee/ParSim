@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,24 +27,23 @@
 #ifndef __SPHERE_SHELL_PIECE_H__
 #define __SPHERE_SHELL_PIECE_H__
 
+#include <Core/Geometry/Point.h>
 #include <Core/GeometryPiece/ShellGeometryPiece.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-
-#include <Core/Geometry/Point.h>
 
 namespace Uintah {
 
 /////////////////////////////////////////////////////////////////////////////
 /*!
    \class SphereShellPiece
-	
+
    \brief Creates a spherical shell from the xml input file description.
-	
+
    \author Jim Guilkey \n
    C-SAFE and Department of Mechanical Engineering \n
    University of Utah \n
-	
+
    Creates a sphere from the xml input file description.
    Requires five inputs: origin, radius and thickness as well as
    num_lat and num_long.  These last two indicate how many lines of
@@ -61,61 +60,68 @@ namespace Uintah {
        <num_long>40</num_long>
      </sphere>
    \endverbatim
-	
+
 */
 /////////////////////////////////////////////////////////////////////////////
 
-  class SphereShellPiece : public ShellGeometryPiece {
-	 
-  public:
-    //////////
-    //  Constructor that takes a ProblemSpecP argument.   It reads the xml 
-    // input specification and builds a sphere.
-    SphereShellPiece(ProblemSpecP &);
-	 
-    //////////
-    // Destructor
-    virtual ~SphereShellPiece();
+class SphereShellPiece : public ShellGeometryPiece {
+ public:
+  //////////
+  //  Constructor that takes a ProblemSpecP argument.   It reads the xml
+  // input specification and builds a sphere.
+  SphereShellPiece(ProblemSpecP&);
 
-    static const string TYPE_NAME;
-    virtual std::string getType() const { return TYPE_NAME; }
+  //////////
+  // Destructor
+  virtual ~SphereShellPiece() = default;
 
-    /// Make a clone
-    virtual GeometryPieceP clone() const;
-	 
-    //////////
-    // Determines whether a point is inside the sphere. 
-    virtual bool inside(const Point &p) const;
-	 
-    //////////
-    // Returns the bounding box surrounding the box.
-    virtual Box getBoundingBox() const;
+  static const std::string TYPE_NAME;
+  virtual std::string
+  getType() const {
+    return TYPE_NAME;
+  }
 
-    //////////
-    // Returns the number of particles
-    int returnParticleCount(const Patch* patch);
+  /// Make a clone
+  virtual GeometryPieceP
+  clone() const;
 
-    //////////
-    // Creates the particles
-    int createParticles(const Patch* patch,
-			ParticleVariable<Point>&  pos,
-			ParticleVariable<double>& vol,
-			ParticleVariable<double>& pThickTop,
-			ParticleVariable<double>& pThickBot,
-			ParticleVariable<Vector>& pNormal,
-			ParticleVariable<Matrix3>& psize,
-			particleIndex start);
+  //////////
+  // Determines whether a point is inside the sphere.
+  virtual bool
+  inside(const Point& p) const;
 
+  //////////
+  // Returns the bounding box surrounding the box.
+  virtual Box
+  getBoundingBox() const;
 
-  private:
-    virtual void outputHelper( ProblemSpecP & ps ) const;
+  //////////
+  // Returns the number of particles
+  int
+  returnParticleCount(const Patch* patch);
 
-    Point  d_origin;
-    double d_radius;
-    double d_h;
-    double d_numLat;
-    double d_numLong;
-  };
-} // End namespace Uintah
+  //////////
+  // Creates the particles
+  int
+  createParticles(const Patch* patch,
+                  ParticleVariable<Point>& pos,
+                  ParticleVariable<double>& vol,
+                  ParticleVariable<double>& pThickTop,
+                  ParticleVariable<double>& pThickBot,
+                  ParticleVariable<Vector>& pNormal,
+                  ParticleVariable<Matrix3>& pSize,
+                  particleIndex start);
 
-#endif // __SPHERE_SHELL_PIECE_H__
+ private:
+  virtual void
+  outputHelper(ProblemSpecP& ps) const;
+
+  Point d_origin;
+  double d_radius;
+  double d_h;
+  double d_numLat;
+  double d_numLong;
+};
+}  // End namespace Uintah
+
+#endif  // __SPHERE_SHELL_PIECE_H__

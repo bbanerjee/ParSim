@@ -72,13 +72,13 @@ typedef unsigned long long uint64_t;
 #endif
 
 
-#include <Core/Util/share.h>
+
 
 namespace Uintah{
 
   // pass in a pointer to a 64-bit int, but depending upon nByteMode it may
   // be treated as a 32-bit int (the last half wouldn't get touched).
-  SCISHARE unsigned long convertSizeType(uint64_t* ssize, bool swapBytes,
+   unsigned long convertSizeType(uint64_t* ssize, bool swapBytes,
 				int nByteMode);    
 
 } //end namespace Uintah

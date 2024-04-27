@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2017-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2017-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -63,7 +63,7 @@ public:
   void outputProblemSpec(Uintah::ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  TabularEquationOfState* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   // compute stable timestep for this patch
   void computeStableTimestep(const Uintah::Patch* patch,

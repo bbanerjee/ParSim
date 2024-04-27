@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,51 +26,46 @@
 #ifndef PATCH_BVH_NODE_H
 #define PATCH_BVH_NODE_H
 
-
 #include <Core/Grid/PatchBVH/PatchBVHBase.h>
 #include <vector>
+
 namespace Uintah {
 
-  /**************************************
+/**************************************
+  CLASS
+  PatchBVHNode
 
-    CLASS
-    PatchBVHNode
+  A Bounding Volume Hiearchy for querying patches that are
+  within a given range.  This class is a general node of the tree.
 
-    A Bounding Volume Hiearchy for querying patches that are 
-    within a given range.  This class is a general node of the tree.
+  GENERAL INFORMATION
 
-    GENERAL INFORMATION
+  PatchBVHNode.h
 
-    PatchBVHNode.h
+  Justin Luitjens
+  Department of Computer Science
+  University of Utah
 
-    Justin Luitjens
-    Department of Computer Science
-    University of Utah
+  Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+ ****************************************/
 
-    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+class PatchBVHNode : public PatchBVHBase
+{
+public:
+  PatchBVHNode(std::vector<PatchKeyVal>::iterator begin,
+               std::vector<PatchKeyVal>::iterator end);
 
+  ~PatchBVHNode() noexcept(false);
 
-    KEYWORDS
-    PatchBVH
+  void
+  query(const IntVector& low,
+        const IntVector& high,
+        std::vector<const Patch*>& patches,
+        bool includeExtraCells);
 
-    DESCRIPTION
-    The PatchBVH is used for querying patches within a given range.
-    WARNING
-
-   ****************************************/
-
-  class PatchBVHNode : public PatchBVHBase
-  {
-    public:
-      PatchBVHNode(std::vector<PatchKeyVal>::iterator begin, std::vector<PatchKeyVal>::iterator end);
-
-      ~PatchBVHNode();
-
-      void query(const IntVector& low, const IntVector& high, Level::selectType& patches, bool includeExtraCells);
-    private:
-
-      PatchBVHBase *left_, *right_;
-  };
+private:
+  PatchBVHBase *left_, *right_;
+};
 
 } // end namespace Uintah
 

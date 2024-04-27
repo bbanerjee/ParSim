@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,43 +26,41 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/FrictionContact.h>
-#include <CCA/Components/MPM/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMBoundCond.h>
+#include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
+#include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationState.h>
-#include <Core/Grid/SimulationStateP.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/MiscMath.h>
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <vector>
 
 using namespace Uintah;
-using std::vector;
 using std::string;
+using std::vector;
 
 FrictionContact::FrictionContact(const ProcessorGroup* myworld,
-                                 ProblemSpecP& ps, SimulationStateP& d_sS,
-                                 MPMLabel* Mlb, MPMFlags* MFlag)
-  : Contact(myworld, Mlb, MFlag, ps)
+                                 const MaterialManagerP& mat_manager,
+                                 const MPMLabel* labels,
+                                 const MPMFlags* flags,
+                                 ProblemSpecP& ps)
+  : Contact(myworld, mat_manager, labels, flags, ps)
 {
-  // Constructor
-  d_sharedState = d_sS;
-  d_vol_const = 0.;
-
   ps->require("mu", d_mu);
   ps->get("volume_constraint", d_vol_const);
+  ps->get("one_or_two_step", d_one_or_two_step);
 
   // Hardcoded normal for objects that can be represented in
   // special coordinate systems (cylindrical/spherical)
@@ -122,19 +120,11 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
       }
     }
   } // End if hardcoded normals
-
-  if (flag->d_8or27 == 8) {
-    NGP = 1;
-    NGN = 1;
-  } else {
-    NGP = 2;
-    NGN = 2;
-  }
 }
 
-FrictionContact::~FrictionContact()
+void
+FrictionContact::setContactMaterialAttributes()
 {
-  // Destructor
 }
 
 void
@@ -144,6 +134,7 @@ FrictionContact::outputProblemSpec(ProblemSpecP& ps)
   contact_ps->appendElement("type", "friction");
   contact_ps->appendElement("mu", d_mu);
   contact_ps->appendElement("volume_constraint", d_vol_const);
+  contact_ps->appendElement("one_or_two_step", d_one_or_two_step);
 
   contact_ps->appendElement("use_hardcoded_normals", d_hardcodedNormals);
   for (unsigned int ii = 0; ii < d_matIndex.size(); ii++) {
@@ -162,59 +153,73 @@ void
 FrictionContact::exchangeMomentum(const ProcessorGroup*,
                                   const PatchSubset* patches,
                                   const MaterialSubset* matls,
-                                  DataWarehouse* old_dw, DataWarehouse* new_dw,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw,
                                   const VarLabel* gVelocity_label)
 {
+  // If one_step, only do exchange for gVelocity_star
+  if (d_one_or_two_step == 1 &&
+      gVelocity_label == d_mpm_labels->gVelocityLabel) {
+    return;
+  }
+
   Ghost::GhostType gnone = Ghost::None;
 
-  int numMatls = d_sharedState->getNumMPMMatls();
+  int numMatls = d_mat_manager->getNumMaterials("MPM");
   ASSERTEQ(numMatls, matls->size());
 
   // Need access to all velocity fields at once, so store in
   // vectors of NCVariables
-  std::vector<constNCVariable<double>> gmass(numMatls);
-  std::vector<constNCVariable<double>> gvolume(numMatls);
-  std::vector<NCVariable<Vector>> gvelocity_star(numMatls);
+  std::vector<constNCVariable<double>> gMass(numMatls);
+  std::vector<constNCVariable<double>> gVolume(numMatls);
+  std::vector<NCVariable<Vector>> gVelocity_star(numMatls);
   std::vector<constNCVariable<double>> normtraction(numMatls);
   std::vector<NCVariable<double>> frictionWork(numMatls);
-  std::vector<constNCVariable<Vector>> gsurfnorm(numMatls);
+  std::vector<constNCVariable<Vector>> gSurfNormal(numMatls);
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    Vector dx = patch->dCell();
-    double cell_vol = dx.x() * dx.y() * dx.z();
+    Vector dx          = patch->dCell();
+    double cell_vol    = dx.x() * dx.y() * dx.z();
     constNCVariable<double> NC_CCweight;
-    old_dw->get(NC_CCweight, lb->NC_CCweightLabel, 0, patch, gnone, 0);
+    old_dw->get(
+      NC_CCweight, d_mpm_labels->NC_CCweightLabel, 0, patch, gnone, 0);
 
     // Retrieve necessary data from DataWarehouse
     for (int m = 0; m < matls->size(); m++) {
       int dwi = matls->get(m);
-      new_dw->get(gmass[m], lb->gMassLabel, dwi, patch, gnone, 0);
-      new_dw->get(normtraction[m], lb->gNormTractionLabel, dwi, patch, gnone,
+      new_dw->get(gMass[m], d_mpm_labels->gMassLabel, dwi, patch, gnone, 0);
+      new_dw->get(normtraction[m],
+                  d_mpm_labels->gNormTractionLabel,
+                  dwi,
+                  patch,
+                  gnone,
                   0);
-      new_dw->get(gsurfnorm[m], lb->gSurfNormLabel, dwi, patch, gnone, 0);
-      new_dw->get(gvolume[m], lb->gVolumeLabel, dwi, patch, gnone, 0);
-      new_dw->getModifiable(gvelocity_star[m], gVelocity_label, dwi, patch);
-      new_dw->getModifiable(frictionWork[m], lb->frictionalWorkLabel, dwi,
-                            patch);
+      new_dw->get(
+        gSurfNormal[m], d_mpm_labels->gSurfNormLabel, dwi, patch, gnone, 0);
+      new_dw->get(gVolume[m], d_mpm_labels->gVolumeLabel, dwi, patch, gnone, 0);
+      new_dw->getModifiable(gVelocity_star[m], gVelocity_label, dwi, patch);
+      new_dw->getModifiable(
+        frictionWork[m], d_mpm_labels->frictionalWorkLabel, dwi, patch);
     }
 
     delt_vartype delT;
-    old_dw->get(delT, lb->delTLabel, getLevel(patches));
+    old_dw->get(delT, d_mpm_labels->delTLabel, getLevel(patches));
     double epsilon_max_max = 0.0;
 
     for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
       IntVector c = *iter;
       Vector centerOfMassMom(0., 0., 0.);
       double centerOfMassMass = 0.0;
-      double totalNodalVol = 0.0;
+      double totalNodalVol    = 0.0;
       for (int n = 0; n < numMatls; n++) {
-        if (!d_matls.requested(n))
+        if (!d_matls.requested(n)) {
           continue;
-        double mass = gmass[n][c];
-        centerOfMassMom += gvelocity_star[n][c] * mass;
+        }
+        double mass = gMass[n][c];
+        centerOfMassMom += gVelocity_star[n][c] * mass;
         centerOfMassMass += mass;
-        totalNodalVol += gvolume[n][c] * 8.0 * NC_CCweight[c];
+        totalNodalVol += gVolume[n][c] * 8.0 * NC_CCweight[c];
       }
 
       // Apply Coulomb friction contact
@@ -222,7 +227,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
       if (!compare(centerOfMassMass, 0.0)) {
         Vector centerOfMassVelocity = centerOfMassMom / centerOfMassMass;
 
-        if (flag->d_axisymmetric) {
+        if (d_mpm_flags->d_axisymmetric) {
           // Nodal volume isn't constant for axisymmetry
           // volume = r*dr*dtheta*dy  (dtheta = 1 radian)
           double r = std::min((patch->getNodePosition(c)).x(), .5 * dx.x());
@@ -264,17 +269,18 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
           // the centerOfMassVelocity is nonzero (More than one velocity
           // field is contributing to grid vertex).
           for (int n = 0; n < numMatls; n++) {
-            if (!d_matls.requested(n))
+            if (!d_matls.requested(n)) {
               continue;
-            Vector deltaVelocity = gvelocity_star[n][c] - centerOfMassVelocity;
-            double mass = gmass[n][c];
+            }
+            Vector deltaVelocity = gVelocity_star[n][c] - centerOfMassVelocity;
+            double mass          = gMass[n][c];
             if (!compare(mass / centerOfMassMass, 0.0) &&
                 !compare(mass - centerOfMassMass, 0.0)) {
 
               // Apply frictional contact IF the surface is in compression
               // OR the surface is stress free and approaching.
               // Otherwise apply free surface conditions (do nothing).
-              Vector normal = gsurfnorm[n][c];
+              Vector normal         = gSurfNormal[n][c];
               double normalDeltaVel = Dot(deltaVelocity, normal);
 
               Vector Dv(0., 0., 0.);
@@ -285,7 +291,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
                 // Simplify algorithm in case where approach velocity
                 // is in direction of surface normal (no slip).
                 Vector normal_normaldV = normal * normalDeltaVel;
-                Vector dV_normaldV = deltaVelocity - normal_normaldV;
+                Vector dV_normaldV     = deltaVelocity - normal_normaldV;
                 if (compare(dV_normaldV.length2(), 0.0)) {
 
                   // Calculate velocity change needed to enforce contact
@@ -303,9 +309,8 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
                     Min(d_mu, tangentDeltaVelocity / fabs(normalDeltaVel));
 
                   // Calculate velocity change needed to enforce contact
-                  Dv =
-                    -normal_normaldV -
-                    surfaceTangent * frictionCoefficient * fabs(normalDeltaVel);
+                  Dv = -normal_normaldV - surfaceTangent * frictionCoefficient *
+                                            fabs(normalDeltaVel);
 
                   // Calculate work done by the frictional force (only) if
                   // contact slips.  Because the frictional force opposes motion
@@ -332,10 +337,10 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
                   // Scale velocity change if contact algorithm imposed strain
                   // is too large.
                   double ff = Min(epsilon_max, .5) / epsilon_max;
-                  Dv = Dv * ff;
+                  Dv        = Dv * ff;
                 }
                 Dv = scale_factor * Dv;
-                gvelocity_star[n][c] += Dv;
+                gVelocity_star[n][c] += Dv;
               } // traction
             }   // if !compare && !compare
           }     // for numMatls
@@ -347,12 +352,13 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
     //  static int ts=0;
     //  static ofstream tmpout("max_strain.dat");
 
-    //  tmpout << ts << " " << epsilon_max_max << endl;
+    //  tmpout << ts << " " << epsilon_max_max << std::endl;
     //  ts++;
 
     // This converts frictional work into a temperature rate
     for (int m = 0; m < matls->size(); m++) {
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
 
       if (!d_matls.requested(m)) {
         for (NodeIterator iter = patch->getNodeIterator(); !iter.done();
@@ -364,9 +370,10 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
         for (NodeIterator iter = patch->getNodeIterator(); !iter.done();
              iter++) {
           IntVector c = *iter;
-          frictionWork[m][c] /= (c_v * gmass[m][c] * delT);
+          frictionWork[m][c] /= (c_v * gMass[m][c] * delT);
           if (frictionWork[m][c] < 0.0) {
-            std::cout << "dT/dt is negative: " << frictionWork[m][c] << endl;
+            std::cout << "dT/dt is negative: " << frictionWork[m][c]
+                      << std::endl;
           }
         }
       }
@@ -380,7 +387,8 @@ FrictionContact::addComputesAndRequires(SchedulerP& sched,
                                         const MaterialSet* matls,
                                         const VarLabel* gVelocity_label)
 {
-  Task* t = scinew Task("Friction::exchangeMomentum", this,
+  Task* t = scinew Task("Friction::exchangeMomentum",
+                        this,
                         &FrictionContact::exchangeMomentum,
                         gVelocity_label);
 
@@ -389,17 +397,18 @@ FrictionContact::addComputesAndRequires(SchedulerP& sched,
   z_matl->addReference();
 
   const MaterialSubset* mss = matls->getUnion();
-  t->requires(Task::OldDW, lb->delTLabel);
-  t->requires(Task::OldDW, lb->NC_CCweightLabel, z_matl, Ghost::None);
-  t->requires(Task::NewDW, lb->gNormTractionLabel, Ghost::None);
-  t->requires(Task::NewDW, lb->gSurfNormLabel, Ghost::None);
-  t->requires(Task::NewDW, lb->gMassLabel, Ghost::None);
-  t->requires(Task::NewDW, lb->gVolumeLabel, Ghost::None);
+  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
+  t->requires(Task::NewDW, d_mpm_labels->gNormTractionLabel, Ghost::None);
+  t->requires(Task::NewDW, d_mpm_labels->gSurfNormLabel, Ghost::None);
+  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
   t->modifies(gVelocity_label, mss);
-  t->modifies(lb->frictionalWorkLabel, mss);
+  t->modifies(d_mpm_labels->frictionalWorkLabel, mss);
 
   sched->addTask(t, patches, matls);
 
-  if (z_matl->removeReference())
+  if (z_matl->removeReference()) {
     delete z_matl; // shouln't happen, but...
+  }
 }

@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -58,10 +58,8 @@ SET(Vaango_Core_Math_SRCS
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Plane.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Point.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Polygon.cc 
-  ${CMAKE_SOURCE_DIR}/Core/Geometry/Quaternion.cc 
-  ${CMAKE_SOURCE_DIR}/Core/Geometry/Ray.cc 
+  ${CMAKE_SOURCE_DIR}/Core/Geometry/PolyPlane.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Tensor.cc 
-  ${CMAKE_SOURCE_DIR}/Core/Geometry/Transform.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Vector.cc 
   ${CMAKE_SOURCE_DIR}/Core/Disclosure/TypeDescription.cc 
   ${CMAKE_SOURCE_DIR}/Core/Disclosure/TypeUtils.cc 
@@ -71,7 +69,7 @@ IF(WIN32)
   SET(Vaango_Core_Math_SRCS ${Vaango_Core_Math_SRCS} Rand48.cc)
 ENDIF(WIN32)
 
-ADD_LIBRARY(Vaango_Core_Math ${Vaango_Core_Math_SRCS})
+add_library(Vaango_Core_Math ${Vaango_Core_Math_SRCS})
 
 set(LIBS
  ${M_LIBRARY} 
@@ -86,14 +84,12 @@ set(LIBS
  ${Z_LIBRARY}
 )
 
-TARGET_LINK_LIBRARIES(Vaango_Core_Math
+target_link_libraries(Vaango_Core_Math
   Vaango_Core_Exceptions
   Vaango_Core_Util
-  Vaango_Core_Thread
-  Vaango_Core_Persistent
   ${LIBS}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Math)
+  add_definitions(-DBUILD_Vaango_Core_Math)
 ENDIF(BUILD_SHARED_LIBS)

@@ -85,17 +85,17 @@ int main()
   int numNodes = 0;
   int numElements = 0;
   string name,out_name, info, info1, info2;
-  cout << endl << "**********************************************" << endl;
-  cout << "Input the name of the Gambit output file: ";
+  std::cout << endl << "**********************************************" << endl;
+  std::cout << "Input the name of the Gambit output file: ";
   cin >> name;
 
-  cout << "Input the output file name for storing points and surfaces: ";
+  std::cout << "Input the output file name for storing points and surfaces: ";
   cin >> out_name;
  
   instream.open(name.c_str());                       // opens files name
  
   while (!instream.is_open())  {                     // tests for openness
-    cout << "Invalid file name. Please re-enter the name of the file to use: ";
+    std::cout << "Invalid file name. Please re-enter the name of the file to use: ";
     cin >> name;                                    // loop for correct file
     instream.open(name.c_str());
   }  
@@ -115,8 +115,8 @@ int main()
        info  != "GAMBIT"  ||
        info1 != "NEUTRAL" ||
        info2 != "FILE"  ) {
-    cout << " The file is not recognized as a gambit neutral (neu) file " << endl;
-    cout << " Now exiting " << endl;
+    std::cout << " The file is not recognized as a gambit neutral (neu) file " << endl;
+    std::cout << " Now exiting " << endl;
     exit (1);
   }
   
@@ -131,7 +131,7 @@ int main()
   }
   instream >> numNodes;
   instream >> numElements;
-  cout << "I've found "<< numNodes << " nodes and "
+  std::cout << "I've found "<< numNodes << " nodes and "
        << numElements<< " elements"<<endl;   
   
   //__________________________________
@@ -141,7 +141,7 @@ int main()
   }
   instream >> info;
   
-  vector<struct node_coord> nodeCoords(numNodes);
+  std::vector<struct node_coord> nodeCoords(numNodes);
   for(int n=0; n<numNodes; n++){
       nodeCoords[n].x = -999;      // initialize to some obscure value
       nodeCoords[n].y = -999;      // initialize to some obscure value
@@ -159,17 +159,17 @@ int main()
     // bulletproofing
 #if 1
     if (node_num != x+1) {
-      cout << " E R R O R : I've misread the Node Coordinates data "
+      std::cout << " E R R O R : I've misread the Node Coordinates data "
 	   << nodeCoords[x].x << "  "
 	   << nodeCoords[x].y << "   "<< nodeCoords[x].z << endl;
       exit(1);
     } 
     if (!finite(nodeCoords[x].x) ||
 	!finite(nodeCoords[x].y) || !finite(nodeCoords[x].z) ) {
-      cout << " E R R O R :I've detected a number that isn't finite"<<endl;
-      cout << " " << nodeCoords[x].x << " " <<
+      std::cout << " E R R O R :I've detected a number that isn't finite"<<endl;
+      std::cout << " " << nodeCoords[x].x << " " <<
 	nodeCoords[x].y << " " << nodeCoords[x].z << " " <<endl; 
-      cout << " Now exiting "<<endl;
+      std::cout << " Now exiting "<<endl;
       exit(1);        
     } 
   } 
@@ -182,13 +182,13 @@ int main()
     counter ++;
   }
   if(counter == 10 ) {
-    cout << " The file is not recognized as a gambit file " << endl;
-    cout << " Now exiting " << endl;
+    std::cout << " The file is not recognized as a gambit file " << endl;
+    std::cout << " Now exiting " << endl;
     exit (1);
   }   
   instream >> info;
   
-  vector<elem_coord> nodeIndx(numElements);
+  std::vector<elem_coord> nodeIndx(numElements);
   
   for(int y=0;y<numElements;y++){
     instream >> node_num;  // this is really element number
@@ -201,12 +201,12 @@ int main()
     //__________________________________
     // bulletproofing
     if (info != "3" || info1 != "3") {
-      cout << " E R R O R : The input mesh is not triangulated surface "<< endl;
-      cout << " Now exiting " << endl;
+      std::cout << " E R R O R : The input mesh is not triangulated surface "<< endl;
+      std::cout << " Now exiting " << endl;
       exit(1);
     }
     if (node_num != y+1) {
-      cout << " E R R O R : I've misread the element data "
+      std::cout << " E R R O R : I've misread the element data "
 	   << info <<"  "<<info1
 	   << "   "<< nodeIndx[y].n1 << "  "<< nodeIndx[y].n2
 	   << "   "<< nodeIndx[y].n3 << endl;
@@ -215,30 +215,30 @@ int main()
     
     if (!finite(nodeIndx[y].n1) || 
 	!finite(nodeIndx[y].n2) || !finite(nodeIndx[y].n3)) {
-      cout << "I've detected a number that isn't finite"<<endl;
-      cout << nodeIndx[y].n1 << " " <<
+      std::cout << "I've detected a number that isn't finite"<<endl;
+      std::cout << nodeIndx[y].n1 << " " <<
 	nodeIndx[y].n2 << " " << nodeIndx[y].n3 <<endl; 
-      cout << " Now exiting "<<endl;
+      std::cout << " Now exiting "<<endl;
       exit(1);        
     } 
   }
   
   //__________________________________
   //  spew out what I've found
-  cout << "Node Coordinates"<<endl;
+  std::cout << "Node Coordinates"<<endl;
   for(int x=0;x<numNodes;x++){
     pts_stream << nodeCoords[x].x << " " 
 	       << nodeCoords[x].y << " " << nodeCoords[x].z << endl; 
   }  
   
   // Input file is 1 based, changing it to zero based.
-  cout << "connectivity "<<endl;
+  std::cout << "connectivity "<<endl;
   for(int y=0;y<numElements;y++){
     tri_stream << nodeIndx[y].n1-1 << " "
 	       << nodeIndx[y].n2-1 << " " << nodeIndx[y].n3-1 << " " << endl;
   }  
   
-  cout << "I've successfully read in the file  " << endl;
+  std::cout << "I've successfully read in the file  " << endl;
   instream.close();
   
   return 0;

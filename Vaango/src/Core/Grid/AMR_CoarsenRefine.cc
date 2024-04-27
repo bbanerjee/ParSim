@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,117 +32,124 @@
 #include <Core/Util/DebugStream.h>
 
 using Uintah::IntVector;
-using namespace std;
 
 namespace Uintah {
 
 static Uintah::DebugStream cout_dbg("AMR_CoarsenRefine", false);
+
+namespace AMRCoarsenRefine {
 //______________________________________________________________________
 //
 template<typename T>
-void coarsenDriver_std(const IntVector& cl, 
-                       const IntVector& ch,                     
-                       const IntVector& fl,                     
-                       const IntVector& fh,                     
-                       const IntVector& refinementRatio,
-                       const double ratio,
-                       const Level* coarseLevel,
-                       constCCVariable<T>& fine_q_CC,
-                       CCVariable<T>& coarse_q_CC )
+void
+coarsenDriver_std(const IntVector& cl,
+                  const IntVector& ch,
+                  const IntVector& fl,
+                  const IntVector& fh,
+                  const IntVector& refinementRatio,
+                  const double ratio,
+                  const Level* coarseLevel,
+                  constCCVariable<T>& fine_q_CC,
+                  CCVariable<T>& coarse_q_CC)
 {
   T zero(0.0);
   // iterate over coarse level cells
-  for(CellIterator iter(cl, ch); !iter.done(); iter++){
+  for (CellIterator iter(cl, ch); !iter.done(); iter++) {
     IntVector c = *iter;
     T q_CC_tmp(zero);
     IntVector fineStart = coarseLevel->mapCellToFiner(c);
 
     double count = 0;
-    // for each coarse level cell iterate over the fine level cells   
-    for(CellIterator inside(IntVector(0,0,0),refinementRatio );
-        !inside.done(); inside++){
+    // for each coarse level cell iterate over the fine level cells
+    for (CellIterator inside(IntVector(0, 0, 0), refinementRatio);
+         !inside.done();
+         inside++) {
       IntVector fc = fineStart + *inside;
-      
-      if( fc.x() >= fl.x() && fc.y() >= fl.y() && fc.z() >= fl.z() &&
-          fc.x() <= fh.x() && fc.y() <= fh.y() && fc.z() <= fh.z() ) {
+
+      if (fc.x() >= fl.x() && fc.y() >= fl.y() && fc.z() >= fl.z() &&
+          fc.x() <= fh.x() && fc.y() <= fh.y() && fc.z() <= fh.z()) {
         q_CC_tmp += fine_q_CC[fc];
-        count +=1.0;
-        //std::cout << "    " << fc << "   fine_q_CC " << fine_q_CC[fc] <<" q_CC_tmp: " << q_CC_tmp << endl;
+        count += 1.0;
+        // std::cout << "    " << fc << "   fine_q_CC " << fine_q_CC[fc] <<"
+        // q_CC_tmp: " << q_CC_tmp << std::endl;
       }
     }
-    coarse_q_CC[c] =q_CC_tmp*ratio;
-    
-    //__________________________________
-    //  bulletproofing
-    #if SCI_ASSERTION_LEVEL > 0
-      if ( (fabs(ratio - 1.0/count) > 2 * DBL_EPSILON) && ratio != 1 ) {
-        std::ostringstream msg;
-        msg << " ERROR:  coarsenDriver_std: coarse cell " << c << "\n" 
-            <<  "Only (" << count << ") fine level cells were used to compute the coarse cell value."
-            << " There should have been ("<< 1/ratio << ") cells used";
+    coarse_q_CC[c] = q_CC_tmp * ratio;
 
-      throw InternalError(msg.str(),__FILE__,__LINE__);
-      } 
-    #endif
-    //std::cout << c << "   coarse_q_CC " << coarse_q_CC[c] << " ratio " << ratio << endl;
+//__________________________________
+//  bulletproofing
+#if SCI_ASSERTION_LEVEL > 0
+    if ((fabs(ratio - 1.0 / count) > 2 * DBL_EPSILON) && ratio != 1) {
+      std::ostringstream msg;
+      msg << " ERROR:  coarsenDriver_std: coarse cell " << c << "\n"
+          << "Only (" << count
+          << ") fine level cells were used to compute the coarse cell value."
+          << " There should have been (" << 1 / ratio << ") cells used";
+
+      throw InternalError(msg.str(), __FILE__, __LINE__);
+    }
+#endif
+    // std::cout << c << "   coarse_q_CC " << coarse_q_CC[c] << " ratio " <<
+    // ratio << std::endl;
   }
 }
 
 //______________________________________________________________________
-// 
+//
 template<typename T>
-void coarsenDriver_massWeighted( const IntVector & cl,
-                                 const IntVector & ch,
-                                 const IntVector & fl,
-                                 const IntVector & fh,
-                                 const IntVector & refinementRatio,
-                                 const Level* coarseLevel,
-                                 constCCVariable<double>& cMass,
-                                 constCCVariable<T>& fine_q_CC,
-                                 CCVariable<T>& coarse_q_CC )
+void
+coarsenDriver_massWeighted(const IntVector& cl,
+                           const IntVector& ch,
+                           const IntVector& fl,
+                           const IntVector& fh,
+                           const IntVector& refinementRatio,
+                           const Level* coarseLevel,
+                           constCCVariable<double>& cMass,
+                           constCCVariable<T>& fine_q_CC,
+                           CCVariable<T>& coarse_q_CC)
 {
   T zero(0.0);
   // iterate over coarse level cells
-  for(CellIterator iter(cl, ch); !iter.done(); iter++){
+  for (CellIterator iter(cl, ch); !iter.done(); iter++) {
     IntVector c = *iter;
     T q_CC_tmp(zero);
-    double mass_CC_tmp=0.;
+    double mass_CC_tmp  = 0.;
     IntVector fineStart = coarseLevel->mapCellToFiner(c);
 
-    // for each coarse level cell iterate over the fine level cells   
-    for(CellIterator inside(IntVector(0,0,0),refinementRatio );
-        !inside.done(); inside++){
+    // for each coarse level cell iterate over the fine level cells
+    for (CellIterator inside(IntVector(0, 0, 0), refinementRatio);
+         !inside.done();
+         inside++) {
       IntVector fc = fineStart + *inside;
-      
-      if( fc.x() >= fl.x() && fc.y() >= fl.y() && fc.z() >= fl.z() &&
-          fc.x() <= fh.x() && fc.y() <= fh.y() && fc.z() <= fh.z() ) {
-        q_CC_tmp += fine_q_CC[fc]*cMass[fc];
+
+      if (fc.x() >= fl.x() && fc.y() >= fl.y() && fc.z() >= fl.z() &&
+          fc.x() <= fh.x() && fc.y() <= fh.y() && fc.z() <= fh.z()) {
+        q_CC_tmp += fine_q_CC[fc] * cMass[fc];
         mass_CC_tmp += cMass[fc];
       }
-      
     }
-    coarse_q_CC[c] =q_CC_tmp/mass_CC_tmp;
+    coarse_q_CC[c] = q_CC_tmp / mass_CC_tmp;
   }
 }
 
-
 //_____________________________________________________________________
 //   Averages the interior fine patch data onto the coarse patch
-// 
+//
 template<class T>
-void fineToCoarseOperator(CCVariable<T>& q_CC,
-                          const bool computesAve,
-                          const VarLabel* varLabel,
-                          const int indx,
-                          DataWarehouse* new_dw,
-                          const Patch* coarsePatch,
-                          const Level* coarseLevel,
-                          const Level* fineLevel)
+void
+fineToCoarseOperator(CCVariable<T>& q_CC,
+                     const bool computesAve,
+                     const VarLabel* varLabel,
+                     const int indx,
+                     DataWarehouse* new_dw,
+                     const Patch* coarsePatch,
+                     const Level* coarseLevel,
+                     const Level* fineLevel)
 {
   Level::selectType finePatches;
   coarsePatch->getFineLevelPatches(finePatches);
-                          
-  for(int i=0;i<finePatches.size();i++){
+
+  for (size_t i = 0; i < finePatches.size(); i++) {
     const Patch* finePatch = finePatches[i];
 
     IntVector cl, ch, fl, fh;
@@ -150,60 +158,124 @@ void fineToCoarseOperator(CCVariable<T>& q_CC,
     if (fh.x() <= fl.x() || fh.y() <= fl.y() || fh.z() <= fl.z()) {
       continue;
     }
-    
-    constCCVariable<T> fine_q_CC;
-    new_dw->getRegion(fine_q_CC,  varLabel, indx, fineLevel, fl, fh, false);
 
-    cout_dbg << " fineToCoarseOperator: finePatch "<< fl << " " << fh 
-             << " coarsePatch "<< cl << " " << ch << endl;
-             
+    constCCVariable<T> fine_q_CC;
+    new_dw->getRegion(fine_q_CC, varLabel, indx, fineLevel, fl, fh, false);
+
+    cout_dbg << " fineToCoarseOperator: finePatch " << fl << " " << fh
+             << " coarsePatch " << cl << " " << ch << std::endl;
+
     IntVector r_Ratio = fineLevel->getRefinementRatio();
-    
-    double inv_RR = 1.0;    
-    
-    if(computesAve){
-      inv_RR = 1.0/( (double)(r_Ratio.x() * r_Ratio.y() * r_Ratio.z()) );
+
+    double inv_RR = 1.0;
+
+    if (computesAve) {
+      inv_RR = 1.0 / ((double)(r_Ratio.x() * r_Ratio.y() * r_Ratio.z()));
     }
 
-
-    coarsenDriver_std(cl, ch, fl, fh, r_Ratio, inv_RR, coarseLevel,                
-                      fine_q_CC, q_CC );
+    coarsenDriver_std(
+      cl, ch, fl, fh, r_Ratio, inv_RR, coarseLevel, fine_q_CC, q_CC);
   }
-//  cout_dbg.setActive(false);// turn off the switch for cout_dbg  (turn off tsanitizer warnings)
+  //  cout_dbg.setActive(false);// turn off the switch for cout_dbg  (turn off
+  //  tsanitizer warnings)
 }
-
 
 //______________________________________________________________________
 // Explicit template instantiations:
-template void coarsenDriver_std<double>( const IntVector& cl, const IntVector& ch, const IntVector& fl, const IntVector& fh,
-                                         const IntVector& refinementRatio, const double ratio,
-                                         const Level* coarseLevel, constCCVariable<double >& fine_q_CC, CCVariable<double>& coarse_q_CC );
-                                         
-template void coarsenDriver_std<float>( const IntVector& cl, const IntVector& ch, const IntVector& fl, const IntVector& fh,
-                                         const IntVector& refinementRatio, const double ratio,
-                                         const Level* coarseLevel, constCCVariable<float >& fine_q_CC, CCVariable<float>& coarse_q_CC );
+template void
+coarsenDriver_std<double>(const IntVector& cl,
+                          const IntVector& ch,
+                          const IntVector& fl,
+                          const IntVector& fh,
+                          const IntVector& refinementRatio,
+                          const double ratio,
+                          const Level* coarseLevel,
+                          constCCVariable<double>& fine_q_CC,
+                          CCVariable<double>& coarse_q_CC);
 
-template void coarsenDriver_std<Vector>( const IntVector& cl, const IntVector& ch, const IntVector& fl, const IntVector& fh,
-                                         const IntVector& refinementRatio, const double ratio,
-                                         const Level* coarseLevel, constCCVariable<Vector >& fine_q_CC, CCVariable<Vector>& coarse_q_CC );
-                                            
+template void
+coarsenDriver_std<float>(const IntVector& cl,
+                         const IntVector& ch,
+                         const IntVector& fl,
+                         const IntVector& fh,
+                         const IntVector& refinementRatio,
+                         const double ratio,
+                         const Level* coarseLevel,
+                         constCCVariable<float>& fine_q_CC,
+                         CCVariable<float>& coarse_q_CC);
 
-template void coarsenDriver_massWeighted<double>( const IntVector & cl, const IntVector & ch, const IntVector & fl, const IntVector & fh, const IntVector & refinementRatio,
-                                                  const Level* coarseLevel, constCCVariable<double>& cMass, constCCVariable<double>& fine_q_CC, CCVariable<double>& coarse_q_CC );
+template void
+coarsenDriver_std<Vector>(const IntVector& cl,
+                          const IntVector& ch,
+                          const IntVector& fl,
+                          const IntVector& fh,
+                          const IntVector& refinementRatio,
+                          const double ratio,
+                          const Level* coarseLevel,
+                          constCCVariable<Vector>& fine_q_CC,
+                          CCVariable<Vector>& coarse_q_CC);
 
-template void coarsenDriver_massWeighted<Vector>( const IntVector & cl, const IntVector & ch, const IntVector & fl, const IntVector & fh, const IntVector & refinementRatio,
-                                                  const Level* coarseLevel, constCCVariable<double>& cMass, constCCVariable<Vector>& fine_q_CC, CCVariable<Vector>& coarse_q_CC );
-                                                  
-template void fineToCoarseOperator<int>(CCVariable<int>& q_CC, const bool computesAve, const VarLabel* varLabel, const int indx, DataWarehouse* new_dw,
-                                   const Patch* coarsePatch, const Level* coarseLevel, const Level* fineLevel);
-                                                  
-template void fineToCoarseOperator<double>(CCVariable<double>& q_CC, const bool computesAve, const VarLabel* varLabel, const int indx, DataWarehouse* new_dw,
-                                   const Patch* coarsePatch, const Level* coarseLevel, const Level* fineLevel);
-                                   
-template void fineToCoarseOperator<float>(CCVariable<float>& q_CC, const bool computesAve, const VarLabel* varLabel, const int indx, DataWarehouse* new_dw,
-                                   const Patch* coarsePatch, const Level* coarseLevel, const Level* fineLevel);
-                                   
-template void fineToCoarseOperator<Vector>(CCVariable<Vector>& q_CC, const bool computesAve, const VarLabel* varLabel, const int indx, DataWarehouse* new_dw,
-                                   const Patch* coarsePatch, const Level* coarseLevel, const Level* fineLevel);
+template void
+coarsenDriver_massWeighted<double>(const IntVector& cl,
+                                   const IntVector& ch,
+                                   const IntVector& fl,
+                                   const IntVector& fh,
+                                   const IntVector& refinementRatio,
+                                   const Level* coarseLevel,
+                                   constCCVariable<double>& cMass,
+                                   constCCVariable<double>& fine_q_CC,
+                                   CCVariable<double>& coarse_q_CC);
 
-}  // end namespace Uintah
+template void
+coarsenDriver_massWeighted<Vector>(const IntVector& cl,
+                                   const IntVector& ch,
+                                   const IntVector& fl,
+                                   const IntVector& fh,
+                                   const IntVector& refinementRatio,
+                                   const Level* coarseLevel,
+                                   constCCVariable<double>& cMass,
+                                   constCCVariable<Vector>& fine_q_CC,
+                                   CCVariable<Vector>& coarse_q_CC);
+
+template void
+fineToCoarseOperator<int>(CCVariable<int>& q_CC,
+                          const bool computesAve,
+                          const VarLabel* varLabel,
+                          const int indx,
+                          DataWarehouse* new_dw,
+                          const Patch* coarsePatch,
+                          const Level* coarseLevel,
+                          const Level* fineLevel);
+
+template void
+fineToCoarseOperator<double>(CCVariable<double>& q_CC,
+                             const bool computesAve,
+                             const VarLabel* varLabel,
+                             const int indx,
+                             DataWarehouse* new_dw,
+                             const Patch* coarsePatch,
+                             const Level* coarseLevel,
+                             const Level* fineLevel);
+
+template void
+fineToCoarseOperator<float>(CCVariable<float>& q_CC,
+                            const bool computesAve,
+                            const VarLabel* varLabel,
+                            const int indx,
+                            DataWarehouse* new_dw,
+                            const Patch* coarsePatch,
+                            const Level* coarseLevel,
+                            const Level* fineLevel);
+
+template void
+fineToCoarseOperator<Vector>(CCVariable<Vector>& q_CC,
+                             const bool computesAve,
+                             const VarLabel* varLabel,
+                             const int indx,
+                             DataWarehouse* new_dw,
+                             const Patch* coarsePatch,
+                             const Level* coarseLevel,
+                             const Level* fineLevel);
+
+} // namespace AMRCoarsenRefine
+} // end namespace Uintah

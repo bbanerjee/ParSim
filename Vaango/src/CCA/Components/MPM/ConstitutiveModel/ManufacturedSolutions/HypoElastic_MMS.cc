@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -36,7 +36,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 #include <Core/Malloc/Allocator.h>
@@ -91,10 +91,10 @@ HypoElastic_MMS::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   }
 }
 
-HypoElastic_MMS*
+std::unique_ptr<ConstitutiveModel>
 HypoElastic_MMS::clone()
 {
-  return scinew HypoElastic_MMS(*this);
+  return std::make_unique<HypoElastic_MMS>(*this);
 }
 
 void

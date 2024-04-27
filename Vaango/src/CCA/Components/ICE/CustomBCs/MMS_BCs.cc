@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,18 +23,18 @@
  */
 
 #include <CCA/Components/ICE/CustomBCs/MMS_BCs.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
-#include <Core/Exceptions/InternalError.h>
-#include <Core/Exceptions/ProblemSetupException.h>
+#include <CCA/Components/ICE/Materials/ICEMaterial.h>
 #include <Core/Grid/Grid.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Math/MiscMath.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Math/MiscMath.h>
 #include <typeinfo>
 #include <Core/Util/DebugStream.h>
 
+using namespace std;
 using namespace Uintah;
+
 namespace Uintah {
 //__________________________________
 //  To turn on couts
@@ -72,7 +48,7 @@ static DebugStream cout_doing("MMS_DOING_COUT", false);
             -reads input parameters thar are need by the setBC routines
  ______________________________________________________________________  */
 bool read_MMS_BC_inputs(const ProblemSpecP& prob_spec,
-                        mms_variable_basket* mms_vb)
+                        mms_globalVars* lvb)
 {
   //__________________________________
   // search the BoundaryConditions problem spec
@@ -81,23 +57,21 @@ bool read_MMS_BC_inputs(const ProblemSpecP& prob_spec,
   ProblemSpecP bc_ps  = grid_ps->findBlock("BoundaryConditions");
  
   bool usingMMS = false;
-  mms_vb->whichMMS = "none";
+  lvb->whichMMS = "none";
   
-  for (ProblemSpecP face_ps = bc_ps->findBlock("Face");face_ps != 0; 
-                    face_ps=face_ps->findNextBlock("Face")) {
+  for( ProblemSpecP face_ps = bc_ps->findBlock( "Face" ); face_ps != nullptr; face_ps=face_ps->findNextBlock( "Face" ) ) {
     map<string,string> face;
     face_ps->getAttributes(face);
     bool is_a_MMS_face = false;
     
-    for(ProblemSpecP bc_iter = face_ps->findBlock("BCType"); bc_iter != 0;
-                     bc_iter = bc_iter->findNextBlock("BCType")){
+    for( ProblemSpecP bc_iter = face_ps->findBlock( "BCType" ); bc_iter != nullptr; bc_iter = bc_iter->findNextBlock( "BCType" ) ) {
       map<string,string> bc_type;
-      bc_iter->getAttributes(bc_type);
+      bc_iter->getAttributes( bc_type );
 
       if (bc_type["var"] == "MMS_1" && !is_a_MMS_face) {
         usingMMS = true;
         is_a_MMS_face = true;
-        mms_vb->whichMMS = bc_type["var"];
+        lvb->whichMMS = bc_type["var"];
       }
     }
   }
@@ -105,19 +79,19 @@ bool read_MMS_BC_inputs(const ProblemSpecP& prob_spec,
   //__________________________________
   //  read in variables from ICE 
   if(usingMMS ){
-    if(mms_vb->whichMMS == "MMS_1"){
+    if(lvb->whichMMS == "MMS_1"){
       ProblemSpecP mat_ps= 
         prob_spec->findBlockWithOutAttribute("MaterialProperties");
       ProblemSpecP ice_ps= mat_ps->findBlock("ICE")->findBlock("material");
 
-      ice_ps->require("gamma",mms_vb->gamma);
-      ice_ps->require("dynamic_viscosity",  mms_vb->viscosity);
-      ice_ps->require("specific_heat",mms_vb->cv);
+      ice_ps->require("gamma",lvb->gamma);
+      ice_ps->require("dynamic_viscosity",  lvb->viscosity);
+      ice_ps->require("specific_heat",lvb->cv);
 
       ProblemSpecP cfd_ice_ps = prob_spec->findBlock("CFD")->findBlock("ICE");
       ProblemSpecP c_init_ps  = cfd_ice_ps->findBlock("customInitialization");
       ProblemSpecP mms_ps     = c_init_ps->findBlock("manufacturedSolution");
-      mms_ps->require("A", mms_vb->A);
+      mms_ps->require("A", lvb->A);
     }
   }
   return usingMMS;
@@ -159,11 +133,11 @@ void  preprocess_MMS_BCs(DataWarehouse* new_dw,
                          const Patch* patch,
                          const string& where,
                          bool& setMMS_BCs,
-                         mms_vars* mms_v)
+                         mms_localVars* lv)
 {
   Ghost::GhostType  gn  = Ghost::None;
   setMMS_BCs = false; 
-  mms_v->where = where;
+  lv->where = where;
   //__________________________________
   //    Equilibrium pressure
   if(where == "EqPress"){
@@ -178,19 +152,19 @@ void  preprocess_MMS_BCs(DataWarehouse* new_dw,
   //    cc_ Exchange
   if(where == "CC_Exchange"){
     setMMS_BCs = true; 
-    new_dw->get(mms_v->press_CC, lb->press_CCLabel, 0, patch,gn,0);
-    new_dw->get(mms_v->rho_CC,   lb->rho_CCLabel,   0, patch,gn,0);
+    new_dw->get(lv->press_CC, lb->press_CCLabel, 0, patch,gn,0);
+    new_dw->get(lv->rho_CC,   lb->rho_CCLabel,   0, patch,gn,0);
   }
   //__________________________________
   //    Advection
   if(where == "Advection"){
     setMMS_BCs = true; 
-    new_dw->get(mms_v->press_CC, lb->press_CCLabel, 0, patch,gn,0);
-    new_dw->get(mms_v->rho_CC,   lb->rho_CCLabel,   0, patch,gn,0); 
+    new_dw->get(lv->press_CC, lb->press_CCLabel, 0, patch,gn,0);
+    new_dw->get(lv->rho_CC,   lb->rho_CCLabel,   0, patch,gn,0); 
   }
 }
 /*_________________________________________________________________
- Function~ set_MMS_Velocity_BC--
+ Function~ set_lvelocity_BC--
  Purpose~  Set velocity boundary conditions using method of manufactured
            solution boundary conditions
 ___________________________________________________________________*/
@@ -200,9 +174,9 @@ int set_MMS_Velocity_BC(const Patch* patch,
                          const string& var_desc,
                          Iterator& bound_ptr,
                          const string& bc_kind,
-                         SimulationStateP& sharedState,
-                         mms_variable_basket* mms_var_basket,
-                         mms_vars* mms_v)                     
+                         MaterialManagerP& materialManager,
+                         mms_globalVars* gv,
+                         mms_localVars* lv)                     
 
 {
   int nCells = 0;
@@ -210,14 +184,15 @@ int set_MMS_Velocity_BC(const Patch* patch,
     cout_doing << "Setting Vel_MMS on face " << face << endl;
     
     // bulletproofing
-    if (!mms_var_basket || !mms_v){
-      throw InternalError("set_MMS_velocity_BC", __FILE__, __LINE__);
+    if (!gv || !lv){
+      throw InternalError("set_lvelocity_BC", __FILE__, __LINE__);
     }
     if(bc_kind == "MMS_1") {
-      double nu = mms_var_basket->viscosity;
-      double A =  mms_var_basket->A;
-      double t  = sharedState->getElapsedTime();
-      t += mms_v->delT;
+      double nu = gv->viscosity;
+      double A =  gv->A;
+      double t = lv->simTime + lv->delT;
+      // double t  = materialManager->getElapsedSimTime();
+      // t += lv->delT;
       
       for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {
         IntVector c = *bound_ptr;
@@ -245,21 +220,21 @@ int set_MMS_Temperature_BC(const Patch* /*patch*/,
                             CCVariable<double>& temp_CC,
                             Iterator& bound_ptr,
                             const string& bc_kind,
-                            mms_variable_basket* mms_var_basket,
-                            mms_vars* mms_v)  
+                            mms_globalVars* gv,
+                            mms_localVars* lv)  
 {
   // bulletproofing
-  if (!mms_var_basket || !mms_v){
+  if (!gv || !lv){
     throw InternalError("set_MMS_Temperature_BC", __FILE__, __LINE__);
   }
   
   int nCells = 0;
   if (bc_kind == "MMS_1") {
     cout_doing << "Setting Temp_MMS on face " <<face<< endl;
-    double cv = mms_var_basket->cv;
-    double gamma = mms_var_basket->gamma;
-    constCCVariable<double> press_CC = mms_v->press_CC;
-    constCCVariable<double> rho_CC   = mms_v->rho_CC;
+    double cv = gv->cv;
+    double gamma = gv->gamma;
+    constCCVariable<double> press_CC = lv->press_CC;
+    constCCVariable<double> rho_CC   = lv->rho_CC;
 
     for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {
       IntVector c = *bound_ptr;
@@ -280,24 +255,25 @@ int set_MMS_press_BC(const Patch* patch,
                       CCVariable<double>& press_CC,
                       Iterator& bound_ptr,
                       const string& bc_kind,
-                      SimulationStateP& sharedState,
-                      mms_variable_basket* mms_var_basket,
-                      mms_vars* mms_v)  
+                      MaterialManagerP& materialManager,
+                      mms_globalVars* gv,
+                      mms_localVars* lv)  
 {
   cout_doing << "Setting press_MMS_BC on face " <<face<< endl;
 
   // bulletproofing
-  if (!mms_var_basket || !mms_v){
-    throw InternalError("set_MMS_press_BC: mms_vars = null", __FILE__, __LINE__);
+  if (!gv || !lv){
+    throw InternalError("set_MMS_press_BC: mms_localVars = null", __FILE__, __LINE__);
   }
   
   int nCells = 0;
   if(bc_kind == "MMS_1") {
-    double nu = mms_var_basket->viscosity;
-    double A =  mms_var_basket->A;
-    double t =  sharedState->getElapsedTime();
+    double nu = gv->viscosity;
+    double A =  gv->A;
+    double t = lv->simTime + lv->delT;
+    // double t =  materialManager->getElapsedSimTime();
+    // t += lv->delT;
     double p_ref = 101325;
-    t += mms_v->delT;
 
     for (bound_ptr.reset(); !bound_ptr.done();bound_ptr++) {
       IntVector c = *bound_ptr;

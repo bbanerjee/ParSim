@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,7 +29,7 @@
 /*--------------------------------------------------------------------------
 CLASS
    SolverFactory
-   
+
    Main class of the Solvers component.
 
 GENERAL INFORMATION
@@ -40,7 +41,7 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    SolverFactory, SolverInterface, ProblemSpecP.
@@ -52,29 +53,30 @@ DESCRIPTION
    We support our own solvers (CGSolver) and several Hypre library solvers
    and preconditioners, among which: PFMG, SMG, FAC, AMG, CG. Solver
    arbitration is based on input file parameters.
-  
+
 WARNING
    Make sure to comment out any solver that is not completed yet, otherwise
    sus cannot pass linking.
    --------------------------------------------------------------------------*/
 
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <CCA/Ports/SolverInterface.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
+
+#include <memory>
 
 namespace Uintah {
 
-  class ProcessorGroup;
+class ProcessorGroup;
 
-  class SolverFactory
-    {
-    public:
-
-      // This function contains switches for all known solvers.
-      static SolverInterface* create(       ProblemSpecP   & ps,
-                                      const ProcessorGroup * world,
-                                      const std::string    & cmdline = "" );
-
-    };
+class SolverFactory
+{
+public:
+  // This function contains switches for all known solvers.
+  static std::shared_ptr<SolverInterface>
+  create(ProblemSpecP& ps,
+         const ProcessorGroup* world,
+         std::string solveName = "");
+};
 } // End namespace Uintah
 
 #endif // Packages_Uintah_CCA_Components_Solvers_SolverFactory_h

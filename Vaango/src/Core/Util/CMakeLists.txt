@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -23,35 +24,36 @@
 #
 # CMakeLists.txt for Vaango/src/Core/Util
 
-SET(Vaango_Core_Util_SRCS
+set(Vaango_Core_Util_SRCS
   DebugStream.cc        
+  DOUT.cpp
   Endian.cc             
   Environment.cc        
   FileUtils.cc          
-  LogFile.cc            
-  ProgressReporter.cc   
-  RegressionReporter.cc 
-  SimpleProfiler.cc     
-  SizeTypeConvert.cc    
-  RWS.cc                
-  sci_system.cc         
-  Signals.cc            
-  Timer.cc              
-  FETypeDescription.cc    
   ProgressiveWarning.cc 
-  Util.cc 
-  DynamicLoader.cc      
-  DynamicCompilation.cc 
+  RWS.cc                
+  SizeTypeConvert.cc    
   soloader.cc           
-  Socket.cc             
+  StringUtil.cc
+  SysUtils.cc
+  Util.cc
   XMLUtils.cc
   ${REFCOUNT_IMPL}
 )
 
-ADD_LIBRARY(Vaango_Core_Util ${Vaango_Core_Util_SRCS})
+if (HAVE_CUDA)
+  set(Vaango_Core_Util_SRCS
+      ${Vaango_Core_Util_SRCS}
+      GPU.cu
+  )
+endif (HAVE_CUDA)
+
+add_library(Vaango_Core_Util ${Vaango_Core_Util_SRCS})
 
 set(LIBS 
+  Vaango_Core_Containers
   Vaango_Core_Exceptions
+  Vaango_Core_Malloc
 )
 if (WIN32)
   set(LIBS
@@ -60,14 +62,21 @@ if (WIN32)
   )
 endif()
 
+if (HAVE_CUDA)
+  set(LIBS
+    ${LIBS}
+    GPU.o
+  )
+endif (HAVE_CUDA)
+
 # message(STATUS "Core/Util Linking to libraries ${LIBS} ${DL_LIBRARY} ${THREAD_LIBRARY} ${SOCKET_LIBRARY}")
 
-TARGET_LINK_LIBRARIES(Vaango_Core_Util ${LIBS}
+target_link_libraries(Vaango_Core_Util ${LIBS}
    ${DL_LIBRARY}
-   ${THREAD_LIBRARY} 
-   ${SOCKET_LIBRARY}
+   ${Z_LIBRARY} 
+   ${CUDA_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Util)
+  add_definitions(-DBUILD_Vaango_Core_Util)
 ENDIF(BUILD_SHARED_LIBS)

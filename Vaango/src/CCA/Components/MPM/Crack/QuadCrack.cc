@@ -132,27 +132,27 @@ void QuadCrack::readCrack(ProblemSpecP& quad_ps)
 void QuadCrack::outputInitialCrackPlane(int i)
 {
 
-  cout << "  * Quad " << i+1 << ": meshed by [" << N12
+  std::cout << "  * Quad " << i+1 << ": meshed by [" << N12
        << ", " << N23 << ", " << N12
-       << ", " << N23 << "]" << endl;
+       << ", " << N23 << "]" << std::endl;
   for(int j=0;j< (int)vertices.size();j++)
-    cout << "    p" << j+1 << ": " << vertices[j] << endl;
+    std::cout << "    p" << j+1 << ": " << vertices[j] << std::endl;
   for(int j=0;j<4;j++) {
     if(AtFront[j]) {
       int j2=(j+2<5 ? j+2 : 1);
-      cout << "    Side " << j+1 << " (p" << j+1 << "-" << "p" << j2
-           << ") is a crack front." << endl;
+      std::cout << "    Side " << j+1 << " (p" << j+1 << "-" << "p" << j2
+           << ") is a crack front." << std::endl;
     }
   }
   
   if (Repetition > 1)
-    cout << "    The quad is repeated by " << Repetition
-         << " times with the offset " << Offset << "." << endl;
+    std::cout << "    The quad is repeated by " << Repetition
+         << " times with the offset " << Offset << "." << std::endl;
   
 }
 
 void QuadCrack::discretize(int& nstart0,vector<Point>& cx, 
-                           vector<IntVector>& ce,vector<int>& SegNodes)
+                           std::vector<IntVector>& ce,vector<int>& SegNodes)
 {
 
   int i,j,ni,nj,n1,n2,n3,num;
@@ -170,7 +170,7 @@ void QuadCrack::discretize(int& nstart0,vector<Point>& cx,
     
     
     // Flag if node i is on edge j, initialized by false 
-    vector<vector<bool> > nodeOnEdge;
+    std::vector<vector<bool> > nodeOnEdge;
     for(i=0; i<num; i++) {
       for(j=0; j<4; j++) nodeOnEdge[i].push_back(false);
     }       

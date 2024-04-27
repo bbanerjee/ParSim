@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,89 +24,97 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <Core/Grid/Variables/ParticleSubset.h>
-#include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Parallel/Parallel.h>
+
 #include <Core/Disclosure/TypeUtils.h>
 #include <Core/Exceptions/InternalError.h>
+#include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/Parallel/Parallel.h>
 #include <Core/Util/ProgressiveWarning.h>
 
 #include <algorithm>
 #include <iostream>
 
 using namespace Uintah;
-using namespace Uintah;
-
 
 ParticleSubset::~ParticleSubset()
 {
-  for( unsigned int i = 0; i < neighbor_subsets.size(); i++ ) {
-    if( neighbor_subsets[i]->removeReference() ) {
+  for (unsigned int i = 0; i < neighbor_subsets.size(); i++) {
+    if (neighbor_subsets[i]->removeReference()) {
       delete neighbor_subsets[i];
     }
   }
 
-  if( d_particles ) {
-    delete [] d_particles;
+  if (d_particles) {
+    delete[] d_particles;
   }
 }
 
-ParticleSubset::ParticleSubset() : d_numParticles(0)
+ParticleSubset::ParticleSubset()
+  : d_numParticles(0)
 {
   init();
 }
 
-ParticleSubset::ParticleSubset( const unsigned int   num_particles,
-                                const int            matlIndex, 
-                                const Patch        * patch)
-    : d_numParticles(num_particles), d_matlIndex(matlIndex), d_patch(patch)
+ParticleSubset::ParticleSubset(const unsigned int num_particles,
+                               const int matlIndex,
+                               const Patch* patch)
+  : d_numParticles(num_particles)
+  , d_matlIndex(matlIndex)
+  , d_patch(patch)
 {
   init();
 
   if (patch) {
-    d_low = patch->getExtraCellLowIndex();
+    d_low  = patch->getExtraCellLowIndex();
     d_high = patch->getExtraCellHighIndex();
-  }
-  else {
+  } else {
     // don't matter...
-    d_low = IntVector(0,0,0);
-    d_high = IntVector(0,0,0);
+    d_low  = IntVector(0, 0, 0);
+    d_high = IntVector(0, 0, 0);
   }
   fillset();
 }
 
-ParticleSubset::ParticleSubset( const unsigned int              num_particles,
-                                const int                       matlIndex,
-                                const Patch                   * patch,
-                                const IntVector               & low,
-                                const IntVector               & high,
-                                const vector<const Patch*>    & neighbors,
-                                const vector<ParticleSubset*> & neighbor_subsets )
-  : d_numParticles(num_particles), d_matlIndex(matlIndex), d_patch(patch),
-    d_low(low), d_high(high),
-    neighbors(neighbors), neighbor_subsets(neighbor_subsets)
+ParticleSubset::ParticleSubset(
+  const unsigned int num_particles,
+  const int matlIndex,
+  const Patch* patch,
+  const IntVector& low,
+  const IntVector& high,
+  const std::vector<const Patch*>& neighbors,
+  const std::vector<ParticleSubset*>& neighbor_subsets)
+  : d_numParticles(num_particles)
+  , d_matlIndex(matlIndex)
+  , d_patch(patch)
+  , d_low(low)
+  , d_high(high)
+  , neighbors(neighbors)
+  , neighbor_subsets(neighbor_subsets)
 {
-  //cout << "ParticleSubset contstructor called\n";
-  //WAIT_FOR_DEBUGGER();
   init();
-  for(int i=0;i<(int)neighbor_subsets.size();i++)
+  for (int i = 0; i < (int)neighbor_subsets.size(); i++) {
     neighbor_subsets[i]->addReference();
+  }
   fillset();
 }
 
-ParticleSubset::ParticleSubset(       unsigned int   num_particles,
-                                      int            matlIndex, 
-                                const Patch        * patch,
-                                const IntVector    & low,
-                                const IntVector    & high )
-  : d_numParticles(num_particles), d_matlIndex(matlIndex), d_patch(patch),
-    d_low(low), d_high(high)
+ParticleSubset::ParticleSubset(unsigned int num_particles,
+                               int matlIndex,
+                               const Patch* patch,
+                               const IntVector& low,
+                               const IntVector& high)
+  : d_numParticles(num_particles)
+  , d_matlIndex(matlIndex)
+  , d_patch(patch)
+  , d_low(low)
+  , d_high(high)
 {
   init();
-  for(int i=0;i<(int)neighbor_subsets.size();i++)
+  for (int i = 0; i < (int)neighbor_subsets.size(); i++) {
     neighbor_subsets[i]->addReference();
+  }
   fillset();
 }
 
@@ -114,21 +123,23 @@ ParticleSubset::fillset()
 {
   if (d_numParticles > 0) {
     d_particles = scinew particleIndex[d_numParticles];
-    for( unsigned int i = 0; i < d_numParticles; i++ ) {
+    for (unsigned int i = 0; i < d_numParticles; i++) {
       d_particles[i] = i;
     }
     d_allocatedSize = d_numParticles;
   }
 }
 
-
 class compareIDFunctor
 {
 public:
   compareIDFunctor(ParticleVariable<long64>* particleIDs)
-    : particleIDs_(particleIDs) {}
-  
-  bool operator()(particleIndex x, particleIndex y)
+    : particleIDs_(particleIDs)
+  {
+  }
+
+  bool
+  operator()(particleIndex x, particleIndex y)
   {
     return (*particleIDs_)[x] < (*particleIDs_)[y];
   }
@@ -142,16 +153,20 @@ ParticleSubset::sort(ParticleVariableBase* particleIDs)
 {
   ParticleVariable<long64>* pIDs =
     dynamic_cast<ParticleVariable<long64>*>(particleIDs);
-  if (pIDs == 0)
-    SCI_THROW(InternalError("particleID variable must be ParticleVariable<long64>", __FILE__, __LINE__));
+  if (pIDs == 0) {
+    SCI_THROW(
+      InternalError("particleID variable must be ParticleVariable<long64>",
+                    __FILE__,
+                    __LINE__));
+  }
   compareIDFunctor comp(pIDs);
-  std::sort(d_particles, d_particles+d_numParticles, comp);
+  std::sort(d_particles, d_particles + d_numParticles, comp);
 }
 
 void
 ParticleSubset::init()
 {
-  d_particles = 0;
+  d_particles     = 0;
   d_allocatedSize = 0;
   d_numExpansions = 0;
 }
@@ -160,24 +175,27 @@ void
 ParticleSubset::resize(particleIndex newSize)
 {
   // Check for spurious resizes
-  if(d_particles) {
-    SCI_THROW(InternalError("ParticleSubsets should not be resized after creation", __FILE__, __LINE__));
+  if (d_particles) {
+    SCI_THROW(
+      InternalError("ParticleSubsets should not be resized after creation",
+                    __FILE__,
+                    __LINE__));
   }
 
   d_allocatedSize = newSize;
   d_numParticles  = newSize;
 
-  d_particles = scinew particleIndex[ newSize ];
+  d_particles = scinew particleIndex[newSize];
 }
 
 void
-ParticleSubset::expand( unsigned int minSizeIncrement )
+ParticleSubset::expand(unsigned int minSizeIncrement)
 {
   unsigned int minAmount = d_numParticles >> 2;
-  if( minAmount < 10 ) {
+  if (minAmount < 10) {
     minAmount = 10;
   }
-  if( minSizeIncrement < minAmount ) {
+  if (minSizeIncrement < minAmount) {
     minSizeIncrement = minAmount;
   }
   d_allocatedSize += minSizeIncrement;
@@ -189,42 +207,41 @@ ParticleSubset::expand( unsigned int minSizeIncrement )
   }
 #endif
   particleIndex* newparticles = scinew particleIndex[d_allocatedSize];
-  if(d_particles){
-    for(unsigned int i = 0; i < d_numParticles; i++ ) {
+  if (d_particles) {
+    for (unsigned int i = 0; i < d_numParticles; i++) {
       newparticles[i] = d_particles[i];
     }
-    delete [] d_particles;
+    delete[] d_particles;
   }
   d_particles = newparticles;
 }
 
 particleIndex
-ParticleSubset::addParticles( unsigned int count )
+ParticleSubset::addParticles(unsigned int count)
 {
-  if( d_numParticles + count > d_allocatedSize ) {
-    expand( count );
+  if (d_numParticles + count > d_allocatedSize) {
+    expand(count);
   }
 
   unsigned int oldsize = d_numParticles;
   d_numParticles += count;
 
-  for( unsigned int idx = oldsize; idx < d_numParticles; idx++) {
+  for (unsigned int idx = oldsize; idx < d_numParticles; idx++) {
     d_particles[idx] = idx;
   }
-  return oldsize;  // The beginning of the new index range
+  return oldsize; // The beginning of the new index range
 }
 
 namespace Uintah {
 
-ostream &
-operator<<(ostream& out, ParticleSubset& pset)
+ostream&
+operator<<(std::ostream& out, ParticleSubset& pset)
 {
-  out << "pset (patch: " << *(pset.getPatch()) << " (" << (pset.getPatch()?pset.getPatch()->getID():0)
-      << "), matl "
-      << pset.getMatlIndex() << " range [" << pset.getLow() 
-      << ", " << pset.getHigh() << "]   " 
-      << pset.numParticles() << " particles, " 
-      << pset.getNeighbors().size() << " neighboring patches)" ;
+  out << "pset (patch: " << *(pset.getPatch()) << " ("
+      << (pset.getPatch() ? pset.getPatch()->getID() : 0) << "), matl "
+      << pset.getMatlIndex() << " range [" << pset.getLow() << ", "
+      << pset.getHigh() << "]   " << pset.numParticles() << " particles, "
+      << pset.getNeighbors().size() << " neighboring patches)";
   return out;
 }
 

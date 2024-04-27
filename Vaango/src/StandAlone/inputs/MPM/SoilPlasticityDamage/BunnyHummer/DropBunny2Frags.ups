@@ -1,41 +1,35 @@
 <?xml version='1.0' encoding='ISO-8859-1' ?>
-
 <Uintah_specification>
-
   <Meta>
-      <title>Drop test bunny Cam Clay 2</title>
+    <title>Drop test bunny Cam Clay 2</title>
   </Meta>
-
   <SimulationComponent type="mpm" />
-
   <Time>
-      <maxTime>  1.0e-1    </maxTime>
-      <initTime> 0.0    </initTime>
-      <delt_min> 1.0e-9 </delt_min>
-      <delt_max> 0.01   </delt_max>
-      <timestep_multiplier>0.3</timestep_multiplier>
-      <max_timesteps>20</max_timesteps>
+    <maxTime>  1.0e-1    </maxTime>
+    <initTime> 0.0    </initTime>
+    <delt_min> 1.0e-9 </delt_min>
+    <delt_max> 0.01   </delt_max>
+    <timestep_multiplier>0.3</timestep_multiplier>
+    <max_timesteps>20</max_timesteps>
   </Time>
-
   <DataArchiver>
-      <filebase>DropBunny2Frags.uda</filebase>
-      <outputTimestepInterval>10</outputTimestepInterval>
-      <save label = "p.x"/>
-      <save label = "p.color"/>
-      <save label = "p.velocity"/>
-      <save label = "p.particleID"/>
-      <save label = "p.stress"/>
-      <save label = "g.mass"/>
-      <save label = "p.deformationGradient"/>
-      <save label = "g.acceleration"/>
-      <save label = "p.volume"/>
-      <save label = "p.strain"/>
-      <save label = "p.elasticStrain"/>
-      <save label = "p.deltaGamma"/>
-      <save label = "p.p_c"/>
-      <checkpoint cycle = "2" timestepInterval = "10"/>
+    <filebase>DropBunny2Frags.uda</filebase>
+    <outputTimestepInterval>10</outputTimestepInterval>
+    <save label = "p.x"/>
+    <save label = "p.color"/>
+    <save label = "p.velocity"/>
+    <save label = "p.particleID"/>
+    <save label = "p.stress"/>
+    <save label = "g.mass"/>
+    <save label = "p.deformationGradient"/>
+    <save label = "g.acceleration"/>
+    <save label = "p.volume"/>
+    <save label = "p.strain"/>
+    <save label = "p.elasticStrain"/>
+    <save label = "p.deltaGamma"/>
+    <save label = "p.p_c"/>
+    <checkpoint cycle = "2" timestepInterval = "10"/>
   </DataArchiver>
-
   <MPM>
     <time_integrator>              explicit  </time_integrator>
     <interpolator>                 gimp      </interpolator>
@@ -50,11 +44,9 @@
     <with_color>                    true      </with_color>
     <use_prescribed_deformation>     false     </use_prescribed_deformation>
   </MPM>
-
   <PhysicalConstants>
-      <gravity>[0,-10.0,0]</gravity>
+    <gravity>[0,-10.0,0]</gravity>
   </PhysicalConstants>
-
   <MaterialProperties>
     <MPM>
       <!--
@@ -85,7 +77,6 @@
         </geom_object>
       </material>
       -->
-
       <material name="Clay Bunny">
         <density>2000.0</density>
         <thermal_conductivity>1.0</thermal_conductivity>
@@ -105,7 +96,7 @@
           </yield_condition>
           <internal_variable_model type="borja_consolidation_pressure">
             <pc0> -9.0e4  </pc0>
-            <lambdatilde> 0.13 </lambdatilde> 
+            <lambdatilde> 0.13 </lambdatilde>
           </internal_variable_model>
         </constitutive_model>
         <geom_object>
@@ -137,16 +128,13 @@
           <color>1</color>
         </geom_object>
       </material>
-
       <contact>
         <type>single_velocity</type>
         <materials>[0]</materials>
         <stop_time>999999.9 </stop_time>
       </contact>
-
     </MPM>
   </MaterialProperties>
-
   <Grid>
     <BoundaryConditions>
       <Face side = "x-">
@@ -173,10 +161,9 @@
         <lower>[-0.44, -0.95, -0.76]</lower>
         <upper>[-0.23, -0.78, -0.62]</upper>
         <resolution>[50,50,50]</resolution>
-        <patches>[1,1,1]</patches>
+        <patches>[2,2,1]</patches>
         <extraCells>[1,1,1]</extraCells>
       </Box>
     </Level>
   </Grid>
-
 </Uintah_specification>

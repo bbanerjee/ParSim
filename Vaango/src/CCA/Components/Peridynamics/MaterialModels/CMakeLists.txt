@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -37,7 +37,7 @@ SET(LIBS
   Vaango_CCA_Ports
   Vaango_Core_Grid
   Vaango_Core_Util
-  Vaango_Core_Labels
+  
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
@@ -49,12 +49,12 @@ SET(LIBS
   ${MPI_LIBRARY}
 )
 
-ADD_LIBRARY(Peridynamics_MaterialModels ${Peridynamics_MaterialModel_SRCS})
+add_library(Peridynamics_MaterialModels ${Peridynamics_MaterialModel_SRCS})
 
-TARGET_LINK_LIBRARIES(Peridynamics_MaterialModels ${LIBS})
+target_link_libraries(Peridynamics_MaterialModels ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Peridynamics_MaterialModels)
+  add_definitions(-DBUILD_Peridynamics_MaterialModels)
 ENDIF(BUILD_SHARED_LIBS)
 
 

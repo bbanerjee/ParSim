@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2021 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,40 +22,11 @@
  * IN THE SOFTWARE.
  */
 
-/*
-
-The MIT License
-
-The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to
-deal in the Software without restriction, including without limitation the
-rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-IN THE SOFTWARE.
-
-*/
-
-
-
 #ifndef Packages_Uintah_CCA_Components_Examples_Meso_Burn_h
 #define Packages_Uintah_CCA_Components_Examples_Meso_Burn_h
 
-#include <CCA/Ports/ModelInterface.h>
+#include <CCA/Components/Models/HEChem/HEChemModel.h>
+
 #include <Core/Grid/Variables/NCVariable.h>
 
 namespace Uintah {
@@ -108,61 +79,51 @@ WARNING
   
 ****************************************/
 
-  class MesoBurn : public ModelInterface {
+  class MesoBurn : public HEChemModel {
   public:
-    MesoBurn(const ProcessorGroup* myworld, ProblemSpecP& params,
-                const ProblemSpecP& prob_spec);
+    MesoBurn(const ProcessorGroup* myworld,
+             const MaterialManagerP& materialManager,
+             const ProblemSpecP& params,
+             const ProblemSpecP& prob_spec);
+    
     virtual ~MesoBurn();
 
     virtual void outputProblemSpec(ProblemSpecP& ps);
     
-    virtual void problemSetup(GridP& grid, SimulationStateP& sharedState,
-                              ModelSetup* setup);
+    virtual void problemSetup(GridP& grid,
+                               const bool isRestart);
     
     virtual void scheduleInitialize(SchedulerP&,
-                                    const LevelP& level,
-                                    const ModelInfo*);
-    
-    virtual void initialize(const ProcessorGroup*,
-                            const PatchSubset*,
-                            const MaterialSubset*,
-                            DataWarehouse*,
-                            DataWarehouse*);
-    
-    virtual void restartInitialize() {}
-    
+                                    const LevelP& level);
+
+    virtual void scheduleRestartInitialize(SchedulerP&,
+                                           const LevelP& level){};
+
     virtual void scheduleComputeStableTimestep(SchedulerP&,
-                                               const LevelP& level,
-                                               const ModelInfo*);
+                                               const LevelP& level);
     
     virtual void scheduleComputeModelSources(SchedulerP&,
-                                             const LevelP& level,
-                                             const ModelInfo*);
+                                             const LevelP& level);
 
-    virtual void scheduleModifyThermoTransportProperties(SchedulerP&,
-                                                         const LevelP&,
-                                                         const MaterialSet*);
-    
-    virtual void computeSpecificHeat(CCVariable<double>&,
-                                     const Patch*,
-                                     DataWarehouse*,
-                                     const int);
-    
-    virtual void scheduleErrorEstimate(const LevelP& coarseLevel,
-                                       SchedulerP& sched);
-    
-    virtual void scheduleTestConservation(SchedulerP&,
-                                          const PatchSet* patches,
-                                          const ModelInfo* mi);
-    
   private:    
-    void computeModelSources(const ProcessorGroup*, const PatchSubset*,
-                             const MaterialSubset*, DataWarehouse*, 
-                             DataWarehouse*, const ModelInfo*);
+
+    void initialize(const ProcessorGroup*,
+                    const PatchSubset*,
+                    const MaterialSubset*,
+                    DataWarehouse*,
+                    DataWarehouse*);
+
+    void computeModelSources(const ProcessorGroup*,
+                             const PatchSubset*,
+                             const MaterialSubset*,
+                             DataWarehouse*, 
+                             DataWarehouse*);
     
-    void computeParticleVariables(const ProcessorGroup*, const PatchSubset*,
-                                  const MaterialSubset*, DataWarehouse*, 
-                                  DataWarehouse*, const ModelInfo*);
+    void computeParticleVariables(const ProcessorGroup*,
+                                  const PatchSubset*,
+                                  const MaterialSubset*,
+                                  DataWarehouse*, 
+                                  DataWarehouse*);
     
     double computeBurnedMass(double To, double& Ts,  double P, double Vc,
                              double surfArea, double delT, double solidMass);
@@ -189,7 +150,6 @@ WARNING
     ProblemSpecP d_prob_spec;
     const Material* matl0;
     const Material* matl1;
-    SimulationStateP d_sharedState;   
     
     MPMICELabel* MIlb;
     ICELabel* Ilb;
@@ -266,8 +226,6 @@ WARNING
     double BisectionNewton(double Ts, IterationVariables *iter);
     
     static const double EPSILON;   /* stop epsilon for Bisection-Newton method */
-    #define d_SMALL_NUM 1e-100
-    #define d_TINY_RHO  1e-12
   };
 }
 

@@ -52,10 +52,10 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
-#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/Scheduler.h>
@@ -65,7 +65,7 @@
 
 #include <sci_defs/cuda_defs.h>
 
-using namespace std;
+
 using namespace Uintah;
 
 GPUSchedulerTest::GPUSchedulerTest(const ProcessorGroup* myworld) :
@@ -84,12 +84,12 @@ GPUSchedulerTest::~GPUSchedulerTest() {
 void GPUSchedulerTest::problemSetup(const ProblemSpecP& params,
                                     const ProblemSpecP& restart_prob_spec,
                                     GridP& grid,
-                                    SimulationStateP& sharedState) {
+                                    MaterialManagerP& mat_manager) {
   sharedState_ = sharedState;
   ProblemSpecP gpuSchedTest = params->findBlock("GPUSchedulerTest");
   gpuSchedTest->require("delt", delt_);
-  simpleMaterial_ = scinew SimpleMaterial();
-  sharedState->registerSimpleMaterial(simpleMaterial_);
+  simpleMaterial_ = scinew EmptyMaterial();
+  d_materialManager->registerEmptyMaterial(simpleMaterial_);
 }
 //______________________________________________________________________
 //
@@ -98,7 +98,7 @@ void GPUSchedulerTest::scheduleInitialize(const LevelP& level, SchedulerP& sched
 
   multiTask->computes(phi_label);
   multiTask->computes(residual_label);
-  sched->addTask(multiTask, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(multiTask, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -106,8 +106,8 @@ void GPUSchedulerTest::scheduleComputeStableTimestep(const LevelP& level, Schedu
   Task* task = scinew Task("GPUSchedulerTest::computeStableTimestep", this, &GPUSchedulerTest::computeStableTimestep);
 
   task->requires(Task::NewDW, residual_label);
-  task->computes(sharedState_->get_delt_label(), level.get_rep());
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  task->computes(getDelTLabel(), level.get_rep());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 //______________________________________________________________________
 //
@@ -121,7 +121,7 @@ void GPUSchedulerTest::scheduleTimeAdvance(const LevelP& level, SchedulerP& sche
   task->requires(Task::OldDW, phi_label, Ghost::AroundNodes, 1);
   task->computes(phi_label);
   task->computes(residual_label);
-  sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
+  sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 
 //______________________________________________________________________
@@ -131,12 +131,12 @@ void GPUSchedulerTest::computeStableTimestep(const ProcessorGroup* pg,
                                              const MaterialSubset* matls,
                                              DataWarehouse*  old_dw,
                                              DataWarehouse* new_dw) {
-  if (pg->myrank() == 0) {
+  if (pg->myRank() == 0) {
     sum_vartype residual;
     new_dw->get(residual, residual_label);
-    cerr << "Residual=" << residual << '\n';
+    std::cerr <<  "Residual=" << residual << '\n';
   }
-  new_dw->put(delt_vartype(delt_), sharedState_->get_delt_label(), getLevel(patches));
+  new_dw->put(delt_vartype(delt_), getDelTLabel(), getLevel(patches));
 }
 
 //______________________________________________________________________
@@ -271,12 +271,12 @@ void GPUSchedulerTest::timeAdvance1DP(const ProcessorGroup*,
     int ystride = yhigh + numGhostCells;
     int xstride = xhigh + numGhostCells;
 
-//    cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << endl;
+//    std::cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << std::endl;
 
     for (int k = l.z(); k < zhigh; k++) {
       for (int j = l.y(); j < yhigh; j++) {
         for (int i = l.x(); i < xhigh; i++) {
-          cout << "(x,y,z): " << k << "," << j << "," << i << endl;
+          std::cout << "(x,y,z): " << k << "," << j << "," << i << std::endl;
           // For an array of [ A ][ B ][ C ], we can index it thus:
           // (a * B * C) + (b * C) + (c * 1)
           int idx = i + (j * xstride) + (k * xstride * ystride);
@@ -343,7 +343,7 @@ void GPUSchedulerTest::timeAdvance3DP(const ProcessorGroup*,
     int yhigh = h.y();
     int xhigh = h.x();
 
-//    cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << endl;
+//    std::cout << "high(x,y,z): " << xhigh << "," << yhigh << "," << zhigh << std::endl;
 
     for (int i = l.z(); i < zhigh; i++) {
       for (int j = l.y(); j < yhigh; j++) {
@@ -386,8 +386,8 @@ void GPUSchedulerTest::timeAdvanceGPU(const ProcessorGroup* pg,
   int matl = 0;
 
   // requisite pointers
-  double* d_phi = NULL;
-  double* d_newphi = NULL;
+  double* d_phi = nullptr;
+  double* d_newphi = nullptr;
 
   int numPatches = patches->size();
   for (int p = 0; p < numPatches; p++) {

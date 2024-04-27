@@ -63,7 +63,7 @@
    // 'unreachable' statement.  However, if you don't have it under gnu,
    // then you get a 'this function must return a value' warning.
 #  define RETURN_FALSE
-#  define RETURN_NULL
+#  define RETURN_nullptr
 #  define RETURN_0
 #  define RETURN
 
@@ -75,7 +75,7 @@
 #else
 
 #  define RETURN_FALSE return false
-#  define RETURN_NULL return NULL
+#  define RETURN_nullptr return nullptr
 #  define RETURN_0 return 0
 #  define RETURN   return
 

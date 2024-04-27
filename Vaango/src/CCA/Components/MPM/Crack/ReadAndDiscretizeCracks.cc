@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -42,8 +42,8 @@
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationState.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
@@ -63,7 +63,7 @@ using std::string;
 #define MAX_BASIS 27
 
 Crack::Crack(const ProblemSpecP& ps,
-             SimulationStateP& d_sS,
+             MaterialManagerP& d_sS,
              Output* d_dataArchiver,
              MPMLabel* Mlb,
              MPMFlags* MFlag)
@@ -72,7 +72,7 @@ Crack::Crack(const ProblemSpecP& ps,
 
   // Task 1: Initialization of fracture analysis
 
-  d_sharedState = d_sS;
+  d_mat_manager = d_sS;
   dataArchiver  = d_dataArchiver;
   lb            = Mlb;
   flag          = MFlag;
@@ -140,10 +140,10 @@ Crack::Crack(const ProblemSpecP& ps,
     ps->findBlock("Grid")->findBlock("BoundaryConditions");
   for (ProblemSpecP face_ps = grid_bc_ps->findBlock("Face"); face_ps != 0;
        face_ps              = face_ps->findNextBlock("Face")) {
-    map<string, string> values;
+    std::map<std::string, std::string> values;
     face_ps->getAttributes(values);
     ProblemSpecP bcType_ps = face_ps->findBlock("BCType");
-    map<string, string> bc_attr;
+    std::map<std::string, std::string> bc_attr;
     bcType_ps->getAttributes(bc_attr);
     if (values["side"] == "x-")
       GridBCType[Patch::xminus] = bc_attr["var"];
@@ -269,7 +269,7 @@ Crack::ReadCurvedQuadCracks(const int& m, const ProblemSpecP& geom_ps)
 
     // Four vertices of the curved quad
     Point p;
-    vector<Point> vertices;
+    std::vector<Point> vertices;
     cquad_ps->require("p1", p);
     vertices.push_back(p);
     cquad_ps->require("p2", p);
@@ -287,7 +287,7 @@ Crack::ReadCurvedQuadCracks(const int& m, const ProblemSpecP& geom_ps)
     cquadNStraightSides[m].push_back(n);
 
     // Characteristic points on two opposite cuvered sides
-    vector<Point> ptsSide2, ptsSide4;
+    std::vector<Point> ptsSide2, ptsSide4;
     ProblemSpecP side2_ps = cquad_ps->findBlock("points_curved_side2");
     for (ProblemSpecP pt_ps = side2_ps->findBlock("point"); pt_ps != 0;
          pt_ps              = pt_ps->findNextBlock("point")) {
@@ -313,7 +313,7 @@ Crack::ReadCurvedQuadCracks(const int& m, const ProblemSpecP& geom_ps)
     ptsSide4.clear();
 
     // Crack front
-    vector<short> crackSidesAtFront;
+    std::vector<short> crackSidesAtFront;
     string cfsides("");
     cquad_ps->get("crack_front_sides", cfsides);
     if (cfsides.length() == 4) {
@@ -351,7 +351,7 @@ Crack::ReadQuadCracks(const int& m, const ProblemSpecP& geom_ps)
 
     // Four vertices (p1-p4) of the quad
     Point p1, p2, p3, p4, p5, p6, p7, p8;
-    vector<Point> vertices;
+    std::vector<Point> vertices;
     quad_ps->require("p1", p1);
     vertices.push_back(p1);
     quad_ps->require("p2", p2);
@@ -390,7 +390,7 @@ Crack::ReadQuadCracks(const int& m, const ProblemSpecP& geom_ps)
     quadN23[m].push_back(n23);
 
     // Crack front
-    vector<short> crackSidesAtFront;
+    std::vector<short> crackSidesAtFront;
     string cfsides("");
     quad_ps->get("crack_front_sides", cfsides);
     if (cfsides.length() == 4) {
@@ -429,7 +429,7 @@ Crack::ReadTriangularCracks(const int& m, const ProblemSpecP& geom_ps)
 
     // Three vertices (p1-p3) of the triangle
     Point p1, p2, p3, p4, p5, p6;
-    vector<Point> vertices;
+    std::vector<Point> vertices;
     tri_ps->require("p1", p1);
     vertices.push_back(p1);
     tri_ps->require("p2", p2);
@@ -461,7 +461,7 @@ Crack::ReadTriangularCracks(const int& m, const ProblemSpecP& geom_ps)
 
     // Crack front
     string cfsides("");
-    vector<short> crackSidesAtFront;
+    std::vector<short> crackSidesAtFront;
     tri_ps->get("crack_front_sides", cfsides);
     if (cfsides.length() == 3) {
       for (string::const_iterator iter = cfsides.begin(); iter != cfsides.end();
@@ -498,7 +498,7 @@ Crack::ReadArcCracks(const int& m, const ProblemSpecP& geom_ps)
 
     // Three points on the arc
     Point p;
-    vector<Point> thisArcPts;
+    std::vector<Point> thisArcPts;
     arc_ps->require("start_point", p);
     thisArcPts.push_back(p);
     arc_ps->require("middle_point", p);
@@ -530,7 +530,7 @@ Crack::ReadEllipticCracks(const int& m, const ProblemSpecP& geom_ps)
 
     // Three points on the arc
     Point p;
-    vector<Point> thisEllipsePts;
+    std::vector<Point> thisEllipsePts;
     ellipse_ps->require("point1_axis1", p);
     thisEllipsePts.push_back(p);
     ellipse_ps->require("point_axis2", p);
@@ -563,7 +563,7 @@ Crack::ReadPartialEllipticCracks(const int& m, const ProblemSpecP& geom_ps)
 
     // Center,two points on major and minor axes
     Point p;
-    vector<Point> thispEllipsePts;
+    std::vector<Point> thispEllipsePts;
     pellipse_ps->require("center", p);
     thispEllipsePts.push_back(p);
     pellipse_ps->require("point_axis1", p);
@@ -797,7 +797,7 @@ Crack::CrackDiscretization(const ProcessorGroup*,
     }
 
     // Allocate memories for crack mesh
-    int numMPMMatls = d_sharedState->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     css.resize(numMPMMatls);
     csa.resize(numMPMMatls);
     cx.resize(numMPMMatls);
@@ -1731,7 +1731,7 @@ void
 Crack::ReorderCrackFrontNodes(const int& m)
 {
   int k1 = -1, k2 = -1, segs[2];
-  vector<int> tmp;
+  std::vector<int> tmp;
 
   int num = (int)cfSegNodes[m].size();
   for (int i = 0; i < num / 2; i++) {
@@ -1865,10 +1865,10 @@ Crack::SmoothCrackFrontAndCalculateNormals(const int& mm)
   int minIdx = -1, maxIdx = -1;
   int minNode = -1, maxNode = -1;
   int numSegs = -1, numPts = -1;
-  vector<Point> pts;  // Crack-front point subset of the sub-crack
-  vector<Vector> V3;  // Crack-front point tangential vector
-  vector<double> dis; // Arc length from the starting point
-  vector<int> idx;
+  std::vector<Point> pts;  // Crack-front point subset of the sub-crack
+  std::vector<Vector> V3;  // Crack-front point tangential vector
+  std::vector<double> dis; // Arc length from the starting point
+  std::vector<int> idx;
 
   for (k = 0; k < cfNodeSize; k++) {
     // Step a: Collect crack points for current sub-crack

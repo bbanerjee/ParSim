@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -155,8 +155,8 @@ public:
   const Uintah::VarLabel* pTGrowLabel_preReloc;
 
 private:
-  ElasticModuliModel* d_elastic;
-  YieldCondition* d_yield;
+  std::unique_ptr<ElasticModuliModel> d_elastic;
+  std::unique_ptr<YieldCondition> d_yield;
 
   /* Tangent bulk modulus models for air, water, granite */
   AirEOS d_air;
@@ -185,6 +185,7 @@ public:
   // constructor
   ArenaMixture(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
   ArenaMixture(const ArenaMixture* cm);
+  ArenaMixture(const ArenaMixture& cm) = delete;
   ArenaMixture& operator=(const ArenaMixture& cm) = delete;
 
   // destructor
@@ -199,7 +200,7 @@ public:
                          bool output_cm_tag = true) override;
 
   // clone
-  ArenaMixture* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   /*! Get parameters */
   ParameterDict getParameters() const

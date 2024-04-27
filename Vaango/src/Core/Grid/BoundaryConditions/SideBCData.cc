@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,117 +25,118 @@
  */
 
 #include <Core/Grid/BoundaryConditions/SideBCData.h>
+
 #include <Core/Geometry/Point.h>
+#include <Core/Grid/BoundaryConditions/BoundCondFactory.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/NodeIterator.h>
-#include <Core/Grid/BoundaryConditions/BoundCondFactory.h>
-#include <Core/Util/DebugStream.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/Util/DOUT.hpp>
 #include <iostream>
 
-using std::endl;
+namespace {
 
-using namespace Uintah;
-using namespace Uintah;
+// Usage: export SCI_DEBUG="SideBC_dbg:+"
+Uintah::Dout bc_dbg{ "SideBC_dbg",
+                     "SideBCData_BoundaryConditions",
+                     "Grid Side BC debug info",
+                     false };
 
-// export SCI_DEBUG="BC_dbg:+"
-static DebugStream BC_dbg("BC_dbg",false);
-
-SideBCData::SideBCData() 
-{
-  d_cells=GridIterator(IntVector(0,0,0),IntVector(0,0,0));
-  d_nodes=GridIterator(IntVector(0,0,0),IntVector(0,0,0));
-  d_bcname = "NotSet"; 
 }
 
+namespace Uintah {
 
-SideBCData::~SideBCData()
+SideBCData::SideBCData()
 {
+  d_cells  = GridIterator(IntVector(0, 0, 0), IntVector(0, 0, 0));
+  d_nodes  = GridIterator(IntVector(0, 0, 0), IntVector(0, 0, 0));
+  d_bcname = "NotSet";
 }
 
-bool SideBCData::operator==(const BCGeomBase& rhs) const
-{
-  const SideBCData* p_rhs = 
-    dynamic_cast<const SideBCData*>(&rhs);
+SideBCData::~SideBCData() = default;
 
-  if (p_rhs == NULL)
+auto
+SideBCData::operator==(const BCGeomBase& rhs) const -> bool
+{
+  const auto* p_rhs = dynamic_cast<const SideBCData*>(&rhs);
+
+  if (p_rhs == nullptr) {
     return false;
-  else
+  } else {
     return true;
+  }
 }
 
-SideBCData* SideBCData::clone()
+std::shared_ptr<BCGeomBase>
+SideBCData::clone()
 {
-  return scinew SideBCData(*this);
-
+  return std::make_shared<SideBCData>(*this);
 }
-void SideBCData::addBCData(BCData& bc)
+
+void
+SideBCData::addBCData(BCData& bc)
 {
   d_bc = bc;
 }
 
-void SideBCData::addBC(BoundCondBaseP bc)
+void
+SideBCData::addBC(BoundCondBaseSP bc)
 {
   d_bc.setBCValues(bc);
 }
 
+void
+SideBCData::sudoAddBC(BoundCondBaseSP& bc)
+{
+  d_bc.setBCValues(bc);
+}
 
-void SideBCData::getBCData(BCData& bc) const
+void
+SideBCData::getBCData(BCData& bc) const
 {
   bc = d_bc;
 }
 
-bool SideBCData::inside(const Point &p) const 
+auto
+SideBCData::inside([[maybe_unused]] const Point& p) const -> bool
 {
   return true;
 }
 
-void SideBCData::print()
+void
+SideBCData::print()
 {
-  BC_dbg << "Geometry type = " << typeid(this).name() << endl;
+  DOUT(bc_dbg, "Geometry type = " << typeid(this).name());
   d_bc.print();
 }
 
-
-void SideBCData::determineIteratorLimits(Patch::FaceType face, 
-                                         const Patch* patch, 
-                                         vector<Point>& test_pts)
+void
+SideBCData::determineIteratorLimits(Patch::FaceType face,
+                                    const Patch* patch,
+                                    [[maybe_unused]] std::vector<Point>& test_pts)
 {
-#if 0
-  cout << "SideBC determineIteratorLimits() " << patch->getFaceName(face)<<  endl;
-#endif
+  DOUT(bc_dbg, "SideBC determineIteratorLimits() " << patch->getFaceName(face));
 
+  IntVector l, h;
+  patch->getFaceCells(face, 0, l, h);
+  d_cells = GridIterator(l, h);
 
-  IntVector l,h;
-  patch->getFaceCells(face,0,l,h);
-  d_cells = GridIterator(l,h);
+  DOUT(bc_dbg, "d_cells->begin() = " << d_cells.begin() << " d_cells->end() = " 
+       << d_cells.end());
 
-#if 0
-  cout << "d_cells->begin() = " << d_cells->begin() << " d_cells->end() = " 
-       << d_cells->end() << endl;
-#endif
+  IntVector ln, hn;
+  patch->getFaceNodes(face, 0, ln, hn);
+  d_nodes = GridIterator(ln, hn);
 
-
-  IntVector ln,hn;
-  patch->getFaceNodes(face,0,ln,hn);
-  d_nodes = GridIterator(ln,hn);
-
-
-#if 0
-  cout << "d_nodes->begin() = " << d_nodes->begin() << " d_nodes->end() = " 
-       << d_nodes->end() << endl;
-#endif
+  DOUT(bc_dbg, "d_nodes->begin() = " << d_nodes.begin() << " d_nodes->end() = " 
+       << d_nodes.end());
 
   //  Iterator iii(d_cells);
-
-#if 0
-  cout << "Iterator output . . . " << endl;
+  DOUT(bc_dbg, "Iterator output . . . ");
   for (Iterator ii(d_cells); !ii.done(); ii++) {
-    cout << ii << endl;
+    DOUT(bc_dbg, ii);
   }
-#endif
-  
 }
 
-
+} // namespace Uintah

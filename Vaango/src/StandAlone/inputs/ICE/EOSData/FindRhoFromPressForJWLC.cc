@@ -42,7 +42,7 @@
 #include <iomanip>
 #include <math.h>
 
-using namespace std;
+
 int main()
 {
 
@@ -113,9 +113,9 @@ int main()
        rhoM=fabs(rhoM);
        if(count>=150){
          //cerr << setprecision(15);
-         cerr << "ERROR:ICE:JWLC::computeRhoMicro not converging. \n";
-         cerr << "press= " << press << "\n";
-         cerr << "delta= " << delta << " rhoM= " << rhoM << " f = " << f 
+         std::cerr <<  "ERROR:ICE:JWLC::computeRhoMicro not converging. \n";
+         std::cerr <<  "press= " << press << "\n";
+         std::cerr <<  "delta= " << delta << " rhoM= " << rhoM << " f = " << f 
               <<" df_drho =" << df_drho << " rho_guess =" << rho_guess << "\n";
          
        }
@@ -124,9 +124,9 @@ int main()
     }
     count++;
   }
-  cout << setprecision(15);
-  cout << "rho = " <<  rhoM << '\n';
-  cout << "specific volume = " <<  1./rhoM << '\n';
-  cout << "relative specific volume = " <<  rho0/rhoM << '\n';
+  std::cout << setprecision(15);
+  std::cout << "rho = " <<  rhoM << '\n';
+  std::cout << "specific volume = " <<  1./rhoM << '\n';
+  std::cout << "relative specific volume = " <<  rho0/rhoM << '\n';
   
 }

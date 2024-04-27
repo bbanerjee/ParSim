@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research imited, New Zealand
+ * Copyright (c) 2015-2023 Parresia Research imited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -59,10 +59,10 @@ using namespace Uintah;
 void usage(const std::string& badarg, const std::string& progname)
 {
   if(badarg != "")
-    cerr << "Error parsing argument: " << badarg << endl;
-  cerr << "Usage: " << progname << " [options] <archive file>\n\n";
-  cerr << "Valid options are:\n";
-  cerr << " -mat <material id>\n";
+    std::cerr <<  "Error parsing argument: " << badarg << std::endl;
+  std::cerr <<  "Usage: " << progname << " [options] <archive file>\n\n";
+  std::cerr <<  "Valid options are:\n";
+  std::cerr <<  " -mat <material id>\n";
   exit(1);
 }
 
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
   }
   filebase = argv[argc-1];
   if(filebase == ""){
-    cerr << "No archive file specified\n";
+    std::cerr <<  "No archive file specified\n";
     usage("", argv[0]);
   }
 
@@ -97,23 +97,24 @@ int main(int argc, char** argv)
     
     //______________________________________________________________________
     //              V A R S U M M A R Y   O P T I O N
-    vector<string> vars;
-    vector<const Uintah::TypeDescription*> types;
-    da->queryVariables(vars, types);
+    std::vector<std::string> vars;
+    std::vector<int> num_matls;
+    std::vector<const Uintah::TypeDescription*> types;
+    da->queryVariables(vars, num_matls, types);
     ASSERTEQ(vars.size(), types.size());
     //cout << "There are " << vars.size() << " variables:\n";
     //for(int i=0;i<(int)vars.size();i++) {
-    //  cout << vars[i] << ": " << types[i]->getName() << endl;
+    //  std::cout << vars[i] << ": " << types[i]->getName() << std::endl;
     //}
 
       
-    vector<int> index;
-    vector<double> times;
+    std::vector<int> index;
+    std::vector<double> times;
     da->queryTimesteps(index, times);
     ASSERTEQ(index.size(), times.size());
     //cout << "There are " << index.size() << " timesteps:\n";
     //for(int i=0;i<(int)index.size();i++)
-    //  cout << index[i] << ": " << times[i] << endl;
+    //  std::cout << index[i] << ": " << times[i] << std::endl;
       
     // Var loop
     for(int v=0;v<(int)vars.size();v++){
@@ -123,12 +124,12 @@ int main(int argc, char** argv)
 
       // ParticleVariable switch
       switch(td->getType()){
-      case Uintah::TypeDescription::ParticleVariable:
+      case Uintah::TypeDescription::Type::ParticleVariable:
 
         switch(subtype->getType()){
 
         // Double variable
-        case Uintah::TypeDescription::double_type:
+        case Uintah::TypeDescription::Type::double_type:
           {
             // Set up variables to store min and max
             double min = 1.0e30, max = -1.0e30;
@@ -147,7 +148,7 @@ int main(int argc, char** argv)
                 LevelP level = grid->getLevel(l);
 
                 // Patch loop
-                Level::const_patchIterator pIter = level->patchesBegin();
+                Level::const_patch_iterator pIter = level->patchesBegin();
                 for(; pIter != level->patchesEnd(); pIter++){
                   const Patch* patch = *pIter;
                   ConsecutiveRangeSet matls = 
@@ -177,13 +178,13 @@ int main(int argc, char** argv)
               } // end level loop
             } // end time loop
             numParticles /= numSteps;
-            cout << "# particles = " << numParticles << " " 
-                 << var << " min = " << min << " max = " << max << endl;
+            std::cout << "# particles = " << numParticles << " " 
+                 << var << " min = " << min << " max = " << max << std::endl;
           } // end double case
         break;
 
         // Float variable
-        case Uintah::TypeDescription::float_type:
+        case Uintah::TypeDescription::Type::float_type:
           {
             // Set up variables to store min and max
             float min = 1.0e20, max = -1.0e20;
@@ -200,7 +201,7 @@ int main(int argc, char** argv)
                 LevelP level = grid->getLevel(l);
 
                 // Patch loop
-                Level::const_patchIterator pIter = level->patchesBegin();
+                Level::const_patch_iterator pIter = level->patchesBegin();
                 for(; pIter != level->patchesEnd(); pIter++){
                   const Patch* patch = *pIter;
                   ConsecutiveRangeSet matls = 
@@ -227,12 +228,12 @@ int main(int argc, char** argv)
                 } // end patch loop
               } // end level loop
             } // end time loop
-            cout << var << " min = " << min << " max = " << max << endl;
+            std::cout << var << " min = " << min << " max = " << max << std::endl;
           } // end float case
         break;
 
         // Int variable
-        case Uintah::TypeDescription::int_type:
+        case Uintah::TypeDescription::Type::int_type:
           {
             // Set up variables to store min and max
             int min = 40000000, max = -40000000;
@@ -249,7 +250,7 @@ int main(int argc, char** argv)
                 LevelP level = grid->getLevel(l);
 
                 // Patch loop
-                Level::const_patchIterator pIter = level->patchesBegin();
+                Level::const_patch_iterator pIter = level->patchesBegin();
                 for(; pIter != level->patchesEnd(); pIter++){
                   const Patch* patch = *pIter;
                   ConsecutiveRangeSet matls = 
@@ -276,12 +277,12 @@ int main(int argc, char** argv)
                 } // end patch loop
               } // end level loop
             } // end time loop
-            cout << var << " min = " << min << " max = " << max << endl;
+            std::cout << var << " min = " << min << " max = " << max << std::endl;
           } // end int case
         break;
 
         // Vector variable
-        case Uintah::TypeDescription::Vector:
+        case Uintah::TypeDescription::Type::Vector:
           {
             // Set up variables to store min and max
             double min = 1.0e30, max = -1.0e30;
@@ -298,7 +299,7 @@ int main(int argc, char** argv)
                 LevelP level = grid->getLevel(l);
 
                 // Patch loop
-                Level::const_patchIterator pIter = level->patchesBegin();
+                Level::const_patch_iterator pIter = level->patchesBegin();
                 for(; pIter != level->patchesEnd(); pIter++){
                   const Patch* patch = *pIter;
                   ConsecutiveRangeSet matls = 
@@ -325,13 +326,13 @@ int main(int argc, char** argv)
                 } // end patch loop
               } // end level loop
             } // end time loop
-            cout << var << " min = " << sqrt(min) 
-                 << " max = " << sqrt(max) << endl;
+            std::cout << var << " min = " << sqrt(min) 
+                 << " max = " << sqrt(max) << std::endl;
           } // end Vector case
         break;
 
         // Matrix3 variable
-        case Uintah::TypeDescription::Matrix3:
+        case Uintah::TypeDescription::Type::Matrix3:
           {
             // Set up variables to store min and max
             double min = 1.0e30, max = -1.0e30;
@@ -348,7 +349,7 @@ int main(int argc, char** argv)
                 LevelP level = grid->getLevel(l);
 
                 // Patch loop
-                Level::const_patchIterator pIter = level->patchesBegin();
+                Level::const_patch_iterator pIter = level->patchesBegin();
                 for(; pIter != level->patchesEnd(); pIter++){
                   const Patch* patch = *pIter;
                   ConsecutiveRangeSet matls = 
@@ -375,39 +376,39 @@ int main(int argc, char** argv)
                 } // end patch loop
               } // end level loop
             } // end time loop
-            cout << var << " min = " << sqrt(min) 
-                 << " max = " << sqrt(max) << endl;
+            std::cout << var << " min = " << sqrt(min) 
+                 << " max = " << sqrt(max) << std::endl;
           } // end Matrix3 case
         break;
 
-        case Uintah::TypeDescription::Point:
+        case Uintah::TypeDescription::Type::Point:
         break;
 
-        case Uintah::TypeDescription::long64_type:
+        case Uintah::TypeDescription::Type::long64_type:
         break;
 
         default:
           {
-            cerr << "Particle Variable of unknown type: " 
-                 << subtype->getName() << endl;
+            std::cerr <<  "Particle Variable of unknown type: " 
+                 << subtype->getName() << std::endl;
           }
         break;
 
         } // end switch subtype
 
-      case Uintah::TypeDescription::NCVariable:
+      case Uintah::TypeDescription::Type::NCVariable:
       break;
 
-      case Uintah::TypeDescription::CCVariable:
+      case Uintah::TypeDescription::Type::CCVariable:
       break;
 
-      case Uintah::TypeDescription::SFCXVariable:
+      case Uintah::TypeDescription::Type::SFCXVariable:
       break;
 
-      case Uintah::TypeDescription::SFCYVariable:
+      case Uintah::TypeDescription::Type::SFCYVariable:
       break;
 
-      case Uintah::TypeDescription::SFCZVariable:
+      case Uintah::TypeDescription::Type::SFCZVariable:
       break;
 
       default:
@@ -417,10 +418,10 @@ int main(int argc, char** argv)
     
     } // end var loop
   } catch (Exception& e) {
-    cerr << "Caught exception: " << e.message() << endl;
+    std::cerr <<  "Caught exception: " << e.message() << std::endl;
     abort();
   } catch(...){
-    cerr << "Caught unknown exception\n";
+    std::cerr <<  "Caught unknown exception\n";
     abort();
   }
 }

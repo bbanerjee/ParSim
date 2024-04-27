@@ -122,11 +122,11 @@ GV_TaskGraph::inflate(string xmlDir)
 //    try {
 //      XMLPlatformUtils::Initialize();
 //    } catch (const XMLException& e) {
-//      cerr << "Unable to initialize XML library: " << e.getMessage() << endl;
+//      std::cerr <<  "Unable to initialize XML library: " << e.getMessage() << endl;
 //      return 0;
 //    }
 
-  list<ProblemSpecP> docs;
+   std::list<ProblemSpecP> docs;
 
   GV_TaskGraph* pGraph = scinew GV_TaskGraph();
   
@@ -134,11 +134,11 @@ GV_TaskGraph::inflate(string xmlDir)
   string xmlFileName;
   FILE* tstFile;
   do {
-    ostringstream pname;
+     std::ostringstream pname;
     pname << "/taskgraph_" << setw(5) << setfill('0') << process << ".xml";
     xmlFileName = xmlDir + pname.str();
     
-    if ((tstFile = fopen(xmlFileName.c_str(), "r")) == NULL)
+    if ((tstFile = fopen(xmlFileName.c_str(), "r")) == nullptr)
       break;
     fclose(tstFile);
 
@@ -152,8 +152,8 @@ GV_TaskGraph::inflate(string xmlDir)
 			       -- but just so it won't ever be caught in an
 			       infinite loop */);  
   if (process == 0) {
-    cerr << "Task graph data does not exist:" << endl;
-    cerr << xmlFileName << " does not exist." << endl;
+    std::cerr <<  "Task graph data does not exist:" << endl;
+    std::cerr <<  xmlFileName << " does not exist." << endl;
     delete pGraph;
     return 0;
   }
@@ -183,7 +183,7 @@ void GV_TaskGraph::readNodes(ProblemSpecP xmlDoc)
     node->get("duration", task_duration);
     
     GV_Task* task;
-    if ((task = findTask(task_name)) != NULL) {
+    if ((task = findTask(task_name)) != nullptr) {
       // task already exists
       // It may be a reduction task... in any case
       // make its duration the maximum of given durations.
@@ -209,7 +209,7 @@ void GV_TaskGraph::readEdges(ProblemSpecP xmlDoc)
     GV_Task* sourceTask = m_taskMap[source];
     GV_Task* targetTask = m_taskMap[target];
 
-    if (sourceTask != NULL && targetTask != NULL) {
+    if (sourceTask != nullptr && targetTask != nullptr) {
       if (m_edgeMap.find(source + " -> " + target) == m_edgeMap.end()) {
 	Edge* edge = targetTask->addDependency(sourceTask);
 	if (edge) {
@@ -218,9 +218,9 @@ void GV_TaskGraph::readEdges(ProblemSpecP xmlDoc)
       }
     }
     else {
-      if (sourceTask == NULL)
+      if (sourceTask == nullptr)
 	cerr << "ERROR: Undefined task, '" << source << "'" << endl;
-      if (targetTask == NULL) 
+      if (targetTask == nullptr) 
 	cerr << "ERROR: Undefined task, '" << target << "'" << endl;
     }
   }
@@ -238,13 +238,13 @@ GV_TaskGraph::~GV_TaskGraph()
 
 void GV_TaskGraph::topologicallySortEdges()
 {
-  list<GV_Task*>::iterator iter;
+   std::list<GV_Task*>::iterator iter;
   for( iter = m_tasks.begin(); iter != m_tasks.end(); iter++ ) {
     GV_Task* task = *iter;
     task->resetFlags();
   }
 
-  vector<GV_Task*> sortedTasks;
+  std::vector<GV_Task*> sortedTasks;
   for( iter = m_tasks.begin(); iter != m_tasks.end(); iter++ ) {
     GV_Task* task = *iter;
     if(!task->sorted()){
@@ -254,7 +254,7 @@ void GV_TaskGraph::topologicallySortEdges()
 
   m_edges.clear();
   for (int i = 0; i < (int)sortedTasks.size(); i++) {
-    list<Edge*> dependentEdges = sortedTasks[i]->getDependentEdges();
+     std::list<Edge*> dependentEdges = sortedTasks[i]->getDependentEdges();
     for (list<Edge*>::iterator edgeIter = dependentEdges.begin();
 	 edgeIter != dependentEdges.end(); edgeIter++) {
       m_edges.push_back(*edgeIter);
@@ -266,14 +266,14 @@ void
 GV_Task::processTaskForSorting(vector<GV_Task*>& sortedTasks)
 {
   if(m_visited){
-    cerr << "Cycle detected in task graph: already did\n\t"
+    std::cerr <<  "Cycle detected in task graph: already did\n\t"
 	 << getName() << endl;
     exit(1);
   }
 
   m_visited=true;
    
-  list<Edge*>::iterator edgeIter;
+   std::list<Edge*>::iterator edgeIter;
   for (edgeIter = m_dependencyEdges.begin();
        edgeIter != m_dependencyEdges.end(); edgeIter++) {
     GV_Task* source = (*edgeIter)->getSource();
@@ -299,9 +299,9 @@ void GV_TaskGraph::computeMaxPathLengths()
   topologicallySortEdges();
   markObsoleteEdges();
   
-  list<GV_Task*>::iterator task_it;
-  list<Edge*>::iterator it;
-  list<Edge*>::reverse_iterator r_it;
+   std::list<GV_Task*>::iterator task_it;
+   std::list<Edge*>::iterator it;
+   std::list<Edge*>::reverse_iterator r_it;
 
   // sets the max_below_cost's
   for (r_it = m_edges.rbegin(); r_it != m_edges.rend(); r_it++)
@@ -318,7 +318,7 @@ void GV_TaskGraph::computeMaxPathLengths()
       m_criticalPathCost = (*task_it)->getMaxInclBelowCost();
   }
 
-  cout << "Processed " << m_tasks.size() << " nodes and "
+  std::cout << "Processed " << m_tasks.size() << " nodes and "
        << m_edges.size() << " edges" << endl;  
 }
 
@@ -329,14 +329,14 @@ void GV_TaskGraph::markObsoleteEdges()
   
   // This map's source tasks to each possible destination with
   // a count of how many paths there are to each destination.
-  map<GV_Task*, map<GV_Task*, int> > pathCountMap;
+  std::map<GV_Task*,  std::map< GV_Task*, int> > pathCountMap;
 
   // relies upon the edges being topologically sorted
-  list<Edge*>::reverse_iterator r_it;
-  map<GV_Task*, int>::iterator foundIt;
+   std::list<Edge*>::reverse_iterator r_it;
+  std::map<GV_Task*, int>::iterator foundIt;
   for (r_it = m_edges.rbegin(); r_it != m_edges.rend(); r_it++) {
     Edge* edge = *r_it;
-    map<GV_Task*, int>& destMap = pathCountMap[edge->getSource()];
+    std::map<GV_Task*, int>& destMap = pathCountMap[edge->getSource()];
 
     // add direct path to the path count
     foundIt = destMap.find(edge->getTarget());
@@ -346,7 +346,7 @@ void GV_TaskGraph::markObsoleteEdges()
       destMap[edge->getTarget()] = 1;
 
     // add indirect paths to path counts
-    map<GV_Task*, int>& indirectDestMap = pathCountMap[edge->getTarget()];
+    std::map<GV_Task*, int>& indirectDestMap = pathCountMap[edge->getTarget()];
     for (map<GV_Task*, int>::iterator destIter = indirectDestMap.begin();
 	 destIter != indirectDestMap.end(); destIter++) {
       foundIt = destMap.find((*destIter).first);
@@ -375,7 +375,7 @@ void GV_TaskGraph::markObsoleteEdges()
 GV_Task*
 GV_TaskGraph::findTask(string name)
 {
-  map<string, GV_Task*>::iterator iter = m_taskMap.find(name);
+  std::map<std::string, GV_Task*>::iterator iter = m_taskMap.find(name);
   if (iter == m_taskMap.end())
     return 0;
   return iter->second;
@@ -384,7 +384,7 @@ GV_TaskGraph::findTask(string name)
 Edge*
 GV_TaskGraph::findEdge(string name)
 {
-  map<string, Edge*>::iterator iter = m_edgeMap.find(name);
+  std::map<std::string, Edge*>::iterator iter = m_edgeMap.find(name);
   if (iter == m_edgeMap.end())
     return 0;
   return iter->second;

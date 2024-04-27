@@ -4,7 +4,7 @@
  * Copyright (c) 1997-2019 Center for the Simulation of Accidental Fires and
  * Explosions (CSAFE), and  Scientific Computing and Imaging Institute (SCI),
  * University of Utah.
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * License for the specific language governing rights and limitations under
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -1109,7 +1109,7 @@ MohrCoulombBase::getParamRKDP754(Eigen::Matrix<double, 7, 7>& A,
 
 /**
   The procedure uses the embedded Runge - Kutta integration scheme with
-  Adaptive Stepsize Control the constants are as proposed by Bogacki and
+  Adaptive StepSize Control the constants are as proposed by Bogacki and
   Shampine (1996), An efficient R-K (4,5) pair, Computers Math Applic,
   Vol 32 No 6 pp 15-28 with FSAL feauture the method allows for getting the
   error estimate and calculating value in one go
@@ -1448,7 +1448,7 @@ MohrCoulombBase::findIntersectionWithBisection(double alpha_in, double f_alpha_i
   double f_min = f_alpha_in;
 
   bool solved = false;
-  double alpha, f_alpha;
+  double alpha = 0.0, f_alpha = 0.0;
   Vector6 sigma_alpha;
    
   int numIter = 0;

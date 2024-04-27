@@ -1355,7 +1355,7 @@ void
 Peridynamics::ApplyExternalForce(int istep)
 {
   // deal with the external force, applied at the top of the boundary
-  REAL factor = 0.0;
+  [[maybe_unused]] REAL factor = 0.0;
   REAL rampStep = util::getParam<REAL>("rampStep");
   if (istep <= rampStep) {
     factor = REAL(istep) / REAL(rampStep);

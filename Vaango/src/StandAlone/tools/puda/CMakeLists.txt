@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -35,7 +35,6 @@ ADD_EXECUTABLE(puda
   POL.cc         
   AA_MMS.cc      
   rtdata.cc      
-  tecplot.cc     
   util.cc        
   varsummary.cc  
   puda.cc        
@@ -44,7 +43,7 @@ ADD_EXECUTABLE(puda
   UniaxialStrain_MMS.cc
 )
 
-TARGET_LINK_LIBRARIES(puda
+target_link_libraries(puda
   Vaango_Core_Containers
   Vaango_Core_OS
   Vaango_Core_DataArchive

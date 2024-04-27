@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,56 +23,39 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_HOMEBREW_RoundRobinLoadBalancer_H
-#define UINTAH_HOMEBREW_RoundRobinLoadBalancer_H
+#ifndef __CCA_COMPONENTS_LOADBALANCERS_RoundRobinLoadBalancer_H__
+#define __CCA_COMPONENTS_LOADBALANCERS_RoundRobinLoadBalancer_H__
 
 #include <CCA/Components/LoadBalancers/LoadBalancerCommon.h>
 #include <Core/Parallel/UintahParallelComponent.h>
 #include <set>
 
 namespace Uintah {
-   /**************************************
-     
-     CLASS
-       RoundRobinLoadBalancer
-      
-       Short Description...
-      
-     GENERAL INFORMATION
-      
-       RoundRobinLoadBalancer.h
-      
-       Steven G. Parker
-       Department of Computer Science
-       University of Utah
-      
-       Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-      
-             
-     KEYWORDS
-       RoundRobinLoadBalancer
-      
-     DESCRIPTION
-       Long description...
-      
-     WARNING
-      
-     ****************************************/
-    
-  class RoundRobinLoadBalancer : public LoadBalancerCommon {
-  public:
-    RoundRobinLoadBalancer(const ProcessorGroup* myworld);
-    ~RoundRobinLoadBalancer();
-    
-    virtual int getPatchwiseProcessorAssignment(const Patch* patch);
-    
-  private:
-    RoundRobinLoadBalancer(const RoundRobinLoadBalancer&);
-    RoundRobinLoadBalancer& operator=(const RoundRobinLoadBalancer&);
-    
-   };
+
+class RoundRobinLoadBalancer : public LoadBalancerCommon
+{
+public:
+  RoundRobinLoadBalancer(const ProcessorGroup* myworld);
+  ~RoundRobinLoadBalancer() = default;
+
+  RoundRobinLoadBalancer(const RoundRobinLoadBalancer&) = delete;
+  RoundRobinLoadBalancer(RoundRobinLoadBalancer&&)      = delete;
+  RoundRobinLoadBalancer&
+  operator=(const RoundRobinLoadBalancer&) = delete;
+  RoundRobinLoadBalancer&
+  operator=(RoundRobinLoadBalancer&&) = delete;
+
+  virtual int
+  getPatchwiseProcessorAssignment(const Patch* patch);
+
+  virtual bool
+  needRecompile(const GridP&)
+  {
+    return false;
+  };
+
+private:
+};
 } // End namespace Uintah
 
-
-#endif
-
+#endif //__CCA_COMPONENTS_LOADBALANCERS_RoundRobinLoadBalancer_H__

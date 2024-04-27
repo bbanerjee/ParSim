@@ -114,7 +114,7 @@ class udaFileFormat
 
     // DATA MEMBERS
     bool useExtraCells;
-    int currTimeStep;
+    int currTimestep;
 
     std::map<std::string, void_ref_ptr> mesh_domains;
     std::map<std::string, void_ref_ptr> mesh_boundaries;
@@ -125,7 +125,7 @@ class udaFileFormat
 
     // data that is dependent on time
     GridP* grid;
-    TimeStepInfo* stepInfo;
+    TimestepInfo* stepInfo;
         
     DataArchive*     openDataArchive(const std::string&);
     void             closeDataArchive(DataArchive*);
@@ -134,7 +134,7 @@ class udaFileFormat
     void             releaseGrid(GridP*);
 
     std::vector<double>   getCycleTimes(DataArchive*);
-    TimeStepInfo*    getTimeStepInfo(DataArchive*, GridP*, int, bool);
+    TimestepInfo*    getTimestepInfo(DataArchive*, GridP*, int, bool);
 
     GridDataRaw*     getGridData(DataArchive*, GridP*, int, int, std::string, 
                                  int, int, int[3], int[3]);

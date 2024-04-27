@@ -47,12 +47,12 @@
  */
 
 
-#include <Core/Thread/Thread.h>
+
 #include <Core/Thread/Barrier.h>
 #include <Core/Thread/Runnable.h>
 #include <Core/Thread/ThreadGroup.h>
-#include <Core/Thread/Mutex.h>
-#include <Core/Thread/Time.h>
+
+#include <Core/Util/Timers/Timers.hpp>
 #include <iostream>
 using std::cerr;
 #include <cstdio>
@@ -80,7 +80,7 @@ public:
 
 void usage(char* progname)
 {
-    cerr << "usage: " << progname << " nprocessors count\n";
+    std::cerr <<  "usage: " << progname << " nprocessors count\n";
     exit(1);
 }
 
@@ -116,7 +116,7 @@ void BPS::run()
 	barrier->wait(np);
 	static int g=0;
 	if(g != i)
-	    cerr << "OOPS!: " << g << " vs. " << i << ", proc=" << proc << "\n";
+	    std::cerr <<  "OOPS!: " << g << " vs. " << i << ", proc=" << proc << "\n";
 	barrier->wait(np);
 	if(proc==0)
 	    g++;

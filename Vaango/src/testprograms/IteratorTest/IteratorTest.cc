@@ -53,7 +53,7 @@
 #include <Core/Grid/Variables/UnionIterator.h>
 
 #include <iostream>
-using namespace std;
+
 using namespace Uintah;
 int main()
 {
@@ -75,23 +75,23 @@ int main()
   //Compare big iterator and union iterator
   if(uiter!=giter_big)
   {
-    cout << "Error union iterator not equal\n";
+    std::cout << "Error union iterator not equal\n";
     return 1;
   }
 
   if(diter!=giter_right)
   {
-    cout << "Error diffence iterator not equal\n";
+    std::cout << "Error diffence iterator not equal\n";
     return 1;
   }
   
   if(diter2!=giter_left)
   {
-    cout << "Error diffence iterator (2) not equal\n";
+    std::cout << "Error diffence iterator (2) not equal\n";
     return 1;
   }
 
-  cout << "All tests passed\n";
+  std::cout << "All tests passed\n";
 
   return 0;
 }

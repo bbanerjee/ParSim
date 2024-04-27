@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -30,11 +30,12 @@
 #define __SINGLE_VEL_H__
 
 #include <CCA/Components/MPM/Contact/Contact.h>
+
 #include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Task.h>
 #include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -55,31 +56,43 @@ DESCRIPTION
 
 class SingleVelContact : public Contact
 {
-private:
-  // Prevent copying of this class
-  // copy constructor
-  SingleVelContact(const SingleVelContact& con);
-  SingleVelContact& operator=(const SingleVelContact& con);
-
-  SimulationStateP d_sharedState;
-
 public:
   // Constructor
-  SingleVelContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
-                   SimulationStateP& d_sS, MPMLabel* lb, MPMFlags* MFlag);
+  SingleVelContact(const ProcessorGroup* myworld,
+                   const MaterialManagerP& mat_manager,
+                   const MPMLabel* lb,
+                   const MPMFlags* flag,
+                   ProblemSpecP& ps);
 
   // Destructor
-  virtual ~SingleVelContact();
+  virtual ~SingleVelContact() = default;
 
-  void outputProblemSpec(ProblemSpecP& ps) override;
+  SingleVelContact(const SingleVelContact& con) = delete;
+  SingleVelContact(SingleVelContact&& con)      = delete;
+  SingleVelContact&
+  operator=(const SingleVelContact& con) = delete;
+  SingleVelContact&
+  operator=(SingleVelContact&& con) = delete;
 
-  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
-                        const MaterialSubset* matls, DataWarehouse* old_dw,
-                        DataWarehouse* new_dw, const VarLabel* label) override;
+  virtual void
+  setContactMaterialAttributes() override;
 
-  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
-                              const MaterialSet* matls,
-                              const VarLabel* label) override;
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
+
+  void
+  exchangeMomentum(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset* matls,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw,
+                   const VarLabel* label) override;
+
+  void
+  addComputesAndRequires(SchedulerP& sched,
+                         const PatchSet* patches,
+                         const MaterialSet* matls,
+                         const VarLabel* label) override;
 };
 } // End namespace Uintah
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -46,14 +46,14 @@ namespace Vaango {
 
   The pressure is given by
 
-  p = p0 beta exp[(epse_v - epse_v0)/kappatilde]
+  p = p0 beta exp[(epse_v - epse_v0)/kappahat]
 
   where
 
   p0 = constant
-  beta = 1 + 3/2 alpha/kappatilde epse_s^2
+  beta = 1 + 3/2 alpha/kappahat epse_s^2
   alpha = constant
-  kappatilde = constant
+  kappahat = constant
   epse_s = sqrt(2/3) ||epse||
   epse_v = tr(epse)
   epse_v0 = constant
@@ -69,6 +69,7 @@ private:
   double d_p0;         // Reference pressure
   double d_alpha;      // Pressure-shear coupling constant
   double d_kappatilde; // Reference compressibility
+  double d_kappahat;   // Large deformation compressibility
   double d_epse_v0;    // Volumetric strain at reference pressure
 
 public:
@@ -102,6 +103,7 @@ public:
     params["p0"]         = d_p0;
     params["alpha"]      = d_alpha;
     params["kappatilde"] = d_kappatilde;
+    params["kappahat"]   = d_kappahat;
     params["epse_v0"]    = d_epse_v0;
     return params;
   }

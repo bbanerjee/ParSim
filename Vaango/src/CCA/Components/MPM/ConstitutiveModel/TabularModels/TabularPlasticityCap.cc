@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,7 +31,7 @@
 // Namespace Uintah::
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -149,10 +149,10 @@ TabularPlasticityCap::TabularPlasticityCap(Uintah::ProblemSpecP& ps,
 
   if (d_consistency_bisection_tolerance < 1.0e-16 ||
       d_consistency_bisection_tolerance > 1.0e-2) {
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "Consistency bisection tolerance should be in range [1.0e-16, "
             "1.0e-2].  Default = 1.0e-4"
-         << endl;
+         << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
@@ -207,10 +207,10 @@ TabularPlasticityCap::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
                        d_decrease_substep);
 }
 
-TabularPlasticityCap*
+std::unique_ptr<Uintah::ConstitutiveModel>
 TabularPlasticityCap::clone()
 {
-  return scinew TabularPlasticityCap(*this);
+  return std::make_unique<TabularPlasticityCap>(*this);
 }
 
 // When a particle is pushed from patch to patch, carry information needed for
@@ -330,8 +330,9 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches,
     // Get and allocate the hydrostatic strength
     constParticleVariable<double> pCapX;
     ParticleVariable<double> pCapX_new;
-    d_capX->getInternalVariable(pset, old_dw, pCapX);
-    d_capX->allocateAndPutInternalVariable(pset, new_dw, pCapX_new);
+    auto capX = static_cast<IntVar_TabularCap*>(d_capX.get());
+    capX->getInternalVariable(pset, old_dw, pCapX);
+    capX->allocateAndPutInternalVariable(pset, new_dw, pCapX_new);
 
     // Set up global particle variables to be read and written
     delt_vartype delT;
@@ -2994,7 +2995,7 @@ TabularPlasticityCap::addComputesAndRequires(Task*,
 {
   std::cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR "
                "TabularPlasticityCap"
-            << endl;
+            << std::endl;
 }
 
 /*!

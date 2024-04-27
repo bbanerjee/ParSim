@@ -91,7 +91,7 @@ namespace dem {
       std::string vecStr;
       try {
         vecStr = ps["time"].get<std::string>();
-      } catch (std::exception) {
+      } catch (std::exception& e) {
         std::cerr
           << "**ERROR** Time data not found in boundary condition curve\n";
         std::cerr << "  Add the time: \"t1 t2 t3 ...\" tag.";
@@ -102,7 +102,7 @@ namespace dem {
       vecStr = "";
       try {
         vecStr = ps["value"].get<std::string>();
-      } catch (std::exception) {
+      } catch (std::exception& e) {
         std::cerr
           << "**ERROR** Load/displacement data not found in boundary condition curve\n";
         std::cerr << "  Add the value: \"v1 v2 v3 ...\" tag.";

@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,8 +27,8 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/MPMFlags.h>
-#include <Core/Labels/MPMLabel.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/InternalError.h>
@@ -195,10 +195,10 @@ PolarOrthotropicHypoElastic::PolarOrthotropicHypoElastic(
 }
 
 // Make a clone of the constitutive model
-PolarOrthotropicHypoElastic*
+std::unique_ptr<Uintah::ConstitutiveModel>
 PolarOrthotropicHypoElastic::clone()
 {
-  return scinew PolarOrthotropicHypoElastic(*this);
+  return std::make_unique<PolarOrthotropicHypoElastic>(*this);
 }
 
 PolarOrthotropicHypoElastic::~PolarOrthotropicHypoElastic()

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -29,18 +29,6 @@
 
 #include <Core/Math/Short27.h>
 #include <Core/Math/Matrix3.h>
-
-namespace Uintah {
-
-struct ViscoScramStateData
-{
-  Matrix3 DevStress[5];
-};
-}
-
-namespace Uintah {
-void swapbytes(Uintah::ViscoScramStateData& d);
-}
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <Core/Util/Endian.h>
@@ -171,7 +159,7 @@ public:
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
-  ViscoScram* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   /*! Computes and requires for initialization of history variables */
   void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
@@ -260,9 +248,6 @@ private:
                      const double temperature, const double pressure,
                      double& rho_refrr, double& K0);
 };
-
-/*! Set up type for StateData */
-const Uintah::TypeDescription* fun_getTypeDescription(ViscoScramStateData*);
 
 } // End namespace Uintah
 

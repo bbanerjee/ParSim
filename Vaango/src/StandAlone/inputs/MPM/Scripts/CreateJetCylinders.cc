@@ -51,17 +51,17 @@ int main()
   string outfile_name = "cylinders.xml";
   ofstream dest(outfile_name.c_str());
   if(!dest){
-    cerr << "File " << outfile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
   }
 
   outfile_name = "InsertParticles.dat";
   ofstream dest_IP(outfile_name.c_str());
   if(!dest_IP){
-    cerr << "File " << outfile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
   }
 
-  dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << endl;
-  dest << "<Uintah_Include>" << endl;
+  dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << std::endl;
+  dest << "<Uintah_Include>" << std::endl;
 
   // delayTime allows the target to be pressurized prior to it being
   // impacted by the jet
@@ -86,17 +86,17 @@ int main()
 
   double x=0.12;          // Position at which to monitor densities
 
-  dest << "<!--\n" << endl;
-  dest << "x = " << x << endl;
-  dest << "a = " << a << endl;
-  dest << "b = " << b << endl;
-  dest << "c = " << c << endl;
-  dest << "d = " << d << endl;
-  dest << "q = " << q << endl;
-  dest << "r = " << r << endl;
-  dest << "rho_W = " << rho_W << endl;
-  dest << "delT = " << delT << endl;
-  dest << "-->\n" << endl;
+  dest << "<!--\n" << std::endl;
+  dest << "x = " << x << std::endl;
+  dest << "a = " << a << std::endl;
+  dest << "b = " << b << std::endl;
+  dest << "c = " << c << std::endl;
+  dest << "d = " << d << std::endl;
+  dest << "q = " << q << std::endl;
+  dest << "r = " << r << std::endl;
+  dest << "rho_W = " << rho_W << std::endl;
+  dest << "delT = " << delT << std::endl;
+  dest << "-->\n" << std::endl;
 
   // Integrate rho*dV = rho*(Pi*rad*rad)*dx over the length of the bilinearly
   // fitted jet to see how the created jet compares in total mass
@@ -117,7 +117,7 @@ int main()
 
   mass_in_fit_jet*=M_PI;
 
-  cout << "mass_in_fit_jet  = " << mass_in_fit_jet << endl;
+  std::cout << "mass_in_fit_jet  = " << mass_in_fit_jet << std::endl;
 
   double T0=(x-L0)/v_tip; // Time at which tip is at x
   double t=T0; 
@@ -137,7 +137,7 @@ int main()
       rho=(ae*(x/F) + be)/F;
     }
     else{
-     cout << "SHOULDN'T GET HERE!  X = " << X << endl;
+     std::cout << "SHOULDN'T GET HERE!  X = " << X << std::endl;
     }
 
     double vel = v_tip*X/L0;
@@ -194,7 +194,7 @@ int main()
     dest << "    <color>" << n++ << "</color>\n";
     dest << "  </geom_object>\n\n";
   }
-  cout << "Total Mass in created jet = " << total_mass << endl;
+  std::cout << "Total Mass in created jet = " << total_mass << std::endl;
 
-  dest << "</Uintah_Include>" << endl;
+  dest << "</Uintah_Include>" << std::endl;
 }

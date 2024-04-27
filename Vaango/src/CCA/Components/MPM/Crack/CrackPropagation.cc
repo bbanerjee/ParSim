@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -32,6 +32,7 @@
 ********************************************************************************/
 
 #include "Crack.h"
+
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
@@ -40,13 +41,13 @@
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationState.h>
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <fstream>
@@ -55,7 +56,7 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace std;
+
 
 using std::vector;
 using std::string;
@@ -95,9 +96,9 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
 
     MPI_Datatype MPI_POINT = fun_getTypeDescription((Point*)0)->getMPIType();
 
-    int numMPMMatls = d_sharedState->getNumMPMMatls();
+    int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
       ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
       // Cell mass of the material
@@ -109,14 +110,14 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
       Ghost::GhostType gac = Ghost::AroundCells;
-      constNCVariable<double> gmass, Gmass;
+      constNCVariable<double> gMass, Gmass;
       int NGC = 2 * NGN;
-      new_dw->get(gmass, lb->gMassLabel, dwi, patch, gac, NGC);
+      new_dw->get(gMass, lb->gMassLabel, dwi, patch, gac, NGC);
       new_dw->get(Gmass, lb->GMassLabel, dwi, patch, gac, NGC);
 
-      constParticleVariable<Matrix3> psize;
+      constParticleVariable<Matrix3> pSize;
       if (n8or27 == 27)
-        old_dw->get(psize, lb->pSizeLabel, pset);
+        old_dw->get(pSize, lb->pSizeLabel, pset);
 
       if (doCrackPropagation) {
 
@@ -264,7 +265,7 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
                     patch->findCellNodes27(new_pt, ni);
 
                   for (int j = 0; j < n8or27; j++) {
-                    double totalMass = gmass[ni[j]] + Gmass[ni[j]];
+                    double totalMass = gMass[ni[j]] + Gmass[ni[j]];
                     if (totalMass < d_cell_mass / 64.) {
                       newPtInMat = NO;
                       break;
@@ -359,7 +360,7 @@ Crack::addComputesAndRequiresConstructNewCrackFrontElems(
   const MaterialSet* /*matls*/) const
 {
   // delT will be used to calculate crack propagation velocity
-  t->requires(Task::OldDW, d_sharedState->get_delt_label());
+  t->requires(Task::OldDW, lb->delTLabel);
 }
 
 void
@@ -373,7 +374,7 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     Vector dx          = patch->dCell();
     double dx_bar      = (dx.x() + dx.y() + dx.z()) / 3.;
-    int numMPMMatls    = d_sharedState->getNumMPMMatls();
+    int numMPMMatls    = d_mat_manager->getNumMaterials("MPM");
 
     for (int m = 0; m < numMPMMatls; m++) {
       if (doCrackPropagation) {
@@ -396,7 +397,7 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
         */
 
         // Temporary crack-front segment nodes and velocity
-        vector<int> cfSegNodesT;
+        std::vector<int> cfSegNodesT;
         cfSegNodesT.clear();
         cfSegVel[m].clear();
 
@@ -447,9 +448,9 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
           // Calculate crack propagation velocity
           double vc1 = 0., vc2 = 0., vcc = 0.;
           /*
-          double time=d_sharedState->getElapsedTime();
+          double time=d_mat_manager->getElapsedTime();
           delt_vartype delT;
-          old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches)
+          old_dw->get(delT, d_lb->delTLabel, getLevel(patches)
           );
           if(sp) { // Record crack incremental and time instant
             cfSegDis[m][2*i]=(p1p-p1).length();
@@ -766,8 +767,8 @@ Crack::TrimLineSegmentWithBox(const Point& p1,
 
   // Make sure p1!=p2
   if (p1 == p2) {
-    cout << "Error: p1=p2=" << p1 << " in Crack::TrimLineSegmentWithBox(...)."
-         << " Program is terminated." << endl;
+    std::cout << "Error: p1=p2=" << p1 << " in Crack::TrimLineSegmentWithBox(...)."
+         << " Program is terminated." << std::endl;
     exit(1);
   } else {
     v = TwoPtsDirCos(p1, p2);
@@ -792,10 +793,10 @@ Crack::TrimLineSegmentWithBox(const Point& p1,
     p1Outside = NO;
 
   if (p1Outside) {
-    cout << "Error: p1=" << p1
+    std::cout << "Error: p1=" << p1
          << " is outside of the box in Crack::TrimLineSegmentWithBox(): " << lp
-         << "-->" << hp << ", where p2=" << p2 << endl;
-    cout << " Program terminated." << endl;
+         << "-->" << hp << ", where p2=" << p2 << std::endl;
+    std::cout << " Program terminated." << std::endl;
     exit(1);
   }
 
@@ -852,7 +853,7 @@ Crack::PruneCrackFrontAfterPropagation(const int& m, const double& ca)
   // the mass center of the triangle
 
   int num = (int)cfSegNodes[m].size();
-  vector<Point> cfSegPtsPruned;
+  std::vector<Point> cfSegPtsPruned;
   cfSegPtsPruned.resize(num);
 
   for (int i = 0; i < num; i++) {

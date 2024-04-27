@@ -66,11 +66,11 @@ using namespace Uintah;
 using namespace std;
 
 typedef struct {
-  vector<ShareAssignParticleVariable<double> > pv_double_list;
-  vector<ShareAssignParticleVariable<float> > pv_float_list;
-  vector<ShareAssignParticleVariable<Point> > pv_point_list;
-  vector<ShareAssignParticleVariable<Vector> > pv_vector_list;
-  vector<ShareAssignParticleVariable<Matrix3> > pv_matrix3_list;
+  std::vector<ShareAssignParticleVariable<double> > pv_double_list;
+  std::vector<ShareAssignParticleVariable<float> > pv_float_list;
+  std::vector<ShareAssignParticleVariable<Point> > pv_point_list;
+  std::vector<ShareAssignParticleVariable<Vector> > pv_vector_list;
+  std::vector<ShareAssignParticleVariable<Matrix3> > pv_matrix3_list;
   ShareAssignParticleVariable<Point> p_x;
 } MaterialData;
 
@@ -108,7 +108,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
       rayDir.create( clf.raydatadir );
     }
     catch (Exception& e) {
-      cerr << "Caught exception: " << e.message() << endl;
+      std::cerr <<  "Caught exception: " << e.message() << std::endl;
     }
   }
 
@@ -117,21 +117,22 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
   const string filelistname = clf.raydatadir + string("/") + string("timelist");
   filelist = fopen(filelistname.c_str(),"w");
   if (!filelist) {
-    cerr << "Can't open output file " << filelistname << endl;
+    std::cerr <<  "Can't open output file " << filelistname << std::endl;
     abort();
   }
 
-  vector<string> vars;
-  vector<const Uintah::TypeDescription*> types;
-  da->queryVariables(vars, types);
+  std::vector<std::string> vars;
+  std::vector<int> num_matl;
+  std::vector<const Uintah::TypeDescription*> types;
+  da->queryVariables(vars, num_matl, types);
   ASSERTEQ(vars.size(), types.size());
-  cout << "There are " << vars.size() << " variables:\n";
+  std::cout << "There are " << vars.size() << " variables:\n";
       
-  vector<int> index;
-  vector<double> times;
+  std::vector<int> index;
+  std::vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
-  cout << "There are " << index.size() << " timesteps:\n";
+  std::cout << "There are " << index.size() << " timesteps:\n";
 
   std::string time_file;
   std::string variable_file;
@@ -143,13 +144,13 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
   // for all timesteps
   for( unsigned long t = clf.time_step_lower; t <= clf.time_step_upper; t++ ) {
     double time = times[t];
-    ostringstream tempstr_time;
+     std::ostringstream tempstr_time;
     tempstr_time << setprecision(17) << time;
     time_file = replaceChar(string(tempstr_time.str()),'.','_');
     GridP grid = da->queryGrid(t);
     fprintf(filelist,"<TIMESTEP>\n");
     if(clf.do_verbose) {
-      cout << "time = " << time << endl;
+      std::cout << "time = " << time << std::endl;
     }
     // Create a directory if it's not already there.
     // The exception occurs when the directory is already there
@@ -159,22 +160,22 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
       rayDir.create(clf.raydatadir + string("/TS_") + time_file);
     }
     catch (Exception& e) {
-      cerr << "Caught directory making exception: " << e.message() << endl;
+      std::cerr <<  "Caught directory making exception: " << e.message() << std::endl;
     }
     // for each level in the grid
     for(int l=0;l<grid->numLevels();l++){
       LevelP level = grid->getLevel(l);
           
       // for each patch in the level
-      for(Level::const_patchIterator iter = level->patchesBegin();
+      for(Level::const_patch_iterator iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;
-        ostringstream tempstr_patch;
+         std::ostringstream tempstr_patch;
         tempstr_patch << patch->getID();
         patchID_file = tempstr_patch.str();
         fprintf(filelist,"<PATCH>\n");
 
-        vector<MaterialData> material_data_list; 
+        std::vector<MaterialData> material_data_list; 
                     
         // for all vars in one timestep in one patch
         for(int v=0;v<(int)vars.size();v++){
@@ -189,7 +190,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
           for(ConsecutiveRangeSet::iterator matlIter = matls.begin();
               matlIter != matls.end(); matlIter++){
             int matl = *matlIter;
-            ostringstream tempstr_matl;
+             std::ostringstream tempstr_matl;
             tempstr_matl << matl;
             materialType_file = tempstr_matl.str();
 
@@ -199,24 +200,24 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
               material_data = material_data_list[matl];
                 
             switch(td->getType()){
-            case Uintah::TypeDescription::ParticleVariable:
+            case Uintah::TypeDescription::Type::ParticleVariable:
               if (clf.do_PTvar) {
                 switch(subtype->getType()){
-                case Uintah::TypeDescription::double_type:
+                case Uintah::TypeDescription::Type::double_type:
                   {
                     ParticleVariable<double> value;
                     da->query(value, var, matl, patch, t);
                     material_data.pv_double_list.push_back(value);
                   }
                 break;
-                case Uintah::TypeDescription::float_type:
+                case Uintah::TypeDescription::Type::float_type:
                   {
                     ParticleVariable<float> value;
                     da->query(value, var, matl, patch, t);
                     material_data.pv_float_list.push_back(value);
                   }
                 break;
-                case Uintah::TypeDescription::Point:
+                case Uintah::TypeDescription::Type::Point:
                   {
                     ParticleVariable<Point> value;
                     da->query(value, var, matl, patch, t);
@@ -230,14 +231,14 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                     }
                   }
                 break;
-                case Uintah::TypeDescription::Vector:
+                case Uintah::TypeDescription::Type::Vector:
                   {
                     ParticleVariable<Vector> value;
                     da->query(value, var, matl, patch, t);
                     material_data.pv_vector_list.push_back(value);
                   }
                 break;
-                case Uintah::TypeDescription::Matrix3:
+                case Uintah::TypeDescription::Type::Matrix3:
                   {
                     ParticleVariable<Matrix3> value;
                     da->query(value, var, matl, patch, t);
@@ -245,14 +246,14 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                   }
                 break;
                 default:
-                  cerr << __LINE__ << ":Particle Variable of unknown type: " << subtype->getName() << endl;
+                  std::cerr <<  __LINE__ << ":Particle Variable of unknown type: " << subtype->getName() << std::endl;
                   break;
                 }
                 break;
               }
-            case Uintah::TypeDescription::NCVariable:
+            case Uintah::TypeDescription::Type::NCVariable:
               switch(subtype->getType()){
-              case Uintah::TypeDescription::double_type:
+              case Uintah::TypeDescription::Type::double_type:
                 {
                   if (clf.do_NCvar_double) {
                     // setup output files
@@ -294,7 +295,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                   }
                 }
               break;
-              case Uintah::TypeDescription::float_type:
+              case Uintah::TypeDescription::Type::float_type:
                 {
                   if (clf.do_NCvar_float) {
                     // setup output files
@@ -336,21 +337,21 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                   }
                 }
               break;
-              case Uintah::TypeDescription::Point:
+              case Uintah::TypeDescription::Type::Point:
                 {
                   if (clf.do_NCvar_point) {
                     // not implemented at this time
                   }
                 }
               break;
-              case Uintah::TypeDescription::Vector:
+              case Uintah::TypeDescription::Type::Vector:
                 {
                   if (clf.do_NCvar_vector) {
                     // not implemented at this time
                   }
                 }
               break;
-              case Uintah::TypeDescription::Matrix3:
+              case Uintah::TypeDescription::Type::Matrix3:
                 {
                   if (clf.do_NCvar_matrix3) {
                     // not implemented at this time
@@ -358,13 +359,13 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                 }
               break;
               default:
-                cerr << "NC variable of unknown type: " << subtype->getName() << endl;
+                std::cerr <<  "NC variable of unknown type: " << subtype->getName() << std::endl;
                 break;
               }
               break;
-            case Uintah::TypeDescription::CCVariable:
+            case Uintah::TypeDescription::Type::CCVariable:
               switch(subtype->getType()){
-              case Uintah::TypeDescription::double_type:
+              case Uintah::TypeDescription::Type::double_type:
                 {
                   if (clf.do_CCvar_double) {
                     // setup output files
@@ -406,7 +407,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                   }
                 }
               break;
-              case Uintah::TypeDescription::float_type:
+              case Uintah::TypeDescription::Type::float_type:
                 {
                   if (clf.do_CCvar_float) {
                     // setup output files
@@ -448,21 +449,21 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                   }
                 }
               break;
-              case Uintah::TypeDescription::Point:
+              case Uintah::TypeDescription::Type::Point:
                 {
                   if (clf.do_CCvar_point) {
                     // not implemented at this time
                   }
                 }
               break;
-              case Uintah::TypeDescription::Vector:
+              case Uintah::TypeDescription::Type::Vector:
                 {
                   if (clf.do_CCvar_vector) {
                     // not implemented at this time
                   }
                 }
               break;
-              case Uintah::TypeDescription::Matrix3:
+              case Uintah::TypeDescription::Type::Matrix3:
                 {
                   if (clf.do_CCvar_matrix3) {
                     // not implemented at this time
@@ -470,12 +471,12 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                 }
               break;
               default:
-                cerr << "CC variable of unknown type: " << subtype->getName() << endl;
+                std::cerr <<  "CC variable of unknown type: " << subtype->getName() << std::endl;
                 break;
               }
               break;
             default:
-              cerr << "Variable of unknown type: " << td->getName() << endl;
+              std::cerr <<  "Variable of unknown type: " << td->getName() << std::endl;
               break;
             } // end switch(td->getType())
             if (matl < (int)material_data_list.size())
@@ -492,7 +493,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
           //--------------------------------------------------
           // set up the first min/max
           Point min, max;
-          vector<double> d_min,d_max,f_min,f_max,v_min,v_max,m_min,m_max;
+          std::vector<double> d_min,d_max,f_min,f_max,v_min,v_max,m_min,m_max;
           bool data_found = false;
           int total_particles = 0;
               
@@ -501,10 +502,10 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
           for(int m = 0; m <(int) material_data_list.size(); m++) {
             // determine the min and max
             MaterialData md = material_data_list[m];
-            //cerr << "First md = " << m << endl;
+            //cerr << "First md = " << m << std::endl;
             ParticleSubset* pset = md.p_x.getParticleSubset();
             if (!pset) {
-              cerr << __LINE__ << ":No particle location variable found for material index "<<m<<"\n";
+              std::cerr <<  __LINE__ << ":No particle location variable found for material index "<<m<<"\n";
               continue;
               abort();
             }
@@ -551,14 +552,14 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
           // extract data and write it to a file MaterialData at a time
 
           if (clf.do_verbose)
-            cerr << "---Extracting data and writing it out  ";
+            std::cerr <<  "---Extracting data and writing it out  ";
           for(int m = 0; m <(int) material_data_list.size(); m++) {
             MaterialData md = material_data_list[m];
             ParticleSubset* pset = md.p_x.getParticleSubset();
             // a little redundant, but may not have been cought
             // by the previous section
             if (!pset) {
-              cerr << __LINE__ << ":No particle location variable found\n";
+              std::cerr <<  __LINE__ << ":No particle location variable found\n";
               continue;
               abort();
             }
@@ -627,7 +628,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
           // write the header file
 
           if( clf.do_verbose ) {
-            cerr << "---Writing header file\n";
+            std::cerr <<  "---Writing header file\n";
           }
           if (data_found) {
             fprintf(headerfile,"%d\n",total_particles);
@@ -709,13 +710,13 @@ setupOutFiles(FILE** data, FILE** header, string name, string head)
 
   datafile = fopen(name.c_str(),"w");
   if (!datafile) {
-    cerr << "Can't open output file " << name << endl;
+    std::cerr <<  "Can't open output file " << name << std::endl;
     return false;
   }
   
   headerfile = fopen(headername.c_str(),"w");
   if (!headerfile) {
-    cerr << "Can't open output file " << headername << endl;
+    std::cerr <<  "Can't open output file " << headername << std::endl;
     return false;
   }
   

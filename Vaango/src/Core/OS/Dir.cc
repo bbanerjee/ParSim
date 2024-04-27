@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,130 +27,76 @@
 
 #include <Core/Exceptions/ErrnoException.h>
 #include <Core/Exceptions/InternalError.h>
+#include <Core/Parallel/Parallel.h>
 #include <Core/Util/FileUtils.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-//#include <sys/syscall.h>
-
-#include <cerrno>
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
+#include <filesystem>
 #include <iostream>
 
-#ifndef _WIN32
-#  include <unistd.h>
-#  include <dirent.h>
-#else
-#  include <Core/Malloc/Allocator.h>
-#endif
+namespace fs = std::filesystem;
 
-using namespace std;
-using namespace Uintah;
+namespace Uintah {
 
-Dir Dir::create(const string& name)
+Dir
+Dir::create(const std::string& name)
 {
-   int code = MKDIR(name.c_str(), 0777);
-   if(code != 0)
-      throw ErrnoException("Dir::create (mkdir call): " + name, errno, __FILE__, __LINE__);
-   return Dir(name);
+  try {
+    fs::create_directories(name);
+    fs::permissions(
+      name, fs::perms::owner_all | fs::perms::group_all, fs::perm_options::add);
+  } catch (fs::filesystem_error& err) {
+    throw InternalError("Dir::could not create directory: " + name + " " +
+                          err.what(),
+                        __FILE__,
+                        __LINE__);
+  }
+  return Dir(name);
 }
 
-Dir::Dir()
-{
-}
-
-Dir::Dir(const string& name)
-   : name_(name)
+Dir::Dir(const std::string& name)
+  : d_name(name)
 {
 }
 
 Dir::Dir(const Dir& dir)
-  : name_(dir.name_)
+  : d_name(dir.d_name)
 {
 }
 
-Dir::~Dir()
+Dir&
+Dir::operator=(const Dir& copy)
 {
-}
-
-Dir& Dir::operator=(const Dir& copy)
-{
-   name_ = copy.name_;
-   return *this;
+  d_name = copy.d_name;
+  return *this;
 }
 
 void
 Dir::remove(bool throwOnError)
 {
-  int code = rmdir(name_.c_str());
-  if (code != 0) {
-    ErrnoException exception("Dir::remove()::rmdir: " + name_, errno, __FILE__, __LINE__);
-    if (throwOnError)
+  try {
+    fs::remove(d_name);
+  } catch (fs::filesystem_error& err) {
+    InternalError exception(
+      "Dir::remove()::rmdir: " + d_name + " " + err.what(), __FILE__, __LINE__);
+    if (throwOnError) {
       throw exception;
-    else
-      cerr << "WARNING: " << exception.message() << "\n";
+    } else {
+      std::cerr << "WARNING: " << exception.message() << "\n";
+    }
   }
   return;
 }
 
-// Removes a directory (and all its contents) using C++ calls.  Returns true if it succeeds.
+// Removes a directory (and all its contents).  Returns true if
+// it succeeds.
 bool
-Dir::removeDir( const char * dirName )
+Dir::removeDir(const char* dirName)
 {
-  // Walk through the dir, delete files, find sub dirs, recurse, delete sub dirs, ...
-
-  DIR *    dir = opendir( dirName );
-  dirent * file = 0;
-
-  if( dir == NULL ) {
-    cout << "Error in Dir::removeDir():\n";
-    cout << "  opendir failed for " << dirName << "\n";
-    cout << "  - errno is " << errno << "\n";
-    return false;
-  }
-
-  file = readdir(dir);
-  while( file ) {
-    if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") !=0) {
-      string fullpath = string(dirName) + "/" + file->d_name;
-      bool   isDir = false;
-#if defined(_AIX)
-      // Have to use 'stat' under AIX
-      struct stat entryInfo;
-      if( lstat( fullpath.c_str(), &entryInfo ) == 0 ) {
-	if( S_ISDIR( entryInfo.st_mode ) ) {
-	  isDir = true;
-	}
-      } else {
-	printf( "Error statting %s: %s\n", fullpath, strerror( errno ) );
-      }
-#else
-      if( file->d_type & DT_DIR ) {
-	isDir = true;
-      }
-#endif
-      if( isDir ) {
-        removeDir( fullpath.c_str() );
-      } else {
-        int rc = ::remove( fullpath.c_str() );
-        if (rc != 0) {
-          cout << "WARNING: remove() failed for '" << fullpath.c_str() 
-               << "'.  Return code is: " << rc << ", errno: " << errno << ": " << strerror(errno) << "\n";
-          return false;
-        }
-      }
-    }
-    file = readdir(dir);
-  }
-
-  closedir(dir);
-  int code = rmdir( dirName );
-
-  if (code != 0) {
-    cerr << "Error, rmdir failed for '" << dirName << "'\n";
-    cerr << "  errno is " << errno << "\n";
+  try {
+    fs::remove_all(dirName);
+  } catch (fs::filesystem_error& err) {
+    std::cerr << "Error, rmdir failed for '" << dirName << "'\n";
+    std::cerr << "  err is " << err.what() << "\n";
     return false;
   }
   return true;
@@ -158,106 +105,213 @@ Dir::removeDir( const char * dirName )
 void
 Dir::forceRemove(bool throwOnError)
 {
-   int code = system((string("rm -f -r ") + name_).c_str());
-   if (code != 0) {
-     ErrnoException exception(string("Dir::forceRemove() failed to remove: ") + name_, errno, __FILE__, __LINE__);
-     if (throwOnError)
-       throw exception;
-     else
-       cerr << "WARNING: " << exception.message() << "\n";
-   }
+  try {
+    fs::remove_all(d_name);
+  } catch (fs::filesystem_error& err) {
+    InternalError exception(
+      "Dir::remove()::rmdir: " + d_name + " " + err.what(), __FILE__, __LINE__);
+    if (throwOnError) {
+      throw exception;
+    } else {
+      std::cerr << "WARNING: " << exception.message() << "\n";
+    }
+  }
 }
 
 void
-Dir::remove(const string& filename, bool throwOnError)
+Dir::remove(const std::string& filename, bool throwOnError)
 {
-   if (!exists()) return;
-   string filepath = name_ + "/" + filename;
-   int code = system((string("rm -f ") + filepath).c_str());
-   if (code != 0) {
-     ErrnoException exception(string("Dir::remove failed to remove: ") + filepath, errno, __FILE__, __LINE__);
-     if (throwOnError)
-       throw exception;
-     else
-       cerr << "WARNING: " << exception.message() << "\n";
-   }
+  if (!exists()) {
+    return;
+  }
+  std::string filepath = d_name + "/" + filename;
+  try {
+    fs::remove(filepath);
+  } catch (fs::filesystem_error& err) {
+    InternalError exception(
+      "Dir::remove()::rmdir: " + d_name + " " + err.what(), __FILE__, __LINE__);
+    if (throwOnError) {
+      throw exception;
+    } else {
+      std::cerr << "WARNING: " << exception.message() << "\n";
+    }
+  }
+  return;
 }
 
 Dir
-Dir::createSubdir(const string& sub)
+Dir::createSubdir(const std::string& sub)
 {
-   return create(name_+"/"+sub);
+  return create(d_name + "/" + sub);
+}
+
+// This version of createSubdir tries multiple times and
+// throws an exception if it fails.
+Dir
+Dir::createSubdirPlus(const std::string& sub)
+{
+  Dir myDir;
+
+  bool done = false;
+  int tries = 0;
+
+  while (!done) {
+
+    try {
+      tries++;
+
+      if (tries > 500) {
+        std::ostringstream warn;
+        warn
+          << " ERROR: Dir::createSubdirPlus() failed to create the directory ("
+          << sub << ") after " << tries << " attempts.";
+        throw InternalError(warn.str(), __FILE__, __LINE__);
+      }
+
+      myDir = createSubdir(sub);
+      done  = true;
+    } catch (ErrnoException& e) {
+      if (e.getErrno() == EEXIST) {
+        done  = true;
+        myDir = getSubdir(sub);
+      }
+    }
+  }
+
+  if (tries > 1) {
+    std::cout << Uintah::Parallel::getMPIRank()
+              << " - WARNING:  Dir::createSubdirPlus() created the directory ("
+              << sub << ") after " << tries << " attempts.\n";
+  }
+  return myDir;
 }
 
 Dir
-Dir::getSubdir(const string& sub)
+Dir::getSubdir(const std::string& sub)
 {
-   // This should probably do more
-   return Dir(name_+"/"+sub);
+  // This should probably do more
+  return Dir(d_name + "/" + sub);
+}
+
+void
+Dir::copy_into(Dir& destDir)
+{
+  const auto copyOptions = fs::copy_options::recursive;
+  auto last_dir          = fs::absolute(d_name).filename();
+  auto dest_path         = fs::path(destDir.d_name);
+  dest_path /= last_dir;
+  try {
+    fs::copy(fs::absolute(d_name), fs::absolute(dest_path), copyOptions);
+  } catch (fs::filesystem_error& err) {
+    throw InternalError(std::string("Dir::copy failed to copy: ") + d_name +
+                          " to " + destDir.d_name + " " + err.what(),
+                        __FILE__,
+                        __LINE__);
+  }
+  return;
 }
 
 void
 Dir::copy(Dir& destDir)
 {
-   int code = system((string("cp -r ") + name_ + " " + destDir.name_).c_str());
-   if (code != 0)
-      throw InternalError(string("Dir::copy failed to copy: ") + name_, __FILE__, __LINE__);
-   return;
+  const auto copyOptions = fs::copy_options::recursive;
+  auto dest_path         = fs::path(destDir.d_name);
+  try {
+    fs::copy(fs::absolute(d_name), fs::absolute(dest_path), copyOptions);
+  } catch (fs::filesystem_error& err) {
+    throw InternalError(std::string("Dir::copy failed to copy: ") + d_name +
+                          " to " + destDir.d_name + " " + err.what(),
+                        __FILE__,
+                        __LINE__);
+  }
+  return;
 }
 
 void
 Dir::move(Dir& destDir)
 {
-   int code = system((string("mv ") + name_ + " " + destDir.name_).c_str());
-   if (code != 0)
-      throw InternalError(string("Dir::move failed to move: ") + name_, __FILE__, __LINE__);
-   return;
+  try {
+    fs::rename(fs::absolute(d_name), fs::absolute(destDir.d_name));
+  } catch (fs::filesystem_error& err) {
+    auto last_dir  = fs::absolute(d_name).filename();
+    auto dest_path = fs::path(destDir.d_name);
+    dest_path /= last_dir;
+    try {
+      fs::rename(fs::absolute(d_name), fs::absolute(dest_path));
+    } catch (fs::filesystem_error& err) {
+      std::ostringstream msg;
+      msg << "Dir::move failed to move: " << d_name << " to " << dest_path
+          << " " << err.what();
+      throw InternalError(msg.str(), __FILE__, __LINE__);
+    }
+  }
+  return;
 }
 
 void
 Dir::copy(const std::string& filename, Dir& destDir)
 {
-   string filepath = name_ + "/" + filename;
-   int code =system((string("cp ") + filepath + " " + destDir.name_).c_str());
-   if (code != 0)
-      throw InternalError(string("Dir::copy failed to copy: ") + filepath, __FILE__, __LINE__);
-   return;
+  fs::path filepath      = d_name;
+  fs::path dest_filepath = destDir.d_name;
+
+  filepath /= filename;
+  try {
+    dest_filepath /= filename;
+    fs::copy_file(fs::absolute(filepath),
+                  fs::absolute(dest_filepath),
+                  fs::copy_options::overwrite_existing);
+  } catch (fs::filesystem_error& err) {
+    std::ostringstream msg;
+    msg << "Dir::copy failed to copy file: " << fs::absolute(filepath) << " to "
+        << fs::absolute(dest_filepath) << " with err " << err.what();
+    throw InternalError(msg.str(), __FILE__, __LINE__);
+  }
+  return;
 }
 
 void
 Dir::move(const std::string& filename, Dir& destDir)
 {
-   string filepath = name_ + "/" + filename;
-   int code =system((string("mv ") + filepath + " " + destDir.name_).c_str());
-   if (code != 0)
-      throw InternalError(string("Dir::move failed to move: ") + filepath, __FILE__, __LINE__);
-   return;
+  fs::path filepath      = d_name;
+  fs::path dest_filepath = destDir.d_name;
+
+  filepath /= filename;
+  try {
+    dest_filepath /= filename;
+    fs::rename(fs::absolute(filepath), fs::absolute(dest_filepath));
+  } catch (fs::filesystem_error& err) {
+    std::ostringstream msg;
+    msg << "Dir::move failed to move: " << fs::absolute(filepath) << " to "
+        << fs::absolute(dest_filepath);
+    throw InternalError(msg.str(), __FILE__, __LINE__);
+  }
+  return;
 }
 
 void
-Dir::getFilenamesBySuffix( const std::string& suffix,
-                           vector<string>& filenames )
+Dir::getFilenamesBySuffix(const std::string& suffix,
+                          std::vector<std::string>& filenames)
 {
-  DIR* dir = opendir(name_.c_str());
-  if (!dir) 
+  if (!fs::exists(d_name)) {
     return;
-  const char* ext = suffix.c_str();
-  for(dirent* file = readdir(dir); file != 0; file = readdir(dir)){
-    if ((strlen(file->d_name)>=strlen(ext)) && 
-	(strcmp(file->d_name+strlen(file->d_name)-strlen(ext),ext)==0)) {
-      filenames.push_back(file->d_name);
-      cout << "  Found " << file->d_name << "\n";
+  }
+
+  std::string ext = "." + suffix;
+  for (const auto& file : fs::directory_iterator{ d_name }) {
+    if (file.path().extension() == ext) {
+      filenames.push_back(file.path().string());
+      std::cout << "  Found " << file.path().string() << "\n";
     }
   }
 }
 
 bool
-Dir::exists()
+Dir::exists() const
 {
-  struct stat buf;
-  if(LSTAT(name_.c_str(),&buf) != 0)
-    return false;
-  if (S_ISDIR(buf.st_mode))
+  if (fs::exists(d_name)) {
     return true;
+  }
   return false;
 }
+
+} // namespace Uintah

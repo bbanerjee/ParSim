@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -36,7 +36,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/MinMax.h>
@@ -77,10 +77,10 @@ Water::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("gamma", d_initialData.d_Gamma);
 }
 
-Water*
+std::unique_ptr<ConstitutiveModel>
 Water::clone()
 {
-  return scinew Water(*this);
+  return std::make_unique<Water>(*this);
 }
 
 void
@@ -161,7 +161,7 @@ Water::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
   old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
   if (!flag->d_doGridReset) {
-    std::cerr << "The water model doesn't work without resetting the grid" << endl;
+    std::cerr << "The water model doesn't work without resetting the grid" << std::endl;
   }
 
   for (int pp = 0; pp < patches->size(); pp++) {

@@ -33,7 +33,7 @@
 
 #include <cmath>
 
-using namespace std;
+
 
 #define d_SMALLNUM 1e-100
 

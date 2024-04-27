@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,17 +24,22 @@
  * IN THE SOFTWARE.
  */
 
+#include <CCA/Components/MPM/Contact/ContactFactory.h>
+
 #include <CCA/Components/MPM/Contact/ApproachContact.h>
 #include <CCA/Components/MPM/Contact/CompositeContact.h>
-#include <CCA/Components/MPM/Contact/ContactFactory.h>
+#include <CCA/Components/MPM/Contact/FluidContact.h>
 #include <CCA/Components/MPM/Contact/FrictionContact.h>
 #include <CCA/Components/MPM/Contact/FrictionContactBard.h>
 #include <CCA/Components/MPM/Contact/FrictionContactLR.h>
+#include <CCA/Components/MPM/Contact/FrictionContactLRGuilkey.h>
 #include <CCA/Components/MPM/Contact/NodalSVFContact.h>
 #include <CCA/Components/MPM/Contact/NullContact.h>
 #include <CCA/Components/MPM/Contact/SingleVelContact.h>
 #include <CCA/Components/MPM/Contact/SpecifiedBodyContact.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Contact/SpecifiedBodyFrictionContact.h>
+#include <CCA/Components/MPM/Core/MPMFlags.h>
+#include <CCA/Components/MPM/Core/HydroMPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
@@ -43,9 +48,12 @@
 
 using namespace Uintah;
 
-Contact*
-ContactFactory::create(const ProcessorGroup* myworld, const ProblemSpecP& ps,
-                       SimulationStateP& ss, MPMLabel* lb, MPMFlags* flag)
+std::unique_ptr<Contact>
+ContactFactory::create(const ProcessorGroup* myworld,
+                       const ProblemSpecP& ps,
+                       const MaterialManagerP& mat_manager,
+                       const MPMLabel* labels,
+                       const MPMFlags* flags)
 {
 
   ProblemSpecP mpm_ps =
@@ -57,50 +65,84 @@ ContactFactory::create(const ProcessorGroup* myworld, const ProblemSpecP& ps,
     throw ProblemSetupException(warn, __FILE__, __LINE__);
   }
 
-  CompositeContact* contact_list = scinew CompositeContact(myworld, lb, flag);
+  ProblemSpecP child = mpm_ps->findBlock("contact");
 
-  for (ProblemSpecP child = mpm_ps->findBlock("contact"); child != 0;
-       child = child->findNextBlock("contact")) {
+  std::unique_ptr<CompositeContact> contact_list =
+    std::make_unique<CompositeContact>(myworld, labels, flags, child);
+
+  for (; child != 0; child = child->findNextBlock("contact")) {
 
     std::string con_type;
     child->getWithDefault("type", con_type, "null");
 
-    if (con_type == "null")
-      contact_list->add(scinew NullContact(myworld, ss, lb, flag));
+    if (con_type == "null") {
+      contact_list->add(std::make_unique<NullContact>(
+        myworld, mat_manager, labels, flags, child));
+    }
 
-    else if (con_type == "single_velocity")
-      contact_list->add(scinew SingleVelContact(myworld, child, ss, lb, flag));
+    else if (con_type == "single_velocity") {
+      contact_list->add(std::make_unique<SingleVelContact>(
+        myworld, mat_manager, labels, flags, child));
+    }
 
-    else if (con_type == "nodal_svf")
-      contact_list->add(scinew NodalSVFContact(myworld, child, ss, lb, flag));
+    else if (con_type == "nodal_svf") {
+      contact_list->add(std::make_unique<NodalSVFContact>(
+        myworld, mat_manager, labels, flags, child));
+    }
 
-    else if (con_type == "friction")
-      contact_list->add(scinew FrictionContact(myworld, child, ss, lb, flag));
+    else if (con_type == "fluid") {
+      contact_list->add(std::make_unique<FluidContact>(
+        myworld, mat_manager, labels, flags, child));
+    }
 
-    else if (con_type == "friction_bard")
-      contact_list->add(scinew FrictionContactBard(myworld, child, ss, lb, flag));
+    else if (con_type == "friction") {
+      contact_list->add(std::make_unique<FrictionContact>(
+        myworld, mat_manager, labels, flags, child));
+    }
 
-    else if (con_type == "friction_LR")
-      contact_list->add(scinew FrictionContactLR(myworld, child, ss, lb, flag));
-    
-    else if (con_type == "approach")
-      contact_list->add(scinew ApproachContact(myworld, child, ss, lb, flag));
+    else if (con_type == "friction_bard") {
+      contact_list->add(std::make_unique<FrictionContactBard>(
+        myworld, mat_manager, labels, flags, child));
+    }
+
+    else if (con_type == "friction_LR") {
+      contact_list->add(std::make_unique<FrictionContactLR>(
+        myworld, mat_manager, labels, flags, child));
+    }
+
+    else if (con_type == "friction_LR_guilkey") {
+      contact_list->add(std::make_unique<FrictionContactLRGuilkey>(
+        myworld, mat_manager, labels, flags, child));
+    }
+
+    else if (con_type == "approach") {
+      contact_list->add(std::make_unique<ApproachContact>(
+        myworld, mat_manager, labels, flags, child));
+    }
 
     else if (con_type == "specified_velocity" || con_type == "specified" ||
-             con_type == "rigid")
-      contact_list->add(
-        scinew SpecifiedBodyContact(myworld, child, ss, lb, flag));
+             con_type == "rigid") {
+      contact_list->add(std::make_unique<SpecifiedBodyContact>(
+        myworld, mat_manager, labels, flags, child));
+    }
+
+    else if (con_type == "specified_friction") {
+      contact_list->add(std::make_unique<SpecifiedBodyFrictionContact>(
+        myworld, mat_manager, labels, flags, child));
+
+    }
 
     else {
       std::cerr << "Unknown Contact Type R (" << con_type << ")\n";
-      throw ProblemSetupException(" E R R O R----->MPM:Unknown Contact type",
-                                  __FILE__, __LINE__);
+      throw ProblemSetupException(
+        " E R R O R----->MPM:Unknown Contact type", __FILE__, __LINE__);
     }
   }
 
   if (contact_list->size() == 0) {
     std::cout << "no contact - using null\n";
-    contact_list->add(scinew NullContact(myworld, ss, lb, flag));
+    contact_list->add(std::make_unique<NullContact>(
+      myworld, mat_manager, labels, flags, child));
   }
 
   return contact_list;

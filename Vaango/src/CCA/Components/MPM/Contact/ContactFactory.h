@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,9 +27,11 @@
 #ifndef _CONTACTFACTORY_H_
 #define _CONTACTFACTORY_H_
 
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+
+#include <memory>
 
 namespace Uintah {
 
@@ -43,8 +45,12 @@ public:
   // this function has a switch for all known mat_types
   // and calls the proper class' readParameters()
   // addMaterial() calls this
-  static Contact* create(const ProcessorGroup* myworld, const ProblemSpecP& ps,
-                         SimulationStateP& ss, MPMLabel* lb, MPMFlags* MFlag);
+  static std::unique_ptr<Contact>
+  create(const ProcessorGroup* myworld,
+         const ProblemSpecP& ps,
+         const MaterialManagerP& mat_manager,
+         const MPMLabel* labels,
+         const MPMFlags* flags);
 };
 } // End namespace Uintah
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,7 +28,8 @@
 #define _PLASTIC_FLOW_STRESS_MODELFACTORY_H_
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <string>
+
+#include <memory>
 
 namespace Uintah {
 
@@ -39,8 +40,11 @@ class FlowStressModelFactory
 {
 public:
   // this function has a switch for all known mat_types
-  static FlowStressModel* create(ProblemSpecP& ps);
-  static FlowStressModel* createCopy(const FlowStressModel* pm);
+  static std::unique_ptr<FlowStressModel>
+  create(ProblemSpecP& ps);
+
+  static std::unique_ptr<FlowStressModel>
+  createCopy(const FlowStressModel* pm);
 };
 } // End namespace Uintah
 

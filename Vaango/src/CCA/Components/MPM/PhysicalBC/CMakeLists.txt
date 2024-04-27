@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2014-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -23,18 +24,26 @@
 #
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/PhysicalBC
 
-SET(Vaango_CCA_Components_MPM_SRCS
-  ${Vaango_CCA_Components_MPM_SRCS}
+SET(Vaango_CCA_Components_MPM_PhysicalBC_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/MPMPhysicalBCFactory.cc   
   ${CMAKE_CURRENT_SOURCE_DIR}/ForceBC.cc                
   ${CMAKE_CURRENT_SOURCE_DIR}/MomentBC.cc            
   ${CMAKE_CURRENT_SOURCE_DIR}/VelocityBC.cc            
   ${CMAKE_CURRENT_SOURCE_DIR}/PressureBC.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/CrackBC.cc      
-  ${CMAKE_CURRENT_SOURCE_DIR}/HeatFluxBC.cc      
-  ${CMAKE_CURRENT_SOURCE_DIR}/ArchesHeatFluxBC.cc    
   ${CMAKE_CURRENT_SOURCE_DIR}/PolynomialData.cc    
+  ${CMAKE_CURRENT_SOURCE_DIR}/FluxBCModelFactory.cc   
+  ${CMAKE_CURRENT_SOURCE_DIR}/FluxBCModel.cc   
+  ${CMAKE_CURRENT_SOURCE_DIR}/AutoCycleFluxBC.cc   
   ${CMAKE_CURRENT_SOURCE_DIR}/ScalarFluxBC.cc    
-  PARENT_SCOPE
+  ${CMAKE_CURRENT_SOURCE_DIR}/ArchesHeatFluxBC.cc    
+  ${CMAKE_CURRENT_SOURCE_DIR}/HeatFluxBC.cc      
 )
 
+add_library(MPM_PhysicalBC ${Vaango_CCA_Components_MPM_PhysicalBC_SRCS})
+
+target_link_libraries(MPM_PhysicalBC ${LIBS})
+
+IF(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_MPM_PhysicalBC)
+ENDIF(BUILD_SHARED_LIBS)

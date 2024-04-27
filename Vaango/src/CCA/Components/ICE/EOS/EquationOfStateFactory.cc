@@ -95,7 +95,7 @@ EquationOfState* EquationOfStateFactory::create(ProblemSpecP& ps)
           << "  Run the octave script: \n"
           << "    src/CCA/Components/ICE/Matlab/Murnahan.m \n"
           << "  to see the issue. \n"
-          << "______________________________________________________\n" << endl;
+          << "______________________________________________________\n" << std::endl;
   }
   
   
@@ -122,7 +122,7 @@ EquationOfState* EquationOfStateFactory::create(ProblemSpecP& ps)
   else if (EOS == "KnaussSeaWater") 
     return(scinew KnaussSeaWater(EOS_ps));    
   else{
-    ostringstream warn;
+     std::ostringstream warn;
     warn << "ERROR ICE: Unknown Equation of State ("<< EOS << " )\n"
          << "Valid equations of State:\n" 
          << "ideal_gas\n"
@@ -133,7 +133,7 @@ EquationOfState* EquationOfStateFactory::create(ProblemSpecP& ps)
          << "Gruneisen\n"
          << "Tillotson\n"
          << "KnaussSeaWater\n"
-         << "Thomsen_Hartka_water" << endl;
+         << "Thomsen_Hartka_water" << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 

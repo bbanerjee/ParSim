@@ -75,17 +75,17 @@
 #  include <process.h>
 #endif
 
-using namespace std;
+
 using namespace Uintah;
 
 void
 usage(char* prog_name)
 {
-  cerr << "usage: " << prog_name << " [-e|-a|-h]\n";
-  cerr << "\t-e:  expands test suite tree even where all tests have passed\n";
-  cerr << "\t-a:  reports all suites (not just failed ones)\n";
-  cerr << "\t-v:  verbose mode\n";
-  cerr << "\t-h:  lists this help information\n";
+  std::cerr <<  "usage: " << prog_name << " [-e|-a|-h]\n";
+  std::cerr <<  "\t-e:  expands test suite tree even where all tests have passed\n";
+  std::cerr <<  "\t-a:  reports all suites (not just failed ones)\n";
+  std::cerr <<  "\t-v:  verbose mode\n";
+  std::cerr <<  "\t-h:  lists this help information\n";
 }
 
 int
@@ -116,7 +116,7 @@ main(int argc, char* argv[])
 	  verbose = true;
 	  break;
 	default:
-	  cerr << "unkown option: " << argv[i][j] << endl;
+	  std::cerr <<  "unkown option: " << argv[i][j] << std::endl;
 	  usage(argv[0]);
 	  return 1;
 	}
@@ -138,30 +138,30 @@ main(int argc, char* argv[])
 
   // show suite tree summary
   bool allPassed;
-  cout << suites->composeSubSummary("", expandAll, allPassed) << endl;
+  std::cout << suites->composeSubSummary("", expandAll, allPassed) << std::endl;
   
   // report failed suites to itemized the tests the failed
   if (reportAll)
     suites->reportAllSuites();
   else if (!allPassed) {
-    list<Suite*> failedSuites;
+     std::list<Suite*> failedSuites;
     suites->appendFailedSuites(failedSuites);
     
-    cout << "Failed Suite Reports:" << endl << endl;
+    std::cout << "Failed Suite Reports:" << std::endl << std::endl;
     for (list<Suite*>::iterator it = failedSuites.begin();
 	 it != failedSuites.end(); it++) {
       (*it)->report();
-      cout << endl;
+      std::cout << std::endl;
     }
 
     if (failedSuites.size() == 1)
-      cout << "\n1 suite failed.\n";
+      std::cout << "\n1 suite failed.\n";
     else
-      cout << endl << failedSuites.size() << " suites failed.\n";
+      std::cout << std::endl << failedSuites.size() << " suites failed.\n";
   }
 
   if (allPassed) {
-    cout << "All tests passed!\n";
+    std::cout << "All tests passed!\n";
     return 1;
   }
 

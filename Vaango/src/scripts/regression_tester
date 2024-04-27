@@ -355,10 +355,10 @@ run_test () {
   
     if test $numproc -gt 1; then
         MPI="mpirun -np $numproc"
-        opts="$opts -mpi"
+        opts="$opts"
     elif test $MPI_RUN = "yes"; then
         MPI="mpirun -np $numproc"
-        opts="$opts -mpi"
+        opts="$opts"
     else
         MPI=""
     fi

@@ -256,18 +256,18 @@ readAndPlot <- function(inputDataFile, ExactSol, yLimits, dataType) {
 #-------------------------------------------------------------------------
 # Actually read and plot
 #-------------------------------------------------------------------------
-readAndPlotLargeDef("UniaxialStrainMMS_pdisp.dat", "UniaxialStrainMMS_pdisp.dat", 
+readAndPlotLargeDef("UniaxialStrainMMS_pDisplacement.dat", "UniaxialStrainMMS_pDisplacement.dat", 
              ExactSolHarmonic, c(-0.005, 0.011), "disp")
-readAndPlotLargeDef("UniaxialStrainMMS_pF.dat", "UniaxialStrainMMS_pdisp.dat", 
+readAndPlotLargeDef("UniaxialStrainMMS_pF.dat", "UniaxialStrainMMS_pDisplacement.dat", 
              ExactSolHarmonic, c(0.9, 1.1), "defgrad")
-readAndPlotLargeDef("UniaxialStrainMMS_pvel.dat", "UniaxialStrainMMS_pdisp.dat", 
+readAndPlotLargeDef("UniaxialStrainMMS_pvel.dat", "UniaxialStrainMMS_pDisplacement.dat", 
              ExactSolHarmonic, c(-10, 10), "vel")
-readAndPlotLargeDef("UniaxialStrainMMS_pfext.dat", "UniaxialStrainMMS_pdisp.dat", 
+readAndPlotLargeDef("UniaxialStrainMMS_pfext.dat", "UniaxialStrainMMS_pDisplacement.dat", 
              ExactSolHarmonic, c(-5.0e-5, 5.0e-5), "fext")
-readAndPlotLargeDef("UniaxialStrainMMS_pstress.dat", "UniaxialStrainMMS_pdisp.dat", 
+readAndPlotLargeDef("UniaxialStrainMMS_pstress.dat", "UniaxialStrainMMS_pDisplacement.dat", 
              ExactSolHarmonic, c(-2.0e6, 6.0e6), "stress")
 
-#readAndPlot("UniaxialStrainMMSHomoLin_pdisp.dat", 
+#readAndPlot("UniaxialStrainMMSHomoLin_pDisplacement.dat", 
 #            ExactSolHomoLin, c(0.0, 1.1e-6), "disp")
 #readAndPlot("UniaxialStrainMMSHomoLin_pF.dat", 
 #            ExactSolHomoLin, c(0.9999, 1.0001), "defgrad")
@@ -278,7 +278,7 @@ readAndPlotLargeDef("UniaxialStrainMMS_pstress.dat", "UniaxialStrainMMS_pdisp.da
 #readAndPlot("UniaxialStrainMMSHomoLin_pstress.dat", 
 #            ExactSolHomoLin, c(0, 6000), "stress")
 
-#readAndPlot("UniaxialStrainMMSHomoQuad_pdisp.dat", 
+#readAndPlot("UniaxialStrainMMSHomoQuad_pDisplacement.dat", 
 #            ExactSolHomoQuad, c(0.0, 1.1e-8), "disp")
 #readAndPlot("UniaxialStrainMMSHomoQuad_pF.dat", 
 #            ExactSolHomoQuad, c(0.9, 1.000010), "defgrad")

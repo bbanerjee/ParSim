@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -48,6 +26,7 @@
 
 #include "FieldDumper.h"
 #include <Core/OS/Dir.h>
+#include <Core/Exceptions/ErrnoException.h>
 #include <iomanip>
 
 using namespace std;
@@ -68,14 +47,14 @@ namespace Uintah {
     string dirname = this->basedir_+"_"+this->directoryExt();
     Dir dumpdir;
     try {
-      cout << "creating " << dirname << endl;
+      std::cout << "creating " << dirname << endl;
       dumpdir.create(dirname);
     } catch (ErrnoException & e) {
-      cout << "creating failed for reason " << e.getErrno() << endl;
-      cout << "ignore on " << EEXIST << endl;
+      std::cout << "creating failed for reason " << e.getErrno() << endl;
+      std::cout << "ignore on " << EEXIST << endl;
       // only allow exists as a reason for failure
       if(e.getErrno()!= EEXIST) {
-        cout << "unknown error - rethrowing" << endl;
+        std::cout << "unknown error - rethrowing" << endl;
         throw;
       }
     }
@@ -85,7 +64,7 @@ namespace Uintah {
   string
   FieldDumper::time_string(double tval)
   {
-    ostringstream b;
+     std::ostringstream b;
     b.setf(ios::fixed,ios::floatfield);
     b.precision(8);
     b << setw(12) << setfill('0') << tval;
@@ -104,7 +83,7 @@ namespace Uintah {
   string
   FieldDumper::step_string(int istep)
   {
-    ostringstream b;
+     std::ostringstream b;
     b.setf(ios::fixed,ios::floatfield);
     b.precision(8);
     b << setw(8) << setfill('0') << istep;
@@ -114,7 +93,7 @@ namespace Uintah {
   string
   FieldDumper::mat_string(int mval)
   {
-    ostringstream b;
+     std::ostringstream b;
     b << setw(4) << setfill('0') << mval;
     return b.str();
   }

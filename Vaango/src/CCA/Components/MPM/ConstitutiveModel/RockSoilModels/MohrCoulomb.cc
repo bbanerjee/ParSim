@@ -4,7 +4,7 @@
  * Copyright (c) 1997-2019 Center for the Simulation of Accidental Fires and
  * Explosions (CSAFE), and  Scientific Computing and Imaging Institute (SCI),
  * University of Utah.
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * License for the specific language governing rights and limitations under
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -43,7 +43,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -156,10 +156,10 @@ MohrCoulomb::operator=(const MohrCoulomb& cm)
 /*
  * Create clone
  */
-MohrCoulomb*
+std::unique_ptr<ConstitutiveModel>
 MohrCoulomb::clone()
 {
-  return scinew MohrCoulomb(*this);
+  return std::make_unique<MohrCoulomb>(*this);
 }
 
 /**

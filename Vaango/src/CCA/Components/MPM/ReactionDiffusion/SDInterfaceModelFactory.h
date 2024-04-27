@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2014 The University of Utah
+ * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,28 +26,31 @@
 #ifndef _SDINTERFACEMODELFACTORY_H_
 #define _SDINTERFACEMODELFACTORY_H_
 
-#include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Grid/SimulationStateP.h>
-#include <CCA/Components/MPM/ReactionDiffusion/SDInterfaceModel.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionInterfaces/SDInterfaceModel.h>
 
+#include <Core/ProblemSpec/ProblemSpecP.h>
+
+#include <memory>
 #include <string>
 
 namespace Uintah {
 
-  class SDInterface;
-  class MPMLabel;
-  class MPMFlags;
+class SDInterface;
+class MPMLabel;
+class MPMFlags;
+class MaterialManager;
 
-  class SDInterfaceModelFactory
-  {
-  public:
-    // this function has a switch for all known mat_types
-    
-    static SDInterfaceModel* create(ProblemSpecP& ps,
-                                        SimulationStateP& ss,
-                                        MPMFlags* flags);
+class SDInterfaceModelFactory
+{
+public:
+  // this function has a switch for all known mat_types
 
-  };
+  static std::unique_ptr<SDInterfaceModel>
+  create(ProblemSpecP& ps,
+         const MaterialManager* ss,
+         const MPMFlags* flags,
+         const MPMLabel* mpm_lb);
+};
 } // End namespace Uintah
-      
+
 #endif /* _CONSTITUTIVEMODELFACTORY_H_ */

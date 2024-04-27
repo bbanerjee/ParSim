@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2014-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2014-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -41,8 +41,8 @@ ReadUDA::ReadUDA()
 {
   d_useExtraCells = true;
   d_input_uda_name = "NoArchive";
-  d_archive = NULL;
-  d_stepInfo = NULL;
+  d_archive = nullptr;
+  d_stepInfo = nullptr;
 }
 
 ReadUDA::ReadUDA(const std::string& input_uda_name) 
@@ -61,8 +61,8 @@ ReadUDA::ReadUDA(const std::string& input_uda_name)
     d_cycleTimes = getCycleTimes();
 
     // haven't loaded any timestep data yet
-    d_stepInfo = NULL;
-    d_currTimeStep = -1;
+    d_stepInfo = nullptr;
+    d_currTimestep = -1;
   } 
 }
 
@@ -83,7 +83,7 @@ bool
 ReadUDA::isUDAFile(const std::string& fileName) 
 {
   FILE * fp = fopen( filename, "r" );
-  if( fp == NULL ) {
+  if( fp == nullptr ) {
     std::ostringstream error;
     error << "Failed to open file: " << filename;
     throw InvalidFilesExpection(error.str(), __FILE__, __LINE__);
@@ -117,8 +117,8 @@ ReadUDA::getCycleTimes()
 {
 
   // Get the times and indices.
-  vector<int> index;
-  vector<double> d_cycleTimes;
+  std::vector<int> index;
+  std::vector<double> d_cycleTimes;
 
   // query time info from dataarchive
   d_archive->queryTimesteps(index, d_cycleTimes);
@@ -260,7 +260,7 @@ ReadUDA::readMesh(int timestate, int domain, const std::string& meshname)
     return ugrid;
   }
 
-  return NULL;
+  return nullptr;
 }
 
 
@@ -346,7 +346,7 @@ readUDA::readVar(int timestate, int domain, const std::string& varname)
     int qlow[3], qhigh[3]; // region we're going to ask uintah for (from qlow to qhigh-1)
     patchInfo.getBounds(qlow, qhigh, varType);
 
-    GridDataRaw *gd=NULL;
+    GridDataRaw *gd=nullptr;
 
     if (strcmp(varname, "proc_id")==0) {
       gd = new GridDataRaw;
@@ -404,14 +404,14 @@ readUDA::readVar(int timestate, int domain, const std::string& varname)
 void
 readUDA::activateTimestep(int ts)
 {
-  if (d_currTimeStep == ts) return;
+  if (d_currTimestep == ts) return;
 
   // get the uda grid for the new timestep
   setGrid(ts);
 
-  setTimeStepInfo(ts);
+  setTimestepInfo(ts);
 
-  d_currTimeStep = ts; 
+  d_currTimestep = ts; 
 }
 
 /*****************************************************************************
@@ -427,27 +427,27 @@ ReadUDA::setGrid(int timeStepNo)
 }
 
 /*****************************************************************************
- * Method: setTimeStepInfo
+ * Method: setTimestepInfo
  * Purpose: 
  *   Get all the information that may be needed for the current timestep,
  *   including variable/material info, and level/patch info
  *****************************************************************************/
 void
-ReadUDA::setTimeStepInfo(int timestep)
+ReadUDA::setTimestepInfo(int timestep)
 {
 
   // Reset timestep info
   if (d_stepInfo) {
     delete d_stepInfo;
   }
-  d_stepInfo = new TimeStepInfo();
+  d_stepInfo = new TimestepInfo();
 
   int numLevels = d_grid->numLevels();
   d_stepInfo->levelInfo.resize(numLevels);
 
   // get variable information
-  vector<std::string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<std::string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   d_archive->queryVariables(vars, types);
   d_stepInfo->varInfo.resize(vars.size());
 
@@ -572,12 +572,12 @@ ReadUDA::getGridData(int level_i, int patch_i, const std::string& variable_name,
   const Patch *patch = level->getPatch(patch_i);
 
   // figure out what the type of the variable we're querying is
-  vector<std::string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<std::string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   d_archive->queryVariables(vars, types);
 
-  const Uintah::TypeDescription* maintype = NULL;
-  const Uintah::TypeDescription* subtype = NULL;
+  const Uintah::TypeDescription* maintype = nullptr;
+  const Uintah::TypeDescription* subtype = nullptr;
 
   for (unsigned int i=0; i<vars.size(); i++) {
     if (vars[i] == variable_name) {
@@ -588,34 +588,34 @@ ReadUDA::getGridData(int level_i, int patch_i, const std::string& variable_name,
 
   if (!maintype || !subtype) {
     cerr<<"couldn't find variable " << variable_name<<endl;
-    return NULL;
+    return nullptr;
   }
 
   switch (maintype->getType()) {
 
-  case Uintah::TypeDescription::CCVariable:
+  case Uintah::TypeDescription::Type::CCVariable:
     return getGridDataMainType<CCVariable>(patch, level, variable_name, material, timestep, 
                                            low, high, subtype);
 
-  case Uintah::TypeDescription::NCVariable:
+  case Uintah::TypeDescription::Type::NCVariable:
     return getGridDataMainType<NCVariable>(patch, level, variable_name, material, timestep, 
                                            low, high, subtype);
 
-  case Uintah::TypeDescription::SFCXVariable:
+  case Uintah::TypeDescription::Type::SFCXVariable:
     return getGridDataMainType<SFCXVariable>(patch, level, variable_name, material, timestep, 
                                              low, high, subtype);
 
-  case Uintah::TypeDescription::SFCYVariable:
+  case Uintah::TypeDescription::Type::SFCYVariable:
     return getGridDataMainType<SFCYVariable>(patch, level, variable_name, material, timestep, 
                                              low, high, subtype);
 
-  case Uintah::TypeDescription::SFCZVariable:
+  case Uintah::TypeDescription::Type::SFCZVariable:
     return getGridDataMainType<SFCZVariable>(patch, level, variable_name, material, timestep, 
                                              low, high, subtype);
 
   default:
-    cerr << "Type is unknown.\n";
-    return NULL;
+    std::cerr <<  "Type is unknown.\n";
+    return nullptr;
   }
 }
 
@@ -639,37 +639,37 @@ ReadUDA::getGridDataMainType(const Patch *patch,
 {
   switch (subtype->getType()) {
 
-  case Uintah::TypeDescription::double_type:
+  case Uintah::TypeDescription::Type::double_type:
     return readGridData<VAR, double>(d_archive, patch, level, variable_name, material, 
                                      timestep, low, high);
 
-  case Uintah::TypeDescription::float_type:
+  case Uintah::TypeDescription::Type::float_type:
     return readGridData<VAR, float>(d_archive, patch, level, variable_name, material, 
                                     timestep, low, high);
 
-  case Uintah::TypeDescription::int_type:
+  case Uintah::TypeDescription::Type::int_type:
     return readGridData<VAR, int>(d_archive, patch, level, variable_name, material, 
                                   timestep, low, high);
 
-  case Uintah::TypeDescription::Vector:
+  case Uintah::TypeDescription::Type::Vector:
     return readGridData<VAR, Vector>(d_archive, patch, level, variable_name, material, 
                                      timestep, low, high);
 
-  case Uintah::TypeDescription::Matrix3:
+  case Uintah::TypeDescription::Type::Matrix3:
     return readGridData<VAR, Matrix3>(d_archive, patch, level, variable_name, material, 
                                       timestep, low, high);
 
-  case Uintah::TypeDescription::bool_type:
-  case Uintah::TypeDescription::short_int_type:
-  case Uintah::TypeDescription::long_type:
+  case Uintah::TypeDescription::Type::bool_type:
+  case Uintah::TypeDescription::Type::short_int_type:
+  case Uintah::TypeDescription::Type::long_type:
 
-  case Uintah::TypeDescription::long64_type:
-    cerr << "Subtype " << subtype->getName() << " is not implemented...\n";
-    return NULL;
+  case Uintah::TypeDescription::Type::long64_type:
+    std::cerr <<  "Subtype " << subtype->getName() << " is not implemented...\n";
+    return nullptr;
 
   default:
-    cerr << "Unknown subtype\n";
-    return NULL;
+    std::cerr <<  "Unknown subtype\n";
+    return nullptr;
   }
 }
 
@@ -739,12 +739,12 @@ ReadUDA::getParticleData(int level_i,
   const Patch *patch = level->getPatch(patch_i);
 
   // figure out what the type of the variable we're querying is
-  vector<std::string> vars;
-  vector<const Uintah::TypeDescription*> types;
+  std::vector<std::string> vars;
+  std::vector<const Uintah::TypeDescription*> types;
   d_archive->queryVariables(vars, types);
 
-  const Uintah::TypeDescription* maintype = NULL;
-  const Uintah::TypeDescription* subtype = NULL;
+  const Uintah::TypeDescription* maintype = nullptr;
+  const Uintah::TypeDescription* subtype = nullptr;
 
   for (unsigned int i=0; i<vars.size(); i++) {
     if (vars[i] == variable_name) {
@@ -755,35 +755,35 @@ ReadUDA::getParticleData(int level_i,
 
   if (!maintype || !subtype) {
     cerr<<"couldn't find variable " << variable_name<<endl;
-    return NULL;
+    return nullptr;
   }
 
   switch (subtype->getType()) {
 
-  case Uintah::TypeDescription::double_type:
+  case Uintah::TypeDescription::Type::double_type:
     return readParticleData<double>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::float_type:
+  case Uintah::TypeDescription::Type::float_type:
     return readParticleData<float>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::int_type:
+  case Uintah::TypeDescription::Type::int_type:
     return readParticleData<int>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::long64_type:
+  case Uintah::TypeDescription::Type::long64_type:
     return readParticleData<long64>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::Point:
+  case Uintah::TypeDescription::Type::Point:
     return readParticleData<Point>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::Vector:
+  case Uintah::TypeDescription::Type::Vector:
     return readParticleData<Vector>(patch, variable_name, material, timestep);
 
-  case Uintah::TypeDescription::Matrix3:
+  case Uintah::TypeDescription::Type::Matrix3:
     return readParticleData<Matrix3>(patch, variable_name, material, timestep);
 
   default:
-    cerr << "Unknown subtype for particle data: " << subtype->getName() << "\n";
-    return NULL;
+    std::cerr <<  "Unknown subtype for particle data: " << subtype->getName() << "\n";
+    return nullptr;
   }
 }
 
@@ -818,7 +818,7 @@ ReadUDA::ParticleDataRaw* readParticleData(const Patch* patch,
   }
 
   // first get all the particle subsets so that we know how many total particles we'll have
-  vector<ParticleVariable<T>*> particle_vars;
+  std::vector<ParticleVariable<T>*> particle_vars;
   for (auto matlIter = matlsForVar.begin(); matlIter != matlsForVar.end(); matlIter++ ) {
     int matl = *matlIter;
 

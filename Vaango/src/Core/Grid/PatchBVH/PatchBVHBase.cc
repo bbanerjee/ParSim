@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,38 +23,28 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <Core/Grid/PatchBVH/PatchBVH.h>
+
 namespace Uintah {
- 
 
-  /**************************************
+/**************************************
+  CLASS
+  PatchBVH
 
-    CLASS
-    PatchBVH
+  A Bounding Volume Hiearchy for querying patches that are
+  within a given range.
 
-    A Bounding Volume Hiearchy for querying patches that are 
-    within a given range.
+  GENERAL INFORMATION
 
-    GENERAL INFORMATION
+  PatchBVH.h
 
-    PatchBVH.h
+  Justin Luitjens
+  Department of Computer Science
+  University of Utah
 
-    Justin Luitjens
-    Department of Computer Science
-    University of Utah
+  Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+ ****************************************/
 
-    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-
-
-    KEYWORDS
-    PatchBVH
-
-    DESCRIPTION
-    The PatchBVH is used for querying patches within a given range.
-    WARNING
-
-   ****************************************/
-  unsigned int PatchBVHBase::leafSize_=4;
+unsigned int PatchBVHBase::leafSize_ = 4;
 
 } // end namespace Uintah

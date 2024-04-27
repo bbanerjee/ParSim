@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -100,7 +100,7 @@ public:
                          bool output_cm_tag = true) override;
 
   // clone
-  TabularPlasticity* clone() override;
+  std::unique_ptr<ConstitutiveModel> clone() override;
 
   /*! Get parameters */
   ParameterDict getParameters() const
@@ -186,8 +186,10 @@ public:
 
 protected:
 
-  ElasticModuliModel* d_elastic;
-  YieldCondition* d_yield;
+  std::unique_ptr<ElasticModuliModel> d_elastic;
+  std::unique_ptr<YieldCondition> d_yield;
+  //std::unique_ptr<IntVar_TabularCap> d_capX;
+  std::unique_ptr<InternalVariableModel> d_capX;
   TabularData d_hydrostat;
 
   CMData d_cm;
@@ -241,9 +243,6 @@ protected:
                          const Matrix3& s,
                          const Matrix3& M) const;
 
-protected:
-
-  IntVar_TabularCap* d_capX;
 
 private:
 

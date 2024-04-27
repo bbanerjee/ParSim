@@ -45,10 +45,10 @@
 #include <string>
 #include <vector>
 
-using namespace std;
+
 
 void printCylLocs(vector<vector<double> > xLocs, vector<vector<double> > yLocs,
-                  vector<vector<double> > diaLocs,
+                  std::vector<vector<double> > diaLocs,
                   int n_bins, double RVEsize, double diam_max, int matl_num);
 
 int main()
@@ -63,14 +63,14 @@ int main()
   string infile_name = "Position_Radius.txt";
   ifstream source(infile_name.c_str());
   if(!source){
-    cerr << "File " << infile_name << " can't be opened." << endl;
+    std::cerr <<  "File " << infile_name << " can't be opened." << std::endl;
   }
 
   double x,y,r;
 
-  vector<double> xpos;
-  vector<double> ypos;
-  vector<double> radius;
+  std::vector<double> xpos;
+  std::vector<double> ypos;
+  std::vector<double> radius;
 
   // Read in the cylinders
   int num_cyls=0;
@@ -81,9 +81,9 @@ int main()
      radius.push_back(r);
   }
 
-  vector<vector<double> > xmatlLocs(n_matls);
-  vector<vector<double> > ymatlLocs(n_matls);
-  vector<vector<double> > rmatlLocs(n_matls);
+  std::vector<vector<double> > xmatlLocs(n_matls);
+  std::vector<vector<double> > ymatlLocs(n_matls);
+  std::vector<vector<double> > rmatlLocs(n_matls);
   
   // Distribute the cylinders to the appropriate materials based on
   for(int n = 0; n<num_cyls; n++){
@@ -96,9 +96,9 @@ int main()
   // Bin the cylinders according to their x-position.  No real good reason
   // to do this other than compatibility with an existing print function
   for(int i = 0; i<n_matls; i++){
-    vector<vector<double> > xbinLocs(n_bins);
-    vector<vector<double> > ybinLocs(n_bins);
-    vector<vector<double> > rbinLocs(n_bins);
+    std::vector<vector<double> > xbinLocs(n_bins);
+    std::vector<vector<double> > ybinLocs(n_bins);
+    std::vector<vector<double> > rbinLocs(n_bins);
 
     for(int k = 0; k<xmatlLocs[i].size(); k++){
       int index = (xmatlLocs[i][k]/RVEsize)*((double) n_bins);
@@ -113,11 +113,11 @@ int main()
 }
 
 void printCylLocs(vector<vector<double> > xLocs,
-                  vector<vector<double> > yLocs,
-                  vector<vector<double> > radLocs, int n_bins,
+                  std::vector<vector<double> > yLocs,
+                  std::vector<vector<double> > radLocs, int n_bins,
                   double RVEsize, double diam_max, int matl_num)
 {
-    stringstream out;
+     std::stringstream out;
     string s;
 
     out << matl_num;
@@ -127,15 +127,15 @@ void printCylLocs(vector<vector<double> > xLocs,
     string outfile_name = "Test2D." + s + ".xml";
     ofstream dest(outfile_name.c_str());
     if(!dest){
-      cerr << "File " << outfile_name << " can't be opened." << endl;
+      std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
     }
 
-    dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << endl;
-    dest << "<Uintah_Include>" << endl;
+    dest << "<?xml version='1.0' encoding='ISO-8859-1' ?>" << std::endl;
+    dest << "<Uintah_Include>" << std::endl;
     dest << "<intersection>\n";
     dest << "  <box>\n";
-    dest << "    <min>[0.0, 0.0, -10000.0]</min>" << endl;
-    dest << "    <max>[" << RVEsize << ", " << RVEsize << ",  10000.0]</max>" << endl;
+    dest << "    <min>[0.0, 0.0, -10000.0]</min>" << std::endl;
+    dest << "    <max>[" << RVEsize << ", " << RVEsize << ",  10000.0]</max>" << std::endl;
     dest << "  </box>\n\n";
 
     dest << "  <union>\n";
@@ -153,12 +153,12 @@ void printCylLocs(vector<vector<double> > xLocs,
     dest << "  </union>\n\n";
     dest << " </intersection>\n\n";
 
-    dest << "</Uintah_Include>" << endl;
+    dest << "</Uintah_Include>" << std::endl;
 
     string outfile_name2 = "Position_RadiusNew." + s + ".txt";
     ofstream dest2(outfile_name2.c_str());
     if(!dest2){
-      cerr << "File " << outfile_name << " can't be opened." << endl;
+      std::cerr <<  "File " << outfile_name << " can't be opened." << std::endl;
     }
 
     for(int k=0;k<n_bins;k++){

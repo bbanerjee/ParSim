@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,92 +28,95 @@
 #include <cstdlib>
 #include <iostream>
 
-using namespace std;
-using namespace Uintah;
+namespace Uintah {
 
-extern "C" {
-
-// These functions are called from fortran and thus need to be
-// compiled using "C" naming conventions for the symbols.
-
-void
-bombed_(char* mes, int len_mes)
+extern "C"
 {
-  cerr << "Code bombed with the following message:" << endl;
-  for (int i = 0; i < len_mes; i++) {
-    putchar(mes[i]);
-  }
-  cerr << "\n";
-  exit(1);
-  return;
-}
 
-void
-logmes_(char* mes, int len_mes)
-{
-  if (Uintah::Parallel::getMPIRank() == 0) {
+  // These functions are called from fortran and thus need to be
+  // compiled using "C" naming conventions for the symbols.
+
+  void
+  bombed_(char* mes, int len_mes)
+  {
+    std::cerr << "Code bombed with the following message:" << std::endl;
     for (int i = 0; i < len_mes; i++) {
       putchar(mes[i]);
     }
-    proc0cout << "\n";
+    std::cerr << "\n";
+    exit(1);
+    return;
   }
 
-  return;
-}
+  void
+  logmes_(char* mes, int len_mes)
+  {
+    if (Uintah::Parallel::getMPIRank() == 0) {
+      for (int i = 0; i < len_mes; i++) {
+        putchar(mes[i]);
+      }
+      proc0cout << "\n";
+    }
 
-void
-faterr_(char* mes1, char* mes2, int len_mes1, int len_mes2)
-{
-  cerr << "FATAL ERROR DETECTED BY ";
-  for (int i = 0; i < len_mes1; i++) {
-    putchar(mes1[i]);
+    return;
   }
-  cerr << ":\n";
 
-  for (int i = 0; i < len_mes2; i++) {
-    putchar(mes2[i]);
+  void
+  faterr_(char* mes1, char* mes2, int len_mes1, int len_mes2)
+  {
+    std::cerr << "FATAL ERROR DETECTED BY ";
+    for (int i = 0; i < len_mes1; i++) {
+      putchar(mes1[i]);
+    }
+    std::cerr << ":\n";
+
+    for (int i = 0; i < len_mes2; i++) {
+      putchar(mes2[i]);
+    }
+    std::cerr << "\n";
+    exit(1);
+
+    return;
   }
-  cerr << "\n";
-  exit(1);
 
-  return;
-}
-
-void
-log_error_(char* mes, int len_mes)
-{
-  cerr << "**ERROR** Code bombed with the following message:" << endl;
-  for (int i = 0; i < len_mes; i++) {
-    putchar(mes[i]);
-  }
-  cerr << "\n";
-  exit(1);
-  return;
-}
-
-void
-log_warning_(char* mes, int len_mes)
-{
-  if (Uintah::Parallel::getMPIRank() == 0) {
+  void
+  log_error_(char* mes, int len_mes)
+  {
+    std::cerr << "**ERROR** Code bombed with the following message:"
+              << std::endl;
     for (int i = 0; i < len_mes; i++) {
       putchar(mes[i]);
     }
-    proc0cout << "\n";
+    std::cerr << "\n";
+    exit(1);
+    return;
   }
 
-  return;
-}
-void
-log_message_(char* mes, int len_mes)
-{
-  if (Uintah::Parallel::getMPIRank() == 0) {
-    for (int i = 0; i < len_mes; i++) {
-      putchar(mes[i]);
+  void
+  log_warning_(char* mes, int len_mes)
+  {
+    if (Uintah::Parallel::getMPIRank() == 0) {
+      for (int i = 0; i < len_mes; i++) {
+        putchar(mes[i]);
+      }
+      proc0cout << "\n";
     }
-    proc0cout << "\n";
-  }
 
-  return;
-}
+    return;
+  }
+  void
+  log_message_(char* mes, int len_mes)
+  {
+    if (Uintah::Parallel::getMPIRank() == 0) {
+      for (int i = 0; i < len_mes; i++) {
+        putchar(mes[i]);
+      }
+      proc0cout << "\n";
+    }
+
+    return;
+  }
 
 } // end extern "C"
+
+} // namespace Uintah

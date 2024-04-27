@@ -39,7 +39,7 @@
 #include <sstream>
 
 using namespace Uintah;
-using namespace std;
+
 
 // Construct a pressure model.
 LinearElasticPressure::LinearElasticPressure(ProblemSpecP& ps)

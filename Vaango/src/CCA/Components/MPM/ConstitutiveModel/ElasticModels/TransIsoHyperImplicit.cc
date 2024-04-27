@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -36,7 +36,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Matrix3.h>
@@ -65,10 +65,10 @@ TransIsoHyperImplicit::~TransIsoHyperImplicit()
 {
 }
 
-TransIsoHyperImplicit*
+std::unique_ptr<ConstitutiveModel>
 TransIsoHyperImplicit::clone()
 {
-  return scinew TransIsoHyperImplicit(*this);
+  return std::make_unique<TransIsoHyperImplicit>(*this);
 }
 
 void
@@ -146,8 +146,8 @@ TransIsoHyperImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     solver->copyL2G(l2g, patch);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     constParticleVariable<Point> pX;
     constParticleVariable<double> pVolume_new, pMass, pFail_old;

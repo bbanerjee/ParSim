@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2023 Biswajit Banerjee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -28,11 +28,11 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 set(UT_SRCS utParticleTest.cc)
 set(VAANGO_LIBS 
-        Vaango_Core_Thread       
+               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-        Vaango_Core_Labels      
+              
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
@@ -66,5 +66,5 @@ target_link_libraries(boostTest ut_lib ${VAANGO_LIBS} ${Boost_LIBRARIES})
 #target_link_libraries(utTest0 ${Boost_LIBRARIES} ${MPI_LIBRARIES})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_ut_lib)
+  add_definitions(-DBUILD_ut_lib)
 ENDIF(BUILD_SHARED_LIBS)

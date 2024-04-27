@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,49 +25,45 @@
  */
 
 /*
- *   TypeName.h : template to return name of argument type; 
+ *   TypeName.h : template to return name of argument type;
  *                used in PIO of templatized types
- *                
+ *
  *   Created by:
  *   Alexei Samsonov
  *   Department of Computer Science
  *   University of Utah
  *   December 2000
  *
- *   
+ *
  */
 
-#include <string>
-#include <vector>
-#include <map>
-#include <Core/Datatypes/FieldIndex.h>
+#ifndef __CORE_DATATYPES_TYPENAME_H__
+#define __CORE_DATATYPES_TYPENAME_H__
+
 #include <Core/Containers/LockingHandle.h>
 
-#include <Core/Datatypes/share.h>
-
-#ifndef TYPENAME_H
-#define TYPENAME_H
+#include <map>
+#include <string>
+#include <vector>
 
 namespace Uintah {
-
-using std::string;
-using std::vector;
-using std::pair;
 
 static const char FTNS = '<';
 static const char FTNM = ',';
 static const char FTNE = '>';
 
-
 //////////
 // Function to return name of type of its argument
-template <class T> const string find_type_name(T*)
+template<class T>
+const std::string
+find_type_name(T*)
 {
   return T::type_name(-1);
 }
 
-
-template<class T, class S> const string find_type_name( pair<T,S> *);
+template<class T, class S>
+const std::string
+find_type_name(std::pair<T, S>*);
 
 class Vector;
 class IntVector;
@@ -99,59 +73,134 @@ class Matrix;
 class NrrdData;
 class Field;
 
-template<> SCISHARE const string find_type_name(float*);
-template<> SCISHARE const string find_type_name(double*);
-template<> SCISHARE const string find_type_name(long double*);
-template<> SCISHARE const string find_type_name(short*);
-template<> SCISHARE const string find_type_name(unsigned short*);
-template<> SCISHARE const string find_type_name(int*);
-template<> SCISHARE const string find_type_name(unsigned int*);
-template<> SCISHARE const string find_type_name(long*);
-template<> SCISHARE const string find_type_name(unsigned long*);
-template<> SCISHARE const string find_type_name(long long*);
-template<> SCISHARE const string find_type_name(unsigned long long*);
-template<> SCISHARE const string find_type_name(char*);
-template<> SCISHARE const string find_type_name(unsigned char*);
-template<> SCISHARE const string find_type_name(bool*);
-template<> SCISHARE const string find_type_name(Vector*);
-template<> SCISHARE const string find_type_name(IntVector*);
-template<> SCISHARE const string find_type_name(Point*);
-template<> SCISHARE const string find_type_name(Transform*);
-template<> SCISHARE const string find_type_name(string*);
+template<>
+const std::string
+find_type_name(float*);
 
-template<> SCISHARE const string find_type_name(LockingHandle<Matrix> *);
-template<> SCISHARE const string find_type_name(LockingHandle<NrrdData> *);
-template<> SCISHARE const string find_type_name(LockingHandle<Field> *);
+template<>
+const std::string
+find_type_name(double*);
+
+template<>
+const std::string
+find_type_name(long double*);
+
+template<>
+const std::string
+find_type_name(short*);
+
+template<>
+const std::string
+find_type_name(unsigned short*);
+
+template<>
+const std::string
+find_type_name(int*);
+
+template<>
+const std::string
+find_type_name(unsigned int*);
+
+template<>
+const std::string
+find_type_name(long*);
+
+template<>
+const std::string
+find_type_name(unsigned long*);
+
+template<>
+const std::string
+find_type_name(long long*);
+
+template<>
+const std::string
+find_type_name(unsigned long long*);
+
+template<>
+const std::string
+find_type_name(char*);
+
+template<>
+const std::string
+find_type_name(unsigned char*);
+
+template<>
+const std::string
+find_type_name(bool*);
+
+template<>
+const std::string
+find_type_name(Vector*);
+
+template<>
+const std::string
+find_type_name(IntVector*);
+
+template<>
+const std::string
+find_type_name(Point*);
+
+template<>
+const std::string
+find_type_name(std::string*);
+
+template<>
+const std::string
+find_type_name(LockingHandle<Matrix>*);
+
+template<>
+const std::string
+find_type_name(LockingHandle<NrrdData>*);
+
+template<>
+const std::string
+find_type_name(LockingHandle<Field>*);
 
 //////////
-// Function overloading for templates 
-template<class T> class Array1;
-template<class T> class Array2;
+// Function overloading for templates
+template<class T>
+class Array1;
 
-template <class T> const string find_type_name(Array1<T>*)
+template<class T>
+class Array2;
+
+template<class T>
+const std::string
+find_type_name(Array1<T>*)
 {
-  static const string name = string("Array1") + FTNS + find_type_name((T*)0) + FTNE;
+  static const std::string name =
+    std::string("Array1") + FTNS + find_type_name((T*)0) + FTNE;
   return name;
 }
 
-template <class T> const string find_type_name(Array2<T>*)
+template<class T>
+const std::string
+find_type_name(Array2<T>*)
 {
-  static const string name = string("Array2") + FTNS + find_type_name((T*)0) + FTNE;
+  static const std::string name =
+    std::string("Array2") + FTNS + find_type_name((T*)0) + FTNE;
   return name;
 }
 
-template <class T> const string find_type_name(vector<T>*)
+template<class T>
+const std::string
+find_type_name(std::vector<T>*)
 {
-  static const string name = string("vector") + FTNS + find_type_name((T*)0) + FTNE;
+  static const std::string name =
+    std::string("vector") + FTNS + find_type_name((T*)0) + FTNE;
   return name;
 }
 
-template<class T, class S> const string find_type_name( pair<T,S> *)
+template<class T, class S>
+const std::string
+find_type_name(std::pair<T, S>*)
 {
-  static const string name = string("pair") + FTNS + find_type_name((T*)0) + FTNM + find_type_name((S*)0) + FTNE;
+  static const std::string name = std::string("pair") + FTNS + find_type_name((T*)0) +
+                             FTNM + find_type_name((S*)0) + FTNE;
   return name;
 }
 
 } // namespace Uintah
 
-#endif
+#endif //__CORE_DATATYPES_TYPENAME_H__

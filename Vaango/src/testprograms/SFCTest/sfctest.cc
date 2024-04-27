@@ -47,9 +47,9 @@
  */
 
 #include <iostream>
-using namespace std;
 
-#include <CCA/Ports/SFC.h>
+
+#include <CCA/Ports/SpaceFillingCurve>
 #include <Core/Parallel/Parallel.h>
 #include<Core/Thread/Time.h>
 using namespace Uintah;
@@ -62,7 +62,7 @@ using namespace Uintah;
 #define LOCS float
 int main(int argc, char** argv)
 {
-	Uintah::Parallel::determineIfRunningUnderMPI( argc, argv);	
+	//Uintah::Parallel::determineIfRunningUnderMPI( argc, argv);	
 	Uintah::Parallel::initializeManager( argc, argv, "");
 	ProcessorGroup *d_myworld=Uintah::Parallel::getRootProcessorGroup();
   MPI_Comm Comm=d_myworld->getComm();	
@@ -76,14 +76,14 @@ int main(int argc, char** argv)
 
 	int div=(int)pow((float)DIM,ref);
 	
-	unsigned int P=d_myworld->size();
+	unsigned int P=d_myworld->nRanks();
 	unsigned int N=(unsigned int)pow((float)BINS,ref);
 	unsigned int n=N/P;
 	int rem=N%P;
-	int rank=d_myworld->myrank();
+	int rank=d_myworld->myRank();
 	LOCS xx,yy;
 
-  SFC<LOCS> mycurve(d_myworld);
+  SpaceFillingCurve<LOCS> mycurve(d_myworld);
   
 
 
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
   mycurve.SetCenter(center);
 
   if(rank==0)
-    cout << " Generating curve in parallel\n";
+    std::cout << " Generating curve in parallel\n";
 
   MPI_Barrier(Comm);
   
@@ -166,7 +166,7 @@ int main(int argc, char** argv)
   mycurve.GenerateCurve();
   double finish=Time::currentSeconds();
   
-  cout << rank << ": Time to generate curve:" << finish-start << endl;
+  std::cout << rank << ": Time to generate curve:" << finish-start << std::endl;
 
   MPI_Barrier(Comm);
 
@@ -176,20 +176,20 @@ int main(int argc, char** argv)
   mycurve.SetLocations(&locss);
   
   if(rank==0)
-    cout << " Generating curve in serial\n";
+    std::cout << " Generating curve in serial\n";
   MPI_Barrier(Comm);
 
   start=Time::currentSeconds();
   mycurve.GenerateCurve(true);
   finish=Time::currentSeconds();
   
-  cout << rank << ": Time to generate curve:" << finish-start << endl;
+  std::cout << rank << ": Time to generate curve:" << finish-start << std::endl;
 
   MPI_Barrier(Comm);
 
   if(rank==0)
   {
-    cout << "Verifying curve\n";
+    std::cout << "Verifying curve\n";
 	  unsigned int pn=N/P;
     unsigned int j=0,r;
     unsigned int starti;
@@ -207,15 +207,15 @@ int main(int argc, char** argv)
       int index1=starti  + orders[i].i;
       int index2=orderss[j].i;
       if(index1!=index2)
-        cout << j << ": " << index1 << "!=" << index2 << "\n";
+        std::cout << j << ": " << index1 << "!=" << index2 << "\n";
 
-      //cout << "index1:" << orders[i].p << ":" << orders[i].i << " index2:" << orderss[j].p << ":" << orderss[j].i << endl;
+      //cout << "index1:" << orders[i].p << ":" << orders[i].i << " index2:" << orderss[j].p << ":" << orderss[j].i << std::endl;
       j++;
     }
 
-    n=N/d_myworld->size();
+    n=N/d_myworld->nRanks();
     MPI_Status status;
-    for(int p=1;p<d_myworld->size();p++)
+    for(int p=1;p<d_myworld->nRanks();p++)
     {
       if(p<rem)
         r=n+1;
@@ -237,8 +237,8 @@ int main(int argc, char** argv)
         int index1=starti  + orders[i].i;
         int index2=orderss[j].i;
         if(index1!=index2)
-          cout << j << ": " << index1 << "!=" << index2 <<  "\n";
-        //cout << "index1:" << orders[i].p << ":" << orders[i].i << " index2:" << orderss[j].p << ":" << orderss[j].i << endl;
+          std::cout << j << ": " << index1 << "!=" << index2 <<  "\n";
+        //cout << "index1:" << orders[i].p << ":" << orders[i].i << " index2:" << orderss[j].p << ":" << orderss[j].i << std::endl;
         j++;
       }
     }

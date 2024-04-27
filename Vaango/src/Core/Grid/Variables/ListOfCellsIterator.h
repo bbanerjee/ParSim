@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,145 +24,200 @@
  * IN THE SOFTWARE.
  */
 
+#ifndef __CORE_GRID_VARIABLES_ListOfCellsIterator_H__
+#define __CORE_GRID_VARIABLES_ListOfCellsIterator_H__
 
-#ifndef UINTAH_HOMEBREW_ListOfCellsIterator_H
-#define UINTAH_HOMEBREW_ListOfCellsIterator_H
+#include <Core/Grid/Variables/BaseIterator.h>
+#include <Core/Grid/Variables/Iterator.h>
+
+#include <Core/Geometry/IntVector.h>
+#include <Core/Malloc/Allocator.h>
 
 #include <climits>
 #include <vector>
 
-#include <Core/Geometry/IntVector.h>
-#include <Core/Malloc/Allocator.h>
-#include <Core/Grid/Variables/BaseIterator.h>
 namespace Uintah {
 
-  using Uintah::IntVector;
+class ListOfCellsIterator : public BaseIterator
+{
+  friend std::ostream&
+  operator<<(std::ostream& out, const Uintah::ListOfCellsIterator& b);
 
-  /**************************************
+public:
 
-    CLASS
-    ListOfCellsIterator
+  ListOfCellsIterator(int size)
+    : d_size{ 0 }
+    , d_index{ 0 }
+    , d_list_of_cells(size + 1)
+  {
+    d_list_of_cells[d_size] = IntVector(INT_MAX, INT_MAX, INT_MAX);
+  }
 
-    Base class for all iterators
+  ListOfCellsIterator(const ListOfCellsIterator& copy)
+    : d_list_of_cells(copy.d_list_of_cells)
+  {
+    reset();
+  }
 
-    GENERAL INFORMATION
+  ListOfCellsIterator&
+  operator=(const ListOfCellsIterator& copy)
+  {
+    d_list_of_cells = copy.d_list_of_cells;
+    reset();
+    return *this;
+  }
 
-    ListOfCellsIterator.h
+  /**
+   * prefix operator to move the iterator forward
+   */
+  ListOfCellsIterator&
+  operator++()
+  {
+    d_index++;
+    return *this;
+  }
 
-    Justin Luitjens
-    Department of Computer Science
-    University of Utah
+  /**
+   * postfix operator to move the iterator forward
+   * does not return the iterator because of performance issues
+   */
+  void
+  operator++(int)
+  {
+    d_index++;
+  }
 
-    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+  /**
+   * returns true if the iterator is done
+   */
+  bool
+  done() const
+  {
+    return d_index == d_size;
+  }
 
+  /**
+   * returns the IntVector that the current iterator is pointing at
+   */
+  IntVector
+  operator*() const
+  {
+    ASSERT(d_index < d_list_of_cells.size());
+    return d_list_of_cells[d_index];
+  }
 
-    KEYWORDS
-    ListOfCellsIterator
+  /**
+   * Assignment operator - this is expensive as we have to allocate new memory
+   */
+  inline ListOfCellsIterator&
+  operator=(Iterator& copy)
+  {
+    // delete old iterator
+    int i = 0;
 
-    DESCRIPTION
-    Base class for all iterators.
-
-    WARNING
-
-   ****************************************/
-
-  class ListOfCellsIterator : public BaseIterator {
-
-    friend std::ostream& operator<<(std::ostream& out, const Uintah::ListOfCellsIterator& b);
-
-    public:
-
-    ListOfCellsIterator() : index_(0) { listOfCells_.push_back(IntVector(INT_MAX,INT_MAX,INT_MAX)); }
-
-  ListOfCellsIterator(const ListOfCellsIterator &copy) : listOfCells_(copy.listOfCells_) {reset(); }
-
-    /**
-     * prefix operator to move the iterator forward
-     */
-    ListOfCellsIterator& operator++() {index_++; return *this;} 
-
-    /**
-     * postfix operator to move the iterator forward
-     * does not return the iterator because of performance issues
-     */
-    void operator++(int) {index_++;} 
-
-    /**
-     * returns true if the iterator is done
-     */    
-    bool done() const { return index_==listOfCells_.size()-1; }
-
-    /**
-     * returns the IntVector that the current iterator is pointing at
-     */
-    IntVector operator*() const { ASSERT(index_<listOfCells_.size()); return listOfCells_[index_]; }
-
-    /**
-     * Return the first element of the iterator
-     */
-    inline IntVector begin() const { return listOfCells_.front(); }
-
-    /**
-     * Return one past the last element of the iterator
-     */
-    inline IntVector end() const { return listOfCells_.back(); }
-    
-    /**
-     * Return the number of cells in the iterator
-     */
-    inline unsigned int size() const {return listOfCells_.size()-1;};
-
-    /**
-     * adds a cell to the list of cells
-     */
-    inline void add(const IntVector& c) 
-    {
-      //place at back of list
-      listOfCells_.back()=c;
-      //readd sentinal to list
-      listOfCells_.push_back(IntVector(INT_MAX,INT_MAX,INT_MAX));
+    // copy iterator into portable container
+    for (copy.reset(); !copy.done(); copy++) {
+      d_list_of_cells[i] = (*copy);
+      i++;
     }
 
+    d_size = i;
+    return *this;
+  }
 
-    /**
-     * resets the iterator
-     */
-    inline void reset()
-    {
-      index_=0;
-    }
+  /**
+   * Return the first element of the iterator
+   */
+  inline IntVector
+  begin() const
+  {
+    return d_list_of_cells[0];
+  }
 
-    protected:
-    /**
-     * Returns a pointer to a deep copy of the virtual class
-     * this should be used only by the Iterator class
-     */
-    ListOfCellsIterator* clone() const
-    {
-      return scinew ListOfCellsIterator(*this);
+  /**
+   * Return one past the last element of the iterator
+   */
+  inline IntVector
+  end() const
+  {
+    return d_list_of_cells[d_size];
+  }
 
-    };
-    
-    virtual std::ostream& put(std::ostream& out) const
-    {
-      out << *this;
-      return out;
-    }
+  /**
+   * Return the number of cells in the iterator
+   */
+  inline unsigned int
+  size() const
+  {
+    return d_size;
+  };
 
-    virtual std::ostream& limits(std::ostream& out) const
-    {
-      out << begin() << " " << end();
-      return out;
-    }
+  /**
+   * adds a cell to the list of cells
+   */
+  inline void
+  add(const IntVector& c)
+  {
+    // place at back of list
+    d_list_of_cells[d_size] = c;
 
-    //vector to store cells
-    std::vector<IntVector> listOfCells_;
+    // read sentinel to list
+    d_list_of_cells[d_size] = IntVector(INT_MAX, INT_MAX, INT_MAX);
+  }
 
-    //index into the iterator
-    unsigned int index_;
+  /**
+   * resets the iterator
+   */
+  inline void
+  reset()
+  {
+    d_index = 0;
+  }
 
-    }; // end class ListOfCellsIterator
+  inline std::vector<IntVector>&
+  get_ref_to_iterator()
+  {
+    return d_list_of_cells;
+  }
+
+protected:
+
+  ListOfCellsIterator() {}
+
+  /**
+   * Returns a pointer to a deep copy of the virtual class
+   * this should be used only by the Iterator class
+   */
+  ListOfCellsIterator*
+  clone() const
+  {
+    return scinew ListOfCellsIterator(*this);
+  };
+
+  virtual std::ostream&
+  put(std::ostream& out) const
+  {
+    out << *this;
+    return out;
+  }
+
+  virtual std::ostream&
+  limits(std::ostream& out) const
+  {
+    out << begin() << " " << end();
+    return out;
+  }
+
+  size_t d_size{ 0 };
+
+  // index into the iterator
+  size_t d_index{ 0 };
+
+  // vector to store cells
+  std::vector<IntVector> d_list_of_cells;
+
+}; // end class ListOfCellsIterator
 
 } // End namespace Uintah
-  
-#endif
+
+#endif //__CORE_GRID_VARIABLES_ListOfCellsIterator_H__

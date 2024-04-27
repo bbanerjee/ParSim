@@ -25,8 +25,8 @@
 #ifndef Vaango_Peridynamics_ut_utParticleTest_h
 #define Vaango_Peridynamics_ut_utParticleTest_h
 
-#include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsLabel.h>
+#include <CCA/Components/Peridynamics/Core/PeridynamicsFlags.h>
 #include <CCA/Components/Peridynamics/GradientComputer/PeridynamicsDefGradComputer.h>
 #include <CCA/Components/Peridynamics/InternalForceComputer/BondInternalForceComputer.h>
 #include <CCA/Components/Peridynamics/InternalForceComputer/ParticleInternalForceComputer.h>
@@ -34,17 +34,17 @@
 
 #include <CCA/Components/MPM/Contact/Contact.h>
 
-#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/MaterialManagerP.h>
 #include <CCA/Ports/SimulationInterface.h>
 
 #include <Core/Parallel/UintahParallelComponent.h>
 
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
-#include <Core/Grid/SimpleMaterial.h>
+#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/ParticleInterpolator.h>
+#include <Core/Grid/MPMInterpolators/ParticleInterpolator.h>
 
 #include <Core/Geometry/Vector.h>
 
@@ -73,7 +73,7 @@ namespace Vaango {
     virtual void problemSetup(const Uintah::ProblemSpecP& params, 
                               const Uintah::ProblemSpecP& restart_prob_spec, 
                               Uintah::GridP& grid, 
-                              Uintah::SimulationStateP& state);
+                              Uintah::MaterialManagerP& mat_manager);
     virtual void scheduleInitialize(const Uintah::LevelP& level,
 				                    Uintah::SchedulerP& sched);
     virtual void scheduleComputeStableTimestep(const Uintah::LevelP& level,
@@ -100,10 +100,11 @@ namespace Vaango {
 		             Uintah::DataWarehouse* old_dw, 
                      Uintah::DataWarehouse* new_dw);
 
-    Uintah::SimulationStateP d_sharedState;
+    Uintah::MaterialManagerP 
+ d_mat_manager;
     PeridynamicsLabel* d_labels;
     PeridynamicsFlags* d_flags;
-    Uintah::SimpleMaterial* d_mymat;
+    Uintah::EmptyMaterial* d_mymat;
 
     int d_doOutput;
     int d_numGhostCells;

@@ -23,11 +23,10 @@
  */
 
 #include <Core/Disclosure/TypeUtils.h>
+#include <Core/Geometry/Vector.h>
 #include <Core/Grid/Variables/SoleVariable.h>
 #include <Core/Util/FancyAssert.h>
-#include <Core/Geometry/Vector.h>
 
-using namespace Uintah;
 using namespace Uintah;
 
 namespace Uintah { // <- This is necessary for IBM SP AIX xlC Compiler
@@ -36,56 +35,55 @@ template<>
 void
 SoleVariable<double>::getMPIInfo(int& count, MPI_Datatype& datatype)
 {
-   datatype = MPI_DOUBLE;
-   count = 1;
+  datatype = MPI_DOUBLE;
+  count    = 1;
 }
 
 template<>
 void
-SoleVariable<double>::getMPIData(vector<char>& data, int& index)
+SoleVariable<double>::getMPIData(std::vector<char>& data, int& index)
 {
-  ASSERTRANGE(index, 0, static_cast<int>(data.size()+1-sizeof(double)));
+  ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
-  *ptr = value;
+  *ptr        = value;
   index += sizeof(double);
 }
 
 template<>
 void
-SoleVariable<double>::putMPIData(vector<char>& data, int& index)
+SoleVariable<double>::putMPIData(std::vector<char>& data, int& index)
 {
-  ASSERTRANGE(index, 0, static_cast<int>(data.size()+1-sizeof(double)));
+  ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(double)));
   double* ptr = reinterpret_cast<double*>(&data[index]);
-  value = *ptr;
+  value       = *ptr;
   index += sizeof(double);
 }
-
 
 template<>
 void
 SoleVariable<int>::getMPIInfo(int& count, MPI_Datatype& datatype)
 {
-   datatype = MPI_INT;
-   count = 1;
+  datatype = MPI_INT;
+  count    = 1;
 }
 
 template<>
 void
-SoleVariable<int>::getMPIData(vector<char>& data, int& index)
+SoleVariable<int>::getMPIData(std::vector<char>& data, int& index)
 {
-  ASSERTRANGE(index, 0, static_cast<int>(data.size()+1-sizeof(int)));
+  ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(int)));
   int* ptr = reinterpret_cast<int*>(&data[index]);
-  *ptr = value;
+  *ptr     = value;
   index += sizeof(int);
 }
 
 template<>
 void
-SoleVariable<int>::putMPIData(vector<char>& data, int& index)
+SoleVariable<int>::putMPIData(std::vector<char>& data, int& index)
 {
-  ASSERTRANGE(index, 0, static_cast<int>(data.size()+1-sizeof(int)));
+  ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(int)));
   int* ptr = reinterpret_cast<int*>(&data[index]);
-  value = *ptr;
+  value    = *ptr;
   index += sizeof(int);
 }
 
@@ -93,29 +91,28 @@ template<>
 void
 SoleVariable<bool>::getMPIInfo(int& count, MPI_Datatype& datatype)
 {
-   datatype = MPI_CHAR;
-   count = 1;
+  datatype = MPI_CHAR;
+  count    = 1;
 }
 
 template<>
 void
-SoleVariable<bool>::getMPIData(vector<char>& data, int& index)
+SoleVariable<bool>::getMPIData(std::vector<char>& data, int& index)
 {
-  ASSERTRANGE(index, 0, static_cast<int>(data.size()+1-sizeof(char)));
+  ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(char)));
   char* ptr = reinterpret_cast<char*>(&data[index]);
-  *ptr = value;
+  *ptr      = value;
   index += sizeof(char);
 }
 
 template<>
 void
-SoleVariable<bool>::putMPIData(vector<char>& data, int& index)
+SoleVariable<bool>::putMPIData(std::vector<char>& data, int& index)
 {
-  ASSERTRANGE(index, 0, static_cast<int>(data.size()+1-sizeof(char)));
+  ASSERTRANGE(index, 0, static_cast<int>(data.size() + 1 - sizeof(char)));
   char* ptr = reinterpret_cast<char*>(&data[index]);
-  value = *ptr;
+  value     = *ptr;
   index += sizeof(char);
 }
-
 
 } // end namespace Uintah

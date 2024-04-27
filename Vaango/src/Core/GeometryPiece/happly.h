@@ -1284,7 +1284,7 @@ public:
     using std::string;
     using std::vector;
 
-    if (verbose) cout << "PLY parser: Reading ply file: " << filename << endl;
+    if (verbose) std::cout << "PLY parser: Reading ply file: " << filename << std::endl;
 
     // Open a file in binary always, in case it turns out to have binary data.
     std::ifstream inStream(filename, std::ios::binary);
@@ -1295,14 +1295,14 @@ public:
     parsePLY(inStream, verbose);
 
     if (verbose) {
-      cout << "  - Finished parsing file." << endl;
+      std::cout << "  - Finished parsing file." << std::endl;
     }
   }
 
   /**
    * @brief Initialize a PLYData by reading from a stringstream. Throws if any failures occur.
    *
-   * @param inStream The stringstream to read from.
+   * @param inStream The  std::stringstream to read from.
    * @param verbose If true, print useful info about the file to stdout
    */
   PLYData(std::istream& inStream, bool verbose = false) {
@@ -1310,12 +1310,12 @@ public:
     using std::cout;
     using std::endl;
 
-    if (verbose) cout << "PLY parser: Reading ply file from stream" << endl;
+    if (verbose) std::cout << "PLY parser: Reading ply file from stream" << std::endl;
 
     parsePLY(inStream, verbose);
 
     if (verbose) {
-      cout << "  - Finished parsing stream." << endl;
+      std::cout << "  - Finished parsing stream." << std::endl;
     }
   }
 
@@ -1713,7 +1713,7 @@ private:
     { // second line is version
       string styleLine;
       std::getline(inStream, styleLine);
-      vector<string> tokens = tokenSplit(styleLine);
+      std::vector<std::string> tokens = tokenSplit(styleLine);
       if (tokens.size() != 3) throw std::runtime_error("PLY parser: bad format line");
       std::string formatStr = tokens[0];
       std::string typeStr = tokens[1];
@@ -1725,13 +1725,13 @@ private:
       // ascii/binary
       if (typeStr == "ascii") {
         inputDataFormat = DataFormat::ASCII;
-        if (verbose) cout << "  - Type: ascii" << endl;
+        if (verbose) std::cout << "  - Type: ascii" << std::endl;
       } else if (typeStr == "binary_little_endian") {
         inputDataFormat = DataFormat::Binary;
-        if (verbose) cout << "  - Type: binary" << endl;
+        if (verbose) std::cout << "  - Type: binary" << std::endl;
       } else if (typeStr == "binary_big_endian") {
         inputDataFormat = DataFormat::BinaryBigEndian;
-        if (verbose) cout << "  - Type: binary big endian" << endl;
+        if (verbose) std::cout << "  - Type: binary big endian" << std::endl;
       } else {
         throw std::runtime_error("PLY parser: bad format line");
       }
@@ -1740,7 +1740,7 @@ private:
       if (versionStr != "1.0") {
         throw std::runtime_error("PLY parser: encountered file with version != 1.0. Don't know how to parse that");
       }
-      if (verbose) cout << "  - Version: " << versionStr << endl;
+      if (verbose) std::cout << "  - Version: " << versionStr << std::endl;
     }
 
     // Consume header line by line
@@ -1751,7 +1751,7 @@ private:
       // Parse a comment
       if (startsWith(line, "comment")) {
         string comment = line.substr(8);
-        if (verbose) cout << "  - Comment: " << comment << endl;
+        if (verbose) std::cout << "  - Comment: " << comment << std::endl;
         comments.push_back(comment);
         continue;
       }
@@ -1759,27 +1759,27 @@ private:
       // Parse an obj_info comment
       if (startsWith(line, "obj_info")) {
         string infoComment = line.substr(9);
-        if (verbose) cout << "  - obj_info: " << infoComment << endl;
+        if (verbose) std::cout << "  - obj_info: " << infoComment << std::endl;
         objInfoComments.push_back(infoComment);
         continue;
       }
 
       // Parse an element
       else if (startsWith(line, "element")) {
-        vector<string> tokens = tokenSplit(line);
+        std::vector<std::string> tokens = tokenSplit(line);
         if (tokens.size() != 3) throw std::runtime_error("PLY parser: Invalid element line");
         string name = tokens[1];
         size_t count;
         std::istringstream iss(tokens[2]);
         iss >> count;
         elements.emplace_back(name, count);
-        if (verbose) cout << "  - Found element: " << name << " (count = " << count << ")" << endl;
+        if (verbose) std::cout << "  - Found element: " << name << " (count = " << count << ")" << std::endl;
         continue;
       }
 
       // Parse a property list
       else if (startsWith(line, "property list")) {
-        vector<string> tokens = tokenSplit(line);
+        std::vector<std::string> tokens = tokenSplit(line);
         if (tokens.size() != 5) throw std::runtime_error("PLY parser: Invalid property list line");
         if (elements.size() == 0) throw std::runtime_error("PLY parser: Found property list without previous element");
         string countType = tokens[2];
@@ -1787,20 +1787,20 @@ private:
         string name = tokens[4];
         elements.back().properties.push_back(createPropertyWithType(name, type, true, countType));
         if (verbose)
-          cout << "    - Found list property: " << name << " (count type = " << countType << ", data type = " << type
-               << ")" << endl;
+          std::cout << "    - Found list property: " << name << " (count type = " << countType << ", data type = " << type
+               << ")" << std::endl;
         continue;
       }
 
       // Parse a property
       else if (startsWith(line, "property")) {
-        vector<string> tokens = tokenSplit(line);
+        std::vector<std::string> tokens = tokenSplit(line);
         if (tokens.size() != 3) throw std::runtime_error("PLY parser: Invalid property line");
         if (elements.size() == 0) throw std::runtime_error("PLY parser: Found property without previous element");
         string type = tokens[1];
         string name = tokens[2];
         elements.back().properties.push_back(createPropertyWithType(name, type, false, ""));
-        if (verbose) cout << "    - Found property: " << name << " (type = " << type << ")" << endl;
+        if (verbose) std::cout << "    - Found property: " << name << " (type = " << type << ")" << std::endl;
         continue;
       }
 
@@ -1842,7 +1842,7 @@ private:
         string line;
         std::getline(inStream, line);
 
-        vector<string> tokens = tokenSplit(line);
+        std::vector<std::string> tokens = tokenSplit(line);
         size_t iTok = 0;
         for (size_t iP = 0; iP < elem.properties.size(); iP++) {
           elem.properties[iP]->parseNext(tokens, iTok);

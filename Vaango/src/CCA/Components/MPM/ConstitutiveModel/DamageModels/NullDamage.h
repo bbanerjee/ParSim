@@ -46,8 +46,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __NULL_DAMAGE_MODEL_H__
-#define __NULL_DAMAGE_MODEL_H__
+#ifndef __nullptr_DAMAGE_MODEL_H__
+#define __nullptr_DAMAGE_MODEL_H__
 
 #include "DamageModel.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -110,4 +110,4 @@ public:
 
 } // End namespace Uintah
 
-#endif // __NULL_DAMAGE_MODEL_H__
+#endif // __nullptr_DAMAGE_MODEL_H__

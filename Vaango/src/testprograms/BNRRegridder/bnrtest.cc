@@ -56,7 +56,7 @@ using namespace Uintah;
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+
 const int X_RES=10, Y_RES=10;
 float prob=.98;
 int f_array[X_RES][Y_RES]=
@@ -89,12 +89,12 @@ int f_array[X_RES][Y_RES]=
 */
 int main(int argc, char** argv)
 {
-	Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
+	//Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
 	Uintah::Parallel::initializeManager( argc, argv );
 
 	ProcessorGroup *d_myworld=Uintah::Parallel::getRootProcessorGroup();
-	int rank=d_myworld->myrank();
-	int numprocs=d_myworld->size();
+	int rank=d_myworld->myRank();
+	int numprocs=d_myworld->nRanks();
 	cout << "rank:" << rank <<  ": Starting \n";
 	
 	srand(rank*rank*rank);
@@ -145,7 +145,7 @@ int main(int argc, char** argv)
 	{
 			cout << "{" << flags[f][0] << "," << flags[f][1] << "," << flags[f][2] << "},";
 	}
-	cout << endl;
+	cout << std::endl;
 */
 	double start1, start2, finish1, finish2;
 	if(rank==0)
@@ -167,7 +167,7 @@ int main(int argc, char** argv)
 					cout << patches[p].low[1] << "-" <<patches[p].high[1] << ", ";
 					cout << patches[p].low[2] << "-" <<patches[p].high[2] << "} ";
 			}
-			cout << endl;
+			cout << std::endl;
 			cout << "Starting Fixup\n";
 			*/
 	}	
@@ -190,13 +190,13 @@ int main(int argc, char** argv)
 					cout << patches[p].getLow()[1] << "-" <<patches[p].getHigh()[1] << ", ";
 					cout << patches[p].getLow()[2] << "-" <<patches[p].getHigh()[2] << "} ";
 			}
-			cout << endl;
+			cout << std::endl;
 			
 	}
 		
 	MPI_Barrier(MPI_COMM_WORLD);	
 	//if(rank==0)
-		cout << "Timings: BR=" << finish1-start1 << " FixUp=" << finish2-start2 << " Total=" << finish1-start1+finish2-start2 << endl;
+		cout << "Timings: BR=" << finish1-start1 << " FixUp=" << finish2-start2 << " Total=" << finish1-start1+finish2-start2 << std::endl;
 
 	
 }

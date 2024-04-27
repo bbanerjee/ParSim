@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -40,7 +40,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/Gaussian.h>
 #include <Core/Math/Matrix3.h>
@@ -100,7 +100,7 @@ UCNH::UCNH(ProblemSpecP& ps, MPMFlags* Mflag)
   d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the MPM EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please check and "
             "correct."
@@ -161,7 +161,7 @@ UCNH::UCNH(ProblemSpecP& ps, MPMFlags* Mflag, bool plas, bool dam)
   d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the MPM EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please check and "
             "correct."
@@ -212,7 +212,7 @@ UCNH::UCNH(const UCNH* cm)
   d_init_pressure    = cm->d_init_pressure;
 
   // EOS from factory
-  d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
+  d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos.get());
   d_eos->setBulkModulus(d_initialData.Bulk);
 
   // Universal Labels
@@ -283,10 +283,10 @@ UCNH::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_eos->outputProblemSpec(cm_ps);
 }
 
-UCNH*
+std::unique_ptr<ConstitutiveModel>
 UCNH::clone()
 {
-  return scinew UCNH(*this);
+  return std::make_unique<UCNH>(this);
 }
 
 UCNH::~UCNH()
@@ -298,9 +298,6 @@ UCNH::~UCNH()
     VarLabel::destroy(pYieldStress_label);
     VarLabel::destroy(pYieldStress_label_preReloc);
   }
-
-  // Delete EOS from factory
-  delete d_eos;
 
   // Universal Deletes
   VarLabel::destroy(bElBarLabel);
@@ -472,11 +469,11 @@ UCNH::computeStableTimestep(const Patch* patch,
   int dwi   = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pMass, pvolume;
+  constParticleVariable<double> pMass, pVolume;
   constParticleVariable<Vector> pVelocity;
 
   new_dw->get(pMass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
   new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
@@ -489,7 +486,7 @@ UCNH::computeStableTimestep(const Patch* patch,
     // Compute wave speed at each particle, store the maximum
     Vector pVelocity_idx = pVelocity[idx];
     if (pMass[idx] > 0) {
-      c_dil = sqrt((bulk + 4. * mu / 3.) * pvolume[idx] / pMass[idx]);
+      c_dil = sqrt((bulk + 4. * mu / 3.) * pVolume[idx] / pMass[idx]);
     } else {
       c_dil         = 0.0;
       pVelocity_idx = Vector(0.0, 0.0, 0.0);
@@ -588,13 +585,13 @@ UCNH::computeStressTensor(const PatchSubset* patches,
     int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     Vector dx            = patch->dCell();
-    // double time = d_sharedState->getElapsedTime();
+    // double time = d_mat_manager->getElapsedTime();
 
     // Get Interpolator
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     // Particle and grid data universal to model type
     // Old data containers
@@ -740,7 +737,7 @@ UCNH::computeStressTensor(const PatchSubset* patches,
       if (std::isnan(pStress[idx].Norm())) {
         std::cerr << "particle = " << idx << " velGrad = " << pVelGrad[idx] << "\n";
         std::cerr << " stress = " << pStress[idx] << "\n";
-        std::cerr << " pmass = " << pMass[idx] << " pvol = " << pVolume_new[idx]
+        std::cerr << " pMass = " << pMass[idx] << " pvol = " << pVolume_new[idx]
              << "\n";
         std::cerr << " delgamma = " << delgamma << " ftrial = " << fTrial
              << " mubar = " << muBar << " K = " << K << "\n";
@@ -854,7 +851,7 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
     new_dw->getOtherDataWarehouse(Task::ParentOldDW);
 
   // Particle and grid variables
-  constParticleVariable<double> pVol, pMass, pvolumeold;
+  constParticleVariable<double> pVol, pMass, pVolumeold;
   constParticleVariable<Point> px;
   constParticleVariable<Matrix3> pSize;
   constParticleVariable<Matrix3> pDefGrad, pBeBar;
@@ -894,7 +891,7 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
     parent_old_dw->get(px, lb->pXLabel, pset);
     parent_old_dw->get(pSize, lb->pSizeLabel, pset);
     parent_old_dw->get(pMass, lb->pMassLabel, pset);
-    parent_old_dw->get(pvolumeold, lb->pVolumeLabel, pset);
+    parent_old_dw->get(pVolumeold, lb->pVolumeLabel, pset);
     parent_old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     parent_old_dw->get(pBeBar, bElBarLabel, pset);
 
@@ -911,8 +908,8 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
       }
     } else {
       auto interpolator = flag->d_interpolator->clone(patch);
-      vector<IntVector> ni(interpolator->size());
-      vector<Vector> d_S(interpolator->size());
+      std::vector<IntVector> ni(interpolator->size());
+      std::vector<Vector> d_S(interpolator->size());
 
       for (auto idx : *pset) {
 
@@ -1287,11 +1284,11 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
     } else { /*if(!matl->getIsRigid()) */
       // Compute the displacement gradient and the deformation gradient
       auto interpolator = flag->d_interpolator->clone(patch);
-      vector<IntVector> ni(interpolator->size());
-      vector<Vector> d_S(interpolator->size());
+      std::vector<IntVector> ni(interpolator->size());
+      std::vector<Vector> d_S(interpolator->size());
 
       // Unused because no "active stress carried over from CNHImplicit
-      // double time = d_sharedState->getElapsedTime();
+      // double time = d_mat_manager->getElapsedTime();
 
       for (iter = pset->begin(); iter != pset->end(); iter++) {
         particleIndex idx = *iter;
@@ -2244,7 +2241,7 @@ UCNH::computeRhoMicroCM(double pressure,
       error = true;
     }
     if (error || rho_cur < 0.0 || std::isnan(rho_cur)) {
-      ostringstream desc;
+       std::ostringstream desc;
       desc << "rho_cur = " << rho_cur << " pressure = " << -p_gauge
            << " p_ref = " << p_ref << " 1/sp_vol_CC = " << rho_guess << "\n";
       throw InvalidValue(desc.str(), __FILE__, __LINE__);

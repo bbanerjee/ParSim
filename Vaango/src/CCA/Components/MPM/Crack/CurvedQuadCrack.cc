@@ -99,8 +99,8 @@ void CurvedQuadCrack::readCrack(ProblemSpecP& cquad_ps)
   }
   
   if(PtsSide4.size()!=PtsSide2.size()) {
-    cout << "Error: The points on curved side 2 and side 4 "
-         << "should appear in pairs." << endl;  
+    std::cout << "Error: The points on curved side 2 and side 4 "
+         << "should appear in pairs." << std::endl;  
   }
   
   // Crack front
@@ -135,41 +135,41 @@ void CurvedQuadCrack::readCrack(ProblemSpecP& cquad_ps)
 void CurvedQuadCrack::outputInitialCrackPlane(int i)
 {
   
-  cout << "  * Curved quad " << i+1 << ":" << endl;
-  cout << "    Four vertices:" << endl; 
+  std::cout << "  * Curved quad " << i+1 << ":" << std::endl;
+  std::cout << "    Four vertices:" << std::endl; 
   // four vertices
   for(int j=0;j<4;j++) 
-    cout << "      p" << j+1 << ": " << vertices[j] << endl;
+    std::cout << "      p" << j+1 << ": " << vertices[j] << std::endl;
   // resolution on straight sides 1 & 3
-  cout << "    Resolution on straight sides (sides p1-p2 and p3-p4):"
-       << NStraightSides << endl; 
+  std::cout << "    Resolution on straight sides (sides p1-p2 and p3-p4):"
+       << NStraightSides << std::endl; 
   // points on curved egde 2
-  cout << "    Points on curved side 2 (p2-p3): " << endl;
+  std::cout << "    Points on curved side 2 (p2-p3): " << std::endl;
   for(int j=0; j< 3; j++)
-    cout << "      p" << j+1 << ": " << PtsSide2[j] << endl;
+    std::cout << "      p" << j+1 << ": " << PtsSide2[j] << std::endl;
   // points on curved side 3
-  cout << "    Points on curved side 4 (p1-p4): " << endl;
+  std::cout << "    Points on curved side 4 (p1-p4): " << std::endl;
   for(int j=0; j< 3; j++)
-    cout << "      p" << j+1 << ": " << PtsSide4[j] << endl; 
+    std::cout << "      p" << j+1 << ": " << PtsSide4[j] << std::endl; 
   // crack-front sides
   for(int j=0;j<4;j++) {
     if(AtFront[j]) {
       int j2=(j+2<5 ? j+2 : 1);
-      cout << "    Side " << j+1 << " (p" << j+1 << "-" << "p" << j2
-           << ") is a crack front." << endl;
+      std::cout << "    Side " << j+1 << " (p" << j+1 << "-" << "p" << j2
+           << ") is a crack front." << std::endl;
     }
   }
 
   // repetition information
   if(Repetition>1) {
-    cout << "    The quad is repeated by " << Repetition
-         << " times with the offset " << Offset << "." << endl;
+    std::cout << "    The quad is repeated by " << Repetition
+         << " times with the offset " << Offset << "." << std::endl;
   }   
         
 }
 
 void CurvedQuadCrack::discretize(int& nstart0,vector<Point>& cx,
-                                 vector<IntVector>& ce,vector<int>& SegNodes)
+                                 std::vector<IntVector>& ce,vector<int>& SegNodes)
 {
 
   int i,j,ni,nj,n1,n2,n3;

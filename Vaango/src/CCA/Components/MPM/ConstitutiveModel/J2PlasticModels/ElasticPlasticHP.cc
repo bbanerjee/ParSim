@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2022 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2023 Biswajit Banerjee
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -49,7 +49,7 @@
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+#include<CCA/Components/MPM/Core/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Gaussian.h>
@@ -120,7 +120,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_flow = FlowStressModelFactory::create(ps);
   if (!d_flow) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the FlowModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -130,7 +130,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_damage = DamageModelFactory::create(ps);
   if (!d_damage) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the DamageModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  "
@@ -141,7 +141,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
   d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Jim.  "
@@ -151,17 +151,17 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_shear = Vaango::ShearModulusModelFactory::create(ps);
   if (!d_shear) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "ElasticPlasticHP::Error in shear modulus model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_elastic = std::make_unique<ElasticModuli_MetalIso>(d_eos, d_shear);
+  d_elastic = std::make_shared<ElasticModuli_MetalIso>(d_eos.get(), d_shear.get());
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "ElasticPlasticHP::Error in melting temp model factory"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
@@ -169,7 +169,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_devStress = DevStressModelFactory::create(ps);
   if (!d_devStress) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "ElasticPlasticHP::Error creating deviatoric stress model"
          << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
@@ -177,24 +177,24 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
 
   ProblemSpecP intvar_ps = ps->findBlock("internal_variable_model");
   if (!intvar_ps) {
-    ostringstream err;
+     std::ostringstream err;
     err << "**ERROR** Please add an 'internal_variable_model' tag to the\n"
         << " 'elastic_plastic_hp' block in the input .ups file.  The\n"
         << " default type is 'metal_internal_var'.\n";
     throw ProblemSetupException(err.str(), __FILE__, __LINE__);
   }
-  d_intvar = std::make_unique<Vaango::IntVar_Metal>(intvar_ps);
+  d_intvar = std::make_shared<Vaango::IntVar_Metal>(intvar_ps);
   if (!d_intvar) {
-    ostringstream err;
+     std::ostringstream err;
     err << "**ERROR** An error occured while creating the internal variable \n"
          << " model. Please file a bug report.\n";
     throw InternalError(err.str(), __FILE__, __LINE__);
   }
 
   d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar.get(), 
-              const_cast<const FlowStressModel*>(d_flow));
+              const_cast<const FlowStressModel*>(d_flow.get()));
   if (!d_yield) {
-    ostringstream desc;
+     std::ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.\n";
@@ -258,18 +258,18 @@ ElasticPlasticHP::ElasticPlasticHP(const ElasticPlasticHP* cm)
   d_scalarDam.scalarDamageDist = cm->d_scalarDam.scalarDamageDist;
 
   d_computeSpecificHeat = cm->d_computeSpecificHeat;
-  d_Cp     = SpecificHeatModelFactory::createCopy(cm->d_Cp);
-  d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
-  d_stable = StabilityCheckFactory::createCopy(cm->d_stable);
-  d_flow   = FlowStressModelFactory::createCopy(cm->d_flow);
-  d_damage = DamageModelFactory::createCopy(cm->d_damage);
-  d_eos    = MPMEquationOfStateFactory::createCopy(cm->d_eos);
-  d_shear  = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
-  d_melt   = MeltingTempModelFactory::createCopy(cm->d_melt);
+  d_Cp     = SpecificHeatModelFactory::createCopy(cm->d_Cp.get());
+  d_yield  = Vaango::YieldConditionFactory::createCopy(cm->d_yield.get());
+  d_stable = StabilityCheckFactory::createCopy(cm->d_stable.get());
+  d_flow   = FlowStressModelFactory::createCopy(cm->d_flow.get());
+  d_damage = DamageModelFactory::createCopy(cm->d_damage.get());
+  d_eos    = MPMEquationOfStateFactory::createCopy(cm->d_eos.get());
+  d_shear  = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear.get());
+  d_melt   = MeltingTempModelFactory::createCopy(cm->d_melt.get());
   d_eos->setBulkModulus(d_initialData.Bulk);
 
-  d_intvar    = std::make_unique<Vaango::IntVar_Metal>(cm->d_intvar.get());
-  d_elastic   = std::make_unique<ElasticModuli_MetalIso>(d_eos, d_shear);
+  d_intvar    = std::make_shared<Vaango::IntVar_Metal>(cm->d_intvar.get());
+  d_elastic   = std::make_shared<ElasticModuli_MetalIso>(d_eos.get(), d_shear.get());
   d_devStress = nullptr;
 
   initializeLocalMPMLabels();
@@ -300,14 +300,6 @@ ElasticPlasticHP::~ElasticPlasticHP()
   VarLabel::destroy(pEnergyLabel_preReloc);
   VarLabel::destroy(pIntVarLabel_preReloc);
 
-  delete d_flow;
-  delete d_yield;
-  delete d_stable;
-  delete d_damage;
-  delete d_eos;
-  delete d_shear;
-  delete d_melt;
-  delete d_Cp;
   delete d_devStress;
 }
 
@@ -346,6 +338,7 @@ ElasticPlasticHP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   d_shear->outputProblemSpec(cm_ps);
   d_melt->outputProblemSpec(cm_ps);
   d_Cp->outputProblemSpec(cm_ps);
+  d_intvar->outputProblemSpec(cm_ps);
 
   cm_ps->appendElement("evolve_porosity", d_evolvePorosity);
   cm_ps->appendElement("initial_mean_porosity", d_porosity.f0);
@@ -364,10 +357,10 @@ ElasticPlasticHP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
                        d_scalarDam.scalarDamageDist);
 }
 
-ElasticPlasticHP*
+std::unique_ptr<ConstitutiveModel>
 ElasticPlasticHP::clone()
 {
-  return scinew ElasticPlasticHP(this);
+  return std::make_unique<ElasticPlasticHP>(this);
 }
 
 //______________________________________________________________________
@@ -673,16 +666,16 @@ ElasticPlasticHP::computeStableTimestep(const Patch* patch,
   for (auto idx : *pset) {
 
     // Compute wave speed at each particle, store the maximum
-    Vector pvelocity_idx = pVelocity[idx];
+    Vector pVelocity_idx = pVelocity[idx];
     if (pMass[idx] > 0) {
       c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pVolume[idx] / pMass[idx]);
     } else {
       c_dil         = 0.0;
-      pvelocity_idx = Vector(0.0, 0.0, 0.0);
+      pVelocity_idx = Vector(0.0, 0.0, 0.0);
     }
-    WaveSpeed = Vector(Max(c_dil + std::abs(pvelocity_idx.x()), WaveSpeed.x()),
-                       Max(c_dil + std::abs(pvelocity_idx.y()), WaveSpeed.y()),
-                       Max(c_dil + std::abs(pvelocity_idx.z()), WaveSpeed.z()));
+    WaveSpeed = Vector(Max(c_dil + std::abs(pVelocity_idx.x()), WaveSpeed.x()),
+                       Max(c_dil + std::abs(pVelocity_idx.y()), WaveSpeed.y()),
+                       Max(c_dil + std::abs(pVelocity_idx.z()), WaveSpeed.z()));
   }
 
   WaveSpeed       = dx / WaveSpeed;
@@ -781,9 +774,9 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(patchIndex);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
 
     // std::cerr << getpid() << " patch = " << patch->getID() << "\n";
     // Get grid size
@@ -806,11 +799,11 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
     // Get the particle location, particle size, particle mass, particle volume
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> psize;
+    constParticleVariable<Matrix3> pSize;
     constParticleVariable<double> pMass;
     constParticleVariable<double> pVolume;
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pMass, lb->pMassLabel, pset);
     old_dw->get(pVolume, lb->pVolumeLabel, pset);
 
@@ -1779,7 +1772,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     pEnergy;
 
   constParticleVariable<Point> px;
-  constParticleVariable<Matrix3> psize;
+  constParticleVariable<Matrix3> pSize;
   constParticleVariable<Matrix3> pDefGrad, pStress, pRotation, pPlasticStrain;
   constNCVariable<Vector> gDisp;
 
@@ -1809,8 +1802,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get the set of particles
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
@@ -1824,7 +1817,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     old_dw->get(pTemperature, lb->pTemperatureLabel, pset);
     old_dw->get(pTempPrev, lb->pTempPreviousLabel, pset);
     old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pSize, lb->pSizeLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(pStress, lb->pStressLabel, pset);
 
@@ -2198,7 +2191,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     pEqPlasticStrainRate, pPorosity;
 
   constParticleVariable<Point> px;
-  constParticleVariable<Matrix3> psize;
+  constParticleVariable<Matrix3> pSize;
   constParticleVariable<Matrix3> pDefGrad, pStress, pPlasticStrain;
   constNCVariable<Vector> gDisp;
 
@@ -2230,8 +2223,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
     // Get interpolation functions
     auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
 
     // Get patch indices for parallel solver
     IntVector lowIndex  = patch->getNodeLowIndex();
@@ -2253,7 +2246,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     parent_old_dw->get(pTempPrev, lb->pTempPreviousLabel, pset);
     parent_old_dw->get(pTemperature, lb->pTemperatureLabel, pset);
     parent_old_dw->get(px, lb->pXLabel, pset);
-    parent_old_dw->get(psize, lb->pSizeLabel, pset);
+    parent_old_dw->get(pSize, lb->pSizeLabel, pset);
     parent_old_dw->get(pMass, lb->pMassLabel, pset);
     parent_old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     parent_old_dw->get(pStress, lb->pStressLabel, pset);
@@ -2298,7 +2291,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
       // Calculate the displacement gradient
       interpolator->findCellAndShapeDerivatives(
-        px[idx], ni, d_S, psize[idx], pDefGrad[idx]);
+        px[idx], ni, d_S, pSize[idx], pDefGrad[idx]);
       computeGradAndBmats(DispGrad, ni, d_S, oodx, gDisp, l2g, B, Bnl, dof);
 
       // Compute the deformation gradient increment
@@ -2445,7 +2438,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         // Do Newton iteration to compute delGamma and updated
         // plastic strain, plastic strain rate, and yield stress
         ModelStateBase state_new(state_trial);
-        double delGamma = doApproxReturn(delT, matl, idx, 
+        [[maybe_unused]] double delGamma = doApproxReturn(delT, matl, idx, 
                                          &state_old, &state_trial, &state_new);
         pStress_new[idx]              = state_new.getStress();
         pPlasticStrain_new[idx]       = state_new.getPlasticStrain();

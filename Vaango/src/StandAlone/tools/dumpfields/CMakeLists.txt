@@ -38,7 +38,7 @@ IF(NOT WIN32)
     HistogramDumper.cc
   )
 
-  TARGET_LINK_LIBRARIES(dumpfields
+  target_link_libraries(dumpfields
      Vaango_Core_DataArchive   
      Vaango_Core_OS
   )
