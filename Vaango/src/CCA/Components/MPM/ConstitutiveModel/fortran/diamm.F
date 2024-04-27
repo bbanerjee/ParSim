@@ -1964,7 +1964,8 @@ C     REFZ: a characteristic scale for the Lode z coordinate
 C.................................................................passed
       DIMENSION UI(*)
 C..................................................................local
-      DIMENSION S(9),UIMG(22)
+      DIMENSION S(9),UIMG(22),RHO(1),ENRG(1),ALPH(1),PRES(1),TTEMP(1)
+      DIMENSION CCS(1)
 C...................................................................data
 C...............................................................external
 C....................................................statement functions
@@ -1977,7 +1978,15 @@ C     Compute bulk modulus
 C     Kerley EOS to compute sound speed
          P= -PTHIRD*RI1
          CALL EOSARRAYREORDER(UI,UIMG)
-         CALL KEREOSMGV(1,1,UIMG,UI,UI(IPDC1),R,U,0,0,P,T,CS,S)
+         RHO(1) = R
+         ENRG(1) = U
+         ALPH(1) = 0
+         PRES(1) = P
+         TTEMP(1) = T
+         CCS(1) = CS
+         CALL KEREOSMGV(1,1,UIMG,UI,UI(IPDC1),
+     $                  RHO,ENRG,ALPH,0, 
+     $                  PRES,TTEMP,CCS,S)
 
       ELSEIF(IDK.EQ.1)THEN
          CS = SQRT((B0 + B1*EXP(-B2/MAX(-RI1,1.D-40)))/R0)
@@ -2829,7 +2838,8 @@ C
         DO 6 J=I,NP+1
           IF(II.GE.1) THEN
             DO 5 K=1,II
- 5          A(I,J) = A(I,J)-A(I,K)*A(K,J)
+               A(I,J) = A(I,J)-A(I,K)*A(K,J)
+ 5          CONTINUE
           ENDIF
           IF(J.NE.I) THEN
             IF(J.LT.NP+1) A(J,I)=A(I,J)

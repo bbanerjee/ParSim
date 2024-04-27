@@ -32,9 +32,9 @@
 
 namespace Uintah {
 
-  typedef Eigen::Matrix<double, 6, 1, Eigen::DontAlign> Vector6d;
-  typedef Eigen::Matrix<double, 21, 1, Eigen::DontAlign> Vector21d;
-  typedef Eigen::Matrix<double, 6, 6, Eigen::DontAlign> Matrix6d;
+  using Vector6d = Eigen::Matrix<double, 6, 1>;
+  using Vector21d = Eigen::Matrix<double, 21, 1>;
+  using Matrix6d = Eigen::Matrix<double, 6, 6>;
 
   /*! \class SymmMatrix6
     \brief Special matrix operations for a symmetric 6x6 matrix.  

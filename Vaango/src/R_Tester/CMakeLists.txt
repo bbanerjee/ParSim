@@ -32,7 +32,7 @@
 
 # *WARNING* Uses symbolic links and "export" and will not work with non linux systems.
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.21.0)
 
 #######################################################################
 # Set up python path/command and variable names to match Uintah

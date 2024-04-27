@@ -37,7 +37,7 @@
 MESSAGE(STATUS "This is CMake ${CMAKE_VERSION}")
 MESSAGE(STATUS "")
 
-cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.21.0 FATAL_ERROR)
 
 #----------------------------------------------------------------------------
 # C/C++ compiler 
@@ -51,7 +51,7 @@ endif ()
 #----------------------------------------------------------------------------
 # Set the project
 #----------------------------------------------------------------------------
-project(Vaango)
+project(Vaango VERSION 1.1.0)
 
 set(MAJOR_VERSION "1")
 set(MINOR_VERSION "1")
@@ -365,35 +365,35 @@ message(STATUS "HAVE_GFORTRAN ${HAVE_GFORTRAN}")
 #   to compile a program looking for the fortran lib, but this is probably good enough
 if(HAVE_CRAYFTN)
   #find_library(F_LIBRARY NAMES ftn)
-  set(F_LIBRARY "" CACHE string "fortran library")
-  set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
+  set(F_LIBRARY "" CACHE STRING "fortran library")
+  set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
   message(STATUS "Have CRAY ftn. Setting libraries to ${F_LIBRARY}")
 elseif(HAVE_GFORTRAN)
-  set(F_LIBRARY gfortran CACHE string "fortran library")
+  set(F_LIBRARY gfortran CACHE STRING "fortran library")
   find_library(F_LIBRARY NAMES gfortran)
-  set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
+  set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
   message(STATUS "Have gfortran. Setting libraries. ${F_LIBRARY}")
 elseif(HAVE_XLF)
-  set(F_LIBRARY xlf90 CACHE string "fortran library")
+  set(F_LIBRARY xlf90 CACHE STRING "fortran library")
   find_library(F_LIBRARY NAMES xlf90)
-  set(FORTRAN_UNDERSCORE none CACHE string "What type of fortran underscore style - linux,end,none")
+  set(FORTRAN_UNDERSCORE none CACHE STRING "What type of fortran underscore style - linux,end,none")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_NONE")
 elseif(HAVE_PGF77)
-  set(F_LIBRARY pgftnrtl CACHE string "fortran library")
+  set(F_LIBRARY pgftnrtl CACHE STRING "fortran library")
   find_library(F_LIBRARY NAMES pgftnrtl)
   set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
 elseif(HAVE_G77)
-  set(F_LIBRARY g2c CACHE string "fortran library")
+  set(F_LIBRARY g2c CACHE STRING "fortran library")
   find_library(F_LIBRARY NAMES g2c)
-  set(FORTRAN_UNDERSCORE linux CACHE string "What type of fortran underscore style - linux,end,none")
+  set(FORTRAN_UNDERSCORE linux CACHE STRING "What type of fortran underscore style - linux,end,none")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_LINUX")
 elseif(HAVE_ifort)
-  set(F_LIBRARY ifcore CACHE string "fortran library")
+  set(F_LIBRARY ifcore CACHE STRING "fortran library")
   find_library(F_LIBRARY NAMES ifcore)
-  set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
+  set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
   message(STATUS "Have ifort. Setting libraries. ${F_LIBRARY}")
 elseif(HAVE_F77)
@@ -421,7 +421,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${CMAKE_MODULE_PATH})
 # Find the Perl package to use
 #----------------------------------------------------------------------------------
 find_program(PERL perl)
-set(FSPEC ${CMAKE_CURRENT_BINARY_DIR}/genfspec.pl CACHE FILE "Path to fspec")
+set(FSPEC ${CMAKE_CURRENT_BINARY_DIR}/genfspec.pl CACHE STRING "Path to fspec")
 configure_file(${Vaango_SOURCE_DIR}/tools/fspec.pl.in ${FSPEC})
 
 #----------------------------------------------------------------------------------
@@ -860,7 +860,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/z_testdefs.h.in ${CM
 
 #-----------------------------------------------------------------------------
 # Packages to enable (must enable packages when building core for now)
-set(LOAD_PACKAGE "Vaango" CACHE string "Building Vaango package by default.")
+set(LOAD_PACKAGE "Vaango" CACHE STRING "Building Vaango package by default.")
 set(HANDLED_PACKAGE_Vaango "YES")
 
 include_directories(
