@@ -226,19 +226,57 @@
         <crack spec="OPTIONAL NO_DATA">
           <type spec="REQUIRED STRING 'friction'"/>
           <mu spec="REQUIRED DOUBLE"/>
-          <!-- FIXME: what is this for? -->
           <crack_segments spec="REQUIRED NO_DATA">
-            <quad spec="REQUIRED NO_DATA">
+            <quad spec="OPTIONAL NO_DATA">
               <p1 spec="REQUIRED VECTOR"/>
               <p2 spec="REQUIRED VECTOR"/>
               <p3 spec="REQUIRED VECTOR"/>
               <p4 spec="REQUIRED VECTOR"/>
               <resolution_p1_p2 spec="REQUIRED INTEGER"/>
-              <!-- FIXME: really integer? -->
               <resolution_p2_p3 spec="REQUIRED INTEGER"/>
-              <!-- FIXME: really integer? -->
               <crack_front_sides spec="REQUIRED STRING 'NYNN'"/>
             </quad>
+            <curved_quad spec="OPTIONAL NO_DATA">
+              <p1 spec="REQUIRED VECTOR"/>
+              <p2 spec="REQUIRED VECTOR"/>
+              <p3 spec="REQUIRED VECTOR"/>
+              <p4 spec="REQUIRED VECTOR"/>
+              <resolution_straight_sides spec="REQUIRED INTEGER"/>
+              <points_curved_side2 spec="REQUIRED NO_DATA">
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+              </points_curved_side2>
+              <points_curved_side4 spec="REQUIRED NO_DATA">
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+                  <point spec="REQUIRED NO_DATA"><val spec="REQUIRED VECTOR"/></point>
+              </points_curved_side4>
+              <crack_front_sides spec="REQUIRED STRING"/>
+              <repetition spec="REQUIRED INTEGER"/>
+              <offset spec="REQUIRED VECTOR"/>
+            </curved_quad>
+            <partial_ellipse spec="OPTIONAL NO_DATA">
+              <center spec="REQUIRED VECTOR"/>
+              <point_axis1 spec="REQUIRED VECTOR"/>
+              <point_axis2 spec="REQUIRED VECTOR"/>
+              <extent spec="REQUIRED DOUBLE"/>
+              <resolution_circumference spec="REQUIRED INTEGER"/>
+            </partial_ellipse>
+            <ellipse spec="OPTIONAL NO_DATA">
+              <point1_axis1 spec="REQUIRED VECTOR"/>
+              <point_axis2 spec="REQUIRED VECTOR"/>
+              <point2_axis1 spec="REQUIRED VECTOR"/>
+              <resolution_circumference spec="REQUIRED INTEGER"/>
+            </ellipse>
           </crack_segments>
         </crack>
       </material>
