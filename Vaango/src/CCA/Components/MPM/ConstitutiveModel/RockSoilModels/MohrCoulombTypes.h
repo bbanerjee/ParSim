@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2023 Biswajit Banerjee
+ * Copyright (c) 2015-2024 Biswajit Banerjee
  *
  * License for the specific language governing rights and limitations under
  * Permission is hereby granted, free of charge, to any person obtaining a
