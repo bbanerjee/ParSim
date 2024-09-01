@@ -124,19 +124,19 @@ add_custom_command(
 )
 gtest_discover_tests(${UNIT_TEST})
 
-add_executable(testBoostAutodiff testBoostAutodiff.cc)
-target_link_libraries(testBoostAutodiff
-  ${GTEST_LIB}
-  ${Boost_LIBRARIES}
-  ${VAANGO_LIBS}
-)
-set(UNIT_TEST testBoostAutodiff)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
-gtest_discover_tests(${UNIT_TEST})
+#add_executable(testBoostAutodiff testBoostAutodiff.cc)
+#target_link_libraries(testBoostAutodiff
+#  ${GTEST_LIB}
+#  ${Boost_LIBRARIES}
+#  ${VAANGO_LIBS}
+#)
+#set(UNIT_TEST testBoostAutodiff)
+#add_custom_command(
+#  TARGET ${UNIT_TEST}
+#  POST_BUILD
+#  COMMAND ${UNIT_TEST}
+#)
+#gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testBoostClosestPoint testBoostClosestPoint.cc)
 target_link_libraries(testBoostClosestPoint

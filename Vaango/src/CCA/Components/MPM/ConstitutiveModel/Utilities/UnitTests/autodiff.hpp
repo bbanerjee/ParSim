@@ -27,7 +27,7 @@
 using namespace boost::math;
 using namespace boost::math::tools;
 
-#define BOOST_NO_CXX17_IF_CONSTEXPR
+//#define BOOST_NO_CXX17_IF_CONSTEXPR
 
 // Automatic Differentiation v1
 namespace autodiff_v1 {
