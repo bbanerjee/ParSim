@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2014-2023 Biswajit Banerjee
+# Copyright (c) 2014-2025 Biswajit Banerjee, Parresia Research Limited, NZ
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -37,47 +37,170 @@
 MESSAGE(STATUS "This is CMake ${CMAKE_VERSION}")
 MESSAGE(STATUS "")
 
-cmake_minimum_required(VERSION 3.21.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.28 FATAL_ERROR)
 
 #----------------------------------------------------------------------------
-# C/C++ compiler 
+# Prevent in-source builds 
 #----------------------------------------------------------------------------
-enable_language(C)
-enable_language(CXX)
-enable_language(Fortran)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+    message(FATAL_ERROR 
+        "Vaango cannot be configured in-source. "
+        "Please create a separate build directory!")
+endif()
 
-if (USE_CLANG)
-  set(CMAKE_C_COMPILER "clang")
-  set(CMAKE_CXX_COMPILER "clang++")
-  set(CMAKE_Fortran_COMPILER "/usr/bin/gfortran")
-endif ()
+#----------------------------------------------------------------------------
+# Set the project with languages
+#----------------------------------------------------------------------------
+project(Vaango 
+    VERSION 1.1.0
+    LANGUAGES C CXX Fortran
+    DESCRIPTION "Vaango project"
+)
 
-set(CMAKE_CXX_STANDARD 17)
+# Optional: Create legacy variables for compatibility
+set(MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
+set(MINOR_VERSION ${PROJECT_VERSION_MINOR})
+set(PATCH_VERSION ${PROJECT_VERSION_PATCH})
+
+# Optional: Enable verbose makefile (uncomment if needed)
+# set(CMAKE_VERBOSE_MAKEFILE ON)
+
+# Create interface library for common compile options
+add_library(vaango_options INTERFACE)
+add_library(vaango_warnings INTERFACE)
+
+# Create aliases for cleaner usage
+add_library(Vaango::Options ALIAS vaango_options)
+add_library(Vaango::Warnings ALIAS vaango_warnings)
+
+# Backward compatibility
+include (CMakeBackwardCompatibilityC)
+
+#----------------------------------------------------------------------------
+# C/C++ compiler configuration
+#----------------------------------------------------------------------------
+# Set C++ standard requirements
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
-#----------------------------------------------------------------------------
-# Set the project
-#----------------------------------------------------------------------------
-project(Vaango VERSION 1.1.0)
+# Enable compile commands export
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(MAJOR_VERSION "1")
-set(MINOR_VERSION "1")
-set(PATCH_VERSION "0")
-
-#set(CMAKE_VERBOSE_MAKEFILE 1)
-
-# Check that the binaries are not being built in the source dir
-IF("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-  MESSAGE(FATAL_ERROR "Vaango cannot be configured in-source. "
-      "Please create a separate build directory!")
-ENDIF()
+# Compiler selection (if needed)
+if(USE_CLANG)
+    find_program(CLANG_C_COMPILER clang REQUIRED)
+    find_program(CLANG_CXX_COMPILER clang++ REQUIRED)
+    find_program(GFORTRAN_COMPILER gfortran REQUIRED)
+    
+    set(CMAKE_C_COMPILER ${CLANG_C_COMPILER})
+    set(CMAKE_CXX_COMPILER ${CLANG_CXX_COMPILER})
+    set(CMAKE_Fortran_COMPILER ${GFORTRAN_COMPILER})
+endif()
 
 #----------------------------------------------------------------------------
 # Load macros and update the module path
 #----------------------------------------------------------------------------
 include(${Vaango_SOURCE_DIR}/cmake/Macros/fortranDependency.cmake)
+
+#----------------------------------------------------------------------------
+# Compile options
+#----------------------------------------------------------------------------
+# Compiler-specific options
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(vaango_options INTERFACE
+        $<$<CONFIG:Debug>:-g -O0>
+        $<$<CONFIG:Release>:-O3 -DNDEBUG>
+    )
+    target_compile_options(vaango_warnings INTERFACE
+        -Wall
+        -Wextra
+        -Wpedantic
+    )
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(vaango_options INTERFACE
+        -rdynamic
+        $<$<CONFIG:Debug>:-g -O0>
+        $<$<CONFIG:Release>:-O3 -DNDEBUG>
+    )
+    target_compile_options(vaango_warnings INTERFACE
+        -Wall
+        -Wextra
+        -Wpedantic
+        # Uncomment these for stricter checking:
+        # -Wsuggest-override
+        # -Wconversion
+        # -Wsign-conversion
+    )
+    target_link_options(vaango_options INTERFACE
+        -rdynamic
+    )
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    target_compile_options(vaango_options INTERFACE
+        $<$<CONFIG:Debug>:-g -O0>
+        $<$<CONFIG:Release>:-O3 -DNDEBUG>
+    )
+    # Intel compiler specific options can be added here
+endif()
+
+#----------------------------------------------------------------------------
+# Architecture-specific options
+#----------------------------------------------------------------------------
+if(NOT DEFINED NBITS)
+    # Auto-detect architecture if not specified
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(NBITS 64)
+    else()
+        set(NBITS 32)
+    endif()
+endif()
+
+if(NBITS EQUAL 64)
+    message(STATUS "Building for 64-bit architecture")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(vaango_options INTERFACE
+            -m64
+            -msse2
+        )
+    endif()
+else()
+    message(STATUS "Building for 32-bit architecture")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(vaango_options INTERFACE
+            -m32
+            -msse2
+        )
+    endif()
+endif()
+
+#----------------------------------------------------------------------------
+# Platform-specific configuration
+#----------------------------------------------------------------------------
+if(WIN32)
+    target_compile_definitions(vaango_options INTERFACE
+        _USE_MATH_DEFINES          # Defines M_PI for Windows
+        _WIN32_WINNT=0x0500       # Windows 2000 features
+        _CRT_SECURE_NO_DEPRECATE  # Turn off VS warnings about strcpy etc.
+        WIN32_LEAN_AND_MEAN       # Prevent rad1/grp1 definitions
+        NOMINMAX                  # Prevent min/max macro definitions
+    )
+    
+    if(NOT BUILD_SHARED_LIBS)
+        target_compile_definitions(vaango_options INTERFACE
+            BUILD_CORE_STATIC
+            GLEW_STATIC
+        )
+    endif()
+    
+    # Set warning level for MSVC
+    if(MSVC)
+        target_compile_options(vaango_warnings INTERFACE
+            /W1  # Warning level 1 (instead of default W3/W4)
+        )
+        # Remove any existing /W flags and replace with /W1
+        string(REGEX REPLACE "/W[0-4]" "/W1" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    endif()
+endif()
 
 #----------------------------------------------------------------------------------
 # Configure options
@@ -120,11 +243,6 @@ set (LIBRARY_OUTPUT_PATH ${Vaango_BINARY_DIR}/lib CACHE INTERNAL "Single output 
 set (EXECUTABLE_OUTPUT_PATH ${Vaango_BINARY_DIR} CACHE INTERNAL "Single output directory for building all executables.")
 mark_as_advanced(LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
 
-#-----------------------------------------------------------------------------
-# Test for some required system information.
-#-----------------------------------------------------------------------------
-include (CMakeBackwardCompatibilityC)
-
 #----------------------------------------------------------------------------
 # Optional variable intialization  
 #----------------------------------------------------------------------------
@@ -135,173 +253,99 @@ set(HAVE_SPATIALOPS "no")
 set(HAVE_EXPRLIB "no")
 
 #----------------------------------------------------------------------------
-# Determine host type, processor count and OS version  
+# Platform detection and system information
 #----------------------------------------------------------------------------
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")  # Apple OSX
-  set(NUM_CPUS 2)
-  set(IS_OSX "yes")
-  set(DEF_OSX "#define IS_OSX 1")
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Aix")
-  set(NUM_CPUS 2)
-  set(IS_AIX "yes")
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(NUM_CPUS 2)
-  set(IS_LINUX "yes")
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  if (MINGW)
-    set(NUM_CPUS 2)
-    set(IS_WIN "yes")
-  else ()
-    message(FATAL_ERROR "Currently Windows only configures from mingw.  See install instructions")
-  endif (MINGW)
-else ()
-  message(STATUS "Warning !!!!!! This system is untested - You are on your own !!!!!")
-  set(NUM_CPUS 1)
-endif ()
+include(ProcessorCount)
+include(CheckTypeSize)
 
-#-----------------------------------------------------------------------------
-# Check type sizes for config_defs.h and Endian.h
-#-----------------------------------------------------------------------------
-check_type_size("void*" SIZEOF_VOID_P)
-check_type_size("long long" SIZEOF_LONG_LONG)
-message(STATUS "SIZEOF_VOID_P ${SIZEOF_VOID_P}")
-message(STATUS "SIZEOF_LONG_LONG ${SIZEOF_LONG_LONG}")
-
-#----------------------------------------------------------------------------
-# Check endian-ness and create Core/Util/Endian.h file and Core/Malloc/mem_init.h
-#----------------------------------------------------------------------------
-# 32-64 bit ?
-if (SIZEOF_VOID_P EQUAL 8)
-  set(NBITS 64)
-elseif (SIZEOF_VOID_P EQUAL 4)
-  set(NBITS 32)
-else ()
-  message(FATAL_ERROR "This machine has some strange sizeof(void*): ${CMAKE_SIZEOF_VOID_P}.
-  Usually this means that your LD_LIBRARY_PATH is set incorrectly for the
-  compiler you are using.  To verify that this is the problem you will need
-  to copy the C++  program from the end of the config.log file and run the
-  compile command which is just before it in config.log.  Run the executable
-  and see what error message you get. You can also just fix your
-  LD_LIBRARY_PATH if you know what is wrong with it.
-  Exiting due to size of void* problem! Read above warnings!")
+# Detect number of processors
+ProcessorCount(NUM_CPUS)
+if(NUM_CPUS EQUAL 0)
+    set(NUM_CPUS 1)
 endif()
-if (SIZEOF_LONG_LONG EQUAL 8)
-  set(LONG_LONG_SWAP "SWAP_8")
-elseif (SIZEOF_LONG_LONG EQUAL 4)
-  set(LONG_LONG_SWAP "SWAP_4")
-else ()
-  message(FATAL_ERROR "This machine has some strange sizeof(long long): ${SIZEOF_LONG_LONG}.
-  Usually this means that your LD_LIBRARY_PATH is set incorrectly for the
-  compiler you are using.  To verify that this is the problem you will need
-  to copy the C++  program from the end of the config.log file and run the
-  compile command which is just before it in config.log.  Run the executable
-  and see what error message you get. You can also just fix your
-  LD_LIBRARY_PATH if you know what is wrong with it.
-  Exiting due to size of long long problem! Read above warnings!")
-endif ()
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Core/Util/testEndian.h.in ${CMAKE_CURRENT_BINARY_DIR}/Core/Util/Endian.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Core/Malloc/testmem_init.h.in ${CMAKE_CURRENT_BINARY_DIR}/Core/Malloc/mem_init.h)
+
+# Platform-specific settings with modern CMake approach
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")  # macOS
+    set(IS_OSX TRUE)
+    target_compile_definitions(vaango_options INTERFACE IS_OSX=1)
+    message(STATUS "Platform: macOS")
+    
+elseif(CMAKE_SYSTEM_NAME STREQUAL "AIX")
+    set(IS_AIX TRUE)
+    target_compile_definitions(vaango_options INTERFACE IS_AIX=1)
+    message(STATUS "Platform: AIX")
+    
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(IS_LINUX TRUE)
+    target_compile_definitions(vaango_options INTERFACE IS_LINUX=1)
+    message(STATUS "Platform: Linux")
+    
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    if(MINGW)
+        set(IS_WIN TRUE)
+        target_compile_definitions(vaango_options INTERFACE IS_WIN=1)
+        message(STATUS "Platform: Windows (MinGW)")
+    else()
+        message(FATAL_ERROR "Currently Windows only configures with MinGW. See install instructions")
+    endif()
+    
+else()
+    message(WARNING "Untested system: ${CMAKE_SYSTEM_NAME} - You are on your own!")
+endif()
 
 
 #----------------------------------------------------------------------------
-# C/C++ compiler flags
+# Type size checks and endianness detection
 #----------------------------------------------------------------------------
-if(CXX_FLAGS)
-  message(STATUS "Default compiler flags are: $CMAKE_CXX_FLAGS$")
-  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE string "Default compiler flags" FORCE)
-  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic" CACHE string "Default compiler flags" FORCE)
-  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE string "Default compiler flags" FORCE)
-  endif ()
-endif(CXX_FLAGS)
+check_type_size("long long" SIZEOF_LONG_LONG)
+message(STATUS "sizeof(long long): ${SIZEOF_LONG_LONG}")
 
-#------
-# For C++11
-#------
-# if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-# #  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Weverything")
-#   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
-# elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-#   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++11 -Wall")
-# elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-#   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -no-ipo -fp-model precise -wd584 -wd1418 -wd1918 -wd383 -wd869 -wd981 -wd424 -wd1419 -wd444 -wd271 -wd2259 -wd1572 -wd1599 -wd82 -wd177 -wd593 -fno-omit-frame-pointer -Wall -Woverloaded-virtual -Wno-deprecated -w1 -Wno-strict-aliasing -Wno-write-strings -Wno-invalid-offsetof -fno-operator-names")
-# endif ()
+# Long long size validation and swap determination
+if(SIZEOF_LONG_LONG EQUAL 8)
+    set(LONG_LONG_SWAP "SWAP_8")
+elseif(SIZEOF_LONG_LONG EQUAL 4)
+    set(LONG_LONG_SWAP "SWAP_4")
+else()
+    message(FATAL_ERROR 
+        "Unexpected sizeof(long long): ${SIZEOF_LONG_LONG}\n"
+        "This usually indicates an incorrect LD_LIBRARY_PATH for your compiler.\n"
+        "To debug: check the compile command and C++ program from config.log,\n"
+        "compile and run it manually to see the actual error.\n"
+        "Fix your LD_LIBRARY_PATH or compiler setup.")
+endif()
 
-#------
-# For C++14
-#------
-#if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall")
-#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++14 -Wall")
-#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -shared")
-#endif ()
+# Endianness detection (modern CMake way)
+include(TestBigEndian)
+test_big_endian(IS_BIG_ENDIAN)
+if(IS_BIG_ENDIAN)
+    target_compile_definitions(vaango_options INTERFACE IS_BIG_ENDIAN=1)
+    message(STATUS "Endianness: Big Endian")
+else()
+    target_compile_definitions(vaango_options INTERFACE IS_LITTLE_ENDIAN=1)
+    message(STATUS "Endianness: Little Endian")
+endif()
 
-#------
-# For C++17
-#------
-if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
-elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-  #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=c++17 -Wall -Wextra")
-  #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=c++17 -Wall -Wsuggest-override")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=c++17 -Wall")
-elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -shared")
-endif ()
+#----------------------------------------------------------------------------
+# Configure generated header files
+#----------------------------------------------------------------------------
+# Generate Endian.h
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Util/testEndian.h.in 
+    ${CMAKE_CURRENT_BINARY_DIR}/Core/Util/Endian.h
+    @ONLY
+)
 
-#SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
-#SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-rdynamic")
+# Generate mem_init.h
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Malloc/testmem_init.h.in 
+    ${CMAKE_CURRENT_BINARY_DIR}/Core/Malloc/mem_init.h
+    @ONLY
+)
 
-#------
-# For 64 vs 32 bit compiles
-#------
-if (NBITS EQUAL 64) 
-  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -msse2")
-  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -msse2")
-  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  endif ()
-else ()
-  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -msse2")
-  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -msse2")
-  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  endif ()
-endif ()
-
-message(STATUS "compiler flags are: $CMAKE_CXX_FLAGS$ = ${CMAKE_CXX_FLAGS}")
-
-if(WIN32)
-  if(NOT BUILD_SHARED_LIBS)
-    add_definitions(-DBUILD_CORE_STATIC)
-    add_definitions(-DGLEW_STATIC)
-  endif(NOT BUILD_SHARED_LIBS)
-  #  This defines M_PI for windows
-  add_definitions(-D_USE_MATH_DEFINES)
-  # defines Windows 2000 features like mouse leaving window
-  add_definitions(-D_WIN32_WINNT=0x0500)
-  # turns off VS 2005 warnings about strcpy et.al. being unsafe
-  add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
-  add_definitions(-DWIN32_LEAN_AND_MEAN) # makes sure things like rad1/grp1 don't get defined
-  add_definitions(-DNOMINMAX) # makes sure min and max don't get defined
-  
-  # win32 l3 warnings are a little ridiculous
-  set(CMAKE_CXX_WARNING_LEVEL 1)
-  if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-    string(REGEX REPLACE "/W[0-4]" "/W1"
-            CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  else(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1")
-  endif(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-endif(WIN32)
+# Add binary directory to include path for generated headers
+target_include_directories(vaango_options INTERFACE
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 #----------------------------------------------------------------------------------
 # Turn off ICE or MPM (for sci_defs/uintah_defs.h)
