@@ -89,17 +89,17 @@ Crack::addComputesAndRequiresAdjustCrackContactInterpolated(Task* t,const PatchS
   const MaterialSubset* mss = matls->getUnion();
 
   // Nodal solutions above crack
-  t->requires(Task::NewDW, lb->gMassLabel,         Ghost::None);
-  t->requires(Task::NewDW, lb->gVolumeLabel,       Ghost::None);
-  t->requires(Task::NewDW, lb->gNumPatlsLabel,     Ghost::None);
-  t->requires(Task::NewDW, lb->gDisplacementLabel, Ghost::None);
+  t->needs(Task::NewDW, lb->gMassLabel,         Ghost::None);
+  t->needs(Task::NewDW, lb->gVolumeLabel,       Ghost::None);
+  t->needs(Task::NewDW, lb->gNumPatlsLabel,     Ghost::None);
+  t->needs(Task::NewDW, lb->gDisplacementLabel, Ghost::None);
 
   // Nodal solutions below crack
-  t->requires(Task::NewDW, lb->GMassLabel,         Ghost::None);
-  t->requires(Task::NewDW, lb->GVolumeLabel,       Ghost::None);
-  t->requires(Task::NewDW, lb->GNumPatlsLabel,     Ghost::None);
-  t->requires(Task::NewDW, lb->GCrackNormLabel,    Ghost::None);
-  t->requires(Task::NewDW, lb->GDisplacementLabel, Ghost::None);
+  t->needs(Task::NewDW, lb->GMassLabel,         Ghost::None);
+  t->needs(Task::NewDW, lb->GVolumeLabel,       Ghost::None);
+  t->needs(Task::NewDW, lb->GNumPatlsLabel,     Ghost::None);
+  t->needs(Task::NewDW, lb->GCrackNormLabel,    Ghost::None);
+  t->needs(Task::NewDW, lb->GDisplacementLabel, Ghost::None);
 
   t->modifies(lb->gVelocityLabel, mss);
   t->modifies(lb->GVelocityLabel, mss);
@@ -267,21 +267,21 @@ Crack::addComputesAndRequiresAdjustCrackContactIntegrated(Task* t,
 {
   const MaterialSubset* mss = matls->getUnion();
 
-  t->requires(Task::OldDW, lb->delTLabel);
-  t->requires(Task::NewDW, lb->gMassLabel,          Ghost::None);
-  t->requires(Task::NewDW, lb->gVolumeLabel,        Ghost::None);
-  t->requires(Task::NewDW, lb->gNumPatlsLabel,      Ghost::None);
-  t->requires(Task::NewDW, lb->gDisplacementLabel,  Ghost::None);
-  t->requires(Task::NewDW, lb->gVelocityLabel,      Ghost::None); 
+  t->needs(Task::OldDW, lb->delTLabel);
+  t->needs(Task::NewDW, lb->gMassLabel,          Ghost::None);
+  t->needs(Task::NewDW, lb->gVolumeLabel,        Ghost::None);
+  t->needs(Task::NewDW, lb->gNumPatlsLabel,      Ghost::None);
+  t->needs(Task::NewDW, lb->gDisplacementLabel,  Ghost::None);
+  t->needs(Task::NewDW, lb->gVelocityLabel,      Ghost::None); 
   t->modifies(             lb->gVelocityStarLabel,  mss);
   t->modifies(             lb->gAccelerationLabel,  mss);
 
-  t->requires(Task::NewDW, lb->GMassLabel,          Ghost::None);
-  t->requires(Task::NewDW, lb->GVolumeLabel,        Ghost::None);
-  t->requires(Task::NewDW, lb->GNumPatlsLabel,      Ghost::None);
-  t->requires(Task::NewDW, lb->GCrackNormLabel,     Ghost::None);
-  t->requires(Task::NewDW, lb->GDisplacementLabel,  Ghost::None);
-  t->requires(Task::NewDW, lb->GVelocityLabel,      Ghost::None); 
+  t->needs(Task::NewDW, lb->GMassLabel,          Ghost::None);
+  t->needs(Task::NewDW, lb->GVolumeLabel,        Ghost::None);
+  t->needs(Task::NewDW, lb->GNumPatlsLabel,      Ghost::None);
+  t->needs(Task::NewDW, lb->GCrackNormLabel,     Ghost::None);
+  t->needs(Task::NewDW, lb->GDisplacementLabel,  Ghost::None);
+  t->needs(Task::NewDW, lb->GVelocityLabel,      Ghost::None); 
   t->modifies(             lb->GVelocityStarLabel,  mss);
   t->modifies(             lb->GAccelerationLabel,  mss);
   t->modifies(             lb->frictionalWorkLabel, mss);

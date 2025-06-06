@@ -666,19 +666,19 @@ IsoMetalPlasticityExplicit::addComputesAndRequires(
   addSharedCRForHypoExplicit(task, matlset, patches);
 
   // Other constitutive model and input dependent computes and requires
-  task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
 
-  task->requires(Task::OldDW, pStrainRateLabel, matlset, gnone);
-  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
-  task->requires(Task::OldDW, pPlasticStrainRateLabel, matlset, gnone);
-  task->requires(Task::OldDW, pEqStrainRateLabel, matlset, gnone);
-  task->requires(Task::OldDW, pEqPlasticStrainLabel, matlset, gnone);
-  task->requires(Task::OldDW, pEqPlasticStrainRateLabel, matlset, gnone);
-  task->requires(Task::OldDW, pDamageLabel, matlset, gnone);
-  task->requires(Task::OldDW, pPorosityLabel, matlset, gnone);
-  task->requires(Task::OldDW, pLocalizedLabel, matlset, gnone);
-  task->requires(Task::OldDW, pIntVarLabel, matlset, gnone);
-  task->requires(Task::OldDW, pDStressDIntVarLabel, matlset, gnone);
+  task->needs(Task::OldDW, pStrainRateLabel, matlset, gnone);
+  task->needs(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
+  task->needs(Task::OldDW, pPlasticStrainRateLabel, matlset, gnone);
+  task->needs(Task::OldDW, pEqStrainRateLabel, matlset, gnone);
+  task->needs(Task::OldDW, pEqPlasticStrainLabel, matlset, gnone);
+  task->needs(Task::OldDW, pEqPlasticStrainRateLabel, matlset, gnone);
+  task->needs(Task::OldDW, pDamageLabel, matlset, gnone);
+  task->needs(Task::OldDW, pPorosityLabel, matlset, gnone);
+  task->needs(Task::OldDW, pLocalizedLabel, matlset, gnone);
+  task->needs(Task::OldDW, pIntVarLabel, matlset, gnone);
+  task->needs(Task::OldDW, pDStressDIntVarLabel, matlset, gnone);
 
   task->computes(pStrainRateLabel_preReloc, matlset);
   task->computes(pPlasticStrainLabel_preReloc, matlset);
@@ -1935,7 +1935,7 @@ IsoMetalPlasticityExplicit::addRequiresDamageParameter(Task* task,
                                                        const PatchSet*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
 }
 
 void

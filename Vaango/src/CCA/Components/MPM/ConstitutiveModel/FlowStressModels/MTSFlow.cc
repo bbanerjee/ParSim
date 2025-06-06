@@ -182,7 +182,7 @@ void
 MTSFlow::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*)
 {
   // const MaterialSubset* matlset = matl->thisMaterial();
-  // task->requires(Task::OldDW, pMTSLabel, matlset,Ghost::None);
+  // task->needs(Task::OldDW, pMTSLabel, matlset,Ghost::None);
   // task->computes(pMTSLabel_preReloc, matlset);
 }
 
@@ -191,7 +191,7 @@ MTSFlow::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
                                 bool, bool)
 {
   // const MaterialSubset* matlset = matl->thisMaterial();
-  // task->requires(Task::ParentOldDW, pMTSLabel, matlset,Ghost::None);
+  // task->needs(Task::ParentOldDW, pMTSLabel, matlset,Ghost::None);
 }
 
 void
@@ -207,7 +207,7 @@ MTSFlow::allocateCMDataAddRequires(Task*, const MPMMaterial*, const PatchSet*,
                                    MPMLabel*)
 {
   // const MaterialSubset* matlset = matl->thisMaterial();
-  // task->requires(Task::NewDW, pMTSLabel_preReloc, matlset, Ghost::None);
+  // task->needs(Task::NewDW, pMTSLabel_preReloc, matlset, Ghost::None);
 }
 
 void

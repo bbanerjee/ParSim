@@ -95,7 +95,7 @@ ImplicitHeatConductionTasks::scheduleInitializeHeatFluxBCs(const LevelP& level,
       "ImplicitHeatConductionTasks::countMaterialPointsPerLoadCurve",
       this,
       &ImplicitHeatConductionTasks::countMaterialPointsPerLoadCurve);
-    t->requires(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_mpm_labels->materialPointsPerLoadCurveLabel,
                 d_loadCurveIndex,
                 Task::OutOfDomain);
@@ -106,9 +106,9 @@ ImplicitHeatConductionTasks::scheduleInitializeHeatFluxBCs(const LevelP& level,
     t = scinew Task("ImplicitHeatConductionTasks::initializeHeatFluxBC",
                     this,
                     &ImplicitHeatConductionTasks::initializeHeatFluxBC);
-    t->requires(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
-    t->requires(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::NewDW,
                 d_mpm_labels->materialPointsPerLoadCurveLabel,
                 d_loadCurveIndex,
                 Task::OutOfDomain,
@@ -260,12 +260,12 @@ ImplicitHeatConductionTasks::scheduleComputeCCVolume(
                         this,
                         &ImplicitHeatConductionTasks::computeCCVolume);
 
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->NC_CCweightLabel,
               one_matl,
               Ghost::AroundCells,
               1);
-  t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::AroundCells, 1);
+  t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::AroundCells, 1);
 
   t->computes(d_mpm_labels->cVolumeLabel);
 
@@ -327,14 +327,14 @@ ImplicitHeatConductionTasks::scheduleProjectCCHeatSourceToNodes(
                 this,
                 &ImplicitHeatConductionTasks::projectCCHeatSourceToNodes);
 
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->NC_CCweightLabel,
               one_matl,
               Ghost::AroundCells,
               1);
-  t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::AroundCells, 1);
-  t->requires(Task::NewDW, d_mpm_labels->cVolumeLabel, Ghost::AroundCells, 1);
-  t->requires(
+  t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::AroundCells, 1);
+  t->needs(Task::NewDW, d_mpm_labels->cVolumeLabel, Ghost::AroundCells, 1);
+  t->needs(
     Task::OldDW, d_mpm_labels->heatRate_CCLabel, Ghost::AroundCells, 1);
 
   t->computes(d_mpm_labels->heatRate_CCLabel);

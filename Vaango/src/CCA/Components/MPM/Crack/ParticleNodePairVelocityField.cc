@@ -67,7 +67,7 @@ Crack::addComputesAndRequiresParticleVelocityField(
   const PatchSet* /*patches*/,
   const MaterialSet* /*matls*/) const
 {
-  t->requires(Task::OldDW, lb->pXLabel, Ghost::AroundCells, NGN);
+  t->needs(Task::OldDW, lb->pXLabel, Ghost::AroundCells, NGN);
   t->computes(lb->gNumPatlsLabel);
   t->computes(lb->GNumPatlsLabel);
   t->computes(lb->GCrackNormLabel);

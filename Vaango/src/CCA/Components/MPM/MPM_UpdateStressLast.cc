@@ -113,49 +113,49 @@ MPM_UpdateStressLast::scheduleInterpolateToParticlesAndUpdate(
                         this,
                         &MPM_UpdateStressLast::interpolateToParticlesAndUpdate);
 
-  t->requires(Task::OldDW, d_mpm_labels->simulationTimeLabel);
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->simulationTimeLabel);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
   Ghost::GhostType gac   = Ghost::AroundCells;
   Ghost::GhostType gnone = Ghost::None;
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gAccelerationLabel,
               gac,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gVelocityStarLabel,
               gac,
               d_numGhostNodes);
   if (d_mpm_flags->d_useXPIC) {
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW,
                 d_mpm_labels->gVelocityXPICLabel,
                 gac,
                 d_numGhostNodes);
-    t->requires(Task::OldDW, d_mpm_labels->pVelocityXPICLabel, gnone);
+    t->needs(Task::OldDW, d_mpm_labels->pVelocityXPICLabel, gnone);
   }
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gTemperatureRateLabel,
               gac,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->frictionalWorkLabel,
               gac,
               d_numGhostNodes);
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, gnone);
-  t->requires(Task::OldDW, d_mpm_labels->pMassLabel, gnone);
-  t->requires(Task::OldDW, d_mpm_labels->pParticleIDLabel, gnone);
-  t->requires(Task::OldDW, d_mpm_labels->pTemperatureLabel, gnone);
-  t->requires(Task::OldDW, d_mpm_labels->pVelocityLabel, gnone);
-  t->requires(Task::OldDW, d_mpm_labels->pDispLabel, gnone);
-  t->requires(Task::OldDW, d_mpm_labels->pSizeLabel, gnone);
-  t->requires(Task::OldDW, d_mpm_labels->pVolumeLabel, gnone);
-  t->requires(Task::OldDW, d_mpm_labels->pDefGradLabel, gnone);
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, gnone);
+  t->needs(Task::OldDW, d_mpm_labels->pMassLabel, gnone);
+  t->needs(Task::OldDW, d_mpm_labels->pParticleIDLabel, gnone);
+  t->needs(Task::OldDW, d_mpm_labels->pTemperatureLabel, gnone);
+  t->needs(Task::OldDW, d_mpm_labels->pVelocityLabel, gnone);
+  t->needs(Task::OldDW, d_mpm_labels->pDispLabel, gnone);
+  t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, gnone);
+  t->needs(Task::OldDW, d_mpm_labels->pVolumeLabel, gnone);
+  t->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, gnone);
   if (d_mpm_flags->d_useLoadCurves) {
-    t->requires(Task::OldDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
   }
   if (d_mpm_flags->d_withICE) {
-    t->requires(Task::NewDW, d_mpm_labels->dTdt_NCLabel, gac, d_numGhostNodes);
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW, d_mpm_labels->dTdt_NCLabel, gac, d_numGhostNodes);
+    t->needs(Task::NewDW,
                 d_mpm_labels->massBurnFractionLabel,
                 gac,
                 d_numGhostNodes);
@@ -188,20 +188,20 @@ MPM_UpdateStressLast::scheduleInterpolateToParticlesAndUpdate(
     t->computes(d_mpm_labels->TotalMassLabel);
   }
   if (d_mpm_flags->d_withColor) {
-    t->requires(Task::OldDW, d_mpm_labels->pColorLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->pColorLabel, Ghost::None);
     t->computes(d_mpm_labels->pColorLabel_preReloc);
   }
 
   // Carry Forward particle refinement flag
   if (d_mpm_flags->d_refineParticles) {
-    t->requires(Task::OldDW, d_mpm_labels->pRefinedLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->pRefinedLabel, Ghost::None);
     t->computes(d_mpm_labels->pRefinedLabel_preReloc);
   }
 
   MaterialSubset* z_matl = scinew MaterialSubset();
   z_matl->add(0);
   z_matl->addReference();
-  t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
   t->computes(d_mpm_labels->NC_CCweightLabel, z_matl);
 
   sched->addTask(t, patches, matls);

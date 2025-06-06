@@ -221,15 +221,15 @@ ScalarDiffusionTasks::scheduleIntegrate(SchedulerP& sched,
                           this,
                           &ScalarDiffusionTasks::computeAndIntegrateDiffusion);
 
-    t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-    t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
-    t->requires(
+    t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+    t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+    t->needs(
       Task::NewDW, d_mpm_labels->diffusion->gConcentrationNoBC, Ghost::None);
-    t->requires(
+    t->needs(
       Task::NewDW, d_mpm_labels->diffusion->gConcentration, Ghost::None);
-    t->requires(
+    t->needs(
       Task::NewDW, d_mpm_labels->diffusion->gExternalScalarFlux, Ghost::None);
-    t->requires(
+    t->needs(
       Task::NewDW, sdInterfaceModel->getInterfaceFluxLabel(), Ghost::None);
     t->modifies(d_mpm_labels->diffusion->gConcentrationRate);
     t->computes(d_mpm_labels->diffusion->gConcentrationStar);
@@ -321,21 +321,21 @@ void
 ScalarDiffusionTasks::scheduleInterpolateParticlesToGrid(Task* task)
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
-    task->requires(Task::OldDW,
+    task->needs(Task::OldDW,
                    d_mpm_labels->pStressLabel,
                    Ghost::AroundNodes,
                    d_num_ghost_particles);
-    task->requires(Task::OldDW,
+    task->needs(Task::OldDW,
                    d_mpm_labels->diffusion->pConcentration,
                    Ghost::AroundNodes,
                    d_num_ghost_particles);
     if (d_mpm_flags->d_GEVelProj) {
-      task->requires(Task::OldDW,
+      task->needs(Task::OldDW,
                      d_mpm_labels->diffusion->pGradConcentration,
                      Ghost::AroundNodes,
                      d_num_ghost_particles);
     }
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_mpm_labels->diffusion->pExternalScalarFlux_preReloc,
                    Ghost::AroundNodes,
                    d_num_ghost_particles);
@@ -346,7 +346,7 @@ ScalarDiffusionTasks::scheduleInterpolateParticlesToGrid(Task* task)
 
 #ifdef CBDI_FLUXBCS
     if (d_mpm_flags->d_useLoadCurves) {
-      task->requires(Task::OldDW,
+      task->needs(Task::OldDW,
                      d_mpm_labels->pLoadCurveIDLabel,
                      Ghost::AroundNodes,
                      d_num_ghost_particles);
@@ -504,7 +504,7 @@ ScalarDiffusionTasks::scheduleInterpolateParticlesToGrid_CFI(
   int numPaddingCells)
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
-    task->requires(Task::OldDW,
+    task->needs(Task::OldDW,
                    d_mpm_labels->diffusion->pConcentration,
                    allPatches,
                    Task::CoarseLevel,
@@ -512,7 +512,7 @@ ScalarDiffusionTasks::scheduleInterpolateParticlesToGrid_CFI(
                    Task::NormalDomain,
                    Ghost::AroundCells,
                    numPaddingCells);
-    task->requires(Task::OldDW,
+    task->needs(Task::OldDW,
                    d_mpm_labels->pStressLabel,
                    allPatches,
                    Task::CoarseLevel,
@@ -520,7 +520,7 @@ ScalarDiffusionTasks::scheduleInterpolateParticlesToGrid_CFI(
                    Task::NormalDomain,
                    Ghost::AroundCells,
                    numPaddingCells);
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_mpm_labels->diffusion->pExternalScalarFlux_preReloc,
                    allPatches,
                    Task::CoarseLevel,
@@ -605,7 +605,7 @@ void
 ScalarDiffusionTasks::scheduleCoarsenNodalData_CFI(Task* task)
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_mpm_labels->diffusion->gConcentration,
                    allPatches,
                    Task::FineLevel,
@@ -614,7 +614,7 @@ ScalarDiffusionTasks::scheduleCoarsenNodalData_CFI(Task* task)
                    Ghost::None,
                    0);
     task->modifies(d_mpm_labels->diffusion->gConcentration);
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_mpm_labels->diffusion->gExternalScalarFlux,
                    allPatches,
                    Task::FineLevel,
@@ -691,7 +691,7 @@ void
 ScalarDiffusionTasks::scheduleCoarsenNodalData_CFI2(Task* task)
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_mpm_labels->diffusion->gConcentrationRate,
                    allPatches,
                    Task::FineLevel,
@@ -821,13 +821,13 @@ void
 ScalarDiffusionTasks::scheduleComputeAndIntegrateConcentration(Task* task)
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
-    task->requires(
+    task->needs(
       Task::NewDW, sdInterfaceModel->getInterfaceFluxLabel(), Ghost::None);
-    task->requires(
+    task->needs(
       Task::NewDW, d_mpm_labels->diffusion->gConcentration, Ghost::None);
-    task->requires(
+    task->needs(
       Task::NewDW, d_mpm_labels->diffusion->gConcentrationNoBC, Ghost::None);
-    task->requires(
+    task->needs(
       Task::NewDW, d_mpm_labels->diffusion->gExternalScalarFlux, Ghost::None);
     task->modifies(d_mpm_labels->diffusion->gConcentrationRate);
     task->computes(d_mpm_labels->diffusion->gConcentrationStar);
@@ -932,11 +932,11 @@ ScalarDiffusionTasks::scheduleComputeConcentrationGradient(
                           this,
                           &ScalarDiffusionTasks::computeConcentrationGradient);
 
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW,
                 d_mpm_labels->diffusion->gConcentrationStar,
                 Ghost::AroundCells,
                 d_num_ghost_nodes);
-    t->requires(Task::OldDW, d_mpm_labels->diffusion->pArea, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->diffusion->pArea, Ghost::None);
     t->computes(d_mpm_labels->diffusion->pGradConcentration_preReloc);
     t->computes(d_mpm_labels->diffusion->pArea_preReloc);
 
@@ -1038,9 +1038,9 @@ void
 ScalarDiffusionTasks::scheduleInterpolateToParticlesAndUpdate(Task* task)
 {
   if (d_mpm_flags->d_doScalarDiffusion) {
-    task->requires(
+    task->needs(
       Task::OldDW, d_mpm_labels->diffusion->pConcentration, Ghost::None);
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_mpm_labels->diffusion->gConcentrationRate,
                    Ghost::AroundCells,
                    d_num_ghost_nodes);

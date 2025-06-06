@@ -71,13 +71,13 @@ TEST(HDF5Tests, readTest)
           current_layer.input_size = prev_layer.units;
         }
         if (l_it.key() == "name") {
-          current_layer.name = l_it.value();
+          current_layer.name = l_it.value().get<std::string>();
         }
         if (l_it.key() == "activation") {
-          current_layer.activation = l_it.value();
+          current_layer.activation = l_it.value().get<std::string>();
         }
         if (l_it.key() == "units") {
-          current_layer.units = l_it.value();
+          current_layer.units = l_it.value().get<int>();
         }
       }
       layers.push_back(current_layer);

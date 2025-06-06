@@ -259,33 +259,33 @@ impAMRICE::scheduleMultiLevelPressureSolve(SchedulerP& sched,
     const PatchSubset* patches = level->allPatches()->getUnion();
     //__________________________________
     // common Variables
-    t->requires(Task::OldDW, d_ice_labels->delTLabel, level.get_rep());
-    t->requires(Task::NewDW, d_ice_labels->vol_frac_CCLabel, patches, gac, 2);
-    t->requires(Task::NewDW, d_ice_labels->specificVolume_CCLabel, patches, gac, 1);
-    t->requires(
+    t->needs(Task::OldDW, d_ice_labels->delTLabel, level.get_rep());
+    t->needs(Task::NewDW, d_ice_labels->vol_frac_CCLabel, patches, gac, 2);
+    t->needs(Task::NewDW, d_ice_labels->specificVolume_CCLabel, patches, gac, 1);
+    t->needs(
       Task::NewDW, d_ice_labels->rhsLabel, patches, tl, one_matl, oims, gn, 0);
-    t->requires(Task::NewDW, d_ice_labels->uvel_FCLabel, patches, gn, 0);
-    t->requires(Task::NewDW, d_ice_labels->vvel_FCLabel, patches, gn, 0);
-    t->requires(Task::NewDW, d_ice_labels->wvel_FCLabel, patches, gn, 0);
+    t->needs(Task::NewDW, d_ice_labels->uvel_FCLabel, patches, gn, 0);
+    t->needs(Task::NewDW, d_ice_labels->vvel_FCLabel, patches, gn, 0);
+    t->needs(Task::NewDW, d_ice_labels->wvel_FCLabel, patches, gn, 0);
 
     //__________________________________
     // SetupRHS
     if (d_models.size() > 0) {
-      t->requires(
+      t->needs(
         Task::NewDW, d_ice_labels->modelMass_srcLabel, patches, gn, 0);
     }
-    t->requires(Task::NewDW, d_ice_labels->speedSound_CCLabel, patches, gn, 0);
-    t->requires(Task::NewDW, d_ice_labels->max_RHSLabel, gn, 0);
+    t->needs(Task::NewDW, d_ice_labels->speedSound_CCLabel, patches, gn, 0);
+    t->needs(Task::NewDW, d_ice_labels->max_RHSLabel, gn, 0);
 
     //__________________________________
     // setup Matrix
-    t->requires(Task::NewDW, d_ice_labels->sp_volX_FCLabel, patches, gac, 1);
-    t->requires(Task::NewDW, d_ice_labels->sp_volY_FCLabel, patches, gac, 1);
-    t->requires(Task::NewDW, d_ice_labels->sp_volZ_FCLabel, patches, gac, 1);
-    t->requires(Task::NewDW, d_ice_labels->vol_fracX_FCLabel, patches, gac, 1);
-    t->requires(Task::NewDW, d_ice_labels->vol_fracY_FCLabel, patches, gac, 1);
-    t->requires(Task::NewDW, d_ice_labels->vol_fracZ_FCLabel, patches, gac, 1);
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW, d_ice_labels->sp_volX_FCLabel, patches, gac, 1);
+    t->needs(Task::NewDW, d_ice_labels->sp_volY_FCLabel, patches, gac, 1);
+    t->needs(Task::NewDW, d_ice_labels->sp_volZ_FCLabel, patches, gac, 1);
+    t->needs(Task::NewDW, d_ice_labels->vol_fracX_FCLabel, patches, gac, 1);
+    t->needs(Task::NewDW, d_ice_labels->vol_fracY_FCLabel, patches, gac, 1);
+    t->needs(Task::NewDW, d_ice_labels->vol_fracZ_FCLabel, patches, gac, 1);
+    t->needs(Task::NewDW,
                 d_ice_labels->sumKappaLabel,
                 patches,
                 tl,
@@ -296,9 +296,9 @@ impAMRICE::scheduleMultiLevelPressureSolve(SchedulerP& sched,
 
     //__________________________________
     // Update Pressure
-    t->requires(
+    t->needs(
       Task::NewDW, d_ice_labels->press_equil_CCLabel, press_matl, oims, gac, 1);
-    t->requires(
+    t->needs(
       Task::NewDW, d_ice_labels->sum_imp_delPLabel, press_matl, oims, gac, 1);
 
 #if 0 // fix me
@@ -308,10 +308,10 @@ impAMRICE::scheduleMultiLevelPressureSolve(SchedulerP& sched,
 
     //__________________________________
     // ImplicitVel_FC
-    t->requires(
+    t->needs(
       Task::OldDW, d_ice_labels->velocity_CCLabel, patches, ice_matls, gac, 1);
     if (mpm_matls) {
-      t->requires(
+      t->needs(
         Task::NewDW, d_ice_labels->velocity_CCLabel, patches, mpm_matls, gac, 1);
     }
 
@@ -745,7 +745,7 @@ impAMRICE::scheduleAddReflux_RHS(SchedulerP& sched,
     Task::MaterialDomainSpec oims = Task::OutOfDomain; // outside of ice matlSet
 
     // Fluxes from the fine level. These are computed in the advection operator
-    t1->requires(Task::NewDW,
+    t1->needs(Task::NewDW,
                  d_ice_labels->vol_frac_X_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -753,7 +753,7 @@ impAMRICE::scheduleAddReflux_RHS(SchedulerP& sched,
                  Task::NormalDomain,
                  gn,
                  0);
-    t1->requires(Task::NewDW,
+    t1->needs(Task::NewDW,
                  d_ice_labels->vol_frac_Y_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -761,7 +761,7 @@ impAMRICE::scheduleAddReflux_RHS(SchedulerP& sched,
                  Task::NormalDomain,
                  gn,
                  0);
-    t1->requires(Task::NewDW,
+    t1->needs(Task::NewDW,
                  d_ice_labels->vol_frac_Z_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -789,12 +789,12 @@ impAMRICE::scheduleAddReflux_RHS(SchedulerP& sched,
                            &impAMRICE::apply_refluxFluxes_RHS);
 
     // coarse grid RHS after setupRHS
-    t2->requires(Task::NewDW, d_ice_labels->rhsLabel, one_matl, oims, gn, 0);
+    t2->needs(Task::NewDW, d_ice_labels->rhsLabel, one_matl, oims, gn, 0);
 
     // Correction fluxes  from the coarse level
-    t2->requires(Task::NewDW, d_ice_labels->vol_frac_X_FC_fluxLabel, gac, 1);
-    t2->requires(Task::NewDW, d_ice_labels->vol_frac_Y_FC_fluxLabel, gac, 1);
-    t2->requires(Task::NewDW, d_ice_labels->vol_frac_Z_FC_fluxLabel, gac, 1);
+    t2->needs(Task::NewDW, d_ice_labels->vol_frac_X_FC_fluxLabel, gac, 1);
+    t2->needs(Task::NewDW, d_ice_labels->vol_frac_Y_FC_fluxLabel, gac, 1);
+    t2->needs(Task::NewDW, d_ice_labels->vol_frac_Z_FC_fluxLabel, gac, 1);
     t2->modifies(d_ice_labels->rhsLabel, one_matl, oims);
 
     sched->addTask(t2, coarseLevel->eachPatch(), all_matls);
@@ -941,7 +941,7 @@ impAMRICE::scheduleCoarsen_delP(SchedulerP& sched,
   Task::MaterialDomainSpec oims = Task::OutOfDomain; // outside of ice matlSet.
   Ghost::GhostType gn           = Ghost::None;
 
-  t->requires(
+  t->needs(
     Task::NewDW, variable, 0, Task::FineLevel, press_matl, oims, gn, 0);
 
   t->modifies(variable, d_press_matl, oims);
@@ -1138,7 +1138,7 @@ impAMRICE::schedule_matrixBC_CFI_coarsePatch(SchedulerP& sched,
                              &impAMRICE::matrixBC_CFI_coarsePatch);
 
     Ghost::GhostType gn = Ghost::None;
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_ice_labels->matrixLabel,
                    0,
                    Task::FineLevel,

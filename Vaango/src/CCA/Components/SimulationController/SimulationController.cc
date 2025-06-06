@@ -571,7 +571,7 @@ SimulationController::ScheduleReportStats(bool header)
   // Require delta T so that the task gets scheduled
   // correctly. Otherwise the scheduler/taskgraph will toss an error :
   // Caught std exception: map::at: key not found
-  task->requires(Task::NewDW, d_simulator->getDelTLabel());
+  task->needs(Task::NewDW, d_simulator->getDelTLabel());
 
   d_scheduler->addTask(task,
                        d_loadBalancer->getPerProcessorPatchSet(d_current_gridP),

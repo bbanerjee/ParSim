@@ -584,20 +584,20 @@ ElasticPlasticHP::addComputesAndRequires(Task* task,
   Ghost::GhostType gnone        = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
   addComputesAndRequiresForRotatedExplicit(task, matlset, patches);
-  task->requires(Task::OldDW, lb->pPolarDecompRLabel, matlset, gnone);
-  task->requires(Task::NewDW, lb->pPolarDecompRLabel_preReloc, matlset, gnone);
+  task->needs(Task::OldDW, lb->pPolarDecompRLabel, matlset, gnone);
+  task->needs(Task::NewDW, lb->pPolarDecompRLabel_preReloc, matlset, gnone);
 
   // Other constitutive model and input dependent computes and requires
-  task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
 
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
-  task->requires(Task::OldDW, pStrainRateLabel, matlset, gnone);
-  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
-  task->requires(Task::OldDW, pPlasticStrainRateLabel, matlset, gnone);
-  task->requires(Task::OldDW, pDamageLabel, matlset, gnone);
-  task->requires(Task::OldDW, pPorosityLabel, matlset, gnone);
-  task->requires(Task::OldDW, pLocalizedLabel, matlset, gnone);
-  task->requires(Task::OldDW, pEnergyLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
+  task->needs(Task::OldDW, pStrainRateLabel, matlset, gnone);
+  task->needs(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
+  task->needs(Task::OldDW, pPlasticStrainRateLabel, matlset, gnone);
+  task->needs(Task::OldDW, pDamageLabel, matlset, gnone);
+  task->needs(Task::OldDW, pPorosityLabel, matlset, gnone);
+  task->needs(Task::OldDW, pLocalizedLabel, matlset, gnone);
+  task->needs(Task::OldDW, pEnergyLabel, matlset, gnone);
 
   task->computes(pStrainRateLabel_preReloc, matlset);
   task->computes(pPlasticStrainLabel_preReloc, matlset);
@@ -1465,7 +1465,7 @@ ElasticPlasticHP::addRequiresDamageParameter(Task* task,
                                              const PatchSet*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
 }
 
 /* For copying damage parameter to SerialMPM */
@@ -1589,14 +1589,14 @@ ElasticPlasticHP::allocateCMDataAddRequires(Task* task,
 
   // Add requires local to this model
   Ghost::GhostType gnone = Ghost::None;
-  task->requires(Task::NewDW, pRotationLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pStrainRateLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pPlasticStrainLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pPlasticStrainRateLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pDamageLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pPorosityLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pEnergyLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pRotationLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pStrainRateLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pPlasticStrainLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pPlasticStrainRateLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pDamageLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pPorosityLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pEnergyLabel_preReloc, matlset, gnone);
   d_flow->allocateCMDataAddRequires(task, matl, patch, lb);
 }
 
@@ -1678,7 +1678,7 @@ ElasticPlasticHP::scheduleCheckNeedAddMPMMaterial(Task* task,
 {
   Ghost::GhostType gnone        = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pPlasticStrainLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pPlasticStrainLabel_preReloc, matlset, gnone);
 
   task->computes(lb->NeedAddMPMMaterialLabel);
 }

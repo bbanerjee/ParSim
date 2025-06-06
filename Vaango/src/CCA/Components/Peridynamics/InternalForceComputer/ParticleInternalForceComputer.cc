@@ -100,13 +100,13 @@ ParticleInternalForceComputer::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   
   // List the variables needed for this task to execute
-  task->requires(Task::OldDW, d_label->pParticleIDLabel,         matlset, gac, numGhostCells);
-  task->requires(Task::OldDW, d_label->pVolumeLabel,             matlset, gac, numGhostCells);
+  task->needs(Task::OldDW, d_label->pParticleIDLabel,         matlset, gac, numGhostCells);
+  task->needs(Task::OldDW, d_label->pVolumeLabel,             matlset, gac, numGhostCells);
 
-  task->requires(Task::OldDW, d_label->pNeighborListLabel,               matlset, gac, numGhostCells);
-  task->requires(Task::OldDW, d_label->pNeighborConnLabel,               matlset, gac, numGhostCells);
-  task->requires(Task::OldDW, d_label->pNeighborCountLabel,              matlset, gac, numGhostCells);
-  task->requires(Task::NewDW, d_label->pNeighborBondForceLabel_preReloc, matlset, gac, numGhostCells);
+  task->needs(Task::OldDW, d_label->pNeighborListLabel,               matlset, gac, numGhostCells);
+  task->needs(Task::OldDW, d_label->pNeighborConnLabel,               matlset, gac, numGhostCells);
+  task->needs(Task::OldDW, d_label->pNeighborCountLabel,              matlset, gac, numGhostCells);
+  task->needs(Task::NewDW, d_label->pNeighborBondForceLabel_preReloc, matlset, gac, numGhostCells);
 
   // List the variables computed by this task
   task->computes(d_label->pInternalForceLabel_preReloc, matlset);

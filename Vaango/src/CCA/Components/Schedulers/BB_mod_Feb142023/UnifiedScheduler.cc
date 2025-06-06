@@ -2194,7 +2194,7 @@ UnifiedScheduler::initiateH2DCopies(DetailedTask* dtask)
       GPUDataWarehouse* gpudw    = dw->getGPUDW(deviceIndex);
 
       // a fix for when INF ghost cells are requested such as in RMCRT e.g.
-      // tsk->requires(abskg_dw, d_abskgLabel, gac, SHRT_MAX);
+      // tsk->needs(abskg_dw, d_abskgLabel, gac, SHRT_MAX);
       bool uses_SHRT_MAX = (curDependency->m_num_ghost_cells == SHRT_MAX);
 
       // Get all size information about this dependency.

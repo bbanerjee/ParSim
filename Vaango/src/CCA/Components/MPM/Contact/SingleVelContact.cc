@@ -165,8 +165,8 @@ SingleVelContact::addComputesAndRequires(SchedulerP& sched,
                         gVelocity_label);
 
   const MaterialSubset* mss = matls->getUnion();
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
 
   t->modifies(gVelocity_label, mss);
 

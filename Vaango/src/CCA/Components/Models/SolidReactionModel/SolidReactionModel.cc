@@ -219,21 +219,21 @@ void SolidReactionModel::scheduleComputeModelSources(SchedulerP& sched,
   one_matl->addReference();
   MaterialSubset* press_matl   = one_matl;
 
-  t->requires(Task::OldDW, Ilb->timeStepLabel);
-  t->requires(Task::OldDW, Ilb->delTLabel,         level.get_rep());
+  t->needs(Task::OldDW, Ilb->timeStepLabel);
+  t->needs(Task::OldDW, Ilb->delTLabel,         level.get_rep());
   //__________________________________
   // Products
-  t->requires(Task::NewDW,  Ilb->rho_CCLabel,      prod_matl, gn);
+  t->needs(Task::NewDW,  Ilb->rho_CCLabel,      prod_matl, gn);
 
   //__________________________________
   // Reactants
-  t->requires(Task::NewDW, Ilb->specificVolume_CCLabel,    react_matl, gn);
-  t->requires(Task::OldDW, Ilb->velocity_CCLabel,       react_matl, gn);
-  t->requires(Task::OldDW, Ilb->temperature_CCLabel,      react_matl, gn);
-  t->requires(Task::NewDW, Ilb->rho_CCLabel,       react_matl, gn);
-  t->requires(Task::NewDW, Ilb->vol_frac_CCLabel,  react_matl, gn);
+  t->needs(Task::NewDW, Ilb->specificVolume_CCLabel,    react_matl, gn);
+  t->needs(Task::OldDW, Ilb->velocity_CCLabel,       react_matl, gn);
+  t->needs(Task::OldDW, Ilb->temperature_CCLabel,      react_matl, gn);
+  t->needs(Task::NewDW, Ilb->rho_CCLabel,       react_matl, gn);
+  t->needs(Task::NewDW, Ilb->vol_frac_CCLabel,  react_matl, gn);
 
-  t->requires(Task::NewDW, Ilb->press_equil_CCLabel, press_matl,gn);
+  t->needs(Task::NewDW, Ilb->press_equil_CCLabel, press_matl,gn);
   t->computes(reactedFractionLabel, react_matl);
   t->computes(delFLabel,            react_matl);
 

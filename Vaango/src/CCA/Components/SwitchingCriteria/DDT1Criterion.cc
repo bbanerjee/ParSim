@@ -90,15 +90,15 @@ DDT1Criterion::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
   Ghost::GhostType gan = Ghost::AroundNodes;
 
   if (level->hasFinerLevel() == false) { // only on the finest level
-    t->requires(Task::OldDW, d_ice_labels->vol_frac_CCLabel, mpm_matls, gac, 1);
-    t->requires(Task::NewDW, d_mpm_labels->gMassLabel, mpm_matls, gan, 2);
-    t->requires(Task::OldDW, d_mpm_labels->pXLabel, mpm_matls, gan, 1);
-    t->requires(Task::NewDW,
+    t->needs(Task::OldDW, d_ice_labels->vol_frac_CCLabel, mpm_matls, gac, 1);
+    t->needs(Task::NewDW, d_mpm_labels->gMassLabel, mpm_matls, gan, 2);
+    t->needs(Task::OldDW, d_mpm_labels->pXLabel, mpm_matls, gan, 1);
+    t->needs(Task::NewDW,
                 d_mpm_labels->gTemperatureLabel,
                 one_matl,
                 gan,
                 2);
-    t->requires(Task::OldDW,
+    t->needs(Task::OldDW,
                 d_mpm_labels->NC_CCweightLabel,
                 one_matl,
                 gan,

@@ -539,11 +539,11 @@ public:
     }
     Task* task =
       scinew Task("CGSolver:setup", this, &CGStencil7<GridVarType>::setup);
-    task->requires(parent_which_b_dw, B_label, Ghost::None, 0);
-    task->requires(parent_which_A_dw, A_label, Ghost::None, 0);
+    task->needs(parent_which_b_dw, B_label, Ghost::None, 0);
+    task->needs(parent_which_A_dw, A_label, Ghost::None, 0);
 
     if (guess_label) {
-      task->requires(parent_which_guess_dw, guess_label, Around, 1);
+      task->needs(parent_which_guess_dw, guess_label, Around, 1);
     }
 
     task->computes(memref_label);
@@ -614,8 +614,8 @@ public:
       }
       task =
         scinew Task("CGSolver:step1", this, &CGStencil7<GridVarType>::step1);
-      task->requires(parent_which_A_dw, A_label, Ghost::None, 0);
-      task->requires(Task::OldDW, D_label, Around, 1);
+      task->needs(parent_which_A_dw, A_label, Ghost::None, 0);
+      task->needs(Task::OldDW, D_label, Around, 1);
       task->computes(aden_label);
       task->computes(Q_label);
       task->computes(flop_label);
@@ -631,12 +631,12 @@ public:
       }
       task =
         scinew Task("CGSolver:step2", this, &CGStencil7<GridVarType>::step2);
-      task->requires(Task::OldDW, d_label);
-      task->requires(Task::NewDW, aden_label);
-      task->requires(Task::OldDW, D_label, Ghost::None, 0);
-      task->requires(Task::OldDW, X_label, Ghost::None, 0);
-      task->requires(Task::OldDW, R_label, Ghost::None, 0);
-      task->requires(Task::OldDW, diag_label, Ghost::None, 0);
+      task->needs(Task::OldDW, d_label);
+      task->needs(Task::NewDW, aden_label);
+      task->needs(Task::OldDW, D_label, Ghost::None, 0);
+      task->needs(Task::OldDW, X_label, Ghost::None, 0);
+      task->needs(Task::OldDW, R_label, Ghost::None, 0);
+      task->needs(Task::OldDW, diag_label, Ghost::None, 0);
       task->computes(X_label);
       task->computes(R_label);
       task->modifies(Q_label);
@@ -658,10 +658,10 @@ public:
       }
       task =
         scinew Task("CGSolver:step3", this, &CGStencil7<GridVarType>::step3);
-      task->requires(Task::OldDW, D_label, Ghost::None, 0);
-      task->requires(Task::NewDW, Q_label, Ghost::None, 0);
-      task->requires(Task::NewDW, d_label);
-      task->requires(Task::OldDW, d_label);
+      task->needs(Task::OldDW, D_label, Ghost::None, 0);
+      task->needs(Task::NewDW, Q_label, Ghost::None, 0);
+      task->needs(Task::NewDW, d_label);
+      task->needs(Task::OldDW, d_label);
       task->computes(D_label);
       task->computes(flop_label);
       task->modifies(memref_label);

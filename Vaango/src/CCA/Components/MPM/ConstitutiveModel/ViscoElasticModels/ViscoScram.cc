@@ -497,11 +497,11 @@ ViscoScram::addComputesAndRequires(Task* task,
   // Other constitutive model and input dependent computes and requires
   Ghost::GhostType gnone = Ghost::None;
 
-  task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
 
-  task->requires(Task::OldDW, pCrackRadiusLabel, matlset, gnone);
-  task->requires(Task::OldDW, pStatedataLabel, matlset, gnone);
-  task->requires(Task::OldDW, pRandLabel, matlset, gnone);
+  task->needs(Task::OldDW, pCrackRadiusLabel, matlset, gnone);
+  task->needs(Task::OldDW, pStatedataLabel, matlset, gnone);
+  task->needs(Task::OldDW, pRandLabel, matlset, gnone);
 
   task->computes(pVolChangeHeatRateLabel_preReloc, matlset);
   task->computes(pViscousHeatRateLabel_preReloc, matlset);
@@ -1163,13 +1163,13 @@ ViscoScram::allocateCMDataAddRequires(Task* task,
 
   // Add requires local to this model
   Ghost::GhostType gnone = Ghost::None;
-  task->requires(Task::NewDW, pVolChangeHeatRateLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pViscousHeatRateLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pCrackHeatRateLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pCrackRadiusLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pStrainRateLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pStatedataLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pRandLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pVolChangeHeatRateLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pViscousHeatRateLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pCrackHeatRateLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pCrackRadiusLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pStrainRateLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pStatedataLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pRandLabel_preReloc, matlset, gnone);
 }
 
 void

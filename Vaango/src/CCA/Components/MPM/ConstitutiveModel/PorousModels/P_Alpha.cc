@@ -226,8 +226,8 @@ P_Alpha::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForExplicit(task, matlset, patches);
 
-  task->requires(Task::OldDW, pAlphaMinLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pTempAlpha1Label, matlset, Ghost::None);
+  task->needs(Task::OldDW, pAlphaMinLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pTempAlpha1Label, matlset, Ghost::None);
 
   task->computes(pAlphaLabel, matlset);
   task->computes(pAlphaMinLabel_preReloc, matlset);

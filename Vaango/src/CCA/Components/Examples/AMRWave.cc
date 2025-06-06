@@ -91,7 +91,7 @@ AMRWave::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
     return;
   }
   Task* task = scinew Task("coarsen", this, &AMRWave::coarsen);
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_phi_label,
                  0,
                  Task::FineLevel,
@@ -100,7 +100,7 @@ AMRWave::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
                  Ghost::None,
                  0);
   task->modifies(d_phi_label);
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_pi_label,
                  0,
                  Task::FineLevel,
@@ -120,7 +120,7 @@ AMRWave::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
     return;
   }
   Task* task = scinew Task("refine", this, &AMRWave::refine);
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_phi_label,
                  0,
                  Task::CoarseLevel,
@@ -128,7 +128,7 @@ AMRWave::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
                  Task::NormalDomain,
                  Ghost::AroundCells,
                  1);
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_pi_label,
                  0,
                  Task::CoarseLevel,
@@ -150,7 +150,7 @@ void
 AMRWave::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
 {
   Task* task = scinew Task("errorEstimate", this, &AMRWave::errorEstimate);
-  task->requires(Task::NewDW, d_phi_label, Ghost::AroundCells, 1);
+  task->needs(Task::NewDW, d_phi_label, Ghost::AroundCells, 1);
   task->modifies(d_regridder->getRefineFlagLabel(),
                  d_regridder->refineFlagMaterials());
   task->modifies(d_regridder->getRefinePatchFlagLabel(),
@@ -482,7 +482,7 @@ AMRWave::addRefineDependencies(Task* task,
   Ghost::GhostType gc = Ghost::AroundCells;
 
   if (needCoarseOld) {
-    task->requires(Task::CoarseOldDW,
+    task->needs(Task::CoarseOldDW,
                    var,
                    0,
                    Task::CoarseLevel,
@@ -492,7 +492,7 @@ AMRWave::addRefineDependencies(Task* task,
                    1);
   }
   if (needCoarseNew) {
-    task->requires(Task::CoarseNewDW,
+    task->needs(Task::CoarseNewDW,
                    var,
                    0,
                    Task::CoarseLevel,

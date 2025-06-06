@@ -453,18 +453,18 @@ TabularPlasticity::addComputesAndRequires(Task* task,
                                           const PatchSet* patches) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, lb->delTLabel);
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, lb->pXLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, lb->pMassLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, lb->pVolumeLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, lb->pTemperatureLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, lb->pVelocityLabel, matlset, Ghost::None);
-  task->requires(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, lb->pDeformRateMidLabel, matlset, Ghost::None);
-  task->requires(Task::NewDW, lb->pStressUnrotatedLabel, matlset, Ghost::None);
-  task->requires(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->delTLabel);
+  task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->pXLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->pMassLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->pVolumeLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->pTemperatureLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->pTempPreviousLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->pVelocityLabel, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pDeformRateMidLabel, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pStressUnrotatedLabel, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, Ghost::None);
 
   task->computes(lb->pStressLabel_preReloc, matlset);
   task->computes(lb->pdTdtLabel_preReloc, matlset);
@@ -474,12 +474,12 @@ TabularPlasticity::addComputesAndRequires(Task* task,
   d_yield->addComputesAndRequires(task, matl, patches);
 
   // Add internal variable computes and requires
-  task->requires(Task::OldDW, pElasticStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pElasticVolStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticCumEqStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pBulkModulusLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pElasticStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pElasticVolStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticCumEqStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pBulkModulusLabel, matlset, Ghost::None);
 
   task->computes(pElasticStrainLabel_preReloc, matlset);
   task->computes(pElasticVolStrainLabel_preReloc, matlset);
@@ -1495,7 +1495,7 @@ TabularPlasticity::addRequiresDamageParameter(Task* task,
 {
   // Require the damage parameter
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, lb->pRemoveLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pRemoveLabel_preReloc, matlset, Ghost::None);
 }
 
 void

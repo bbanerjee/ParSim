@@ -1788,14 +1788,14 @@ TaskGraph::setupTaskConnections(GraphSortInfoMap& sortinfo)
           if (comp->matls != nullptr) {
             // TODO APH - figure this out and clean up - 01/31/15
             // newtask->computes(comp->var, level, comp->matls,
-            // Task::OutOfDomain); newtask->requires(Task::NewDW, comp->var,
+            // Task::OutOfDomain); newtask->needs(Task::NewDW, comp->var,
             // level, comp->matls, Task::OutOfDomain);
             newtask->modifies(comp->var, level, comp->matls, Task::OutOfDomain);
           } else {
             for (int m = 0; m < ms->size(); m++) {
               // TODO APH - figure this out and clean up - 01/31/15
               // newtask->computes(comp->var, level, ms->getSubset(m),
-              // Task::OutOfDomain); newtask->requires(Task::NewDW, comp->var,
+              // Task::OutOfDomain); newtask->needs(Task::NewDW, comp->var,
               // level, ms->getSubset(m), Task::OutOfDomain);
               newtask->modifies(
                 comp->var, level, ms->getSubset(m), Task::OutOfDomain);

@@ -246,14 +246,17 @@ public:
   {
     m_pools = m_pool_allocator.allocate( num_levels );
     for ( size_t i=0; i<m_num_levels; ++i) {
-      m_pool_allocator.construct( m_pools + i, i, m_node_allocator );
+      std::allocator_traits<pool_allocator_type>::construct(
+        m_pool_allocator, m_pools + i, i, m_node_allocator);
     }
 
     m_size = m_size_allocator.allocate(1);
-    m_size_allocator.construct( m_size, 0 );
+    std::allocator_traits<size_allocator_type>::construct(
+      m_size_allocator, m_size, 0);
 
     m_refcount = m_size_allocator.allocate(1);
-    m_size_allocator.construct( m_refcount, 1 );
+    std::allocator_traits<size_allocator_type>::construct(
+      m_size_allocator, m_refcount, 1);
 
     std::atomic_thread_fence( std::memory_order_seq_cst );
   }
@@ -334,7 +337,8 @@ public:
     if ( m_refcount && m_refcount->fetch_sub(one, std::memory_order_relaxed ) == one ) {
 
       for ( size_t i=0; i<m_num_levels; ++i) {
-        m_pool_allocator.destroy( m_pools + i );
+        std::allocator_traits<pool_allocator_type>::destroy(m_pool_allocator,
+                                                            m_pools + i);
       }
       m_pool_allocator.deallocate( m_pools, m_num_levels);
 

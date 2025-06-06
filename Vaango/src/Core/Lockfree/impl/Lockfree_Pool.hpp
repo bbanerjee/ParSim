@@ -143,7 +143,11 @@ public:
     , m_node_allocator{ node_allocator }
   {
     m_head = m_node_allocator.allocate(1);
-    m_node_allocator.construct( m_head.load( std::memory_order_relaxed ), m_pool_id, this );
+    std::allocator_traits<node_allocator_type>::construct(
+      m_node_allocator,
+      m_head.load(std::memory_order_relaxed),
+      m_pool_id,
+      this);
 
     m_find_head.store( m_head.load( std::memory_order_relaxed ), std::memory_order_relaxed );
   }
@@ -163,7 +167,8 @@ public:
     // iterate circular pool deleting nodes
     do {
       next = curr->next();
-      m_node_allocator.destroy(curr);
+      std::allocator_traits<node_allocator_type>::destroy(m_node_allocator,
+                                                          curr);
       m_node_allocator.deallocate( curr, 1 );
       curr = next;
     } while ( curr != start );

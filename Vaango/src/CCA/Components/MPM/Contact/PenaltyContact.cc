@@ -78,10 +78,10 @@ PenaltyContact::addComputesAndRequires(SchedulerP& sched,
                            label);
 
     const MaterialSubset* mss = matls->getUnion();
-    t->requires(Task::OldDW, lb->delTLabel);
-    t->requires(Task::NewDW, lb->gMassLabel,                  Ghost::None);
-    t->requires(Task::NewDW, lb->gVolumeLabel,                Ghost::None);
-    t->requires(Task::NewDW, lb->gLSContactForceLabel,        Ghost::None);
+    t->needs(Task::OldDW, lb->delTLabel);
+    t->needs(Task::NewDW, lb->gMassLabel,                  Ghost::None);
+    t->needs(Task::NewDW, lb->gVolumeLabel,                Ghost::None);
+    t->needs(Task::NewDW, lb->gLSContactForceLabel,        Ghost::None);
     t->modifies(lb->gVelocityStarLabel,  mss);
 
     sched->addTask(t, patches, matls);

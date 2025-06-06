@@ -265,9 +265,9 @@ CGSolver::scheduleSolve(const LevelP& level,
                           __LINE__);
   }
 
-  task->requires(which_A_dw, A, Ghost::None, 0);
+  task->needs(which_A_dw, A, Ghost::None, 0);
   if (guess) {
-    task->requires(which_guess_dw, guess, Around, 1);
+    task->needs(which_guess_dw, guess, Around, 1);
   }
   if (modifies_x) {
     task->modifies(x);
@@ -275,7 +275,7 @@ CGSolver::scheduleSolve(const LevelP& level,
     task->computes(x);
   }
 
-  task->requires(which_b_dw, b, Ghost::None, 0);
+  task->needs(which_b_dw, b, Ghost::None, 0);
   task->hasSubScheduler();
 
   if (d_params->getRecomputeTimestepOnFailure()) {

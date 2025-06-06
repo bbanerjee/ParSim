@@ -103,7 +103,7 @@ SingleVelocityContact::addComputesAndRequiresInterpolated(
                         &SingleVelocityContact::exchangeMomentumInterpolated);
 
   const MaterialSubset* mss = ms->getUnion();
-  t->requires(Task::NewDW, d_labels->gMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_labels->gMassLabel, Ghost::None);
 
   t->modifies(d_labels->gVelocityLabel, mss);
 
@@ -182,8 +182,8 @@ SingleVelocityContact::addComputesAndRequiresIntegrated(SchedulerP& sched,
                         &SingleVelocityContact::exchangeMomentumIntegrated);
 
   const MaterialSubset* mss = ms->getUnion();
-  t->requires(Task::OldDW, d_labels->delTLabel);
-  t->requires(Task::NewDW, d_labels->gMassLabel, Ghost::None);
+  t->needs(Task::OldDW, d_labels->delTLabel);
+  t->needs(Task::NewDW, d_labels->gMassLabel, Ghost::None);
 
   t->modifies(d_labels->gVelocityStarLabel, mss);
 

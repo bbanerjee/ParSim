@@ -352,8 +352,9 @@ public:
     // Allocate node and insert the value
     if ( !itr ) {
       // allocate and construct
-      node_type * new_node = allocator.allocate(1, curr);
-      allocator.construct( new_node, pid, pool );
+      node_type * new_node = allocator.allocate(1);
+      std::allocator_traits<NodeAllocator>::construct(
+        allocator, new_node, pid, pool);
 
       // will always succeed since the node is not in the pool
       itr = new_node->try_atomic_emplace( 0, std::forward<Args>(args)... );

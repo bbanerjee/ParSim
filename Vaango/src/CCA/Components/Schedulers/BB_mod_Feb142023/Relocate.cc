@@ -156,14 +156,14 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
     t->usesMPI(true);
   }
 
-  t->requires(Task::NewDW, d_reloc_old_pos_label, Ghost::None);
+  t->needs(Task::NewDW, d_reloc_old_pos_label, Ghost::None);
 
   for (int m = 0; m < numMatls; m++) {
     MaterialSubset* thismatl = scinew MaterialSubset();
     thismatl->add(matlsub->get(m));
 
     for (int i = 0; i < (int)d_reloc_old_labels[m].size(); i++) {
-      t->requires(Task::NewDW, d_reloc_old_labels[m][i], Ghost::None);
+      t->needs(Task::NewDW, d_reloc_old_labels[m][i], Ghost::None);
     }
 
     t->computes(d_reloc_new_pos_label, thismatl);
@@ -255,14 +255,14 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
     t->usesMPI(true);
   }
 
-  t->requires(Task::NewDW, old_posLabel, Ghost::None);
+  t->needs(Task::NewDW, old_posLabel, Ghost::None);
 
   for (int m = 0; m < numMatls; m++) {
     MaterialSubset* thismatl = scinew MaterialSubset();
     thismatl->add(matlsub->get(m));
 
     for (int i = 0; i < (int)old_labels[m].size(); i++) {
-      t->requires(Task::NewDW, old_labels[m][i], thismatl, Ghost::None);
+      t->needs(Task::NewDW, old_labels[m][i], thismatl, Ghost::None);
     }
 
     t->computes(new_posLabel, thismatl);

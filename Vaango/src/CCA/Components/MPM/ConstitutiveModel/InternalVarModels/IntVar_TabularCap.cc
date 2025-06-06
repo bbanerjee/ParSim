@@ -129,7 +129,7 @@ IntVar_TabularCap::addComputesAndRequires(Task* task,
                                           const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, pCapXLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pCapXLabel, matlset, Ghost::None);
   task->computes(pCapXLabel_preReloc, matlset);
 }
 
@@ -277,7 +277,7 @@ IntVar_TabularCap::allocateCMDataAddRequires(Task* task,
                                              MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pCapXLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pCapXLabel_preReloc, matlset, Ghost::None);
 }
 
 /*!-----------------------------------------------------*/

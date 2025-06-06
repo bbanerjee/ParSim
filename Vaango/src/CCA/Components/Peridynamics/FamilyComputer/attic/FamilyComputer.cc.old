@@ -138,13 +138,13 @@ void FamilyComputer::allocateVariablesAddRequires(Uintah::Task* task,
 {
   d_lock.writeLock();
   Uintah::Ghost::GhostType  gn = Uintah::Ghost::None;
-  task->requires(Uintah::Task::OldDW, d_varLabel->pParticleIDLabel,  gn);
-  task->requires(Uintah::Task::OldDW, d_varLabel->pPositionLabel,    gn);
-  task->requires(Uintah::Task::OldDW, d_varLabel->pMassLabel,        gn);
-  //task->requires(Task::OldDW,d_varLabel->pVolumeLabel,    gn);
-  task->requires(Uintah::Task::NewDW, d_varLabel->pVolumeLabel_preReloc,   gn);
-  task->requires(Uintah::Task::OldDW, d_varLabel->pDispLabel,        gn);
-  task->requires(Uintah::Task::OldDW, d_varLabel->pVelocityLabel,    gn);
+  task->needs(Uintah::Task::OldDW, d_varLabel->pParticleIDLabel,  gn);
+  task->needs(Uintah::Task::OldDW, d_varLabel->pPositionLabel,    gn);
+  task->needs(Uintah::Task::OldDW, d_varLabel->pMassLabel,        gn);
+  //task->needs(Task::OldDW,d_varLabel->pVolumeLabel,    gn);
+  task->needs(Uintah::Task::NewDW, d_varLabel->pVolumeLabel_preReloc,   gn);
+  task->needs(Uintah::Task::OldDW, d_varLabel->pDispLabel,        gn);
+  task->needs(Uintah::Task::OldDW, d_varLabel->pVelocityLabel,    gn);
   d_lock.writeUnlock();
 }
 

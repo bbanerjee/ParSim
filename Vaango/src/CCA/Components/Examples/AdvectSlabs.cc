@@ -136,7 +136,7 @@ AdvectSlabs::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
   Task* task = scinew Task("timeAdvance",
 			   this, &AdvectSlabs::timeAdvance);
 
-  task->requires(Task::OldDW, mass_label, Ghost::AroundCells, 2);
+  task->needs(Task::OldDW, mass_label, Ghost::AroundCells, 2);
   task->computes(mass_label);
   task->computes(massAdvected_label);
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());

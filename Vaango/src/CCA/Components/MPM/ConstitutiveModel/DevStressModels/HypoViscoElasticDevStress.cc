@@ -127,7 +127,7 @@ HypoViscoElasticDevStress::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
 
-    task->requires(Task::OldDW, d_sigmaDevLabel[j], matlset, Ghost::None);
+    task->needs(Task::OldDW, d_sigmaDevLabel[j], matlset, Ghost::None);
     task->computes(d_sigmaDevLabel_preReloc[j], matlset);
   }
 }
@@ -143,10 +143,10 @@ HypoViscoElasticDevStress::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   for (unsigned int j = 0; j < d_MaxwellElements; j++) {
     if (SchedParent) {
-      task->requires(Task::ParentOldDW, d_sigmaDevLabel[j], matlset,
+      task->needs(Task::ParentOldDW, d_sigmaDevLabel[j], matlset,
                      Ghost::None);
     } else {
-      task->requires(Task::OldDW, d_sigmaDevLabel[j], matlset, Ghost::None);
+      task->needs(Task::OldDW, d_sigmaDevLabel[j], matlset, Ghost::None);
     }
   }
 }

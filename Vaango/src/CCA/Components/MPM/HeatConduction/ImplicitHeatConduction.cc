@@ -122,7 +122,7 @@ ImplicitHeatConduction::scheduleCreateHCMatrix(SchedulerP& sched,
     Task* t = scinew Task(
       "ImpMPM::createHCMatrix", this, &ImplicitHeatConduction::createHCMatrix);
 
-    t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
+    t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
 
     d_perproc_patches = patches;
     d_perproc_patches->addReference();
@@ -144,7 +144,7 @@ ImplicitHeatConduction::scheduleApplyHCBoundaryConditions(
                           &ImplicitHeatConduction::applyHCBoundaryConditions);
 
     t->computes(d_mpm_labels->gTemperatureStarLabel, d_one_matl);
-    t->requires(
+    t->needs(
       Task::NewDW, d_mpm_labels->gExternalHeatFluxLabel, Ghost::None, 0);
 
     t->setType(Task::OncePerProc);
@@ -161,7 +161,7 @@ ImplicitHeatConduction::scheduleFindFixedHCDOF(SchedulerP& sched,
     Task* t = scinew Task(
       "ImpMPM::findFixedHCDOF", this, &ImplicitHeatConduction::findFixedHCDOF);
 
-    t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None, 0);
+    t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None, 0);
 
     t->setType(Task::OncePerProc);
     sched->addTask(t, patches, matls);
@@ -178,10 +178,10 @@ ImplicitHeatConduction::scheduleFormHCStiffnessMatrix(SchedulerP& sched,
                           this,
                           &ImplicitHeatConduction::formHCStiffnessMatrix);
 
-    t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-    t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
-    t->requires(Task::OldDW, d_mpm_labels->pVolumeLabel, Ghost::AroundNodes, 1);
-    t->requires(
+    t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+    t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
+    t->needs(Task::OldDW, d_mpm_labels->pVolumeLabel, Ghost::AroundNodes, 1);
+    t->needs(
       Task::OldDW, d_mpm_labels->pTemperatureLabel, Ghost::AroundNodes, 1);
     t->setType(Task::OncePerProc);
     sched->addTask(t, patches, matls);
@@ -197,16 +197,16 @@ ImplicitHeatConduction::scheduleFormHCQ(SchedulerP& sched,
     Task* t =
       scinew Task("ImpMPM::formHCQ", this, &ImplicitHeatConduction::formHCQ);
 
-    t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-    t->requires(Task::NewDW,
+    t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+    t->needs(Task::NewDW,
                 d_mpm_labels->gTemperatureLabel,
                 d_one_matl,
                 Ghost::AroundCells,
                 1);
-    t->requires(
+    t->needs(
       Task::NewDW, d_mpm_labels->gExternalHeatRateLabel, Ghost::AroundCells, 1);
-    t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
-    t->requires(Task::OldDW, d_mpm_labels->pVolumeLabel, Ghost::AroundNodes, 1);
+    t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
+    t->needs(Task::OldDW, d_mpm_labels->pVolumeLabel, Ghost::AroundNodes, 1);
 
     t->setType(Task::OncePerProc);
     sched->addTask(t, patches, matls);
@@ -225,7 +225,7 @@ ImplicitHeatConduction::scheduleAdjustHCQAndHCKForBCs(SchedulerP& sched,
 
     Ghost::GhostType gnone = Ghost::None;
 
-    t->requires(
+    t->needs(
       Task::NewDW, d_mpm_labels->gTemperatureStarLabel, d_one_matl, gnone, 0);
 
     t->setType(Task::OncePerProc);
@@ -244,7 +244,7 @@ ImplicitHeatConduction::scheduleSolveForTemp(SchedulerP& sched,
 
 #if 0
   Ghost::GhostType  gnone = Ghost::None;
-  t->requires(Task::NewDW, d_mpm_labels->gTemperatureLabel,d_one_matl,gnone,0);
+  t->needs(Task::NewDW, d_mpm_labels->gTemperatureLabel,d_one_matl,gnone,0);
 #endif
 
     t->setType(Task::OncePerProc);
@@ -263,8 +263,8 @@ ImplicitHeatConduction::scheduleGetTemperatureIncrement(
                           this,
                           &ImplicitHeatConduction::getTemperatureIncrement);
 
-    t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-    t->requires(
+    t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+    t->needs(
       Task::NewDW, d_mpm_labels->gTemperatureLabel, d_one_matl, Ghost::None, 0);
     t->computes(d_mpm_labels->gTemperatureRateLabel, d_one_matl);
 

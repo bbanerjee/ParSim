@@ -98,20 +98,20 @@ ImplicitCM::addSharedCRForImplicit(Task* task, const MaterialSubset* matlset,
   Ghost::GhostType gnone = Ghost::None;
   // Ghost::GhostType  gac   = Ghost::AroundCells;
 
-  task->requires(Task::OldDW, d_lb->delTLabel);
-  task->requires(Task::OldDW, d_lb->simulationTimeLabel);
-  task->requires(Task::OldDW, d_lb->pXLabel, matlset, gnone);
-  task->requires(Task::OldDW, d_lb->pSizeLabel, matlset, gnone);
-  task->requires(Task::OldDW, d_lb->pMassLabel, matlset, gnone);
-  task->requires(Task::OldDW, d_lb->pVolumeLabel, matlset, gnone);
-  task->requires(Task::OldDW, d_lb->pTemperatureLabel, matlset, gnone);
-  task->requires(Task::OldDW, d_lb->pDefGradLabel, matlset, gnone);
-  task->requires(Task::OldDW, d_lb->pStressLabel, matlset, gnone);
+  task->needs(Task::OldDW, d_lb->delTLabel);
+  task->needs(Task::OldDW, d_lb->simulationTimeLabel);
+  task->needs(Task::OldDW, d_lb->pXLabel, matlset, gnone);
+  task->needs(Task::OldDW, d_lb->pSizeLabel, matlset, gnone);
+  task->needs(Task::OldDW, d_lb->pMassLabel, matlset, gnone);
+  task->needs(Task::OldDW, d_lb->pVolumeLabel, matlset, gnone);
+  task->needs(Task::OldDW, d_lb->pTemperatureLabel, matlset, gnone);
+  task->needs(Task::OldDW, d_lb->pDefGradLabel, matlset, gnone);
+  task->needs(Task::OldDW, d_lb->pStressLabel, matlset, gnone);
 
-  task->requires(Task::NewDW, d_lb->pDefGradLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, d_lb->pVelGradLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, d_lb->pDispGradLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, d_lb->pVolumeLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, d_lb->pDefGradLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, d_lb->pVelGradLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, d_lb->pDispGradLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, d_lb->pVolumeLabel_preReloc, matlset, gnone);
 
   task->computes(d_lb->pStressLabel_preReloc, matlset);
   task->computes(d_lb->pdTdtLabel_preReloc, matlset);
@@ -124,7 +124,7 @@ ImplicitCM::addSharedCRForImplicitHypo(Task* task,
 {
 
   addSharedCRForImplicit(task, matlset, reset);
-  task->requires(Task::OldDW, d_lb->pStressLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, d_lb->pStressLabel, matlset, Ghost::None);
 }
 
 void
@@ -137,30 +137,30 @@ ImplicitCM::addSharedCRForImplicit(Task* task, const MaterialSubset* matlset,
 
   if (SchedParent) {
     // For subscheduler
-    task->requires(Task::ParentOldDW, d_lb->pXLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, d_lb->pSizeLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, d_lb->pMassLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, d_lb->pVolumeLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, d_lb->pTemperatureLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, d_lb->pDefGradLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, d_lb->pXLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, d_lb->pSizeLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, d_lb->pMassLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, d_lb->pVolumeLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, d_lb->pTemperatureLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, d_lb->pDefGradLabel, matlset, gnone);
 
-    task->requires(Task::NewDW, d_lb->pDefGradLabel_preReloc, matlset, gnone);
-    task->requires(Task::NewDW, d_lb->pVelGradLabel_preReloc, matlset, gnone);
-    task->requires(Task::NewDW, d_lb->pDispGradLabel_preReloc, matlset, gnone);
-    task->requires(Task::NewDW, d_lb->pVolumeLabel_preReloc, matlset, gnone);
+    task->needs(Task::NewDW, d_lb->pDefGradLabel_preReloc, matlset, gnone);
+    task->needs(Task::NewDW, d_lb->pVelGradLabel_preReloc, matlset, gnone);
+    task->needs(Task::NewDW, d_lb->pDispGradLabel_preReloc, matlset, gnone);
+    task->needs(Task::NewDW, d_lb->pVolumeLabel_preReloc, matlset, gnone);
 
     task->computes(d_lb->pStressLabel_preReloc, matlset);
     task->computes(d_lb->pdTdtLabel_preReloc, matlset);
   } else {
     // For scheduleIterate
-    task->requires(Task::OldDW, d_lb->pXLabel, matlset, gnone);
-    task->requires(Task::OldDW, d_lb->pSizeLabel, matlset, gnone);
-    task->requires(Task::OldDW, d_lb->pMassLabel, matlset, gnone);
-    task->requires(Task::OldDW, d_lb->pVolumeLabel, matlset, gnone);
-    task->requires(Task::OldDW, d_lb->pTemperatureLabel, matlset, gnone);
-    task->requires(Task::OldDW, d_lb->pDefGradLabel, matlset, gnone);
-    task->requires(Task::OldDW, d_lb->pVelGradLabel, matlset, gnone);
-    task->requires(Task::OldDW, d_lb->pDispGradLabel, matlset, gnone);
+    task->needs(Task::OldDW, d_lb->pXLabel, matlset, gnone);
+    task->needs(Task::OldDW, d_lb->pSizeLabel, matlset, gnone);
+    task->needs(Task::OldDW, d_lb->pMassLabel, matlset, gnone);
+    task->needs(Task::OldDW, d_lb->pVolumeLabel, matlset, gnone);
+    task->needs(Task::OldDW, d_lb->pTemperatureLabel, matlset, gnone);
+    task->needs(Task::OldDW, d_lb->pDefGradLabel, matlset, gnone);
+    task->needs(Task::OldDW, d_lb->pVelGradLabel, matlset, gnone);
+    task->needs(Task::OldDW, d_lb->pDispGradLabel, matlset, gnone);
   }
 }
 
@@ -173,9 +173,9 @@ ImplicitCM::addSharedCRForImplicitHypo(Task* task,
   addSharedCRForImplicit(task, matlset, reset, true, SchedParent);
   if (SchedParent) {
     // For subscheduler
-    task->requires(Task::ParentOldDW, d_lb->pStressLabel, matlset, Ghost::None);
+    task->needs(Task::ParentOldDW, d_lb->pStressLabel, matlset, Ghost::None);
   } else {
-    task->requires(Task::OldDW, d_lb->pStressLabel, matlset, Ghost::None);
+    task->needs(Task::OldDW, d_lb->pStressLabel, matlset, Ghost::None);
   }
 }
 

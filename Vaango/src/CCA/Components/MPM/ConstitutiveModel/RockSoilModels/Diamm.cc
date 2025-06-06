@@ -255,7 +255,7 @@ Diamm::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
   addSharedRForConvertExplicit(task, matlset, patches);
   // Add requires local to this model
   for (int i = 0; i < d_NINSV; i++) {
-    task->requires(Task::NewDW, ISVLabels_preReloc[i], matlset, Ghost::None);
+    task->needs(Task::NewDW, ISVLabels_preReloc[i], matlset, Ghost::None);
   }
 }
 
@@ -602,7 +602,7 @@ Diamm::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 
   // Computes and requires for internal state data
   for (int i = 0; i < d_NINSV; i++) {
-    task->requires(Task::OldDW, ISVLabels[i], matlset, Ghost::None);
+    task->needs(Task::OldDW, ISVLabels[i], matlset, Ghost::None);
     task->computes(ISVLabels_preReloc[i], matlset);
   }
 }

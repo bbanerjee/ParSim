@@ -190,7 +190,7 @@ public:
                               const Uintah::PatchSet* patches) const override
   {
     const Uintah::MaterialSubset* matlset = matl->thisMaterial();
-    task->requires(Uintah::Task::OldDW, pBackStressLabel, matlset,
+    task->needs(Uintah::Task::OldDW, pBackStressLabel, matlset,
                    Uintah::Ghost::None);
     task->computes(pBackStressLabel_preReloc, matlset);
   }

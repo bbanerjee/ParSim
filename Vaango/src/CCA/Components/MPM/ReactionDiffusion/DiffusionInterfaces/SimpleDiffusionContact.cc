@@ -74,16 +74,16 @@ SimpleSDInterface::addComputesAndRequiresDivergence(SchedulerP& sched,
   // Everthing needs to register to calculate the basic interface flux rate
   setBaseComputesAndRequiresDivergence(task, matls->getUnion());
 
-  task->requires(Task::OldDW, d_mpm_lb->delTLabel);
+  task->needs(Task::OldDW, d_mpm_lb->delTLabel);
 
-  task->requires(Task::NewDW, d_mpm_lb->gVolumeLabel, gnone);
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW, d_mpm_lb->gVolumeLabel, gnone);
+  task->needs(Task::NewDW,
                  d_mpm_lb->gVolumeLabel,
                  d_materialManager->getAllInOneMaterial(),
                  Task::OutOfDomain,
                  gnone);
-  task->requires(Task::NewDW, d_mpm_lb->diffusion->gConcentration, gnone);
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW, d_mpm_lb->diffusion->gConcentration, gnone);
+  task->needs(Task::NewDW,
                  d_mpm_lb->diffusion->gConcentration,
                  d_materialManager->getAllInOneMaterial(),
                  Task::OutOfDomain,

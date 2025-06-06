@@ -213,9 +213,9 @@ NonLocalDruckerPrager::allocateCMDataAddRequires(Task* task,
   // for the particle convert operation
   // This method is defined in the ConstitutiveModel base class.
   addSharedRForConvertExplicit(task, matlset, patches);
-  task->requires(Task::NewDW, etaLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, eta_nlLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, k_o_distLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, etaLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, eta_nlLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, k_o_distLabel_preReloc, matlset, Ghost::None);
 }
 
 void
@@ -1031,10 +1031,10 @@ NonLocalDruckerPrager::addComputesAndRequires(Task* task,
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForHypoExplicit(task, matlset, patches);
-  task->requires(Task::OldDW, etaLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, eta_nlLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, k_o_distLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, etaLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, eta_nlLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, k_o_distLabel, matlset, Ghost::None);
   task->computes(etaLabel_preReloc, matlset);
   task->computes(eta_nlLabel_preReloc, matlset);
   task->computes(pPlasticStrainLabel_preReloc, matlset);

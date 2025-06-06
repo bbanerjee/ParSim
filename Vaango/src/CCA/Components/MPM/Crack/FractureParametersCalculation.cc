@@ -70,19 +70,19 @@ Crack::addComputesAndRequiresGetNodalSolutions(
   Ghost::GhostType gan   = Ghost::AroundNodes;
   Ghost::GhostType gnone = Ghost::None;
 
-  t->requires(Task::OldDW, lb->simulationTimeLabel);
-  t->requires(Task::NewDW, lb->pMassLabel_preReloc, gan, NGP);
-  t->requires(Task::NewDW, lb->pStressLabel_preReloc, gan, NGP);
-  t->requires(Task::NewDW, lb->pDispGradsLabel_preReloc, gan, NGP);
-  t->requires(Task::NewDW, lb->pStrainEnergyDensityLabel_preReloc, gan, NGP);
-  t->requires(Task::NewDW, lb->pgCodeLabel, gan, NGP);
-  t->requires(Task::NewDW, lb->pKineticEnergyDensityLabel, gan, NGP);
-  t->requires(Task::NewDW, lb->pVelGradsLabel, gan, NGP);
-  t->requires(Task::OldDW, lb->pXLabel, gan, NGP);
-  t->requires(Task::OldDW, lb->pSizeLabel, gan, NGP);
-  t->requires(Task::OldDW, lb->pDefGradLabel, gan, NGP);
-  t->requires(Task::NewDW, lb->gMassLabel, gnone);
-  t->requires(Task::NewDW, lb->GMassLabel, gnone);
+  t->needs(Task::OldDW, lb->simulationTimeLabel);
+  t->needs(Task::NewDW, lb->pMassLabel_preReloc, gan, NGP);
+  t->needs(Task::NewDW, lb->pStressLabel_preReloc, gan, NGP);
+  t->needs(Task::NewDW, lb->pDispGradsLabel_preReloc, gan, NGP);
+  t->needs(Task::NewDW, lb->pStrainEnergyDensityLabel_preReloc, gan, NGP);
+  t->needs(Task::NewDW, lb->pgCodeLabel, gan, NGP);
+  t->needs(Task::NewDW, lb->pKineticEnergyDensityLabel, gan, NGP);
+  t->needs(Task::NewDW, lb->pVelGradsLabel, gan, NGP);
+  t->needs(Task::OldDW, lb->pXLabel, gan, NGP);
+  t->needs(Task::OldDW, lb->pSizeLabel, gan, NGP);
+  t->needs(Task::OldDW, lb->pDefGradLabel, gan, NGP);
+  t->needs(Task::NewDW, lb->gMassLabel, gnone);
+  t->needs(Task::NewDW, lb->GMassLabel, gnone);
 
   t->computes(lb->gGridStressLabel);
   t->computes(lb->GGridStressLabel);
@@ -257,31 +257,31 @@ Crack::addComputesAndRequiresCalculateFractureParameters(
   int NGC              = NJ + NGN + 1;
   Ghost::GhostType gac = Ghost::AroundCells;
 
-  t->requires(Task::OldDW, lb->delTLabel);
-  t->requires(Task::OldDW, lb->simulationTimeLabel);
-  t->requires(Task::NewDW, lb->gMassLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GMassLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GNumPatlsLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->gDisplacementLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GDisplacementLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->gGridStressLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GGridStressLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->gDispGradsLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GDispGradsLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->gStrainEnergyDensityLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GStrainEnergyDensityLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->gKineticEnergyDensityLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GKineticEnergyDensityLabel, gac, NGC);
+  t->needs(Task::OldDW, lb->delTLabel);
+  t->needs(Task::OldDW, lb->simulationTimeLabel);
+  t->needs(Task::NewDW, lb->gMassLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GMassLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GNumPatlsLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->gDisplacementLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GDisplacementLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->gGridStressLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GGridStressLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->gDispGradsLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GDispGradsLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->gStrainEnergyDensityLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GStrainEnergyDensityLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->gKineticEnergyDensityLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GKineticEnergyDensityLabel, gac, NGC);
 
   // Required for area integral
-  t->requires(Task::NewDW, lb->gAccelerationLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GAccelerationLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->gVelGradsLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GVelGradsLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->gVelocityLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GVelocityLabel, gac, NGC);
-  t->requires(Task::OldDW, lb->pSizeLabel, Ghost::None);
-  t->requires(Task::OldDW, lb->pDefGradLabel, Ghost::None);
+  t->needs(Task::NewDW, lb->gAccelerationLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GAccelerationLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->gVelGradsLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GVelGradsLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->gVelocityLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GVelocityLabel, gac, NGC);
+  t->needs(Task::OldDW, lb->pSizeLabel, Ghost::None);
+  t->needs(Task::OldDW, lb->pDefGradLabel, Ghost::None);
 }
 
 void

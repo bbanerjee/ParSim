@@ -135,12 +135,12 @@ vorticity::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
 
   Ghost::GhostType gac = Ghost::AroundCells;
 
-  t->requires(Task::NewDW, I_lb->velocity_CCLabel, d_matl_sub, gac, 1);
+  t->needs(Task::NewDW, I_lb->velocity_CCLabel, d_matl_sub, gac, 1);
   t->computes(vorticityLabel, d_matl_sub);
 
 #ifdef HAVE_VISIT
   if (required) {
-    t->requires(Task::OldDW, vorticityLabel, d_matl_sub, m_gn, 0);
+    t->needs(Task::OldDW, vorticityLabel, d_matl_sub, m_gn, 0);
   }
 #endif
 

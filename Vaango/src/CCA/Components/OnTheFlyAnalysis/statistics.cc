@@ -601,8 +601,8 @@ statistics::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
   Task* t =
     scinew Task("statistics::doAnalysis", this, &statistics::doAnalysis);
 
-  t->requires(Task::OldDW, m_timeStepLabel);
-  t->requires(Task::OldDW, m_simulationTimeLabel);
+  t->needs(Task::OldDW, m_timeStepLabel);
+  t->needs(Task::OldDW, m_simulationTimeLabel);
 
   Ghost::GhostType gn = Ghost::None;
 
@@ -616,15 +616,15 @@ statistics::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
 
     //__________________________________
     //  Lower order statistics
-    t->requires(Task::NewDW, Q.Q_Label, matSubSet, gn, 0);
-    t->requires(Task::OldDW, Q.Qsum_Label, matSubSet, gn, 0);
-    t->requires(Task::OldDW, Q.Qsum2_Label, matSubSet, gn, 0);
+    t->needs(Task::NewDW, Q.Q_Label, matSubSet, gn, 0);
+    t->needs(Task::OldDW, Q.Qsum_Label, matSubSet, gn, 0);
+    t->needs(Task::OldDW, Q.Qsum2_Label, matSubSet, gn, 0);
 
 #ifdef HAVE_VISIT
     if (required) {
-      t->requires(Task::OldDW, Q.Qmean_Label, matSubSet, gn, 0);
-      t->requires(Task::OldDW, Q.Qmean2_Label, matSubSet, gn, 0);
-      t->requires(Task::OldDW, Q.Qvariance_Label, matSubSet, gn, 0);
+      t->needs(Task::OldDW, Q.Qmean_Label, matSubSet, gn, 0);
+      t->needs(Task::OldDW, Q.Qmean2_Label, matSubSet, gn, 0);
+      t->needs(Task::OldDW, Q.Qvariance_Label, matSubSet, gn, 0);
     }
 #endif
 
@@ -638,15 +638,15 @@ statistics::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
     // Higher order statistics
     if (d_doHigherOrderStats) {
 
-      t->requires(Task::OldDW, Q.Qsum3_Label, matSubSet, gn, 0);
-      t->requires(Task::OldDW, Q.Qsum4_Label, matSubSet, gn, 0);
+      t->needs(Task::OldDW, Q.Qsum3_Label, matSubSet, gn, 0);
+      t->needs(Task::OldDW, Q.Qsum4_Label, matSubSet, gn, 0);
 
 #ifdef HAVE_VISIT
       if (required) {
-        t->requires(Task::OldDW, Q.Qmean3_Label, matSubSet, gn, 0);
-        t->requires(Task::OldDW, Q.Qmean4_Label, matSubSet, gn, 0);
-        t->requires(Task::OldDW, Q.Qskewness_Label, matSubSet, gn, 0);
-        t->requires(Task::OldDW, Q.Qkurtosis_Label, matSubSet, gn, 0);
+        t->needs(Task::OldDW, Q.Qmean3_Label, matSubSet, gn, 0);
+        t->needs(Task::OldDW, Q.Qmean4_Label, matSubSet, gn, 0);
+        t->needs(Task::OldDW, Q.Qskewness_Label, matSubSet, gn, 0);
+        t->needs(Task::OldDW, Q.Qkurtosis_Label, matSubSet, gn, 0);
       }
 #endif
 
@@ -670,12 +670,12 @@ statistics::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
     matSubSet->add(d_RS_matl);
     matSubSet->addReference();
 
-    t->requires(Task::OldDW, d_velSum_Label, matSubSet, gn, 0);
+    t->needs(Task::OldDW, d_velSum_Label, matSubSet, gn, 0);
 
 #ifdef HAVE_VISIT
     if (required) {
-      t->requires(Task::OldDW, d_velPrime_Label, matSubSet, gn, 0);
-      t->requires(Task::OldDW, d_velMean_Label, matSubSet, gn, 0);
+      t->needs(Task::OldDW, d_velPrime_Label, matSubSet, gn, 0);
+      t->needs(Task::OldDW, d_velMean_Label, matSubSet, gn, 0);
     }
 #endif
 

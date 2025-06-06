@@ -216,10 +216,10 @@ Membrane::addComputesAndRequires(Task* task,
   // Other constitutive model and input dependent computes and requires
   Ghost::GhostType gnone = Ghost::None;
 
-  task->requires(Task::OldDW, pDefGradInPlaneLabel, matlset, gnone);
-  task->requires(Task::OldDW, pTang1Label, matlset, gnone);
-  task->requires(Task::OldDW, pTang2Label, matlset, gnone);
-  task->requires(Task::OldDW, pNormLabel, matlset, gnone);
+  task->needs(Task::OldDW, pDefGradInPlaneLabel, matlset, gnone);
+  task->needs(Task::OldDW, pTang1Label, matlset, gnone);
+  task->needs(Task::OldDW, pTang2Label, matlset, gnone);
+  task->needs(Task::OldDW, pNormLabel, matlset, gnone);
 
   task->computes(pDefGradInPlaneLabel_preReloc, matlset);
   task->computes(pTang1Label_preReloc, matlset);
@@ -450,7 +450,7 @@ Membrane::allocateCMDataAddRequires(Task* task,
 
   // Add requires local to this model
   Ghost::GhostType gnone = Ghost::None;
-  task->requires(Task::NewDW, pDefGradInPlaneLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pDefGradInPlaneLabel_preReloc, matlset, gnone);
 }
 
 void

@@ -340,7 +340,7 @@ ViscoScramImplicit::allocateCMDataAddRequires(Task* task,
                                               MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, lb->pStressLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pStressLabel_preReloc, matlset, Ghost::None);
 }
 
 void
@@ -711,16 +711,16 @@ ViscoScramImplicit::addComputesAndRequires(Task* task,
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
-  task->requires(Task::ParentOldDW, lb->pXLabel, matlset, Ghost::None);
-  task->requires(Task::ParentOldDW, lb->pSizeLabel, matlset, Ghost::None);
-  task->requires(Task::ParentOldDW, lb->pMassLabel, matlset, Ghost::None);
-  task->requires(Task::ParentOldDW, lb->pVolumeLabel, matlset, Ghost::None);
-  task->requires(Task::ParentOldDW, lb->pDefGradLabel, matlset, Ghost::None);
+  task->needs(Task::ParentOldDW, lb->pXLabel, matlset, Ghost::None);
+  task->needs(Task::ParentOldDW, lb->pSizeLabel, matlset, Ghost::None);
+  task->needs(Task::ParentOldDW, lb->pMassLabel, matlset, Ghost::None);
+  task->needs(Task::ParentOldDW, lb->pVolumeLabel, matlset, Ghost::None);
+  task->needs(Task::ParentOldDW, lb->pDefGradLabel, matlset, Ghost::None);
 
-  task->requires(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, Ghost::None);
-  task->requires(
+  task->needs(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, Ghost::None);
+  task->needs(
     Task::NewDW, lb->pDispGradLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
 
   task->computes(lb->pStressLabel_preReloc, matlset);
   task->computes(lb->pdTdtLabel_preReloc, matlset);
@@ -734,21 +734,21 @@ ViscoScramImplicit::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   Ghost::GhostType gnone        = Ghost::None;
 
-  task->requires(Task::OldDW, lb->delTLabel);
-  task->requires(Task::OldDW, lb->pXLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pSizeLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pMassLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pStressLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVelocityLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
-  task->requires(Task::OldDW, pCrackRadiusLabel, matlset, gnone);
-  task->requires(Task::OldDW, pStatedataLabel, matlset, gnone);
-  task->requires(Task::OldDW, pRandLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->delTLabel);
+  task->needs(Task::OldDW, lb->pXLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pSizeLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pMassLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pStressLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVelocityLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
+  task->needs(Task::OldDW, pCrackRadiusLabel, matlset, gnone);
+  task->needs(Task::OldDW, pStatedataLabel, matlset, gnone);
+  task->needs(Task::OldDW, pRandLabel, matlset, gnone);
 
-  task->requires(Task::NewDW, lb->pDispGradLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, lb->pDispGradLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, gnone);
 
   task->computes(lb->pStressLabel_preReloc, matlset);
   task->computes(lb->pdTdtLabel_preReloc, matlset);

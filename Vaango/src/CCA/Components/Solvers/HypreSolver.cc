@@ -1455,7 +1455,7 @@ HypreSolver2::scheduleSolve(const LevelP& level,
   //  Computes and requires
 
   // Matrix A
-  task->requires(which_A_dw, A_label, Ghost::None, 0);
+  task->needs(which_A_dw, A_label, Ghost::None, 0);
 
   // Solution X
   if (modifies_X) {
@@ -1466,23 +1466,23 @@ HypreSolver2::scheduleSolve(const LevelP& level,
 
   // Initial Guess
   if (guess_label) {
-    task->requires(which_guess_dw, guess_label, Ghost::None, 0);
+    task->needs(which_guess_dw, guess_label, Ghost::None, 0);
   }
 
   // RHS  B
-  task->requires(which_b_dw, b_label, Ghost::None, 0);
+  task->needs(which_b_dw, b_label, Ghost::None, 0);
 
   // timestep
   // it could come from old_dw or parentOldDw
   Task::WhichDW old_dw = m_params->getWhichOldDW();
-  task->requires(old_dw, m_timeStepLabel);
+  task->needs(old_dw, m_timeStepLabel);
 
   // solve struct
   if (isFirstSolve) {
-    task->requires(Task::OldDW, hypre_solver_label);
+    task->needs(Task::OldDW, hypre_solver_label);
     task->computes(hypre_solver_label);
   } else {
-    task->requires(Task::NewDW, hypre_solver_label);
+    task->needs(Task::NewDW, hypre_solver_label);
   }
 
   sched->overrideVariableBehavior(

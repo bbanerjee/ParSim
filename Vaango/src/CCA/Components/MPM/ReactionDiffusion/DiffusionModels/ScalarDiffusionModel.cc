@@ -161,13 +161,13 @@ ScalarDiffusionModel::scheduleComputeDivergence(Task* task,
 {
   Ghost::GhostType gan          = Ghost::AroundNodes;
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, d_lb->delTLabel);
-  task->requires(Task::OldDW, d_lb->pXLabel, gan, NGP);
-  task->requires(Task::NewDW, d_lb->pCurSizeLabel, gan, NGP);
-  task->requires(Task::OldDW, d_lb->pMassLabel, gan, NGP);
-  task->requires(Task::OldDW, d_lb->pVolumeLabel, gan, NGP);
+  task->needs(Task::OldDW, d_lb->delTLabel);
+  task->needs(Task::OldDW, d_lb->pXLabel, gan, NGP);
+  task->needs(Task::NewDW, d_lb->pCurSizeLabel, gan, NGP);
+  task->needs(Task::OldDW, d_lb->pMassLabel, gan, NGP);
+  task->needs(Task::OldDW, d_lb->pVolumeLabel, gan, NGP);
 
-  task->requires(Task::NewDW, d_lb->diffusion->pFlux_preReloc, gan, NGP);
+  task->needs(Task::NewDW, d_lb->diffusion->pFlux_preReloc, gan, NGP);
 
   task->computes(d_lb->diffusion->gConcentrationRate, matlset);
 }
@@ -263,8 +263,8 @@ ScalarDiffusionModel::scheduleComputeDivergence_CFI(Task* t,
   // Note: were using nPaddingCells to extract the region of coarse level
   // particles around every fine patch.   Technically, these are ghost
   // cells but somehow it works.
-  t->requires(Task::NewDW, d_Al->gZOILabel, d_one_matl, Ghost::None, 0);
-  t->requires(Task::OldDW,
+  t->needs(Task::NewDW, d_Al->gZOILabel, d_one_matl, Ghost::None, 0);
+  t->needs(Task::OldDW,
               d_lb->pXLabel,
               allPatches,
               Task::CoarseLevel,
@@ -272,7 +272,7 @@ ScalarDiffusionModel::scheduleComputeDivergence_CFI(Task* t,
               ND,
               gac,
               npc);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_lb->pCurSizeLabel,
               allPatches,
               Task::CoarseLevel,
@@ -280,7 +280,7 @@ ScalarDiffusionModel::scheduleComputeDivergence_CFI(Task* t,
               ND,
               gac,
               npc);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_lb->pMassLabel,
               allPatches,
               Task::CoarseLevel,
@@ -288,7 +288,7 @@ ScalarDiffusionModel::scheduleComputeDivergence_CFI(Task* t,
               ND,
               gac,
               npc);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_lb->diffusion->pFlux_preReloc,
               allPatches,
               Task::CoarseLevel,
@@ -458,7 +458,7 @@ ScalarDiffusionModel::addChemPotentialComputesAndRequires(
   //  Ghost::GhostType        gnone   = Ghost::None;
   //  const MaterialSubset  * matlset = matl->thisMaterial();
   //
-  //  task->requires(Task::OldDW, d_lb->pChemicalPotentialLabel, matlset,
+  //  task->needs(Task::OldDW, d_lb->pChemicalPotentialLabel, matlset,
   //  gnone); task->computes(d_lb->pChemicalPotentialLabel_preReloc, matlset);
 }
 

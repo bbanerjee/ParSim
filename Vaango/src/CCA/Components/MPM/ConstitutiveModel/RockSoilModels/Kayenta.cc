@@ -449,10 +449,10 @@ Kayenta::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
   addSharedRForConvertExplicit(task, matlset, patches);
   // Add requires local to this model
   for (int i = 0; i < d_NINSV; i++) {
-    task->requires(Task::NewDW, ISVLabels_preReloc[i], matlset, Ghost::None);
+    task->needs(Task::NewDW, ISVLabels_preReloc[i], matlset, Ghost::None);
   }
-  task->requires(Task::NewDW, peakI1IDistLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, peakI1IDistLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
 }
 
 void
@@ -504,7 +504,7 @@ Kayenta::addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
                                     const PatchSet*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
 }
 
 void
@@ -935,13 +935,13 @@ Kayenta::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 
   // Computes and requires for internal state data
   for (int i = 0; i < d_NINSV; i++) {
-    task->requires(Task::OldDW, ISVLabels[i], matlset, Ghost::None);
+    task->needs(Task::OldDW, ISVLabels[i], matlset, Ghost::None);
 
     task->computes(ISVLabels_preReloc[i], matlset);
   }
-  task->requires(Task::OldDW, pLocalizedLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, peakI1IDistLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pLocalizedLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, peakI1IDistLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
   task->computes(peakI1IDistLabel_preReloc, matlset);
   task->computes(pLocalizedLabel_preReloc, matlset);
 }

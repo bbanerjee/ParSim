@@ -217,7 +217,7 @@ flatPlate_heatFlux::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
 
   Ghost::GhostType gn = Ghost::None;
 
-  t->requires(Task::NewDW, M_lb->gHeatFluxLabel, d_matl_sub, gn, 0);
+  t->needs(Task::NewDW, M_lb->gHeatFluxLabel, d_matl_sub, gn, 0);
   t->computes(v_lb->total_heatRateLabel);
 
   sched->addTask(t, level->eachPatch(), d_matl_set);

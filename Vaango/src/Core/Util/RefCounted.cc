@@ -34,9 +34,6 @@
 
 #include <atomic>
 
-//
-//
-
 namespace Uintah {
 
 static const int NLOCKS = 1024;
@@ -48,13 +45,6 @@ static Uintah::MasterLock initlock{};
 static std::atomic<long long> nextIndex{0};
 static std::atomic<long long> freeIndex{0};
 
-//static Mutex* locks[NLOCKS];
-//static Mutex initlock("RefCounted initialization lock");
-
-//static AtomicCounter* nextIndex;
-//static AtomicCounter* freeIndex;
-
-
 RefCounted::RefCounted()
   : d_refCount(0)
 {
@@ -63,25 +53,21 @@ RefCounted::RefCounted()
     {
       for (int i = 0; i < NLOCKS; i++) {
         locks[i] = scinew Uintah::MasterLock();
-        //locks[i] = scinew Mutex("RefCounted Mutex");
       }
-      //nextIndex = new AtomicCounter("RefCounted nextIndex count", 0);
-      //freeIndex = new AtomicCounter("RefCounted freeIndex count", 0);
       initialized = true;
     }
     initlock.unlock();
   }
   d_lockIndex = (nextIndex.fetch_add(1, std::memory_order_seq_cst)) % NLOCKS;
-  //d_lockIndex = ((*nextIndex)++) % NLOCKS;
   ASSERT(d_lockIndex >= 0);
 }
 
+/*
 RefCounted::~RefCounted() noexcept(false)
 {
   ASSERTEQ(d_refCount, 0);
   int index = freeIndex.load(std::memory_order_seq_cst);
-  //int index = ++(*freeIndex);
-  //if (index == *nextIndex) {
+
   if (index == nextIndex.load(std::memory_order_seq_cst)) {
     initlock.lock();
     {
@@ -95,22 +81,101 @@ RefCounted::~RefCounted() noexcept(false)
 
       }
     }
-    /*
-    if (*freeIndex == *nextIndex) {
-      initialized = false;
-      for (int i = 0; i < NLOCKS; i++) {
-        delete locks[i];
-        locks[i] = 0;
-      }
-      delete nextIndex;
-      nextIndex = 0;
-      delete freeIndex;
-      freeIndex = 0;
-    }
-    */
     initlock.unlock();
   }
 }
+*/
+
+// nextIndex : tracks the total number of RefCounted objects created
+// freeIndex : appears to track objects that have been destroyed
+// The destructor should increment freeIndex and check if all objects are destroyed
+// The issue is that you're trying to use store() in an if condition, 
+// but you should be using fetch_add() to increment freeIndex and 
+// then check if it equals nextIndex.
+/*
+RefCounted::~RefCounted() noexcept(false)
+{
+  ASSERTEQ(d_refCount, 0);
+
+  // Increment freeIndex and get the new value
+  long long newFreeIndex = freeIndex.fetch_add(1, std::memory_order_seq_cst) + 1;
+  
+  // Check if all objects have been destroyed
+  if (newFreeIndex == nextIndex.load(std::memory_order_seq_cst)) {
+    initlock.lock();
+    {
+      // Double-check inside the lock to avoid race conditions
+      if (freeIndex.load(std::memory_order_seq_cst) == nextIndex.load(std::memory_order_seq_cst)) {
+        initialized = false;
+        for (int i = 0; i < NLOCKS; i++) {
+          delete locks[i];
+          locks[i] = nullptr;
+        }
+        // Reset counters for potential reuse
+        nextIndex.store(0, std::memory_order_seq_cst);
+        freeIndex.store(0, std::memory_order_seq_cst);
+      }
+    }
+    initlock.unlock();
+  }
+}
+*/
+
+RefCounted::~RefCounted() noexcept(false)
+{
+  ASSERTEQ(d_refCount, 0);
+  
+  // Increment freeIndex
+  long long newFreeIndex = freeIndex.fetch_add(1, std::memory_order_seq_cst) + 1;
+  long long currentNext = nextIndex.load(std::memory_order_seq_cst);
+  
+  // Check if this is the last object being destroyed
+  if (newFreeIndex == currentNext) {
+    initlock.lock();
+    {
+      // Use compare_exchange to ensure atomicity
+      long long expected = currentNext;
+      if (freeIndex.compare_exchange_strong(expected, currentNext, std::memory_order_seq_cst) &&
+          expected == currentNext) {
+        initialized = false;
+        for (int i = 0; i < NLOCKS; i++) {
+          delete locks[i];
+          locks[i] = nullptr;
+        }
+        // Reset for potential reuse
+        nextIndex.store(0, std::memory_order_seq_cst);
+        freeIndex.store(0, std::memory_order_seq_cst);
+      }
+    }
+    initlock.unlock();
+  }
+}
+
+/*
+// If lock already exists
+RefCounted::~RefCounted() noexcept(false)
+{
+  ASSERTEQ(d_refCount, 0);
+  int index = freeIndex.load(std::memory_order_seq_cst);
+  
+  if (index == nextIndex.load(std::memory_order_seq_cst)) {
+    initlock.lock();
+    {
+      // Since we're locked, we can safely check and update
+      if (freeIndex.load(std::memory_order_seq_cst) == nextIndex.load(std::memory_order_seq_cst)) {
+        initialized = false;
+        for (int i = 0; i < NLOCKS; i++) {
+          delete locks[i];
+          locks[i] = nullptr;
+        }
+        // Only reset freeIndex after cleanup is done
+        freeIndex.store(0, std::memory_order_seq_cst);  // or whatever reset value you need
+      }
+    }
+    initlock.unlock();
+  }
+}
+*/
 
 void
 RefCounted::addReference() const

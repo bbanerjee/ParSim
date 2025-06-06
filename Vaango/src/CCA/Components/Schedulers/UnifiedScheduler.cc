@@ -1877,7 +1877,7 @@ UnifiedScheduler::initiateH2DCopies( DetailedTask * dtask )
       OnDemandDataWarehouseP dw = m_dws[dwIndex];
       GPUDataWarehouse* gpudw = dw->getGPUDW(deviceIndex);
 
-      // a fix for when INF ghost cells are requested such as in RMCRT e.g. tsk->requires(abskg_dw, d_abskgLabel, gac, SHRT_MAX);
+      // a fix for when INF ghost cells are requested such as in RMCRT e.g. tsk->needs(abskg_dw, d_abskgLabel, gac, SHRT_MAX);
       bool uses_SHRT_MAX = (curDependency->m_num_ghost_cells == SHRT_MAX);
 
       //Get all size information about this dependency.

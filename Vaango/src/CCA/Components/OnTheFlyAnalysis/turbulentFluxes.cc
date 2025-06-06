@@ -481,8 +481,8 @@ turbulentFluxes::sched_Q_mean(SchedulerP& sched, const LevelP& level)
 
   printSchedule(level, dbg_OTF_TF, "turbulentFluxes::sched_Q_mean");
 
-  t->requires(Task::OldDW, m_timeStepLabel);
-  t->requires(Task::OldDW, m_simulationTimeLabel);
+  t->needs(Task::OldDW, m_timeStepLabel);
+  t->needs(Task::OldDW, m_simulationTimeLabel);
 
   for (unsigned int i = 0; i < m_Qvars.size(); i++) {
     Qvar_ptr Q = m_Qvars[i];
@@ -491,13 +491,13 @@ turbulentFluxes::sched_Q_mean(SchedulerP& sched, const LevelP& level)
 
     //__________________________________
     //
-    t->requires(Task::NewDW, Q->Label, matl, m_gn, 0);
-    t->requires(Task::OldDW, Q->Qsum_Label, matl, m_gn, 0);
-    t->requires(Task::OldDW, Q->Q2sum_Label, matl, m_gn, 0);
-    t->requires(Task::OldDW, Q->Qu_Qv_Qw_sum_Label, matl, m_gn, 0);
-    t->requires(Task::OldDW, Q->Qmean_Label, matl, m_gn, 0);
-    t->requires(Task::OldDW, Q->Q2mean_Label, matl, m_gn, 0);
-    t->requires(Task::OldDW, Q->Qu_Qv_Qw_mean_Label, matl, m_gn, 0);
+    t->needs(Task::NewDW, Q->Label, matl, m_gn, 0);
+    t->needs(Task::OldDW, Q->Qsum_Label, matl, m_gn, 0);
+    t->needs(Task::OldDW, Q->Q2sum_Label, matl, m_gn, 0);
+    t->needs(Task::OldDW, Q->Qu_Qv_Qw_sum_Label, matl, m_gn, 0);
+    t->needs(Task::OldDW, Q->Qmean_Label, matl, m_gn, 0);
+    t->needs(Task::OldDW, Q->Q2mean_Label, matl, m_gn, 0);
+    t->needs(Task::OldDW, Q->Qu_Qv_Qw_mean_Label, matl, m_gn, 0);
 
     t->computes(Q->Qsum_Label, matl);
     t->computes(Q->Q2sum_Label, matl);
@@ -661,8 +661,8 @@ turbulentFluxes::sched_turbFluxes(SchedulerP& sched, const LevelP& level)
 
   printSchedule(level, dbg_OTF_TF, "turbulentFluxes::sched_turbFluxes");
 
-  t->requires(Task::OldDW, m_timeStepLabel);
-  t->requires(Task::OldDW, m_simulationTimeLabel);
+  t->needs(Task::OldDW, m_timeStepLabel);
+  t->needs(Task::OldDW, m_simulationTimeLabel);
 
   //__________________________________
   //
@@ -671,13 +671,13 @@ turbulentFluxes::sched_turbFluxes(SchedulerP& sched, const LevelP& level)
 
     const MaterialSubset* matl = Q->matlSubset;
 
-    t->requires(Task::NewDW, Q->Label, matl, m_gn, 0);
-    t->requires(Task::NewDW, Q->Qmean_Label, matl, m_gn, 0);
-    t->requires(Task::NewDW, Q->Q2mean_Label, matl, m_gn, 0);
-    t->requires(Task::NewDW, Q->Qu_Qv_Qw_mean_Label, matl, m_gn, 0);
+    t->needs(Task::NewDW, Q->Label, matl, m_gn, 0);
+    t->needs(Task::NewDW, Q->Qmean_Label, matl, m_gn, 0);
+    t->needs(Task::NewDW, Q->Q2mean_Label, matl, m_gn, 0);
+    t->needs(Task::NewDW, Q->Qu_Qv_Qw_mean_Label, matl, m_gn, 0);
 
-    t->requires(Task::OldDW, Q->variance_Label, matl, m_gn, 0);
-    t->requires(Task::OldDW, Q->covariance_Label, matl, m_gn, 0);
+    t->needs(Task::OldDW, Q->variance_Label, matl, m_gn, 0);
+    t->needs(Task::OldDW, Q->covariance_Label, matl, m_gn, 0);
 
     t->computes(Q->variance_Label, matl);
     t->computes(Q->covariance_Label, matl);

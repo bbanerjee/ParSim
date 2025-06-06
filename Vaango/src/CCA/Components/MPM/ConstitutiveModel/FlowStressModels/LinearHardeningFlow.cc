@@ -86,7 +86,7 @@ LinearHardeningFlow::addComputesAndRequires(Task* task, const MPMMaterial* matl,
                                          const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, pAlphaLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pAlphaLabel, matlset, Ghost::None);
   task->computes(pAlphaLabel_preReloc, matlset);
 }
 
@@ -97,9 +97,9 @@ LinearHardeningFlow::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   if (SchedParent) {
-    task->requires(Task::ParentOldDW, pAlphaLabel, matlset, Ghost::None);
+    task->needs(Task::ParentOldDW, pAlphaLabel, matlset, Ghost::None);
   } else {
-    task->requires(Task::OldDW, pAlphaLabel, matlset, Ghost::None);
+    task->needs(Task::OldDW, pAlphaLabel, matlset, Ghost::None);
   }
 }
 
@@ -116,7 +116,7 @@ LinearHardeningFlow::allocateCMDataAddRequires(Task* task, const MPMMaterial* ma
                                             const PatchSet*, MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pAlphaLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pAlphaLabel_preReloc, matlset, Ghost::None);
 }
 
 void

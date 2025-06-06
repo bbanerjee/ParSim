@@ -844,15 +844,15 @@ MohrCoulomb::addComputesAndRequires(Task* task,
   //task->computes(lb->p_qLabel_preReloc, matlset);
 
   // Computes and requires for internal state data
-  task->requires(Task::OldDW, pStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pShearModulusLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pBulkModulusLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pCohesionLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pSuctionLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pSpVolLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pShearStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pShearStrainRateLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pShearModulusLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pBulkModulusLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pCohesionLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pSuctionLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pSpVolLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pShearStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pShearStrainRateLabel, matlset, Ghost::None);
 
   task->computes(pStrainLabel_preReloc, matlset);
   task->computes(pPlasticStrainLabel_preReloc, matlset);

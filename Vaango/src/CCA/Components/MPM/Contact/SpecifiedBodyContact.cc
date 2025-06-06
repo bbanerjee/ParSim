@@ -240,13 +240,13 @@ SpecifiedBodyContact::addComputesAndRequires(SchedulerP& sched,
   zero_matl->addReference();
 
   const MaterialSubset* mss = matls->getUnion();
-  t->requires(Task::OldDW, d_mpm_labels->simulationTimeLabel);
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gSurfNormLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gInternalForceLabel, Ghost::None);
-  t->requires(
+  t->needs(Task::OldDW, d_mpm_labels->simulationTimeLabel);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gSurfNormLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gInternalForceLabel, Ghost::None);
+  t->needs(
     Task::OldDW, d_mpm_labels->NC_CCweightLabel, zero_matl, Ghost::None);
 
   t->modifies(gVelocity_label, mss);

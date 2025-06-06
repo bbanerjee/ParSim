@@ -368,7 +368,7 @@ Peridynamics::scheduleInitializeParticleLoadBCs(const LevelP& level,
     Task* t = scinew Task("Peridynamics::countSurfaceParticlesPerLoadCurve",
                           this,
                           &Peridynamics::countSurfaceParticlesPerLoadCurve);
-    t->requires(Task::NewDW, d_pd_labels->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::NewDW, d_pd_labels->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_pd_labels->surfaceParticlesPerLoadCurveLabel,
                 d_loadCurveIndex,
                 Task::OutOfDomain);
@@ -379,11 +379,11 @@ Peridynamics::scheduleInitializeParticleLoadBCs(const LevelP& level,
     t = scinew Task("Peridynamics::initializeParticleLoadBC",
                     this,
                     &Peridynamics::initializeParticleLoadBC);
-    t->requires(Task::NewDW, d_pd_labels->pPositionLabel, Ghost::None);
-    t->requires(Task::NewDW, d_pd_labels->pSizeLabel, Ghost::None);
-    t->requires(Task::NewDW, d_pd_labels->pDefGradLabel, Ghost::None);
-    t->requires(Task::NewDW, d_pd_labels->pLoadCurveIDLabel, Ghost::None);
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW, d_pd_labels->pPositionLabel, Ghost::None);
+    t->needs(Task::NewDW, d_pd_labels->pSizeLabel, Ghost::None);
+    t->needs(Task::NewDW, d_pd_labels->pDefGradLabel, Ghost::None);
+    t->needs(Task::NewDW, d_pd_labels->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::NewDW,
                 d_pd_labels->surfaceParticlesPerLoadCurveLabel,
                 d_loadCurveIndex,
                 Task::OutOfDomain,
@@ -821,12 +821,12 @@ Peridynamics::scheduleApplyExternalLoads(SchedulerP& sched,
                         this,
                         &Peridynamics::applyExternalLoads);
 
-  t->requires(Task::OldDW, d_pd_labels->simulationTimeLabel);
-  t->requires(Task::OldDW, d_pd_labels->pPositionLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pSizeLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pMassLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pExternalForceLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pLoadCurveIDLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->simulationTimeLabel);
+  t->needs(Task::OldDW, d_pd_labels->pPositionLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pSizeLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pMassLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pExternalForceLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pLoadCurveIDLabel, Ghost::None);
   t->computes(d_pd_labels->pLoadCurveIDLabel_preReloc);
   t->computes(d_pd_labels->pExternalForceLabel_preReloc);
 
@@ -1003,19 +1003,19 @@ Peridynamics::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
 
   Ghost::GhostType aroundNodes = Ghost::AroundNodes;
   int numGhostNodes            = 1;
-  t->requires(
+  t->needs(
     Task::OldDW, d_pd_labels->pPositionLabel, aroundNodes, numGhostNodes);
-  t->requires(Task::OldDW, d_pd_labels->pMassLabel, aroundNodes, numGhostNodes);
-  t->requires(
+  t->needs(Task::OldDW, d_pd_labels->pMassLabel, aroundNodes, numGhostNodes);
+  t->needs(
     Task::OldDW, d_pd_labels->pVolumeLabel, aroundNodes, numGhostNodes);
-  t->requires(Task::OldDW, d_pd_labels->pSizeLabel, aroundNodes, numGhostNodes);
-  t->requires(
+  t->needs(Task::OldDW, d_pd_labels->pSizeLabel, aroundNodes, numGhostNodes);
+  t->needs(
     Task::OldDW, d_pd_labels->pVelocityLabel, aroundNodes, numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_pd_labels->pExternalForceLabel_preReloc,
               aroundNodes,
               numGhostNodes);
-  t->requires(
+  t->needs(
     Task::OldDW, d_pd_labels->pDefGradLabel, aroundNodes, numGhostNodes);
 
   t->computes(d_pd_labels->gMassLabel);
@@ -1373,23 +1373,23 @@ Peridynamics::scheduleComputeInternalForce(SchedulerP& sched,
                             &Peridynamics::computeGridInternalForce);
 
   int numGhostCells = 1; // Linear interpolation
-  task1->requires(Task::NewDW, d_pd_labels->gVolumeLabel, Ghost::None);
-  task1->requires(Task::NewDW,
+  task1->needs(Task::NewDW, d_pd_labels->gVolumeLabel, Ghost::None);
+  task1->needs(Task::NewDW,
                   d_pd_labels->gVolumeLabel,
                   d_mat_manager->getAllInOneMaterial(),
                   Task::OutOfDomain,
                   Ghost::None);
-  task1->requires(
+  task1->needs(
     Task::OldDW, d_pd_labels->pStressLabel, Ghost::AroundNodes, numGhostCells);
-  task1->requires(
+  task1->needs(
     Task::OldDW, d_pd_labels->pVolumeLabel, Ghost::AroundNodes, numGhostCells);
-  task1->requires(Task::OldDW,
+  task1->needs(Task::OldDW,
                   d_pd_labels->pPositionLabel,
                   Ghost::AroundNodes,
                   numGhostCells);
-  task1->requires(
+  task1->needs(
     Task::OldDW, d_pd_labels->pSizeLabel, Ghost::AroundNodes, numGhostCells);
-  task1->requires(
+  task1->needs(
     Task::OldDW, d_pd_labels->pDefGradLabel, Ghost::AroundNodes, numGhostCells);
 
   task1->computes(d_pd_labels->gInternalForceLabel);
@@ -1629,12 +1629,12 @@ Peridynamics::scheduleComputeAndIntegrateGridAcceleration(
                         this,
                         &Peridynamics::computeAndIntegrateGridAcceleration);
 
-  t->requires(Task::OldDW, d_pd_labels->delTLabel);
+  t->needs(Task::OldDW, d_pd_labels->delTLabel);
 
-  t->requires(Task::NewDW, d_pd_labels->gMassLabel, Ghost::None);
-  t->requires(Task::NewDW, d_pd_labels->gInternalForceLabel, Ghost::None);
-  t->requires(Task::NewDW, d_pd_labels->gExternalForceLabel, Ghost::None);
-  t->requires(Task::NewDW, d_pd_labels->gVelocityLabel, Ghost::None);
+  t->needs(Task::NewDW, d_pd_labels->gMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_pd_labels->gInternalForceLabel, Ghost::None);
+  t->needs(Task::NewDW, d_pd_labels->gExternalForceLabel, Ghost::None);
+  t->needs(Task::NewDW, d_pd_labels->gVelocityLabel, Ghost::None);
 
   t->computes(d_pd_labels->gVelocityStarLabel);
   t->computes(d_pd_labels->gAccelerationLabel);
@@ -1736,15 +1736,15 @@ Peridynamics::scheduleComputeAndIntegrateParticleAcceleration(
                         this,
                         &Peridynamics::computeAndIntegrateParticleAcceleration);
 
-  t->requires(Task::OldDW, d_pd_labels->delTLabel);
-  t->requires(Task::OldDW, d_pd_labels->pMassLabel, Ghost::None);
-  t->requires(Task::NewDW, d_pd_labels->pVolumeLabel_preReloc, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pPositionLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pDisplacementLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pVelocityLabel, Ghost::None);
-  t->requires(
+  t->needs(Task::OldDW, d_pd_labels->delTLabel);
+  t->needs(Task::OldDW, d_pd_labels->pMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_pd_labels->pVolumeLabel_preReloc, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pPositionLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pDisplacementLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pVelocityLabel, Ghost::None);
+  t->needs(
     Task::NewDW, d_pd_labels->pInternalForceLabel_preReloc, Ghost::None);
-  t->requires(
+  t->needs(
     Task::NewDW, d_pd_labels->pExternalForceLabel_preReloc, Ghost::None);
 
   int numBodies = d_mat_manager->getNumMaterials("Peridynamics");
@@ -1917,15 +1917,15 @@ Peridynamics::scheduleProjectParticleAccelerationToGrid(
                         &Peridynamics::projectParticleAccelerationToGrid);
 
   int numGhostNodes = 1; // Linear interpolation only
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_pd_labels->pPositionLabel,
               Ghost::AroundNodes,
               numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_pd_labels->pVelocityStarLabel,
               Ghost::AroundNodes,
               numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_pd_labels->pAccelerationLabel,
               Ghost::AroundNodes,
               numGhostNodes);
@@ -2079,9 +2079,9 @@ Peridynamics::scheduleSetGridBoundaryConditions(SchedulerP& sched,
                         &Peridynamics::setGridBoundaryConditions);
 
   const MaterialSubset* all_materials = matls->getUnion();
-  t->requires(Task::OldDW, d_pd_labels->delTLabel);
+  t->needs(Task::OldDW, d_pd_labels->delTLabel);
 
-  t->requires(Task::NewDW, d_pd_labels->gVelocityLabel, Ghost::None);
+  t->needs(Task::NewDW, d_pd_labels->gVelocityLabel, Ghost::None);
 
   t->modifies(d_pd_labels->gAccelerationLabel, all_materials);
   t->modifies(d_pd_labels->gVelocityStarLabel, all_materials);
@@ -2176,22 +2176,22 @@ Peridynamics::scheduleUpdateParticleKinematics(SchedulerP& sched,
                         this,
                         &Peridynamics::updateParticleKinematics);
 
-  t->requires(Task::OldDW, d_pd_labels->delTLabel);
+  t->needs(Task::OldDW, d_pd_labels->delTLabel);
 
-  t->requires(Task::OldDW, d_pd_labels->pPositionLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pVelocityLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pDisplacementLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pPositionLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pVelocityLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pDisplacementLabel, Ghost::None);
 
-  t->requires(Task::NewDW, d_pd_labels->pPositionStarLabel, Ghost::None);
-  t->requires(Task::NewDW, d_pd_labels->pVelocityStarLabel, Ghost::None);
-  t->requires(Task::NewDW, d_pd_labels->pDisplacementStarLabel, Ghost::None);
+  t->needs(Task::NewDW, d_pd_labels->pPositionStarLabel, Ghost::None);
+  t->needs(Task::NewDW, d_pd_labels->pVelocityStarLabel, Ghost::None);
+  t->needs(Task::NewDW, d_pd_labels->pDisplacementStarLabel, Ghost::None);
 
   int numGhostCells = 1; // Linear interpolation only
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_pd_labels->gAccelerationLabel,
               Ghost::AroundCells,
               numGhostCells);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_pd_labels->gVelocityStarLabel,
               Ghost::AroundCells,
               numGhostCells);
@@ -2427,16 +2427,16 @@ Peridynamics::scheduleFinalizeParticleState(SchedulerP& sched,
                         this,
                         &Peridynamics::finalizeParticleState);
 
-  t->requires(Task::OldDW, d_pd_labels->pParticleIDLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pMassLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pSizeLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pParticleIDLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pMassLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pSizeLabel, Ghost::None);
 
-  t->requires(Task::OldDW, d_pd_labels->pHorizonLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pNeighborListLabel, Ghost::None);
-  t->requires(Task::OldDW, d_pd_labels->pNeighborCountLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pHorizonLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pNeighborListLabel, Ghost::None);
+  t->needs(Task::OldDW, d_pd_labels->pNeighborCountLabel, Ghost::None);
 
-  t->requires(Task::NewDW, d_pd_labels->pPositionLabel_preReloc, Ghost::None);
-  t->requires(Task::NewDW, d_pd_labels->pVelocityLabel_preReloc, Ghost::None);
+  t->needs(Task::NewDW, d_pd_labels->pPositionLabel_preReloc, Ghost::None);
+  t->needs(Task::NewDW, d_pd_labels->pVelocityLabel_preReloc, Ghost::None);
 
   t->computes(d_pd_labels->pParticleIDLabel_preReloc);
   t->computes(d_pd_labels->pMassLabel_preReloc);

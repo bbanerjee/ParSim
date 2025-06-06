@@ -209,12 +209,12 @@ FluidContact::addComputesAndRequires(SchedulerP& sched,
   z_matl->addReference();
 
   const MaterialSubset* mss = ms->getUnion();
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-  t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
-  t->requires(Task::NewDW, gVelocity_label, Ghost::None);
-  t->requires(
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
+  t->needs(Task::NewDW, gVelocity_label, Ghost::None);
+  t->needs(
     Task::NewDW, d_hydro_mpm_labels->gFluidVelocityLabel, Ghost::None);
   t->modifies(d_hydro_mpm_labels->gFluidVelocityStarLabel, mss);
   t->modifies(d_hydro_mpm_labels->gFluidAccelerationLabel, mss);

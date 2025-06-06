@@ -235,73 +235,73 @@ addRequires_Lodi(Task* t,
 
   if (where == "EqPress") {
     setLODI_bcs = true;
-    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
-    // requires(Task::NewDW, lb->press_CCLabel,     press_matl,oims,gn, 0);
-    // requires(Task::NewDW, lb->rho_CCLabel,       ice_matls, gn);
-    // requires(Task::NewDW, lb->speedSound_CCLabel,ice_matls, gn);
+    t->needs(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
+    // needs(Task::NewDW, lb->press_CCLabel,     press_matl,oims,gn, 0);
+    // needs(Task::NewDW, lb->rho_CCLabel,       ice_matls, gn);
+    // needs(Task::NewDW, lb->speedSound_CCLabel,ice_matls, gn);
     /*`==========TESTING==========*/
-    t->requires(Task::OldDW, lb->press_CCLabel, press_matl, oims, gn, 0);
+    t->needs(Task::OldDW, lb->press_CCLabel, press_matl, oims, gn, 0);
     /*===========TESTING==========`*/
   } else if (where == "velFC_Exchange") {
     setLODI_bcs = false;
   } else if (where == "update_press_CC") {
     setLODI_bcs = true;
-    // t->requires(Task::NewDW, lb->press_CCLabel,     press_matl,oims,gn, 0);
-    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
-    t->requires(Task::NewDW, lb->rho_CCLabel, ice_matls, gn);
-    t->requires(Task::NewDW, lb->speedSound_CCLabel, ice_matls, gn);
+    // t->needs(Task::NewDW, lb->press_CCLabel,     press_matl,oims,gn, 0);
+    t->needs(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
+    t->needs(Task::NewDW, lb->rho_CCLabel, ice_matls, gn);
+    t->needs(Task::NewDW, lb->speedSound_CCLabel, ice_matls, gn);
     /*`==========TESTING==========*/
-    t->requires(Task::OldDW, lb->press_CCLabel, press_matl, oims, gn, 0);
+    t->needs(Task::OldDW, lb->press_CCLabel, press_matl, oims, gn, 0);
     /*===========TESTING==========`*/
   } else if (where == "implicitPressureSolve") {
     setLODI_bcs = true;
-    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
-    t->requires(Task::NewDW, lb->speedSound_CCLabel, ice_matls, gn);
-    t->requires(Task::NewDW, lb->rho_CCLabel, ice_matls, gn);
+    t->needs(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
+    t->needs(Task::NewDW, lb->speedSound_CCLabel, ice_matls, gn);
+    t->needs(Task::NewDW, lb->rho_CCLabel, ice_matls, gn);
     /*`==========TESTING==========*/
-    t->requires(Task::OldDW, lb->press_CCLabel, press_matl, oims, gn, 0);
+    t->needs(Task::OldDW, lb->press_CCLabel, press_matl, oims, gn, 0);
     /*===========TESTING==========`*/
   }
 
   else if (where == "imp_update_press_CC") {
     setLODI_bcs = true;
     whichDW     = Task::ParentNewDW;
-    t->requires(Task::ParentOldDW, lb->velocity_CCLabel, ice_matls, gn);
-    t->requires(Task::ParentNewDW, lb->speedSound_CCLabel, ice_matls, gn);
-    t->requires(Task::ParentNewDW, lb->rho_CCLabel, ice_matls, gn);
-    // t->requires(Task::NewDW, lb->press_CCLabel,     press_matl,oims,gn, 0);
+    t->needs(Task::ParentOldDW, lb->velocity_CCLabel, ice_matls, gn);
+    t->needs(Task::ParentNewDW, lb->speedSound_CCLabel, ice_matls, gn);
+    t->needs(Task::ParentNewDW, lb->rho_CCLabel, ice_matls, gn);
+    // t->needs(Task::NewDW, lb->press_CCLabel,     press_matl,oims,gn, 0);
     /*`==========TESTING==========*/
-    t->requires(Task::ParentOldDW, lb->press_CCLabel, press_matl, oims, gn, 0);
+    t->needs(Task::ParentOldDW, lb->press_CCLabel, press_matl, oims, gn, 0);
     /*===========TESTING==========`*/
   } else if (where == "CC_Exchange") {
     setLODI_bcs = true;
-    t->requires(Task::NewDW, lb->press_CCLabel, press_matl, oims, gn, 0);
-    t->requires(Task::NewDW, lb->rho_CCLabel, ice_matls, gn);
-    t->requires(Task::NewDW, lb->gammaLabel, ice_matls, gn);
-    t->requires(Task::NewDW, lb->speedSound_CCLabel, ice_matls, gn);
+    t->needs(Task::NewDW, lb->press_CCLabel, press_matl, oims, gn, 0);
+    t->needs(Task::NewDW, lb->rho_CCLabel, ice_matls, gn);
+    t->needs(Task::NewDW, lb->gammaLabel, ice_matls, gn);
+    t->needs(Task::NewDW, lb->speedSound_CCLabel, ice_matls, gn);
 
     /*`==========TESTING==========*/
-    t->requires(Task::OldDW, lb->rho_CCLabel, ice_matls, gn);
-    t->requires(Task::OldDW, lb->temperature_CCLabel, ice_matls, gn);
-    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
+    t->needs(Task::OldDW, lb->rho_CCLabel, ice_matls, gn);
+    t->needs(Task::OldDW, lb->temperature_CCLabel, ice_matls, gn);
+    t->needs(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
     /*===========TESTING==========`*/
 
     t->computes(lb->vel_CC_XchangeLabel);
     t->computes(lb->temp_CC_XchangeLabel);
   } else if (where == "Advection") {
     setLODI_bcs = true;
-    t->requires(Task::NewDW, lb->press_CCLabel, press_matl, oims, gn, 0);
-    t->requires(Task::NewDW, lb->gammaLabel, ice_matls, gn);
-    // requires(Task::NewDW, lb->velocity_CCLabel,       ice_matls, gn);
-    // requires(Task::NewDW, lb->rho_CCLabel,       ice_matls, gn);
-    // requires(Task::NewDW, lb->speedSound_CCLabel,ice_matls, gn);
+    t->needs(Task::NewDW, lb->press_CCLabel, press_matl, oims, gn, 0);
+    t->needs(Task::NewDW, lb->gammaLabel, ice_matls, gn);
+    // needs(Task::NewDW, lb->velocity_CCLabel,       ice_matls, gn);
+    // needs(Task::NewDW, lb->rho_CCLabel,       ice_matls, gn);
+    // needs(Task::NewDW, lb->speedSound_CCLabel,ice_matls, gn);
     /*`==========TESTING==========*/
-    t->requires(Task::OldDW, lb->rho_CCLabel, ice_matls, gn);
-    t->requires(Task::OldDW, lb->temperature_CCLabel, ice_matls, gn);
-    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
+    t->needs(Task::OldDW, lb->rho_CCLabel, ice_matls, gn);
+    t->needs(Task::OldDW, lb->temperature_CCLabel, ice_matls, gn);
+    t->needs(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
     /*===========TESTING==========`*/
 
-    t->requires(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
+    t->needs(Task::OldDW, lb->velocity_CCLabel, ice_matls, gn);
   } else {
     throw InternalError(
       "ERROR:ICE: addRequires_Lodi: no preprocessing for this task (" + where +
@@ -318,7 +318,7 @@ addRequires_Lodi(Task* t,
     vector<Patch::FaceType>::iterator f;
     for (f = global->LodiFaces.begin(); f != global->LodiFaces.end(); ++f) {
       VarLabel* V_Label = getMaxMach_face_VarLabel(*f);
-      t->requires(whichDW, V_Label, ice_matls);
+      t->needs(whichDW, V_Label, ice_matls);
     }
 
     if (global->saveLiTerms && where == "Advection") {

@@ -244,8 +244,8 @@ TransIsoHyper::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   addSharedCRForExplicit(task, matlset, patches);
 
   Ghost::GhostType gnone = Ghost::None;
-  task->requires(Task::OldDW, lb->pFiberDirLabel, matlset, gnone);
-  task->requires(Task::OldDW, pFailureLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pFiberDirLabel, matlset, gnone);
+  task->needs(Task::OldDW, pFailureLabel, matlset, gnone);
 
   task->computes(lb->pFiberDirLabel_preReloc, matlset);
   task->computes(pStretchLabel_preReloc, matlset);
@@ -643,8 +643,8 @@ TransIsoHyper::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
   // This method is defined in the ConstitutiveModel base class.
   addSharedRForConvertExplicit(task, matlset, patches);
   // Add requires local to this model
-  task->requires(Task::NewDW, pFailureLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pStretchLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pFailureLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pStretchLabel_preReloc, matlset, Ghost::None);
 }
 
 void

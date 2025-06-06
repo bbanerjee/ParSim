@@ -143,7 +143,7 @@ void logLawModel::sched_AddComputeRequires(Task* task,
                                            const MaterialSubset* matls)
 {
  // printSchedule(level,dbg,"logLawModel::schedcomputeWallShearStresses");
-  task->requires(Task::OldDW, d_roughnessLabel, matls, Ghost::None, 0);
+  task->needs(Task::OldDW, d_roughnessLabel, matls, Ghost::None, 0);
   task->computes(d_roughnessLabel);
 }
 

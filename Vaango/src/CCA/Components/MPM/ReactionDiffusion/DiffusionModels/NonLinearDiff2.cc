@@ -104,13 +104,13 @@ NonLinearDiff2::scheduleComputeFlux(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   Ghost::GhostType gnone        = Ghost::None;
 
-  // task->requires(Task::OldDW, d_lb->simulationTimeLabel,);
+  // task->needs(Task::OldDW, d_lb->simulationTimeLabel,);
 
-  task->requires(Task::OldDW, d_Al->pPosChargeLabel, matlset, gnone);
-  task->requires(Task::OldDW, d_Al->pNegChargeLabel, matlset, gnone);
-  task->requires(Task::OldDW, d_Al->pPosChargeGradLabel, matlset, gnone);
-  task->requires(Task::OldDW, d_Al->pNegChargeGradLabel, matlset, gnone);
-  task->requires(Task::NewDW, d_Al->pESGradPotential, matlset, gnone);
+  task->needs(Task::OldDW, d_Al->pPosChargeLabel, matlset, gnone);
+  task->needs(Task::OldDW, d_Al->pNegChargeLabel, matlset, gnone);
+  task->needs(Task::OldDW, d_Al->pPosChargeGradLabel, matlset, gnone);
+  task->needs(Task::OldDW, d_Al->pNegChargeGradLabel, matlset, gnone);
+  task->needs(Task::NewDW, d_Al->pESGradPotential, matlset, gnone);
 
   task->computes(d_lb->delTLabel, getLevel(patch));
 
@@ -184,14 +184,14 @@ NonLinearDiff2::scheduleComputeDivergence(Task* task,
 {
   Ghost::GhostType gan          = Ghost::AroundNodes;
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, d_lb->delTLabel);
-  task->requires(Task::OldDW, d_lb->pXLabel, gan, NGP);
-  task->requires(Task::NewDW, d_lb->pCurSizeLabel, gan, NGP);
-  task->requires(Task::OldDW, d_lb->pMassLabel, gan, NGP);
-  task->requires(Task::OldDW, d_lb->pVolumeLabel, gan, NGP);
+  task->needs(Task::OldDW, d_lb->delTLabel);
+  task->needs(Task::OldDW, d_lb->pXLabel, gan, NGP);
+  task->needs(Task::NewDW, d_lb->pCurSizeLabel, gan, NGP);
+  task->needs(Task::OldDW, d_lb->pMassLabel, gan, NGP);
+  task->needs(Task::OldDW, d_lb->pVolumeLabel, gan, NGP);
 
-  task->requires(Task::NewDW, d_Al->pPosChargeFluxLabel_preReloc, gan, NGP);
-  task->requires(Task::NewDW, d_Al->pNegChargeFluxLabel_preReloc, gan, NGP);
+  task->needs(Task::NewDW, d_Al->pPosChargeFluxLabel_preReloc, gan, NGP);
+  task->needs(Task::NewDW, d_Al->pNegChargeFluxLabel_preReloc, gan, NGP);
 
   task->computes(d_Al->gPosChargeRateLabel, matlset);
   task->computes(d_Al->gNegChargeRateLabel, matlset);

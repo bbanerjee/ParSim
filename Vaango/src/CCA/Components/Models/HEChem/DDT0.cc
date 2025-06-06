@@ -317,28 +317,28 @@ DDT0::scheduleComputeModelSources(SchedulerP& sched, const LevelP& level)
   //__________________________________
   // Requires
   //__________________________________
-  t->requires(Task::OldDW, Ilb->timeStepLabel);
-  t->requires(Task::OldDW, Ilb->delTLabel, level.get_rep());
-  t->requires(Task::OldDW, Ilb->temperature_CCLabel, ice_matls, oms, gn);
-  t->requires(Task::NewDW, Ilb->temperature_CCLabel, mpm_matls, oms, gn);
-  t->requires(Task::NewDW, Ilb->vol_frac_CCLabel, all_matls, oms, gn);
+  t->needs(Task::OldDW, Ilb->timeStepLabel);
+  t->needs(Task::OldDW, Ilb->delTLabel, level.get_rep());
+  t->needs(Task::OldDW, Ilb->temperature_CCLabel, ice_matls, oms, gn);
+  t->needs(Task::NewDW, Ilb->temperature_CCLabel, mpm_matls, oms, gn);
+  t->needs(Task::NewDW, Ilb->vol_frac_CCLabel, all_matls, oms, gn);
   if (d_useCrackModel) {
-    t->requires(Task::OldDW, Mlb->pXLabel, mpm_matls, gn);
-    t->requires(Task::OldDW, pCrackRadiusLabel, react_matl, gn);
+    t->needs(Task::OldDW, Mlb->pXLabel, mpm_matls, gn);
+    t->needs(Task::OldDW, pCrackRadiusLabel, react_matl, gn);
   }
 
   //__________________________________
   // Products
-  t->requires(Task::NewDW, Ilb->rho_CCLabel, prod_matl, gn);
-  t->requires(Task::NewDW, Ilb->press_equil_CCLabel, d_one_matl, gn);
-  t->requires(Task::OldDW, Mlb->NC_CCweightLabel, d_one_matl, gac, 1);
+  t->needs(Task::NewDW, Ilb->rho_CCLabel, prod_matl, gn);
+  t->needs(Task::NewDW, Ilb->press_equil_CCLabel, d_one_matl, gn);
+  t->needs(Task::OldDW, Mlb->NC_CCweightLabel, d_one_matl, gac, 1);
 
   //__________________________________
   // Reactants
-  t->requires(Task::NewDW, Ilb->specificVolume_CCLabel, react_matl, gn);
-  t->requires(Task::NewDW, MIlb->velocity_CCLabel, react_matl, gn);
-  t->requires(Task::NewDW, Ilb->rho_CCLabel, react_matl, gn);
-  t->requires(Task::NewDW, Mlb->gMassLabel, react_matl, gac, 1);
+  t->needs(Task::NewDW, Ilb->specificVolume_CCLabel, react_matl, gn);
+  t->needs(Task::NewDW, MIlb->velocity_CCLabel, react_matl, gn);
+  t->needs(Task::NewDW, Ilb->rho_CCLabel, react_matl, gn);
+  t->needs(Task::NewDW, Mlb->gMassLabel, react_matl, gac, 1);
 
   //__________________________________
   // Computes

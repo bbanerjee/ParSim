@@ -165,9 +165,9 @@ RigidMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
                         this,
                         &RigidMPM::computeAndIntegrateAcceleration);
 
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
-  t->requires(Task::NewDW, d_mpm_labels->gVelocityLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gVelocityLabel, Ghost::None);
 
   t->computes(d_mpm_labels->gVelocityStarLabel);
   t->computes(d_mpm_labels->gAccelerationLabel);
@@ -236,36 +236,36 @@ RigidMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
                         this,
                         &RigidMPM::interpolateToParticlesAndUpdate);
 
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
   Ghost::GhostType gac = Ghost::AroundCells;
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gTemperatureRateLabel,
               gac,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gTemperatureLabel,
               gac,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gTemperatureNoBCLabel,
               gac,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gAccelerationLabel,
               gac,
               d_numGhostNodes);
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pParticleIDLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pTemperatureLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pDispLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->pDefGradLabel_preReloc, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pParticleIDLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pTemperatureLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pDispLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->pDefGradLabel_preReloc, Ghost::None);
 
   if (d_mpm_flags->d_withICE) {
-    t->requires(Task::NewDW, d_mpm_labels->dTdt_NCLabel, gac, d_numGhostNodes);
+    t->needs(Task::NewDW, d_mpm_labels->dTdt_NCLabel, gac, d_numGhostNodes);
   }
 
   t->computes(d_mpm_labels->pDispLabel_preReloc);
@@ -285,14 +285,14 @@ RigidMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 
   // debugging scalar
   if (d_mpm_flags->d_withColor) {
-    t->requires(Task::OldDW, d_mpm_labels->pColorLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->pColorLabel, Ghost::None);
     t->computes(d_mpm_labels->pColorLabel_preReloc);
   }
 
   MaterialSubset* z_matl = scinew MaterialSubset();
   z_matl->add(0);
   z_matl->addReference();
-  t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
   t->computes(d_mpm_labels->NC_CCweightLabel, z_matl);
 
   sched->addTask(t, patches, matls);

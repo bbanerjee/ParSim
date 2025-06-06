@@ -301,13 +301,13 @@ Mixing::scheduleComputeModelSources(SchedulerP& sched, const LevelP& level)
   Task* t = scinew Task(
     "Mixing::computeModelSources", this, &Mixing::computeModelSources);
   t->modifies(Ilb->modelEng_srcLabel);
-  t->requires(Task::OldDW, Ilb->rho_CCLabel, Ghost::None);
-  t->requires(Task::OldDW, Ilb->delTLabel, level.get_rep());
+  t->needs(Task::OldDW, Ilb->rho_CCLabel, Ghost::None);
+  t->needs(Task::OldDW, Ilb->delTLabel, level.get_rep());
 
   for (vector<Stream*>::iterator iter = streams.begin(); iter != streams.end();
        iter++) {
     Stream* stream = *iter;
-    t->requires(Task::OldDW, stream->massFraction_CCLabel, Ghost::None);
+    t->needs(Task::OldDW, stream->massFraction_CCLabel, Ghost::None);
     t->modifies(stream->massFraction_source_CCLabel);
   }
 

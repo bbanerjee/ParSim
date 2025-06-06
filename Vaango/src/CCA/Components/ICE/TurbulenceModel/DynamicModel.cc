@@ -420,8 +420,8 @@ DynamicModel::scheduleComputeVariance(SchedulerP& sched,
                                &DynamicModel::computeVariance,
                                s);
 
-      task->requires(Task::OldDW, VarLabel::find(timeStep_name));
-      task->requires(Task::OldDW, s->scalar, Ghost::AroundCells, 1);
+      task->needs(Task::OldDW, VarLabel::find(timeStep_name));
+      task->needs(Task::OldDW, s->scalar, Ghost::AroundCells, 1);
       task->computes(s->scalarVariance);
       sched->addTask(task, patches, s->matl_set);
     }

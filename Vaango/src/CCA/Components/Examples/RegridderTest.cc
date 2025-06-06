@@ -128,7 +128,7 @@ void
 RegridderTest::scheduleTimeAdvance(const LevelP& level, SchedulerP& scheduler)
 {
   Task* task = scinew Task("timeAdvance", this, &RegridderTest::timeAdvance);
-  task->requires(Task::OldDW, d_densityLabel, Ghost::AroundCells, 1);
+  task->needs(Task::OldDW, d_densityLabel, Ghost::AroundCells, 1);
   task->computes(d_oldDensityLabel);
   task->computes(d_densityLabel);
   scheduler->addTask(
@@ -140,9 +140,9 @@ RegridderTest::scheduleErrorEstimate(const LevelP& level, SchedulerP& scheduler)
 {
   Task* task =
     scinew Task("errorEstimate", this, &RegridderTest::errorEstimate, false);
-  task->requires(Task::OldDW, d_currentAngleLabel, (Level*)0);
-  task->requires(Task::NewDW, d_densityLabel, Ghost::AroundCells, 1);
-  task->requires(Task::NewDW, d_oldDensityLabel, Ghost::AroundCells, 1);
+  task->needs(Task::OldDW, d_currentAngleLabel, (Level*)0);
+  task->needs(Task::NewDW, d_densityLabel, Ghost::AroundCells, 1);
+  task->needs(Task::NewDW, d_oldDensityLabel, Ghost::AroundCells, 1);
   task->modifies(d_regridder->getRefineFlagLabel(),
                  d_regridder->refineFlagMaterials());
   task->modifies(d_regridder->getOldRefineFlagLabel(),
@@ -162,7 +162,7 @@ RegridderTest::scheduleInitialErrorEstimate(const LevelP& level,
 {
   Task* task = scinew Task(
     "initialErrorEstimate", this, &RegridderTest::errorEstimate, true);
-  task->requires(Task::NewDW, d_densityLabel, Ghost::AroundCells, 1);
+  task->needs(Task::NewDW, d_densityLabel, Ghost::AroundCells, 1);
   task->modifies(d_regridder->getRefineFlagLabel(),
                  d_regridder->refineFlagMaterials());
   task->modifies(d_regridder->getOldRefineFlagLabel(),
@@ -177,7 +177,7 @@ void
 RegridderTest::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& scheduler)
 {
   Task* task = scinew Task("coarsen", this, &RegridderTest::coarsen);
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_densityLabel,
                  0,
                  Task::FineLevel,
@@ -194,7 +194,7 @@ void
 RegridderTest::scheduleRefine(const PatchSet* patches, SchedulerP& scheduler)
 {
   Task* task = scinew Task("refine", this, &RegridderTest::refine);
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_densityLabel,
                  0,
                  Task::CoarseLevel,
@@ -202,7 +202,7 @@ RegridderTest::scheduleRefine(const PatchSet* patches, SchedulerP& scheduler)
                  Task::NormalDomain,
                  Ghost::None,
                  0);
-  //    task->requires(Task::NewDW, d_oldDensityLabel, 0, Task::CoarseLevel, 0,
+  //    task->needs(Task::NewDW, d_oldDensityLabel, 0, Task::CoarseLevel, 0,
   //		   Task::NormalDomain, Ghost::None, 0);
   scheduler->addTask(task, patches, d_materialManager->allMaterials());
 }

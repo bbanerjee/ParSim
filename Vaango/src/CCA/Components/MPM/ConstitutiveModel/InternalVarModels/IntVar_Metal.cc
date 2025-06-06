@@ -164,7 +164,7 @@ IntVar_Metal::addComputesAndRequires(Task* task,
                                      const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, pIntVarLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pIntVarLabel, matlset, Ghost::None);
   task->computes(pIntVarLabel_preReloc, matlset);
 }
 
@@ -299,7 +299,7 @@ IntVar_Metal::allocateCMDataAddRequires(Task* task,
                                         MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pIntVarLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pIntVarLabel_preReloc, matlset, Ghost::None);
 }
 
 void

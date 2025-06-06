@@ -292,7 +292,7 @@ FractureMPM::scheduleInitializePressureBCs(const LevelP& level,
     Task* t = scinew Task("FractureMPM::countMaterialPointsPerLoadCurve",
                           this,
                           &FractureMPM::countMaterialPointsPerLoadCurve);
-    t->requires(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_mpm_labels->materialPointsPerLoadCurveLabel,
                 loadCurveIndex,
                 Task::OutOfDomain);
@@ -305,10 +305,10 @@ FractureMPM::scheduleInitializePressureBCs(const LevelP& level,
     t = scinew Task("FractureMPM::initializePressureBC",
                     this,
                     &FractureMPM::initializePressureBC);
-    t->requires(Task::OldDW, d_mpm_labels->simulationTimeLabel);
-    t->requires(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
-    t->requires(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
-    t->requires(Task::NewDW,
+    t->needs(Task::OldDW, d_mpm_labels->simulationTimeLabel);
+    t->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::NewDW,
                 d_mpm_labels->materialPointsPerLoadCurveLabel,
                 loadCurveIndex,
                 Task::OutOfDomain,
@@ -384,12 +384,12 @@ FractureMPM::scheduleApplyExternalLoads(SchedulerP& sched,
                         this,
                         &FractureMPM::applyExternalLoads);
 
-  t->requires(Task::OldDW, d_mpm_labels->simulationTimeLabel);
-  t->requires(Task::OldDW, d_mpm_labels->pExternalForceLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->simulationTimeLabel);
+  t->needs(Task::OldDW, d_mpm_labels->pExternalForceLabel, Ghost::None);
   t->computes(d_mpm_labels->pExtForceLabel_preReloc);
   if (d_mpm_flags->d_useLoadCurves) {
-    t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
-    t->requires(Task::OldDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_mpm_labels->pLoadCurveIDLabel_preReloc);
   }
 
@@ -427,37 +427,37 @@ FractureMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
                         this,
                         &FractureMPM::interpolateParticlesToGrid);
 
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pMassLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pVolumeLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pVelocityLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pXLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pTemperatureLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pSizeLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pExtForceLabel_preReloc,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  // t->requires(Task::OldDW, d_mpm_labels->pExternalHeatRateLabel,
+  // t->needs(Task::OldDW, d_mpm_labels->pExternalHeatRateLabel,
   // Ghost::AroundNodes,d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pDefGradLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
@@ -487,11 +487,11 @@ FractureMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   t->computes(d_mpm_labels->TotalMassLabel);
 
   // for FractureMPM
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pDispLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pgCodeLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
@@ -585,27 +585,27 @@ FractureMPM::scheduleComputeParticleTempFromGrid(SchedulerP& sched,
   Task* t = scinew Task("FractureMPM::computeParticleTempFromGrid",
                         this,
                         &FractureMPM::computeParticleTempFromGrid);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pXLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pSizeLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gTemperatureLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->GTemperatureLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pgCodeLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pDefGradLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
@@ -622,8 +622,8 @@ FractureMPM::scheduleComputeAccStrainEnergy(SchedulerP& sched,
   Task* t = scinew Task("FractureMPM::computeAccStrainEnergy",
                         this,
                         &FractureMPM::computeAccStrainEnergy);
-  t->requires(Task::OldDW, d_mpm_labels->AccStrainEnergyLabel);
-  t->requires(Task::NewDW, d_mpm_labels->StrainEnergyLabel);
+  t->needs(Task::OldDW, d_mpm_labels->AccStrainEnergyLabel);
+  t->needs(Task::NewDW, d_mpm_labels->StrainEnergyLabel);
   t->computes(d_mpm_labels->AccStrainEnergyLabel);
   sched->addTask(t, patches, matls);
 }
@@ -637,19 +637,19 @@ FractureMPM::scheduleComputeArtificialViscosity(SchedulerP& sched,
                         this,
                         &FractureMPM::computeArtificialViscosity);
 
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->pVolumeLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None);
-  t->requires(Task::NewDW,
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->pVolumeLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None);
+  t->needs(Task::NewDW,
               d_mpm_labels->gVelocityStarLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->GVelocityStarLabel,
               Ghost::AroundCells,
               d_numGhostNodes); // for FractureMPM
-  t->requires(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::None);
   t->computes(d_mpm_labels->p_qLabel);
 
   sched->addTask(t, patches, matls);
@@ -667,8 +667,8 @@ FractureMPM::scheduleComputeContactArea(SchedulerP& sched,
                           this,
                           &FractureMPM::computeContactArea);
 
-    t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
+    t->needs(Task::NewDW,
                 d_mpm_labels->GVolumeLabel,
                 Ghost::None); // for FractureMPM
     for (auto& face : d_boundaryTractionFaces) {
@@ -696,55 +696,55 @@ FractureMPM::scheduleComputeInternalForce(SchedulerP& sched,
                         this,
                         &FractureMPM::computeInternalForce);
 
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->needs(Task::NewDW,
               d_mpm_labels->gMassLabel,
               d_materialManager->getAllInOneMaterial(),
               Task::OutOfDomain,
               Ghost::None);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pStressLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pVolumeLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pXLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pMassLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pSizeLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pDefGradLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
 
   // for FractureMPM
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pgCodeLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
-  t->requires(Task::NewDW, d_mpm_labels->GMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->GMassLabel, Ghost::None);
   t->computes(d_mpm_labels->GInternalForceLabel);
   t->computes(d_mpm_labels->TotalVolumeDeformedLabel);
 
   if (d_mpm_flags->d_withICE) {
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW,
                 d_mpm_labels->pPressureLabel,
                 Ghost::AroundNodes,
                 d_numGhostParticles);
   }
 
   if (d_mpm_flags->d_artificialViscosity) {
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW,
                 d_mpm_labels->p_qLabel,
                 Ghost::AroundNodes,
                 d_numGhostParticles);
@@ -757,7 +757,7 @@ FractureMPM::scheduleComputeInternalForce(SchedulerP& sched,
        ftit != d_boundaryTractionFaces.end();
        ftit++) {
     int iface = (int)(*ftit);
-    t->requires(Task::NewDW, d_mpm_labels->BndyContactCellAreaLabel[iface]);
+    t->needs(Task::NewDW, d_mpm_labels->BndyContactCellAreaLabel[iface]);
     t->computes(d_mpm_labels->BndyForceLabel[iface]);
     t->computes(d_mpm_labels->BndyContactAreaLabel[iface]);
     t->computes(d_mpm_labels->BndyTractionLabel[iface]);
@@ -789,17 +789,17 @@ FractureMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
                         this,
                         &FractureMPM::computeAndIntegrateAcceleration);
 
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gInternalForceLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gExternalForceLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gVelocityLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gInternalForceLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gExternalForceLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gVelocityLabel, Ghost::None);
 
-  t->requires(Task::NewDW, d_mpm_labels->GMassLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->GVelocityLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->GInternalForceLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->GExternalForceLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->GMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->GVelocityLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->GInternalForceLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->GExternalForceLabel, Ghost::None);
 
   t->computes(d_mpm_labels->gVelocityStarLabel);
   t->computes(d_mpm_labels->gAccelerationLabel);
@@ -848,16 +848,16 @@ FractureMPM::scheduleSetGridBoundaryConditions(SchedulerP& sched,
                         &FractureMPM::setGridBoundaryConditions);
 
   const MaterialSubset* mss = matls->getUnion();
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
   t->modifies(d_mpm_labels->gAccelerationLabel, mss);
   t->modifies(d_mpm_labels->gVelocityStarLabel, mss);
-  t->requires(Task::NewDW, d_mpm_labels->gVelocityLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gVelocityLabel, Ghost::None);
 
   // for FractureMPM
   t->modifies(d_mpm_labels->GAccelerationLabel, mss);
   t->modifies(d_mpm_labels->GVelocityStarLabel, mss);
-  t->requires(Task::NewDW, d_mpm_labels->GVelocityLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->GVelocityLabel, Ghost::None);
 
   sched->addTask(t, patches, matls);
 }
@@ -879,73 +879,73 @@ FractureMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
                         this,
                         &FractureMPM::interpolateToParticlesAndUpdate);
 
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gAccelerationLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gVelocityStarLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gTemperatureRateLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gTemperatureLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gTemperatureNoBCLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->frictionalWorkLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pParticleIDLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pTemperatureLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pDispLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pParticleIDLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pTemperatureLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pDispLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None);
   t->modifies(d_mpm_labels->pVolumeLabel_preReloc);
   // for thermal stress analysis
-  t->requires(Task::NewDW, d_mpm_labels->pTempCurrentLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->pDefGradLabel_preReloc, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->pTempCurrentLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->pDefGradLabel_preReloc, Ghost::None);
 
   // for FractureMPM
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->GAccelerationLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->GVelocityStarLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->GTemperatureRateLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->GTemperatureLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->GTemperatureNoBCLabel,
               Ghost::AroundCells,
               d_numGhostNodes);
-  t->requires(Task::NewDW, d_mpm_labels->pgCodeLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->pgCodeLabel, Ghost::None);
 
   if (d_mpm_flags->d_withICE) {
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW,
                 d_mpm_labels->dTdt_NCLabel,
                 Ghost::AroundCells,
                 d_numGhostNodes);
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW,
                 d_mpm_labels->massBurnFractionLabel,
                 Ghost::AroundCells,
                 d_numGhostNodes);
@@ -969,7 +969,7 @@ FractureMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 
   // debugging scalar
   if (d_mpm_flags->d_withColor) {
-    t->requires(Task::OldDW, d_mpm_labels->pColorLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->pColorLabel, Ghost::None);
     t->computes(d_mpm_labels->pColorLabel_preReloc);
   }
 
@@ -1116,9 +1116,9 @@ FractureMPM::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
 
   // if the finest level, compute flagged cells
   if (coarseLevel->getIndex() == coarseLevel->getGrid()->numLevels() - 1) {
-    task->requires(Task::NewDW, d_mpm_labels->pXLabel, Ghost::AroundCells, 0);
+    task->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::AroundCells, 0);
   } else {
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_regridder->getRefineFlagLabel(),
                    0,
                    Task::FineLevel,
@@ -1151,7 +1151,7 @@ FractureMPM::scheduleInitialErrorEstimate(const LevelP& coarseLevel,
   // and the simulation controller should not schedule it every time step
   Task* task =
     scinew Task("errorEstimate", this, &FractureMPM::initialErrorEstimate);
-  task->requires(Task::NewDW, d_mpm_labels->pXLabel, Ghost::AroundCells, 0);
+  task->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::AroundCells, 0);
 
   task->modifies(d_regridder->getRefineFlagLabel(),
                  d_regridder->refineFlagMaterials());

@@ -287,7 +287,7 @@ MPMICE::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   const MaterialSubset* mpm_matls =
     d_materialManager->allMaterials("MPM")->getUnion();
 
-  t->requires(Task::NewDW, d_ice_labels->timeStepLabel);
+  t->needs(Task::NewDW, d_ice_labels->timeStepLabel);
 
   // These values are calculated for ICE materials in
   // d_ice->actuallyInitialize(...)
@@ -301,7 +301,7 @@ MPMICE::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 
   // This is computed in d_ice->actuallyInitalize(...), and it is needed in
   //  MPMICE's actuallyInitialize()
-  t->requires(
+  t->needs(
     Task::NewDW, d_ice_labels->vol_frac_CCLabel, ice_matls, Ghost::None, 0);
 
   if (d_switchCriteria) {
@@ -876,22 +876,22 @@ MPMICE::scheduleInterpolateNCToCC_0(SchedulerP& sched,
       "MPMICE::interpolateNCToCC_0", this, &MPMICE::interpolateNCToCC_0);
 
     const MaterialSubset* mss = mpm_matls->getUnion();
-    t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::AroundCells, 1);
-    t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::AroundCells, 1);
-    t->requires(
+    t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::AroundCells, 1);
+    t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::AroundCells, 1);
+    t->needs(
       Task::NewDW, d_mpm_labels->gVelocityBCLabel, Ghost::AroundCells, 1);
-    t->requires(
+    t->needs(
       Task::NewDW, d_mpm_labels->gTemperatureLabel, Ghost::AroundCells, 1);
-    t->requires(
+    t->needs(
       Task::NewDW, d_mpm_labels->gSpecificVolumeLabel, Ghost::AroundCells, 1);
-    t->requires(Task::OldDW,
+    t->needs(Task::OldDW,
                 d_mpm_labels->NC_CCweightLabel,
                 one_matl,
                 Ghost::AroundCells,
                 1);
-    t->requires(
+    t->needs(
       Task::OldDW, d_ice_labels->specificVolume_CCLabel, Ghost::None, 0);
-    t->requires(
+    t->needs(
       Task::OldDW, d_mpmice_labels->temperature_CCLabel, Ghost::None, 0);
 
     t->computes(d_mpmice_labels->cMassLabel);
@@ -1155,11 +1155,11 @@ MPMICE::scheduleCoarsenVariableCC(SchedulerP& sched,
   Ghost::GhostType gn         = Ghost::None;
   Task::MaterialDomainSpec ND = Task::NormalDomain;
 
-  t->requires(Task::OldDW, d_ice_labels->timeStepLabel);
-  t->requires(Task::NewDW, variable, 0, Task::FineLevel, 0, ND, gn, 0);
+  t->needs(Task::OldDW, d_ice_labels->timeStepLabel);
+  t->needs(Task::NewDW, variable, 0, Task::FineLevel, 0, ND, gn, 0);
 
   if (coarsenMethod == "massWeighted") {
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW,
                 d_mpmice_labels->cMassLabel,
                 0,
                 Task::FineLevel,
@@ -1367,7 +1367,7 @@ MPMICE::scheduleCoarsenVariableNC(SchedulerP& sched,
   int ghost = std::max(refineRatio.x(), refineRatio.y());
   ghost     = std::max(ghost, refineRatio.z());
 
-  t->requires(Task::NewDW, variable, 0, Task::FineLevel, 0, ND, gan, ghost);
+  t->needs(Task::NewDW, variable, 0, Task::FineLevel, 0, ND, gan, ghost);
 
   if (modifies) {
     t->modifies(variable);
@@ -1508,26 +1508,26 @@ MPMICE::scheduleComputePressure(SchedulerP& sched,
                         &MPMICE::computeEquilibrationPressure,
                         press_matl);
 
-  t->requires(Task::OldDW, d_ice_labels->timeStepLabel);
-  t->requires(Task::OldDW, d_ice_labels->delTLabel, getLevel(patches));
+  t->needs(Task::OldDW, d_ice_labels->timeStepLabel);
+  t->needs(Task::OldDW, d_ice_labels->delTLabel, getLevel(patches));
 
   // I C E
   Ghost::GhostType gn = Ghost::None;
 
-  t->requires(Task::OldDW, d_ice_labels->temperature_CCLabel, ice_matls, gn);
-  t->requires(Task::OldDW, d_ice_labels->rho_CCLabel, ice_matls, gn);
-  t->requires(Task::OldDW, d_ice_labels->specificVolume_CCLabel, ice_matls, gn);
-  t->requires(Task::NewDW, d_ice_labels->specific_heatLabel, ice_matls, gn);
-  t->requires(Task::NewDW, d_ice_labels->gammaLabel, ice_matls, gn);
+  t->needs(Task::OldDW, d_ice_labels->temperature_CCLabel, ice_matls, gn);
+  t->needs(Task::OldDW, d_ice_labels->rho_CCLabel, ice_matls, gn);
+  t->needs(Task::OldDW, d_ice_labels->specificVolume_CCLabel, ice_matls, gn);
+  t->needs(Task::NewDW, d_ice_labels->specific_heatLabel, ice_matls, gn);
+  t->needs(Task::NewDW, d_ice_labels->gammaLabel, ice_matls, gn);
 
   // M P M
-  t->requires(Task::NewDW, d_mpmice_labels->temperature_CCLabel, mpm_matls, gn);
-  t->requires(Task::NewDW, d_ice_labels->rho_CCLabel, mpm_matls, gn);
-  t->requires(Task::NewDW, d_ice_labels->specificVolume_CCLabel, mpm_matls, gn);
+  t->needs(Task::NewDW, d_mpmice_labels->temperature_CCLabel, mpm_matls, gn);
+  t->needs(Task::NewDW, d_ice_labels->rho_CCLabel, mpm_matls, gn);
+  t->needs(Task::NewDW, d_ice_labels->specificVolume_CCLabel, mpm_matls, gn);
 
-  t->requires(Task::OldDW, d_ice_labels->press_CCLabel, press_matl, gn);
-  t->requires(Task::OldDW, d_ice_labels->velocity_CCLabel, ice_matls, gn);
-  t->requires(Task::NewDW, d_mpmice_labels->velocity_CCLabel, mpm_matls, gn);
+  t->needs(Task::OldDW, d_ice_labels->press_CCLabel, press_matl, gn);
+  t->needs(Task::OldDW, d_ice_labels->velocity_CCLabel, ice_matls, gn);
+  t->needs(Task::NewDW, d_mpmice_labels->velocity_CCLabel, mpm_matls, gn);
 
   computesRequires_CustomBCs(t,
                              "EqPress",
@@ -2522,7 +2522,7 @@ MPMICE::scheduleInterpolatePressCCToPressNC(SchedulerP& sched,
                         &MPMICE::interpolatePressCCToPressNC);
 
   Ghost::GhostType gac = Ghost::AroundCells;
-  t->requires(Task::NewDW, d_ice_labels->press_CCLabel, press_matl, gac, 1);
+  t->needs(Task::NewDW, d_ice_labels->press_CCLabel, press_matl, gac, 1);
   t->computes(d_mpmice_labels->press_NCLabel, press_matl);
 
   sched->addTask(t, patches, matls);
@@ -2583,15 +2583,15 @@ MPMICE::scheduleInterpolatePAndGradP(SchedulerP& sched,
     "MPMICE::interpolatePAndGradP", this, &MPMICE::interpolatePAndGradP);
   Ghost::GhostType gac = Ghost::AroundCells;
 
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpmice_labels->press_NCLabel,
               press_matl,
               gac,
               d_num_ghost_nodes);
-  t->requires(Task::NewDW, d_mpmice_labels->cMassLabel, mpm_matl, gac, 1);
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, mpm_matl, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pSizeLabel, mpm_matl, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pDefGradLabel, mpm_matl, Ghost::None);
+  t->needs(Task::NewDW, d_mpmice_labels->cMassLabel, mpm_matl, gac, 1);
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, mpm_matl, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, mpm_matl, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, mpm_matl, Ghost::None);
 
   t->computes(d_mpm_labels->pPressureLabel, mpm_matl);
   sched->addTask(t, patches, all_matls);
@@ -2676,21 +2676,21 @@ MPMICE::scheduleComputeLagrangianValuesMPM(SchedulerP& sched,
     const MaterialSubset* mss = mpm_matls->getUnion();
     Ghost::GhostType gac      = Ghost::AroundCells;
     Ghost::GhostType gn       = Ghost::None;
-    t->requires(Task::NewDW, d_mpm_labels->gVelocityStarLabel, mss, gac, 1);
-    t->requires(Task::NewDW, d_mpm_labels->gMassLabel, gac, 1);
-    t->requires(Task::NewDW, d_mpm_labels->gTemperatureStarLabel, gac, 1);
-    t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, one_matl, gac, 1);
-    t->requires(Task::NewDW, d_mpmice_labels->cMassLabel, gn);
-    t->requires(Task::NewDW, d_ice_labels->int_eng_source_CCLabel, gn);
-    t->requires(Task::NewDW, d_ice_labels->mom_source_CCLabel, gn);
+    t->needs(Task::NewDW, d_mpm_labels->gVelocityStarLabel, mss, gac, 1);
+    t->needs(Task::NewDW, d_mpm_labels->gMassLabel, gac, 1);
+    t->needs(Task::NewDW, d_mpm_labels->gTemperatureStarLabel, gac, 1);
+    t->needs(Task::OldDW, d_mpm_labels->NC_CCweightLabel, one_matl, gac, 1);
+    t->needs(Task::NewDW, d_mpmice_labels->cMassLabel, gn);
+    t->needs(Task::NewDW, d_ice_labels->int_eng_source_CCLabel, gn);
+    t->needs(Task::NewDW, d_ice_labels->mom_source_CCLabel, gn);
 
-    t->requires(Task::NewDW, d_mpmice_labels->temperature_CCLabel, gn);
-    t->requires(Task::NewDW, d_mpmice_labels->velocity_CCLabel, gn);
+    t->needs(Task::NewDW, d_mpmice_labels->temperature_CCLabel, gn);
+    t->needs(Task::NewDW, d_mpmice_labels->velocity_CCLabel, gn);
 
     if (d_ice->d_models.size() > 0 && !do_mlmpmice) {
-      t->requires(Task::NewDW, d_ice_labels->modelMass_srcLabel, gn);
-      t->requires(Task::NewDW, d_ice_labels->modelMom_srcLabel, gn);
-      t->requires(Task::NewDW, d_ice_labels->modelEng_srcLabel, gn);
+      t->needs(Task::NewDW, d_ice_labels->modelMass_srcLabel, gn);
+      t->needs(Task::NewDW, d_ice_labels->modelMom_srcLabel, gn);
+      t->needs(Task::NewDW, d_ice_labels->modelEng_srcLabel, gn);
     }
 
     t->computes(d_ice_labels->mass_L_CCLabel);
@@ -2942,15 +2942,15 @@ MPMICE::scheduleComputeCCVelAndTempRates(SchedulerP& sched,
 
   Ghost::GhostType gn = Ghost::None;
 
-  t->requires(Task::OldDW, d_ice_labels->delTLabel, getLevel(patches));
-  t->requires(Task::NewDW, d_ice_labels->mass_L_CCLabel, gn);
-  t->requires(Task::NewDW, d_ice_labels->mom_L_CCLabel, gn);
-  t->requires(Task::NewDW, d_ice_labels->int_eng_L_CCLabel, gn);
-  t->requires(Task::NewDW, d_ice_labels->mom_L_ME_CCLabel, gn);
-  t->requires(Task::NewDW, d_ice_labels->eng_L_ME_CCLabel, gn);
-  t->requires(Task::NewDW, d_ice_labels->int_eng_source_CCLabel, gn);
-  t->requires(Task::NewDW, d_ice_labels->mom_source_CCLabel, gn);
-  t->requires(Task::OldDW, d_mpm_labels->heatRate_CCLabel, gn);
+  t->needs(Task::OldDW, d_ice_labels->delTLabel, getLevel(patches));
+  t->needs(Task::NewDW, d_ice_labels->mass_L_CCLabel, gn);
+  t->needs(Task::NewDW, d_ice_labels->mom_L_CCLabel, gn);
+  t->needs(Task::NewDW, d_ice_labels->int_eng_L_CCLabel, gn);
+  t->needs(Task::NewDW, d_ice_labels->mom_L_ME_CCLabel, gn);
+  t->needs(Task::NewDW, d_ice_labels->eng_L_ME_CCLabel, gn);
+  t->needs(Task::NewDW, d_ice_labels->int_eng_source_CCLabel, gn);
+  t->needs(Task::NewDW, d_ice_labels->mom_source_CCLabel, gn);
+  t->needs(Task::OldDW, d_mpm_labels->heatRate_CCLabel, gn);
 
   t->computes(d_ice_labels->dTdt_CCLabel);
   t->computes(d_ice_labels->dVdt_CCLabel);
@@ -3068,13 +3068,13 @@ MPMICE::scheduleInterpolateCCToNC(SchedulerP& sched,
   Ghost::GhostType gan      = Ghost::AroundNodes;
   Ghost::GhostType gac      = Ghost::AroundCells;
 
-  t->requires(Task::OldDW, d_ice_labels->delTLabel, getLevel(patches));
-  t->requires(Task::NewDW, d_ice_labels->dVdt_CCLabel, gan, 1);
-  t->requires(Task::NewDW, d_ice_labels->dTdt_CCLabel, gan, 1);
+  t->needs(Task::OldDW, d_ice_labels->delTLabel, getLevel(patches));
+  t->needs(Task::NewDW, d_ice_labels->dVdt_CCLabel, gan, 1);
+  t->needs(Task::NewDW, d_ice_labels->dTdt_CCLabel, gan, 1);
 
   if (d_ice->d_models.size() > 0) {
-    t->requires(Task::NewDW, d_mpmice_labels->cMassLabel, gac, 1);
-    t->requires(Task::NewDW, d_ice_labels->modelMass_srcLabel, gac, 1);
+    t->needs(Task::NewDW, d_mpmice_labels->cMassLabel, gac, 1);
+    t->needs(Task::NewDW, d_ice_labels->modelMass_srcLabel, gac, 1);
   }
 
   t->modifies(d_mpm_labels->gVelocityStarLabel, mss);
@@ -3542,7 +3542,7 @@ MPMICE::scheduleRefineVariableCC(SchedulerP& sched,
   }
 
   Ghost::GhostType gac = Ghost::AroundCells;
-  t->requires(
+  t->needs(
     Task::NewDW, variable, 0, Task::CoarseLevel, 0, Task::NormalDomain, gac, 1);
   t->computes(variable);
   sched->addTask(t, patches, matls);

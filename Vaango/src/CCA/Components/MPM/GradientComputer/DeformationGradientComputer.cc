@@ -210,7 +210,7 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
   ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
   if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
     const MaterialSubset* matlset = mpm_matl->thisMaterial();
-    task->requires(Task::OldDW, lb->pPolarDecompRLabel, matlset, Ghost::None);
+    task->needs(Task::OldDW, lb->pPolarDecompRLabel, matlset, Ghost::None);
     task->computes(lb->pRemoveLabel_preReloc, matlset);
     task->computes(lb->pPolarDecompRLabel_preReloc, matlset);
     task->computes(lb->pPolarDecompRMidLabel, matlset);
@@ -243,23 +243,23 @@ DeformationGradientComputer::addComputesAndRequiresExplicit(
   const MaterialSubset* matlset = mpm_matl->thisMaterial();
 
   // Requires (for explicit)
-  task->requires(Task::OldDW, lb->delTLabel);
-  task->requires(Task::OldDW, lb->pXLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pMassLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pSizeLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVelocityLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVelGradLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->delTLabel);
+  task->needs(Task::OldDW, lb->pXLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pMassLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pSizeLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVelocityLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVelGradLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
   if (flag->d_doGridReset) {
-    task->requires(Task::NewDW, lb->gVelocityStarLabel, matlset, gac, NGN);
+    task->needs(Task::NewDW, lb->gVelocityStarLabel, matlset, gac, NGN);
     if (flag->d_fracture) {
-      task->requires(Task::NewDW, lb->pgCodeLabel, matlset, gnone);
-      task->requires(Task::NewDW, lb->GVelocityStarLabel, matlset, gac, NGN);
+      task->needs(Task::NewDW, lb->pgCodeLabel, matlset, gnone);
+      task->needs(Task::NewDW, lb->GVelocityStarLabel, matlset, gac, NGN);
     }
   } else {
-    task->requires(Task::NewDW, lb->gDisplacementLabel, matlset, gac, NGN);
+    task->needs(Task::NewDW, lb->gDisplacementLabel, matlset, gac, NGN);
   }
 
   // Computes (for explicit)
@@ -282,17 +282,17 @@ DeformationGradientComputer::addComputesAndRequiresImplicit(
   const MaterialSubset* matlset = mpm_matl->thisMaterial();
 
   // Requires (for implicit)
-  task->requires(Task::OldDW, lb->delTLabel);
-  task->requires(Task::OldDW, lb->pXLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pMassLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pSizeLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->delTLabel);
+  task->needs(Task::OldDW, lb->pXLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pMassLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pSizeLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
   if (flag->d_doGridReset) {
-    task->requires(Task::NewDW, lb->dispNewLabel, matlset, gac, NGN);
+    task->needs(Task::NewDW, lb->dispNewLabel, matlset, gac, NGN);
   } else {
-    task->requires(Task::NewDW, lb->gDisplacementLabel, matlset, gac, NGN);
+    task->needs(Task::NewDW, lb->gDisplacementLabel, matlset, gac, NGN);
   }
 
   // Computes (for implicit)
@@ -972,26 +972,26 @@ DeformationGradientComputer::addComputesAndRequires(
                   dbg_doing,
                   "SchedParent::DefGrad::scheduleComputeDeformationGradient");
 
-    task->requires(Task::ParentOldDW, lb->delTLabel);
-    task->requires(Task::ParentOldDW, lb->pXLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pSizeLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pMassLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pVolumeLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pDefGradLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pParticleIDLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, lb->delTLabel);
+    task->needs(Task::ParentOldDW, lb->pXLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, lb->pSizeLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, lb->pMassLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, lb->pVolumeLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, lb->pDefGradLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, lb->pParticleIDLabel, matlset, gnone);
 
     task->computes(lb->pVelGradLabel_preReloc, matlset);
     task->computes(lb->pDispGradLabel_preReloc, matlset);
     task->computes(lb->pDefGradLabel_preReloc, matlset);
     task->computes(lb->pVolumeLabel_preReloc, matlset);
     if (flag->d_doGridReset) {
-      task->requires(Task::OldDW, lb->dispNewLabel, matlset, gac, 1);
+      task->needs(Task::OldDW, lb->dispNewLabel, matlset, gac, 1);
     } else {
-      task->requires(Task::OldDW, lb->gDisplacementLabel, matlset, gac, 1);
+      task->needs(Task::OldDW, lb->gDisplacementLabel, matlset, gac, 1);
     }
 
     if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
-      task->requires(Task::ParentOldDW, lb->pPolarDecompRLabel, matlset, gnone);
+      task->needs(Task::ParentOldDW, lb->pPolarDecompRLabel, matlset, gnone);
       task->computes(lb->pRemoveLabel_preReloc, matlset);
       task->computes(lb->pPolarDecompRLabel_preReloc, matlset);
       task->computes(lb->pPolarDecompRMidLabel, matlset);
@@ -1002,22 +1002,22 @@ DeformationGradientComputer::addComputesAndRequires(
                   dbg_doing,
                   "Recurse::DefGrad::scheduleComputeDeformationGradient");
 
-    task->requires(Task::OldDW, lb->delTLabel);
-    task->requires(Task::OldDW, lb->pXLabel, matlset, gnone);
-    task->requires(Task::OldDW, lb->pSizeLabel, matlset, gnone);
-    task->requires(Task::OldDW, lb->pMassLabel, matlset, gnone);
-    task->requires(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
-    task->requires(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
-    task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
+    task->needs(Task::OldDW, lb->delTLabel);
+    task->needs(Task::OldDW, lb->pXLabel, matlset, gnone);
+    task->needs(Task::OldDW, lb->pSizeLabel, matlset, gnone);
+    task->needs(Task::OldDW, lb->pMassLabel, matlset, gnone);
+    task->needs(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
+    task->needs(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
+    task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
 
     if (flag->d_doGridReset) {
-      task->requires(Task::NewDW, lb->dispNewLabel, matlset, gac, 1);
+      task->needs(Task::NewDW, lb->dispNewLabel, matlset, gac, 1);
     } else {
-      task->requires(Task::OldDW, lb->gDisplacementLabel, matlset, gac, 1);
+      task->needs(Task::OldDW, lb->gDisplacementLabel, matlset, gac, 1);
     }
 
     if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
-      task->requires(Task::OldDW, lb->pPolarDecompRLabel, matlset, gnone);
+      task->needs(Task::OldDW, lb->pPolarDecompRLabel, matlset, gnone);
     }
   }
 }
@@ -1209,16 +1209,16 @@ DeformationGradientComputer::addRequiresForConvert(Task* task,
 
   if (flag->d_integrator == MPMFlags::Implicit) {
     // Requires (for implicit)
-    task->requires(Task::NewDW, lb->pVolumeLabel, matlset, gnone);
-    task->requires(Task::NewDW, lb->pVelGradLabel, matlset, gnone);
-    task->requires(Task::NewDW, lb->pDispGradLabel, matlset, gnone);
-    task->requires(Task::NewDW, lb->pDefGradLabel, matlset, gnone);
+    task->needs(Task::NewDW, lb->pVolumeLabel, matlset, gnone);
+    task->needs(Task::NewDW, lb->pVelGradLabel, matlset, gnone);
+    task->needs(Task::NewDW, lb->pDispGradLabel, matlset, gnone);
+    task->needs(Task::NewDW, lb->pDefGradLabel, matlset, gnone);
   } else {
     // Requires (for explicit)
-    task->requires(Task::NewDW, lb->pVolumeLabel, matlset, gnone);
-    task->requires(Task::NewDW, lb->pVelGradLabel, matlset, gnone);
-    task->requires(Task::NewDW, lb->pDispGradLabel, matlset, gnone);
-    task->requires(Task::NewDW, lb->pDefGradLabel, matlset, gnone);
+    task->needs(Task::NewDW, lb->pVolumeLabel, matlset, gnone);
+    task->needs(Task::NewDW, lb->pVelGradLabel, matlset, gnone);
+    task->needs(Task::NewDW, lb->pDispGradLabel, matlset, gnone);
+    task->needs(Task::NewDW, lb->pDefGradLabel, matlset, gnone);
   }
 
   // **WARNING and TODO** Will not work for INCREMENTAL models unless we
@@ -1226,8 +1226,8 @@ DeformationGradientComputer::addRequiresForConvert(Task* task,
   // delset.  Needs the sharedState to be passed.
   // ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
   // if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
-  //  task->requires(Task::NewDW, lb->pRemoveLabel,                matlset,
-  //  gnone); task->requires(Task::NewDW, lb->pPolarDecompRLabel_preReloc,
+  //  task->needs(Task::NewDW, lb->pRemoveLabel,                matlset,
+  //  gnone); task->needs(Task::NewDW, lb->pPolarDecompRLabel_preReloc,
   //  matlset, gnone);
   //}
 }

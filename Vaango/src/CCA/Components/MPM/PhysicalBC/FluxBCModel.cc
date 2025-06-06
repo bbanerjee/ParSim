@@ -84,7 +84,7 @@ FluxBCModel::scheduleInitializeScalarFluxBCs(const LevelP& level,
     Task* t = scinew Task("FluxBCModel::countMaterialPointsPerFluxLoadCurve",
                           this,
                           &FluxBCModel::countMaterialPointsPerFluxLoadCurve);
-    t->requires(Task::NewDW, d_mpm_lb->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_lb->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_mpm_lb->materialPointsPerLoadCurveLabel,
                 d_load_curve_index,
                 Task::OutOfDomain);
@@ -96,7 +96,7 @@ FluxBCModel::scheduleInitializeScalarFluxBCs(const LevelP& level,
     t = scinew Task("FluxBCModel::initializeScalarFluxBC",
                     this,
                     &FluxBCModel::initializeScalarFluxBC);
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW,
                 d_mpm_lb->materialPointsPerLoadCurveLabel,
                 d_load_curve_index,
                 Task::OutOfDomain,
@@ -180,21 +180,21 @@ FluxBCModel::scheduleApplyExternalScalarFlux(SchedulerP& sched,
                         this,
                         &FluxBCModel::applyExternalScalarFlux);
 
-  t->requires(Task::OldDW, d_mpm_lb->simulationTimeLabel);
+  t->needs(Task::OldDW, d_mpm_lb->simulationTimeLabel);
 
-  t->requires(Task::OldDW, d_mpm_lb->pXLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_lb->pXLabel, Ghost::None);
   if (d_mpm_flags->d_doScalarDiffusion) {
-    t->requires(Task::OldDW, d_mpm_lb->diffusion->pArea, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_lb->diffusion->pArea, Ghost::None);
   }
-  t->requires(Task::OldDW, d_mpm_lb->pVolumeLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_lb->pVolumeLabel, Ghost::None);
 #if defined USE_FLUX_RESTRICTION
   if (d_mpm_flags->d_doScalarDiffusion) {
-    t->requires(Task::OldDW, d_mpm_lb->diffusion->pConcentration, gnone);
+    t->needs(Task::OldDW, d_mpm_lb->diffusion->pConcentration, gnone);
   }
 #endif
   t->computes(d_mpm_lb->diffusion->pExternalScalarFlux_preReloc);
   if (d_mpm_flags->d_useLoadCurves) {
-    t->requires(Task::OldDW, d_mpm_lb->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_lb->pLoadCurveIDLabel, Ghost::None);
   }
 
   sched->addTask(t, patches, matls);

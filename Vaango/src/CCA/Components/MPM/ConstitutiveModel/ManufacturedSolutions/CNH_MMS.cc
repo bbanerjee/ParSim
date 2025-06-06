@@ -349,7 +349,7 @@ CNH_MMS::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForExplicit(task, matlset, patches);
   if (flag->d_withColor) {
-    task->requires(Task::OldDW, lb->pColorLabel, Ghost::None);
+    task->needs(Task::OldDW, lb->pColorLabel, Ghost::None);
   }
 }
 

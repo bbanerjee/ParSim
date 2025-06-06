@@ -561,14 +561,14 @@ public:
                          const PatchSet* patches) const override
   {
     const MaterialSubset* matlset = matl->thisMaterial();
-    task->requires(Task::OldDW, pPEAKI1Label, matlset, Ghost::None);
-    task->requires(Task::OldDW, pFSLOPELabel, matlset, Ghost::None);
-    task->requires(Task::OldDW, pSTRENLabel, matlset, Ghost::None);
-    task->requires(Task::OldDW, pYSLOPELabel, matlset, Ghost::None);
-    task->requires(Task::OldDW, pBETALabel, matlset, Ghost::None);
-    task->requires(Task::OldDW, pCRLabel, matlset, Ghost::None);
-    task->requires(Task::OldDW, pT1Label, matlset, Ghost::None);
-    task->requires(Task::OldDW, pT2Label, matlset, Ghost::None);
+    task->needs(Task::OldDW, pPEAKI1Label, matlset, Ghost::None);
+    task->needs(Task::OldDW, pFSLOPELabel, matlset, Ghost::None);
+    task->needs(Task::OldDW, pSTRENLabel, matlset, Ghost::None);
+    task->needs(Task::OldDW, pYSLOPELabel, matlset, Ghost::None);
+    task->needs(Task::OldDW, pBETALabel, matlset, Ghost::None);
+    task->needs(Task::OldDW, pCRLabel, matlset, Ghost::None);
+    task->needs(Task::OldDW, pT1Label, matlset, Ghost::None);
+    task->needs(Task::OldDW, pT2Label, matlset, Ghost::None);
 
     task->computes(pPEAKI1Label_preReloc, matlset);
     task->computes(pFSLOPELabel_preReloc, matlset);

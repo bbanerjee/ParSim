@@ -91,13 +91,13 @@ FrictionContactBard::addComputesAndRequires(SchedulerP& sched,
 
   const MaterialSubset* mss = matls->getUnion();
 
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-  t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gSurfNormLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gPositionLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gNormTractionLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gSurfNormLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gPositionLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gNormTractionLabel, Ghost::None);
 
   t->modifies(d_mpm_labels->frictionalWorkLabel, mss);
   if (label == d_mpm_labels->gVelocityLabel) {

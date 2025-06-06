@@ -1572,12 +1572,12 @@ simplifiedGeoModel::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForHypoExplicit(task, matlset, patches);
-  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticStrainVolLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pElasticStrainVolLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pKappaLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pBackStressLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pBackStressIsoLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticStrainVolLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pElasticStrainVolLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pKappaLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pBackStressLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pBackStressIsoLabel, matlset, Ghost::None);
   task->computes(pPlasticStrainLabel_preReloc, matlset);
   task->computes(pPlasticStrainVolLabel_preReloc, matlset);
   task->computes(pElasticStrainVolLabel_preReloc, matlset);

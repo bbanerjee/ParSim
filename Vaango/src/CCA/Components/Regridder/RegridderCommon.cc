@@ -819,12 +819,12 @@ RegridderCommon::scheduleDilation(const LevelP& level, bool isLockstepAMR)
   int ngc_regrid = Max(regrid_depth.x(), regrid_depth.y());
   ngc_regrid     = Max(ngc_regrid, regrid_depth.z());
 
-  dilate_stability_task->requires(Task::NewDW,
+  dilate_stability_task->needs(Task::NewDW,
                                   d_refineFlagLabel,
                                   d_refine_flag_matls,
                                   Ghost::AroundCells,
                                   ngc_stability);
-  dilate_regrid_task->requires(Task::NewDW,
+  dilate_regrid_task->needs(Task::NewDW,
                                d_refineFlagLabel,
                                d_refine_flag_matls,
                                Ghost::AroundCells,

@@ -382,7 +382,7 @@ public: // class Task
   //////////
   // Most general case
   void
-    requires(WhichDW,
+    needs(WhichDW,
              const VarLabel* label,
              const PatchSubset* patches,
              PatchDomainSpec patches_dom,
@@ -396,7 +396,7 @@ public: // class Task
   //////////
   // Like general case, level_offset is not specified
   void
-    requires(WhichDW,
+    needs(WhichDW,
              const VarLabel* label,
              const PatchSubset* patches,
              PatchDomainSpec patches_dom,
@@ -407,14 +407,14 @@ public: // class Task
              SearchTG whichTG = SearchTG::NewTG);
 
   void
-    requires(WhichDW,
+    needs(WhichDW,
              const VarLabel* label,
              Ghost::GhostType gtype,
              int numGhostCells = 0,
              SearchTG whichTG = SearchTG::NewTG);
 
   void
-    requires(WhichDW,
+    needs(WhichDW,
              const VarLabel* label,
              const PatchSubset* patches,
              const MaterialSubset* matls,
@@ -423,7 +423,7 @@ public: // class Task
              SearchTG whichTG = SearchTG::NewTG);
 
   void
-    requires(WhichDW,
+    needs(WhichDW,
              const VarLabel* label,
              const PatchSubset* patches,
              Ghost::GhostType gtype,
@@ -431,7 +431,7 @@ public: // class Task
              SearchTG whichTG = SearchTG::NewTG);
 
   void
-    requires(WhichDW,
+    needs(WhichDW,
              const VarLabel* label,
              const MaterialSubset* matls,
              Ghost::GhostType gtype,
@@ -439,7 +439,7 @@ public: // class Task
              SearchTG whichTG = SearchTG::NewTG);
 
   void
-    requires(WhichDW,
+    needs(WhichDW,
              const VarLabel* label,
              const MaterialSubset* matls,
              MaterialDomainSpec matls_dom,
@@ -450,7 +450,7 @@ public: // class Task
   //////////
   // Requires only for reduction variables
   void
-    requires(WhichDW,
+    needs(WhichDW,
              const VarLabel* label,
              const Level* level = nullptr,
              const MaterialSubset* matls = nullptr,
@@ -460,7 +460,7 @@ public: // class Task
   //////////
   // Requires for reduction variables or perpatch veriables
   void
-    requires(WhichDW,
+    needs(WhichDW,
              const VarLabel* label,
              const MaterialSubset* matls,
              SearchTG whichTG = SearchTG::NewTG);
@@ -468,7 +468,7 @@ public: // class Task
   //////////
   // Requires only for perpatch variables
   void
-    requires(WhichDW,
+    needs(WhichDW,
              const VarLabel* label,
              const PatchSubset* patches,
              const MaterialSubset* matls = nullptr);

@@ -372,7 +372,7 @@ AMRICE::scheduleRefineInterface_Variable(const LevelP& fineLevel,
 
   if (needCoarseOld) {
     cout_dbg << " requires from CoarseOldDW ";
-    t->requires(Task::CoarseOldDW,
+    t->needs(Task::CoarseOldDW,
                 variable,
                 0,
                 Task::CoarseLevel,
@@ -383,7 +383,7 @@ AMRICE::scheduleRefineInterface_Variable(const LevelP& fineLevel,
   }
   if (needCoarseNew) {
     cout_dbg << " requires from CoarseNewDW ";
-    t->requires(Task::CoarseNewDW,
+    t->needs(Task::CoarseNewDW,
                 variable,
                 0,
                 Task::CoarseLevel,
@@ -622,7 +622,7 @@ AMRICE::scheduleSetBC_FineLevel(const PatchSet* patches, SchedulerP& sched)
     Task::MaterialDomainSpec ND = Task::NormalDomain;
 
     // need to interpolate these intermediate values
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW,
                 d_ice_labels->gammaLabel,
                 0,
                 Task::CoarseLevel,
@@ -630,7 +630,7 @@ AMRICE::scheduleSetBC_FineLevel(const PatchSet* patches, SchedulerP& sched)
                 ND,
                 gn,
                 0);
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW,
                 d_ice_labels->specific_heatLabel,
                 0,
                 Task::CoarseLevel,
@@ -638,7 +638,7 @@ AMRICE::scheduleSetBC_FineLevel(const PatchSet* patches, SchedulerP& sched)
                 ND,
                 gn,
                 0);
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW,
                 d_ice_labels->vol_frac_CCLabel,
                 0,
                 Task::CoarseLevel,
@@ -650,9 +650,9 @@ AMRICE::scheduleSetBC_FineLevel(const PatchSet* patches, SchedulerP& sched)
     const MaterialSubset* all_matls =
       d_materialManager->allMaterials()->getUnion();
 
-    t->requires(Task::OldDW, d_ice_labels->timeStepLabel);
-    t->requires(Task::OldDW, d_ice_labels->simulationTimeLabel);
-    t->requires(Task::OldDW, d_ice_labels->delTLabel, getLevel(patches));
+    t->needs(Task::OldDW, d_ice_labels->timeStepLabel);
+    t->needs(Task::OldDW, d_ice_labels->simulationTimeLabel);
+    t->needs(Task::OldDW, d_ice_labels->delTLabel, getLevel(patches));
 
     t->modifies(d_ice_labels->press_CCLabel, d_press_matl, oims);
     t->modifies(d_ice_labels->rho_CCLabel);
@@ -975,7 +975,7 @@ AMRICE::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
 
     subset->add(0);
 
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_ice_labels->press_CCLabel,
                    0,
                    Task::CoarseLevel,
@@ -984,7 +984,7 @@ AMRICE::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
                    d_gac,
                    1);
 
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_ice_labels->rho_CCLabel,
                    0,
                    Task::CoarseLevel,
@@ -993,7 +993,7 @@ AMRICE::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
                    d_gac,
                    1);
 
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_ice_labels->specificVolume_CCLabel,
                    0,
                    Task::CoarseLevel,
@@ -1002,7 +1002,7 @@ AMRICE::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
                    d_gac,
                    1);
 
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_ice_labels->temperature_CCLabel,
                    0,
                    Task::CoarseLevel,
@@ -1011,7 +1011,7 @@ AMRICE::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
                    d_gac,
                    1);
 
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_ice_labels->velocity_CCLabel,
                    0,
                    Task::CoarseLevel,
@@ -1035,7 +1035,7 @@ AMRICE::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
                t_iter++) {
             TransportedVariable* tvar = *t_iter;
 
-            task->requires(Task::NewDW,
+            task->needs(Task::NewDW,
                            tvar->var,
                            0,
                            Task::CoarseLevel,
@@ -1311,7 +1311,7 @@ AMRICE::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
   Task::SearchTG OldTG =
     Task::SearchTG::OldTG; // possibly search old TG for computes
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->press_CCLabel,
                  0,
                  Task::FineLevel,
@@ -1321,7 +1321,7 @@ AMRICE::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
                  0,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->mass_advLabel,
                  0,
                  Task::FineLevel,
@@ -1331,7 +1331,7 @@ AMRICE::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
                  0,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->sp_vol_advLabel,
                  0,
                  Task::FineLevel,
@@ -1341,7 +1341,7 @@ AMRICE::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
                  0,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->eng_advLabel,
                  0,
                  Task::FineLevel,
@@ -1351,7 +1351,7 @@ AMRICE::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
                  0,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->mom_advLabel,
                  0,
                  Task::FineLevel,
@@ -1375,7 +1375,7 @@ AMRICE::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
              t_iter++) {
           TransportedVariable* tvar = *t_iter;
 
-          task->requires(Task::NewDW,
+          task->needs(Task::NewDW,
                          tvar->var_adv,
                          0,
                          Task::FineLevel,
@@ -1599,7 +1599,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
   //__________________________________
   // Fluxes from the fine level
   // MASS
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->mass_X_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1609,7 +1609,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                  1,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->mass_Y_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1619,7 +1619,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                  1,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->mass_Z_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1630,7 +1630,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                  OldTG);
 
   // MOMENTUM
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->mom_X_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1640,7 +1640,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                  1,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->mom_Y_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1650,7 +1650,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                  1,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->mom_Z_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1661,7 +1661,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                  OldTG);
 
   // INT_ENG
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->int_eng_X_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1671,7 +1671,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                  1,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->int_eng_Y_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1681,7 +1681,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                  1,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->int_eng_Z_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1692,7 +1692,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                  OldTG);
 
   // SPECIFIC VOLUME
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->sp_vol_X_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1702,7 +1702,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                  1,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->sp_vol_Y_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1712,7 +1712,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                  1,
                  OldTG);
 
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  d_ice_labels->sp_vol_Z_FC_fluxLabel,
                  0,
                  Task::FineLevel,
@@ -1731,7 +1731,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
       if (fb_model) {
         for (auto& rvar : fb_model->d_refluxVars) {
 
-          task->requires(Task::NewDW,
+          task->needs(Task::NewDW,
                          rvar->var_X_FC_flux,
                          0,
                          Task::FineLevel,
@@ -1741,7 +1741,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                          1,
                          OldTG);
 
-          task->requires(Task::NewDW,
+          task->needs(Task::NewDW,
                          rvar->var_Y_FC_flux,
                          0,
                          Task::FineLevel,
@@ -1751,7 +1751,7 @@ AMRICE::scheduleReflux_computeCorrectionFluxes(const LevelP& coarseLevel,
                          1,
                          OldTG);
 
-          task->requires(Task::NewDW,
+          task->needs(Task::NewDW,
                          rvar->var_Z_FC_flux,
                          0,
                          Task::FineLevel,
@@ -2073,21 +2073,21 @@ AMRICE::scheduleReflux_applyCorrection(const LevelP& coarseLevel,
   //__________________________________
   // Correction fluxes  from the coarse level
   // MASS
-  task->requires(Task::NewDW, d_ice_labels->mass_X_FC_corrLabel, gac, 1);
-  task->requires(Task::NewDW, d_ice_labels->mass_Y_FC_corrLabel, gac, 1);
-  task->requires(Task::NewDW, d_ice_labels->mass_Z_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->mass_X_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->mass_Y_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->mass_Z_FC_corrLabel, gac, 1);
   // MOMENTUM
-  task->requires(Task::NewDW, d_ice_labels->mom_X_FC_corrLabel, gac, 1);
-  task->requires(Task::NewDW, d_ice_labels->mom_Y_FC_corrLabel, gac, 1);
-  task->requires(Task::NewDW, d_ice_labels->mom_Z_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->mom_X_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->mom_Y_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->mom_Z_FC_corrLabel, gac, 1);
   // INT_ENG
-  task->requires(Task::NewDW, d_ice_labels->int_eng_X_FC_corrLabel, gac, 1);
-  task->requires(Task::NewDW, d_ice_labels->int_eng_Y_FC_corrLabel, gac, 1);
-  task->requires(Task::NewDW, d_ice_labels->int_eng_Z_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->int_eng_X_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->int_eng_Y_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->int_eng_Z_FC_corrLabel, gac, 1);
   // SPECIFIC VOLUME
-  task->requires(Task::NewDW, d_ice_labels->sp_vol_X_FC_corrLabel, gac, 1);
-  task->requires(Task::NewDW, d_ice_labels->sp_vol_Y_FC_corrLabel, gac, 1);
-  task->requires(Task::NewDW, d_ice_labels->sp_vol_Z_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->sp_vol_X_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->sp_vol_Y_FC_corrLabel, gac, 1);
+  task->needs(Task::NewDW, d_ice_labels->sp_vol_Z_FC_corrLabel, gac, 1);
 
   //__________________________________
   // Model with reflux variables.
@@ -2098,9 +2098,9 @@ AMRICE::scheduleReflux_applyCorrection(const LevelP& coarseLevel,
       if (fb_model) {
         for (auto& rvar : fb_model->d_refluxVars) {
 
-          task->requires(Task::NewDW, rvar->var_X_FC_corr, gac, 1);
-          task->requires(Task::NewDW, rvar->var_Y_FC_corr, gac, 1);
-          task->requires(Task::NewDW, rvar->var_Z_FC_corr, gac, 1);
+          task->needs(Task::NewDW, rvar->var_X_FC_corr, gac, 1);
+          task->needs(Task::NewDW, rvar->var_Y_FC_corr, gac, 1);
+          task->needs(Task::NewDW, rvar->var_Z_FC_corr, gac, 1);
           task->modifies(rvar->var_adv);
         }
       }
@@ -2503,14 +2503,14 @@ AMRICE::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
     matls_sub = all_matls_sub;
   }
 
-  t->requires(Task::NewDW, d_ice_labels->rho_CCLabel, matls_sub, gac, 1, OldTG);
-  t->requires(
+  t->needs(Task::NewDW, d_ice_labels->rho_CCLabel, matls_sub, gac, 1, OldTG);
+  t->needs(
     Task::NewDW, d_ice_labels->temperature_CCLabel, matls_sub, gac, 1, OldTG);
-  t->requires(
+  t->needs(
     Task::NewDW, d_ice_labels->velocity_CCLabel, matls_sub, gac, 1, OldTG);
-  t->requires(
+  t->needs(
     Task::NewDW, d_ice_labels->vol_frac_CCLabel, matls_sub, gac, 1, OldTG);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_ice_labels->press_CCLabel,
               d_press_matl,
               oims,

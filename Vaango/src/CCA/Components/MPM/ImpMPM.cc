@@ -405,7 +405,7 @@ ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   t = scinew Task("ImpMPM::printParticleCount",
                   this,
                   &ImpMPM::printParticleCount);
-  t->requires(Task::NewDW, d_mpm_labels->partCountLabel);
+  t->needs(Task::NewDW, d_mpm_labels->partCountLabel);
   t->setType(Task::OncePerProc);
   sched->addTask(t, d_perprocPatches, d_materialManager->allMaterials("MPM"));
 
@@ -598,7 +598,7 @@ ImpMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
     Task* t = scinew Task("ImpMPM::countMaterialPointsPerLoadCurve",
                           this,
                           &ImpMPM::countMaterialPointsPerLoadCurve);
-    t->requires(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_mpm_labels->materialPointsPerLoadCurveLabel,
                 d_loadCurveIndex,
                 Task::OutOfDomain);
@@ -611,9 +611,9 @@ ImpMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
     t = scinew Task("ImpMPM::initializePressureBC",
                     this,
                     &ImpMPM::initializePressureBC);
-    t->requires(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
-    t->requires(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
-    t->requires(Task::NewDW,
+    t->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::NewDW,
                 d_mpm_labels->materialPointsPerLoadCurveLabel,
                 d_loadCurveIndex,
                 Task::OutOfDomain,
@@ -763,8 +763,8 @@ ImpMPM::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
 
   if (d_mpm_flags->doMPMOnLevel(level->getIndex(),
                                level->getGrid()->numLevels())) {
-    t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-    t->requires(Task::NewDW, d_mpm_labels->pVelocityLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+    t->needs(Task::NewDW, d_mpm_labels->pVelocityLabel, Ghost::None);
   }
 
   // compute a delT on all levels even levels where impm is not running
@@ -924,8 +924,8 @@ ImpMPM::scheduleComputeParticleBodyForce(SchedulerP& sched,
                         this,
                         &ImpMPM::computeParticleBodyForce);
 
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::None);
   t->computes(d_mpm_labels->pBodyForceAccLabel_preReloc);
   t->computes(d_mpm_labels->pCoriolisImportanceLabel_preReloc);
 
@@ -1037,17 +1037,17 @@ ImpMPM::scheduleApplyExternalLoads(SchedulerP& sched,
   Task* t =
     scinew Task("IMPM::applyExternalLoads", this, &ImpMPM::applyExternalLoads);
 
-  t->requires(Task::OldDW, d_mpm_labels->simulationTimeLabel);
-  t->requires(Task::OldDW, d_mpm_labels->pExternalForceLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pExternalHeatFluxLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pDispLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->simulationTimeLabel);
+  t->needs(Task::OldDW, d_mpm_labels->pExternalForceLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pExternalHeatFluxLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pDispLabel, Ghost::None);
   t->computes(d_mpm_labels->pExtForceLabel_preReloc);
   t->computes(d_mpm_labels->pExternalHeatRateLabel);
   t->computes(d_mpm_labels->pExternalHeatFluxLabel_preReloc);
   if (d_mpm_flags->d_useLoadCurves) {
-    t->requires(Task::OldDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_mpm_labels->pLoadCurveIDLabel_preReloc);
   }
 
@@ -1235,51 +1235,51 @@ ImpMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
                         this,
                         &ImpMPM::interpolateParticlesToGrid);
 
-  t->requires(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::AroundNodes, 1);
-  t->requires(Task::OldDW, d_mpm_labels->pVolumeLabel, Ghost::AroundNodes, 1);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::AroundNodes, 1);
+  t->needs(Task::OldDW, d_mpm_labels->pVolumeLabel, Ghost::AroundNodes, 1);
+  t->needs(Task::OldDW,
               d_mpm_labels->pTemperatureLabel,
               Ghost::AroundNodes,
               1);
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
-  t->requires(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::AroundNodes, 1);
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
+  t->needs(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::AroundNodes, 1);
+  t->needs(Task::OldDW,
               d_mpm_labels->pAccelerationLabel,
               Ghost::AroundNodes,
               1);
-  t->requires(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::AroundNodes, 1);
-  t->requires(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::AroundNodes, 1);
+  t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::AroundNodes, 1);
+  t->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::AroundNodes, 1);
 
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pBodyForceAccLabel_preReloc,
               Ghost::AroundNodes,
               1);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pExtForceLabel_preReloc,
               Ghost::AroundNodes,
               1);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pExternalHeatRateLabel,
               Ghost::AroundNodes,
               1);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pExternalHeatFluxLabel_preReloc,
               Ghost::AroundNodes,
               1);
 
   if (!d_mpm_flags->d_doGridReset) {
-    t->requires(Task::OldDW, d_mpm_labels->gDisplacementLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->gDisplacementLabel, Ghost::None);
     t->computes(d_mpm_labels->gDisplacementLabel);
   }
 
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->NC_CCweightLabel,
               oneMaterial,
               Ghost::AroundCells,
               1);
 
   if (!d_mpm_flags->d_tempSolve) {
-    t->requires(Task::OldDW,
+    t->needs(Task::OldDW,
                 d_mpm_labels->gTemperatureLabel,
                 oneMaterial,
                 Ghost::None,
@@ -1823,7 +1823,7 @@ ImpMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
                         this,
                         &ImpMPM::findSurfaceParticles);
 
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pSurfLabel,
               Ghost::AroundNodes,
               d_numGhostParticles);
@@ -1907,7 +1907,7 @@ ImpMPM::scheduleCreateMatrix(SchedulerP& sched,
   printSchedule(patches, cout_doing, "IMPM::scheduleCreateMatrix");
   Task* t = scinew Task("ImpMPM::createMatrix", this, &ImpMPM::createMatrix);
 
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
 
   t->setType(Task::OncePerProc);
   sched->addTask(t, patches, matls);
@@ -2181,13 +2181,13 @@ ImpMPM::scheduleComputeContact(SchedulerP& sched,
   Task* t =
     scinew Task("ImpMPM::computeContact", this, &ImpMPM::computeContact);
 
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
   if (d_rigidContact) {
-    t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
-    t->requires(Task::NewDW, d_mpm_labels->gVelocityOldLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->gVelocityOldLabel, Ghost::None);
     t->modifies(d_mpm_labels->dispNewLabel);
     if (!d_mpm_flags->d_doGridReset) {
-      t->requires(Task::OldDW, d_mpm_labels->gDisplacementLabel, Ghost::None);
+      t->needs(Task::OldDW, d_mpm_labels->gDisplacementLabel, Ghost::None);
       t->modifies(d_mpm_labels->gDisplacementLabel);
     }
   }
@@ -2308,8 +2308,8 @@ ImpMPM::scheduleFindFixedDOF(SchedulerP& sched,
   printSchedule(patches, cout_doing, "IMPM::scheduleFindFixedDOF");
   Task* t = scinew Task("ImpMPM::findFixedDOF", this, &ImpMPM::findFixedDOF);
 
-  t->requires(Task::NewDW, d_mpm_labels->gMassAllLabel, Ghost::None, 0);
-  t->requires(Task::NewDW, d_mpm_labels->gContactLabel, Ghost::None, 0);
+  t->needs(Task::NewDW, d_mpm_labels->gMassAllLabel, Ghost::None, 0);
+  t->needs(Task::NewDW, d_mpm_labels->gContactLabel, Ghost::None, 0);
 
   t->setType(Task::OncePerProc);
   sched->addTask(t, patches, matls);
@@ -2392,29 +2392,29 @@ ImpMPM::scheduleIterate(SchedulerP& sched,
 
   task->hasSubScheduler();
 
-  task->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None, 0);
-  task->requires(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None, 0);
-  task->requires(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None, 0);
-  task->requires(Task::OldDW, d_mpm_labels->pVolumeLabel, Ghost::None, 0);
-  task->requires(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::None, 0);
+  task->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None, 0);
+  task->needs(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None, 0);
+  task->needs(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None, 0);
+  task->needs(Task::OldDW, d_mpm_labels->pVolumeLabel, Ghost::None, 0);
+  task->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::None, 0);
 
   task->modifies(d_mpm_labels->dispNewLabel);
   task->modifies(d_mpm_labels->gVelocityLabel);
   task->modifies(d_mpm_labels->gInternalForceLabel);
   if (!d_mpm_flags->d_doGridReset) {
-    task->requires(Task::OldDW,
+    task->needs(Task::OldDW,
                    d_mpm_labels->gDisplacementLabel,
                    Ghost::None,
                    0);
     task->modifies(d_mpm_labels->gDisplacementLabel);
   }
 
-  task->requires(Task::NewDW, d_mpm_labels->gVelocityOldLabel, Ghost::None, 0);
-  task->requires(Task::NewDW, d_mpm_labels->gMassAllLabel, Ghost::None, 0);
-  task->requires(Task::NewDW, d_mpm_labels->gBodyForceLabel, Ghost::None, 0);
-  task->requires(Task::NewDW, d_mpm_labels->gExternalForceLabel, Ghost::None, 0);
-  task->requires(Task::NewDW, d_mpm_labels->gAccelerationLabel, Ghost::None, 0);
-  task->requires(Task::NewDW, d_mpm_labels->gContactLabel, Ghost::None, 0);
+  task->needs(Task::NewDW, d_mpm_labels->gVelocityOldLabel, Ghost::None, 0);
+  task->needs(Task::NewDW, d_mpm_labels->gMassAllLabel, Ghost::None, 0);
+  task->needs(Task::NewDW, d_mpm_labels->gBodyForceLabel, Ghost::None, 0);
+  task->needs(Task::NewDW, d_mpm_labels->gExternalForceLabel, Ghost::None, 0);
+  task->needs(Task::NewDW, d_mpm_labels->gAccelerationLabel, Ghost::None, 0);
+  task->needs(Task::NewDW, d_mpm_labels->gContactLabel, Ghost::None, 0);
 
   if (d_mpm_flags->d_doMechanics) {
     int numMatls = d_materialManager->getNumMaterials("MPM");
@@ -2433,7 +2433,7 @@ ImpMPM::scheduleIterate(SchedulerP& sched,
     }
   }
 
-  task->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  task->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
   task->setType(Task::OncePerProc);
   sched->addTask(task, patches, d_materialManager->allMaterials());
@@ -2715,7 +2715,7 @@ ImpMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
 
   // std::cout << "OldDW = " << Task::OldDW << __FILE__ << __LINE__ << "\n";
   // std::cout << "ParentOldDW = " << Task::ParentOldDW << __FILE__ << __LINE__
-  // << "\n"; t->requires(Task::ParentOldDW, d_mpm_labels->delTLabel);
+  // << "\n"; t->needs(Task::ParentOldDW, d_mpm_labels->delTLabel);
   int numMatls = d_materialManager->getNumMaterials("MPM");
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
@@ -2761,7 +2761,7 @@ ImpMPM::scheduleComputeStressTensor(SchedulerP& sched,
                         &ImpMPM::computeStressTensorImplicit,
                         recursion);
 
-  t->requires(Task::ParentOldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::ParentOldDW, d_mpm_labels->delTLabel);
   int numMatls = d_materialManager->getNumMaterials("MPM");
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
@@ -2892,8 +2892,8 @@ ImpMPM::scheduleFormStiffnessMatrix(SchedulerP& sched,
                         this,
                         &ImpMPM::formStiffnessMatrix);
 
-  t->requires(Task::ParentOldDW, d_mpm_labels->delTLabel);
-  t->requires(Task::ParentNewDW, d_mpm_labels->gMassAllLabel, Ghost::None);
+  t->needs(Task::ParentOldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::ParentNewDW, d_mpm_labels->gMassAllLabel, Ghost::None);
 
   t->setType(Task::OncePerProc);
   sched->addTask(t, patches, matls);
@@ -2977,20 +2977,20 @@ ImpMPM::scheduleComputeInternalForce(SchedulerP& sched,
                         this,
                         &ImpMPM::computeInternalForce);
 
-  t->requires(Task::ParentOldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
-  t->requires(Task::ParentOldDW,
+  t->needs(Task::ParentOldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
+  t->needs(Task::ParentOldDW,
               d_mpm_labels->pSizeLabel,
               Ghost::AroundNodes,
               1);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pDefGradLabel_preReloc,
               Ghost::AroundNodes,
               1);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pStressLabel_preReloc,
               Ghost::AroundNodes,
               1);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pVolumeLabel_preReloc,
               Ghost::AroundNodes,
               1);
@@ -3115,14 +3115,14 @@ ImpMPM::scheduleFormQ(SchedulerP& sched,
 
   Ghost::GhostType gnone = Ghost::None;
 
-  t->requires(Task::ParentOldDW, d_mpm_labels->delTLabel);
-  t->requires(Task::ParentNewDW, d_mpm_labels->gMassAllLabel, gnone, 0);
-  t->requires(Task::ParentNewDW, d_mpm_labels->gBodyForceLabel, gnone, 0);
-  t->requires(Task::ParentNewDW, d_mpm_labels->gExternalForceLabel, gnone, 0);
-  t->requires(Task::ParentNewDW, d_mpm_labels->gVelocityOldLabel, gnone, 0);
-  t->requires(Task::ParentNewDW, d_mpm_labels->gAccelerationLabel, gnone, 0);
-  t->requires(Task::OldDW, d_mpm_labels->dispNewLabel, gnone, 0);
-  t->requires(Task::NewDW, d_mpm_labels->gInternalForceLabel, gnone, 0);
+  t->needs(Task::ParentOldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::ParentNewDW, d_mpm_labels->gMassAllLabel, gnone, 0);
+  t->needs(Task::ParentNewDW, d_mpm_labels->gBodyForceLabel, gnone, 0);
+  t->needs(Task::ParentNewDW, d_mpm_labels->gExternalForceLabel, gnone, 0);
+  t->needs(Task::ParentNewDW, d_mpm_labels->gVelocityOldLabel, gnone, 0);
+  t->needs(Task::ParentNewDW, d_mpm_labels->gAccelerationLabel, gnone, 0);
+  t->needs(Task::OldDW, d_mpm_labels->dispNewLabel, gnone, 0);
+  t->needs(Task::NewDW, d_mpm_labels->gInternalForceLabel, gnone, 0);
 
   t->setType(Task::OncePerProc);
   sched->addTask(t, patches, matls);
@@ -3357,16 +3357,16 @@ ImpMPM::scheduleUpdateGridKinematics(SchedulerP& sched,
                         this,
                         &ImpMPM::updateGridKinematics);
 
-  t->requires(Task::ParentOldDW, d_mpm_labels->delTLabel);
-  t->requires(Task::ParentNewDW,
+  t->needs(Task::ParentOldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::ParentNewDW,
               d_mpm_labels->gVelocityOldLabel,
               Ghost::None,
               0);
-  t->requires(Task::ParentNewDW, d_mpm_labels->gContactLabel, Ghost::None, 0);
-  t->requires(Task::OldDW, d_mpm_labels->dispNewLabel, Ghost::None, 0);
-  t->requires(Task::NewDW, d_mpm_labels->dispIncLabel, Ghost::None, 0);
+  t->needs(Task::ParentNewDW, d_mpm_labels->gContactLabel, Ghost::None, 0);
+  t->needs(Task::OldDW, d_mpm_labels->dispNewLabel, Ghost::None, 0);
+  t->needs(Task::NewDW, d_mpm_labels->dispIncLabel, Ghost::None, 0);
   if (!d_mpm_flags->d_doGridReset) {
-    t->requires(Task::ParentOldDW,
+    t->needs(Task::ParentOldDW,
                 d_mpm_labels->gDisplacementLabel,
                 Ghost::None,
                 0);
@@ -3513,9 +3513,9 @@ ImpMPM::scheduleCheckConvergence(SchedulerP& sched,
   Task* t =
     scinew Task("ImpMPM::checkConvergence", this, &ImpMPM::checkConvergence);
 
-  t->requires(Task::OldDW, d_mpm_labels->dispIncQNorm0);
-  t->requires(Task::OldDW, d_mpm_labels->dispIncNormMax);
-  t->requires(Task::NewDW, d_mpm_labels->dispIncLabel, Ghost::None, 0);
+  t->needs(Task::OldDW, d_mpm_labels->dispIncQNorm0);
+  t->needs(Task::OldDW, d_mpm_labels->dispIncNormMax);
+  t->needs(Task::NewDW, d_mpm_labels->dispIncLabel, Ghost::None, 0);
 
   t->computes(d_mpm_labels->dispIncNormMax);
   t->computes(d_mpm_labels->dispIncQNorm0);
@@ -3617,8 +3617,8 @@ ImpMPM::scheduleUpdateTotalDisplacement(SchedulerP& sched,
                           this,
                           &ImpMPM::updateTotalDisplacement);
 
-    t->requires(Task::OldDW, d_mpm_labels->gDisplacementLabel, Ghost::None);
-    t->requires(Task::NewDW, d_mpm_labels->dispNewLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->gDisplacementLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->dispNewLabel, Ghost::None);
     t->modifies(d_mpm_labels->gDisplacementLabel);
 
     t->setType(Task::OncePerProc);
@@ -3678,11 +3678,11 @@ ImpMPM::scheduleComputeAcceleration(SchedulerP& sched,
                         this,
                         &ImpMPM::computeAcceleration);
 
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-  t->requires(Task::NewDW, d_mpm_labels->gVelocityOldLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->dispNewLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::NewDW, d_mpm_labels->gVelocityOldLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->dispNewLabel, Ghost::None);
   if (!d_mpm_flags->d_doGridReset) {
-    t->requires(Task::OldDW, d_mpm_labels->gDisplacementLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->gDisplacementLabel, Ghost::None);
     t->modifies(d_mpm_labels->gDisplacementLabel);
   }
   t->modifies(d_mpm_labels->gAccelerationLabel);
@@ -3754,27 +3754,27 @@ ImpMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
                         this,
                         &ImpMPM::interpolateToParticlesAndUpdate);
 
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pParticleIDLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pAccelerationLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pTemperatureLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pTempPreviousLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pDispLabel, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pParticleIDLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pAccelerationLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pTemperatureLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pTempPreviousLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pDispLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None);
 
-  t->requires(Task::NewDW, d_mpm_labels->pVolumeLabel_preReloc, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->pDefGradLabel_preReloc, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->pVolumeLabel_preReloc, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->pDefGradLabel_preReloc, Ghost::None);
 
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gAccelerationLabel,
               Ghost::AroundCells,
               1);
-  t->requires(Task::NewDW, d_mpm_labels->dispNewLabel, Ghost::AroundCells, 1);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW, d_mpm_labels->dispNewLabel, Ghost::AroundCells, 1);
+  t->needs(Task::NewDW,
               d_mpm_labels->gTemperatureRateLabel,
               d_oneMaterial,
               Ghost::AroundCells,
@@ -3792,7 +3792,7 @@ ImpMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->computes(d_mpm_labels->pTempPreviousLabel_preReloc);
 
   if (d_mpm_flags->d_artificialViscosity) {
-    t->requires(Task::OldDW, d_mpm_labels->p_qLabel, Ghost::None);
+    t->needs(Task::OldDW, d_mpm_labels->p_qLabel, Ghost::None);
     t->computes(d_mpm_labels->p_qLabel_preReloc);
   }
 
@@ -4011,23 +4011,23 @@ ImpMPM::scheduleInterpolateStressToGrid(SchedulerP& sched,
                         this,
                         &ImpMPM::interpolateStressToGrid);
 
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
-  t->requires(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::AroundNodes, 1);
-  t->requires(Task::NewDW,
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::AroundNodes, 1);
+  t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::AroundNodes, 1);
+  t->needs(Task::NewDW,
               d_mpm_labels->pVolumeLabel_preReloc,
               Ghost::AroundNodes,
               1);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->pStressLabel_preReloc,
               Ghost::AroundNodes,
               1);
-  t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
+  t->needs(Task::NewDW,
               d_mpm_labels->gVolumeLabel,
               d_materialManager->getAllInOneMaterial(),
               Task::OutOfDomain,
               Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::AroundNodes, 1);
+  t->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::AroundNodes, 1);
 
   t->modifies(d_mpm_labels->gInternalForceLabel);
   t->computes(d_mpm_labels->gStressForSavingLabel);
@@ -4318,9 +4318,9 @@ ImpMPM::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
 
   // if the finest level, compute flagged cells
   if (coarseLevel->getIndex() == coarseLevel->getGrid()->numLevels() - 1) {
-    task->requires(Task::NewDW, d_mpm_labels->pXLabel, Ghost::AroundCells, 0);
+    task->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::AroundCells, 0);
   } else {
-    task->requires(Task::NewDW,
+    task->needs(Task::NewDW,
                    d_regridder->getRefineFlagLabel(),
                    0,
                    Task::FineLevel,

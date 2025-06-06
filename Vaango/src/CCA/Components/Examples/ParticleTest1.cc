@@ -102,20 +102,20 @@ ParticleTest1::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
   // set this in problemSetup.  0 is no ghost cells, 1 is all with 1 ghost
   // atound-node, and 2 mixes them
   if (d_doGhostCells == 0) {
-    task->requires(Task::OldDW, d_labels->pParticleIDLabel, Ghost::None, 0);
-    task->requires(Task::OldDW, d_labels->pXLabel, Ghost::None, 0);
-    task->requires(Task::OldDW, d_labels->pMassLabel, Ghost::None, 0);
+    task->needs(Task::OldDW, d_labels->pParticleIDLabel, Ghost::None, 0);
+    task->needs(Task::OldDW, d_labels->pXLabel, Ghost::None, 0);
+    task->needs(Task::OldDW, d_labels->pMassLabel, Ghost::None, 0);
   }
 
   else if (d_doGhostCells == 1) {
-    task->requires(Task::OldDW, d_labels->pXLabel, Ghost::AroundNodes, 1);
-    task->requires(Task::OldDW, d_labels->pMassLabel, Ghost::AroundNodes, 1);
-    task->requires(
+    task->needs(Task::OldDW, d_labels->pXLabel, Ghost::AroundNodes, 1);
+    task->needs(Task::OldDW, d_labels->pMassLabel, Ghost::AroundNodes, 1);
+    task->needs(
       Task::OldDW, d_labels->pParticleIDLabel, Ghost::AroundNodes, 1);
   } else if (d_doGhostCells == 2) {
-    task->requires(Task::OldDW, d_labels->pXLabel, Ghost::None, 0);
-    task->requires(Task::OldDW, d_labels->pMassLabel, Ghost::AroundNodes, 1);
-    task->requires(Task::OldDW, d_labels->pParticleIDLabel, Ghost::None, 0);
+    task->needs(Task::OldDW, d_labels->pXLabel, Ghost::None, 0);
+    task->needs(Task::OldDW, d_labels->pMassLabel, Ghost::AroundNodes, 1);
+    task->needs(Task::OldDW, d_labels->pParticleIDLabel, Ghost::None, 0);
   }
 
   task->computes(d_labels->pXLabel_preReloc);

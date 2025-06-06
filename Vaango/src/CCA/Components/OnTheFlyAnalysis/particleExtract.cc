@@ -295,7 +295,7 @@ particleExtract::scheduleDoAnalysis_preReloc(SchedulerP& sched,
   sched->overrideVariableBehavior(
     "filePointer", false, false, false, true, true);
 
-  t->requires(Task::OldDW, m_lb->filePointerLabel, m_gn, 0);
+  t->needs(Task::OldDW, m_lb->filePointerLabel, m_gn, 0);
   t->computes(m_lb->filePointerLabel_preReloc);
 
   sched->addTask(t, level->eachPatch(), d_matl_set);
@@ -374,13 +374,13 @@ particleExtract::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
         __FILE__,
         __LINE__);
     }
-    t->requires(Task::NewDW, d_varLabels[i], m_gn, 0);
+    t->needs(Task::NewDW, d_varLabels[i], m_gn, 0);
   }
 
-  t->requires(Task::NewDW, M_lb->pXLabel, m_gn);
-  t->requires(Task::NewDW, M_lb->pParticleIDLabel, m_gn);
-  t->requires(Task::NewDW, M_lb->pColorLabel, m_gn);
-  t->requires(Task::NewDW, m_lb->filePointerLabel, m_gn);
+  t->needs(Task::NewDW, M_lb->pXLabel, m_gn);
+  t->needs(Task::NewDW, M_lb->pParticleIDLabel, m_gn);
+  t->needs(Task::NewDW, M_lb->pColorLabel, m_gn);
+  t->needs(Task::NewDW, m_lb->filePointerLabel, m_gn);
   t->modifies(m_lb->filePointerLabel);
 
   sched->addTask(t, level->eachPatch(), d_matl_set);

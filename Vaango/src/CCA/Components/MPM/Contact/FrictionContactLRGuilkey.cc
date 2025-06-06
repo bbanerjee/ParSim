@@ -128,15 +128,15 @@ FrictionContactLRGuilkey::addComputesAndRequires(SchedulerP& sched,
   z_matl->addReference();
 
   const MaterialSubset* mss = matls->getUnion();
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gColorLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gMatlProminenceLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gAlphaMaterialLabel, Ghost::None);
-  t->requires(
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gColorLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gMatlProminenceLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gAlphaMaterialLabel, Ghost::None);
+  t->needs(
     Task::NewDW, d_mpm_labels->gNormAlphaToBetaLabel, z_matl, Ghost::None);
-  t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
   t->modifies(label, mss);
 
   sched->addTask(t, patches, matls);

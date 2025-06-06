@@ -95,7 +95,7 @@ HeatEquation::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
 {
   Task* task = scinew Task("timeAdvance", this, &HeatEquation::timeAdvance);
 
-  task->requires(Task::OldDW, d_temperature_label, Ghost::AroundNodes, 1);
+  task->needs(Task::OldDW, d_temperature_label, Ghost::AroundNodes, 1);
   task->computes(d_temperature_label);
   task->computes(d_residual_label);
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());

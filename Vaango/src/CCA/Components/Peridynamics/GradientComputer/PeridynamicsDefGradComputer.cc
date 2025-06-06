@@ -132,13 +132,13 @@ PeridynamicsDefGradComputer::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
 
   // Requires 
-  task->requires(Task::OldDW, d_labels->pPositionLabel,      matlset, gac, numGhostCells);
-  task->requires(Task::OldDW, d_labels->pDisplacementLabel,  matlset, gac, numGhostCells);
-  task->requires(Task::OldDW, d_labels->pVolumeLabel,        matlset, gac, numGhostCells);
-  task->requires(Task::OldDW, d_labels->pParticleIDLabel,    matlset, gac, numGhostCells);
-  task->requires(Task::OldDW, d_labels->pNeighborListLabel,  matlset, gnone);
-  task->requires(Task::OldDW, d_labels->pNeighborConnLabel,  matlset, gnone);
-  task->requires(Task::OldDW, d_labels->pNeighborCountLabel, matlset, gnone);
+  task->needs(Task::OldDW, d_labels->pPositionLabel,      matlset, gac, numGhostCells);
+  task->needs(Task::OldDW, d_labels->pDisplacementLabel,  matlset, gac, numGhostCells);
+  task->needs(Task::OldDW, d_labels->pVolumeLabel,        matlset, gac, numGhostCells);
+  task->needs(Task::OldDW, d_labels->pParticleIDLabel,    matlset, gac, numGhostCells);
+  task->needs(Task::OldDW, d_labels->pNeighborListLabel,  matlset, gnone);
+  task->needs(Task::OldDW, d_labels->pNeighborConnLabel,  matlset, gnone);
+  task->needs(Task::OldDW, d_labels->pNeighborCountLabel, matlset, gnone);
 
   // Computes 
   task->computes(d_labels->pDefGradLabel_preReloc,        matlset);

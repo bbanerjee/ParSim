@@ -2639,7 +2639,7 @@ public:
   getIndexForMinimum(const E key)
   {
     if (m_mapInfoMapper.size() == 0) {
-      return 0;
+      return KEY{};
     }
 
     m_mapInfoMapper.begin()->second.validKey(key);
@@ -2651,7 +2651,7 @@ public:
   getIndexForMinimum(const unsigned int index)
   {
     if (m_mapInfoMapper.size() == 0) {
-      return 0;
+      return KEY{};
     }
 
     const E key = m_mapInfoMapper.begin()->second.getKey(index);
@@ -2663,7 +2663,7 @@ public:
   getIndexForMinimum(const std::string name)
   {
     if (m_mapInfoMapper.size() == 0) {
-      return 0;
+      return KEY{};
     }
 
     const E key = m_mapInfoMapper.begin()->second.getKey(name);
@@ -2713,7 +2713,7 @@ public:
   getIndexForMaximum(const E key)
   {
     if (m_mapInfoMapper.size() == 0) {
-      return 0;
+      return KEY{};
     }
 
     m_mapInfoMapper.begin()->second.validKey(key);
@@ -2725,7 +2725,7 @@ public:
   getIndexForMaximum(const unsigned int index)
   {
     if (m_mapInfoMapper.size() == 0) {
-      return 0;
+      return KEY{};
     }
 
     const E key = m_mapInfoMapper.begin()->second.getKey(index);
@@ -2737,7 +2737,7 @@ public:
   getIndexForMaximum(const std::string name)
   {
     if (m_mapInfoMapper.size() == 0) {
-      return 0;
+      return KEY{};
     }
 
     const E key = m_mapInfoMapper.begin()->second.getKey(name);

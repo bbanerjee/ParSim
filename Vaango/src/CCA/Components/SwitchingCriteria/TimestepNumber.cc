@@ -72,7 +72,7 @@ TimestepNumber::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 
   Task* t = scinew Task("switchTest", this, &TimestepNumber::switchTest);
 
-  t->requires(Task::OldDW, d_timestep_label);
+  t->needs(Task::OldDW, d_timestep_label);
   t->computes(d_switch_label);
   sched->addTask(t, level->eachPatch(), d_mat_manager->allMaterials());
 }

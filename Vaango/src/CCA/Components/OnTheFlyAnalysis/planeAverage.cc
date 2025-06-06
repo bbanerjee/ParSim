@@ -539,7 +539,7 @@ planeAverage::sched_computePlanarSums(SchedulerP& sched, const LevelP& level)
 
   Ghost::GhostType gn = Ghost::None;
   if (d_lb->weightLabel != nullptr) {
-    t->requires(Task::NewDW, d_lb->weightLabel, d_matl_subSet, gn, 0);
+    t->needs(Task::NewDW, d_lb->weightLabel, d_matl_subSet, gn, 0);
   }
 
   const int L_indx = level->getIndex();
@@ -562,7 +562,7 @@ planeAverage::sched_computePlanarSums(SchedulerP& sched, const LevelP& level)
     matSubSet->add(planarVars[i]->matl);
     matSubSet->addReference();
 
-    t->requires(Task::NewDW, label, matSubSet, gn, 0);
+    t->needs(Task::NewDW, label, matSubSet, gn, 0);
 
     if (matSubSet && matSubSet->removeReference()) {
       delete matSubSet;
@@ -923,7 +923,7 @@ planeAverage::sched_writeToFiles(SchedulerP& sched,
 
   sched_TimeVars(t, level, d_lb->lastCompTimeLabel, true);
 
-  t->requires(Task::OldDW, d_lb->fileVarsStructLabel, m_zeroMatl, m_gn, 0);
+  t->needs(Task::OldDW, d_lb->fileVarsStructLabel, m_zeroMatl, m_gn, 0);
   t->computes(d_lb->fileVarsStructLabel, m_zeroMatl);
 
   // first patch on this level

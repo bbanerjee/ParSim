@@ -306,11 +306,11 @@ ApproachContact::addComputesAndRequires(SchedulerP& sched,
   z_matl->addReference();
 
   const MaterialSubset* mss = matls->getUnion();
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-  t->requires(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gSurfNormLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gSurfNormLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, Ghost::None);
   t->modifies(gVelocity_label, mss);
   if (gVelocity_label == d_mpm_labels->gVelocityLabel) {
     t->computes(d_mpm_labels->frictionalWorkLabel, mss);

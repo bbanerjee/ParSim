@@ -202,11 +202,11 @@ SuvicI::addComputesAndRequires(Task* task, const MPMMaterial* matl,
                                const PatchSet*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, pYieldLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pYieldLabel, matlset, Ghost::None);
   task->computes(pYieldLabel_preReloc, matlset);
-  task->requires(Task::OldDW, pDragLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pDragLabel, matlset, Ghost::None);
   task->computes(pDragLabel_preReloc, matlset);
-  task->requires(Task::OldDW, pBackStressLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pBackStressLabel, matlset, Ghost::None);
   task->computes(pBackStressLabel_preReloc, matlset);
 }
 
@@ -215,9 +215,9 @@ SuvicI::addComputesAndRequires(Task* task, const MPMMaterial* matl,
                                const PatchSet*, bool) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::ParentOldDW, pYieldLabel, matlset, Ghost::None);
-  task->requires(Task::ParentOldDW, pDragLabel, matlset, Ghost::None);
-  task->requires(Task::ParentOldDW, pBackStressLabel, matlset, Ghost::None);
+  task->needs(Task::ParentOldDW, pYieldLabel, matlset, Ghost::None);
+  task->needs(Task::ParentOldDW, pDragLabel, matlset, Ghost::None);
+  task->needs(Task::ParentOldDW, pBackStressLabel, matlset, Ghost::None);
 }
 
 void
@@ -237,10 +237,10 @@ SuvicI::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
                                   const PatchSet*, MPMLabel*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pYieldLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pDragLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pBackStressLabel_preReloc, matlset, Ghost::None);
-  // task->requires(Task::OldDW, pAlphaLabel, matlset, Ghost::None);
+  task->needs(Task::NewDW, pYieldLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pDragLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pBackStressLabel_preReloc, matlset, Ghost::None);
+  // task->needs(Task::OldDW, pAlphaLabel, matlset, Ghost::None);
 }
 
 void

@@ -415,9 +415,9 @@ PolarOrthotropicHypoElastic::addComputesAndRequires(
   addComputesAndRequiresForRotatedExplicit(task, matlset, patches);
 
   // Only the local computes and requires
-  task->requires(Task::OldDW, pRCoordLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pThetaCoordLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pZCoordLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pRCoordLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pThetaCoordLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pZCoordLabel, matlset, Ghost::None);
   task->computes(pRCoordLabel_preReloc, matlset);
   task->computes(pThetaCoordLabel_preReloc, matlset);
   task->computes(pZCoordLabel_preReloc, matlset);

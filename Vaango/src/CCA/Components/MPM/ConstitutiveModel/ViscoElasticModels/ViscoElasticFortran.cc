@@ -412,7 +412,7 @@ ViscoElasticFortran::allocateCMDataAddRequires(Task* task,
 
   // Add requires local to this model
   for (int i = 0; i < d_nStateV; i++) {
-    task->requires(Task::NewDW, stateVLabels_preReloc[i], matlset, Ghost::None);
+    task->needs(Task::NewDW, stateVLabels_preReloc[i], matlset, Ghost::None);
   }
 }
 
@@ -760,7 +760,7 @@ ViscoElasticFortran::addComputesAndRequires(Task* task,
 
   // Computes and requires for internal state data
   for (int i = 0; i < d_nStateV; i++) {
-    task->requires(Task::OldDW, stateVLabels[i], matlset, Ghost::None);
+    task->needs(Task::OldDW, stateVLabels[i], matlset, Ghost::None);
     task->computes(stateVLabels_preReloc[i], matlset);
   }
 }

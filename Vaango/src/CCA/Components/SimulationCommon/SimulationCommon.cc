@@ -443,7 +443,7 @@ SimulationCommon::scheduleReduceSystemVars(const GridP& grid,
   task->computes(d_delTLabel);
 
   for (int i = 0; i < grid->numLevels(); i++) {
-    task->requires(Task::NewDW, d_delTLabel, grid->getLevel(i).get_rep());
+    task->needs(Task::NewDW, d_delTLabel, grid->getLevel(i).get_rep());
   }
 
   // These are the application reduction variables. An application may
@@ -459,7 +459,7 @@ SimulationCommon::scheduleReduceSystemVars(const GridP& grid,
         scheduler->getComputedVars().end()) {
       activateReductionVariable(var.first, true);
 
-      task->requires(Task::NewDW, label);
+      task->needs(Task::NewDW, label);
       task->computes(label);
     }
   }

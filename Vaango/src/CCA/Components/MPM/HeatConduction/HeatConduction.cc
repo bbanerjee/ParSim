@@ -75,26 +75,26 @@ HeatConduction::scheduleComputeInternalHeatRate(SchedulerP& sched,
   Ghost::GhostType gan   = Ghost::AroundNodes;
   Ghost::GhostType gac   = Ghost::AroundCells;
   Ghost::GhostType gnone = Ghost::None;
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, gan, d_num_ghost_particles);
-  t->requires(
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, gan, d_num_ghost_particles);
+  t->needs(
     Task::OldDW, d_mpm_labels->pSizeLabel, gan, d_num_ghost_particles);
-  t->requires(
+  t->needs(
     Task::OldDW, d_mpm_labels->pMassLabel, gan, d_num_ghost_particles);
-  t->requires(
+  t->needs(
     Task::OldDW, d_mpm_labels->pVolumeLabel, gan, d_num_ghost_particles);
-  t->requires(
+  t->needs(
     Task::OldDW, d_mpm_labels->pDefGradLabel, gan, d_num_ghost_particles);
-  t->requires(
+  t->needs(
     Task::NewDW, d_mpm_labels->gTemperatureLabel, gan, 2 * d_num_ghost_nodes);
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, gnone);
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, gnone);
   t->computes(d_mpm_labels->gdTdtLabel);
 
   if (d_mpm_flags->d_fracture) { // for FractureMPM
-    t->requires(
+    t->needs(
       Task::NewDW, d_mpm_labels->pgCodeLabel, gan, d_num_ghost_particles);
-    t->requires(
+    t->needs(
       Task::NewDW, d_mpm_labels->GTemperatureLabel, gac, 2 * d_num_ghost_nodes);
-    t->requires(Task::NewDW, d_mpm_labels->GMassLabel, gnone);
+    t->needs(Task::NewDW, d_mpm_labels->GMassLabel, gnone);
     t->computes(d_mpm_labels->GdTdtLabel);
   }
 
@@ -120,18 +120,18 @@ HeatConduction::scheduleComputeNodalHeatFlux(SchedulerP& sched,
   Ghost::GhostType gan   = Ghost::AroundNodes;
   Ghost::GhostType gac   = Ghost::AroundCells;
   Ghost::GhostType gnone = Ghost::None;
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, gan, d_num_ghost_particles);
-  t->requires(
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, gan, d_num_ghost_particles);
+  t->needs(
     Task::OldDW, d_mpm_labels->pSizeLabel, gan, d_num_ghost_particles);
-  t->requires(
+  t->needs(
     Task::OldDW, d_mpm_labels->pDefGradLabel, gan, d_num_ghost_particles);
-  t->requires(
+  t->needs(
     Task::OldDW, d_mpm_labels->pMassLabel, gan, d_num_ghost_particles);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gTemperatureLabel,
               gac,
               2 * d_num_ghost_particles);
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, gnone);
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, gnone);
   t->computes(d_mpm_labels->gHeatFluxLabel);
 
   sched->addTask(t, patches, matls);
@@ -150,20 +150,20 @@ HeatConduction::scheduleSolveHeatEquations(SchedulerP& sched,
     "MPM::solveHeatEquations", this, &HeatConduction::solveHeatEquations);
 
   Ghost::GhostType gnone = Ghost::None;
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, gnone);
-  t->requires(Task::NewDW, d_mpm_labels->gVolumeLabel, gnone);
-  t->requires(Task::NewDW, d_mpm_labels->gExternalHeatRateLabel, gnone);
-  t->requires(Task::NewDW, d_mpm_labels->gdTdtLabel, gnone);
-  t->requires(
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, gnone);
+  t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, gnone);
+  t->needs(Task::NewDW, d_mpm_labels->gExternalHeatRateLabel, gnone);
+  t->needs(Task::NewDW, d_mpm_labels->gdTdtLabel, gnone);
+  t->needs(
     Task::NewDW, d_mpm_labels->gThermalContactTemperatureRateLabel, gnone);
   t->modifies(d_mpm_labels->gTemperatureRateLabel);
 
   if (d_mpm_flags->d_fracture) { // for FractureMPM
-    t->requires(Task::NewDW, d_mpm_labels->GMassLabel, gnone);
-    t->requires(Task::NewDW, d_mpm_labels->GVolumeLabel, gnone);
-    t->requires(Task::NewDW, d_mpm_labels->GExternalHeatRateLabel, gnone);
-    t->requires(Task::NewDW, d_mpm_labels->GdTdtLabel, gnone);
-    t->requires(
+    t->needs(Task::NewDW, d_mpm_labels->GMassLabel, gnone);
+    t->needs(Task::NewDW, d_mpm_labels->GVolumeLabel, gnone);
+    t->needs(Task::NewDW, d_mpm_labels->GExternalHeatRateLabel, gnone);
+    t->needs(Task::NewDW, d_mpm_labels->GdTdtLabel, gnone);
+    t->needs(
       Task::NewDW, d_mpm_labels->GThermalContactTemperatureRateLabel, gnone);
     t->computes(d_mpm_labels->GTemperatureRateLabel);
   }
@@ -187,16 +187,16 @@ HeatConduction::scheduleIntegrateTemperatureRate(SchedulerP& sched,
 
   const MaterialSubset* mss = matls->getUnion();
 
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
-  t->requires(Task::NewDW, d_mpm_labels->gTemperatureLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gTemperatureNoBCLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gTemperatureLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gTemperatureNoBCLabel, Ghost::None);
   t->modifies(d_mpm_labels->gTemperatureRateLabel, mss);
   t->computes(d_mpm_labels->gTemperatureStarLabel);
 
   if (d_mpm_flags->d_fracture) { // for FractureMPM
-    t->requires(Task::NewDW, d_mpm_labels->GTemperatureLabel, Ghost::None);
-    t->requires(Task::NewDW, d_mpm_labels->GTemperatureNoBCLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->GTemperatureLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->GTemperatureNoBCLabel, Ghost::None);
     t->modifies(d_mpm_labels->GTemperatureRateLabel, mss);
     t->computes(d_mpm_labels->GTemperatureStarLabel);
   }

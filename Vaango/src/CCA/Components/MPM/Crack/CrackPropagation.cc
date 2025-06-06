@@ -71,11 +71,11 @@ Crack::addComputesAndRequiresPropagateCrackFrontPoints(
 {
   Ghost::GhostType gac = Ghost::AroundCells;
   int NGC              = 2 * NGN;
-  t->requires(Task::NewDW, lb->gMassLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GMassLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->gMassLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GMassLabel, gac, NGC);
 
   if (n8or27 == 27)
-    t->requires(Task::OldDW, lb->pSizeLabel, Ghost::None);
+    t->needs(Task::OldDW, lb->pSizeLabel, Ghost::None);
 }
 
 void
@@ -360,7 +360,7 @@ Crack::addComputesAndRequiresConstructNewCrackFrontElems(
   const MaterialSet* /*matls*/) const
 {
   // delT will be used to calculate crack propagation velocity
-  t->requires(Task::OldDW, lb->delTLabel);
+  t->needs(Task::OldDW, lb->delTLabel);
 }
 
 void

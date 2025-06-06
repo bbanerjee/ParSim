@@ -179,31 +179,31 @@ CohesiveZoneTasks::scheduleUpdateCohesiveZones(SchedulerP& sched,
                         this,
                         &CohesiveZoneTasks::updateCohesiveZones);
 
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
   Ghost::GhostType gnone = Ghost::None;
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gVelocityLabel,
               mpm_matls,
               Ghost::AroundCells,
               d_num_ghost_nodes);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gMassLabel,
               mpm_matls,
               Ghost::AroundCells,
               d_num_ghost_nodes);
-  t->requires(Task::OldDW, d_mpm_labels->pXLabel, cz_matls, gnone);
-  t->requires(Task::OldDW, d_cz_labels->czAreaLabel, cz_matls, gnone);
-  t->requires(Task::OldDW, d_cz_labels->czNormLabel, cz_matls, gnone);
-  t->requires(Task::OldDW, d_cz_labels->czTangLabel, cz_matls, gnone);
-  t->requires(Task::OldDW, d_cz_labels->czDispTopLabel, cz_matls, gnone);
-  t->requires(Task::OldDW, d_cz_labels->czDispBottomLabel, cz_matls, gnone);
-  t->requires(Task::OldDW, d_cz_labels->czSeparationLabel, cz_matls, gnone);
-  t->requires(Task::OldDW, d_cz_labels->czForceLabel, cz_matls, gnone);
-  t->requires(Task::OldDW, d_cz_labels->czTopMatLabel, cz_matls, gnone);
-  t->requires(Task::OldDW, d_cz_labels->czBotMatLabel, cz_matls, gnone);
-  t->requires(Task::OldDW, d_cz_labels->czFailedLabel, cz_matls, gnone);
-  t->requires(Task::OldDW, d_cz_labels->czIDLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_cz_labels->czAreaLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_cz_labels->czNormLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_cz_labels->czTangLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_cz_labels->czDispTopLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_cz_labels->czDispBottomLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_cz_labels->czSeparationLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_cz_labels->czForceLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_cz_labels->czTopMatLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_cz_labels->czBotMatLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_cz_labels->czFailedLabel, cz_matls, gnone);
+  t->needs(Task::OldDW, d_cz_labels->czIDLabel, cz_matls, gnone);
 
   t->computes(d_mpm_labels->pXLabel_preReloc, cz_matls);
   t->computes(d_cz_labels->czAreaLabel_preReloc, cz_matls);
@@ -509,27 +509,27 @@ CohesiveZoneTasks::scheduleAddCohesiveZoneForces(
                         this,
                         &CohesiveZoneTasks::addCohesiveZoneForces);
 
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               d_mpm_labels->pXLabel,
               cz_matls,
               Ghost::AroundNodes,
               d_num_ghost_particles);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_cz_labels->czForceLabel_preReloc,
               cz_matls,
               Ghost::AroundNodes,
               d_num_ghost_particles);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_cz_labels->czTopMatLabel_preReloc,
               cz_matls,
               Ghost::AroundNodes,
               d_num_ghost_particles);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_cz_labels->czBotMatLabel_preReloc,
               cz_matls,
               Ghost::AroundNodes,
               d_num_ghost_particles);
-  t->requires(Task::NewDW,
+  t->needs(Task::NewDW,
               d_mpm_labels->gMassLabel,
               mpm_matls,
               Ghost::AroundCells,

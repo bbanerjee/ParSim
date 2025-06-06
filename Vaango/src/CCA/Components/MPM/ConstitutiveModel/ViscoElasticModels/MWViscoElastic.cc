@@ -177,11 +177,11 @@ MWViscoElastic::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
 
   // Add requires local to this model
   Ghost::GhostType gnone = Ghost::None;
-  task->requires(Task::NewDW, pStress_ve_vLabel, matlset, gnone);
-  task->requires(Task::NewDW, pStress_ve_dLabel, matlset, gnone);
-  task->requires(Task::NewDW, pStress_e_vLabel, matlset, gnone);
-  task->requires(Task::NewDW, pStress_e_dLabel, matlset, gnone);
-  task->requires(Task::NewDW, pStress_eLabel, matlset, gnone);
+  task->needs(Task::NewDW, pStress_ve_vLabel, matlset, gnone);
+  task->needs(Task::NewDW, pStress_ve_dLabel, matlset, gnone);
+  task->needs(Task::NewDW, pStress_e_vLabel, matlset, gnone);
+  task->needs(Task::NewDW, pStress_e_dLabel, matlset, gnone);
+  task->needs(Task::NewDW, pStress_eLabel, matlset, gnone);
 }
 
 void
@@ -485,11 +485,11 @@ MWViscoElastic::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->computes(pStress_e_dLabel_preReloc, matlset);
   task->computes(pStress_eLabel_preReloc, matlset);
 
-  task->requires(Task::OldDW, pStress_ve_vLabel, matlset, gnone);
-  task->requires(Task::OldDW, pStress_ve_dLabel, matlset, gnone);
-  task->requires(Task::OldDW, pStress_e_vLabel, matlset, gnone);
-  task->requires(Task::OldDW, pStress_e_dLabel, matlset, gnone);
-  task->requires(Task::OldDW, pStress_eLabel, matlset, gnone);
+  task->needs(Task::OldDW, pStress_ve_vLabel, matlset, gnone);
+  task->needs(Task::OldDW, pStress_ve_dLabel, matlset, gnone);
+  task->needs(Task::OldDW, pStress_e_vLabel, matlset, gnone);
+  task->needs(Task::OldDW, pStress_e_dLabel, matlset, gnone);
+  task->needs(Task::OldDW, pStress_eLabel, matlset, gnone);
 }
 
 void

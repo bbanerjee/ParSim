@@ -427,7 +427,7 @@ MinMax::scheduleDoAnalysis(SchedulerP& sched, const LevelP& levelP)
       }
 
       MaterialSubset* matSubSet = d_analyzeVars[i].matSubSet;
-      t0->requires(Task::NewDW, label, matSubSet, gn, 0);
+      t0->needs(Task::NewDW, label, matSubSet, gn, 0);
 
       t0->computes(d_analyzeVars[i].reductionMinLabel, level, matSubSet);
       t0->computes(d_analyzeVars[i].reductionMaxLabel, level, matSubSet);
@@ -444,7 +444,7 @@ MinMax::scheduleDoAnalysis(SchedulerP& sched, const LevelP& levelP)
 
   sched_TimeVars(t1, levelP, d_lb->lastCompTimeLabel, true);
 
-  t1->requires(Task::OldDW, d_lb->fileVarsStructLabel, m_zeroMatl, gn, 0);
+  t1->needs(Task::OldDW, d_lb->fileVarsStructLabel, m_zeroMatl, gn, 0);
 
   // schedule the reduction variables
   for (unsigned int i = 0; i < d_analyzeVars.size(); i++) {
@@ -454,9 +454,9 @@ MinMax::scheduleDoAnalysis(SchedulerP& sched, const LevelP& levelP)
 
       MaterialSubset* matSubSet = d_analyzeVars[i].matSubSet;
 
-      t1->requires(
+      t1->needs(
         Task::NewDW, d_analyzeVars[i].reductionMinLabel, level, matSubSet);
-      t1->requires(
+      t1->needs(
         Task::NewDW, d_analyzeVars[i].reductionMaxLabel, level, matSubSet);
     }
   }

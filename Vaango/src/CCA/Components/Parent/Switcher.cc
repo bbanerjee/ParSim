@@ -474,7 +474,7 @@ Switcher::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
   t->setType(Task::OncePerProc);
 
   // the component is responsible for determining when it is to switch.
-  t->requires(Task::NewDW, d_switch_label);
+  t->needs(Task::NewDW, d_switch_label);
   sched->addTask(t,
                  d_loadBalancer->getPerProcessorPatchSet(level),
                  d_materialManager->allMaterials());
@@ -548,7 +548,7 @@ Switcher::scheduleInitNewVars(const LevelP& level, SchedulerP& sched)
 
   d_initVars[nextComp_indx]->matls = matlSet;
 
-  t->requires(Task::NewDW, d_switch_label);
+  t->needs(Task::NewDW, d_switch_label);
   sched->addTask(t, level->eachPatch(), d_materialManager->allMaterials());
 }
 
@@ -802,7 +802,7 @@ Switcher::scheduleCarryOverVars(const LevelP& level, SchedulerP& sched)
         VarLabel* var         = d_carryOverVarLabels[i];
         MaterialSubset* matls = d_carryOverVarMatls[i];
 
-        t->requires(Task::OldDW, var, matls, Ghost::None, 0);
+        t->needs(Task::OldDW, var, matls, Ghost::None, 0);
         t->computes(var, matls);
 
         if (d_myworld->myRank() == 0) {

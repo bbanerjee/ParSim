@@ -216,7 +216,7 @@ BinaryProperties::scheduleInitialize(SchedulerP& sched, const LevelP& level)
   Task* t = scinew Task(
     "BinaryProperties::initialize", this, &BinaryProperties::initialize);
 
-  t->requires(Task::NewDW, Ilb->timeStepLabel);
+  t->needs(Task::NewDW, Ilb->timeStepLabel);
 
   t->modifies(Ilb->specificVolume_CCLabel);
   t->modifies(Ilb->rho_micro_CCLabel);
@@ -358,7 +358,7 @@ BinaryProperties::scheduleModifyThermoTransportProperties(
                         this,
                         &BinaryProperties::modifyThermoTransportProperties);
 
-  t->requires(Task::OldDW, d_scalar->scalar_CCLabel, Ghost::None, 0);
+  t->needs(Task::OldDW, d_scalar->scalar_CCLabel, Ghost::None, 0);
   t->modifies(Ilb->specific_heatLabel);
   t->modifies(Ilb->gammaLabel);
   t->modifies(Ilb->thermalCondLabel);
@@ -463,9 +463,9 @@ BinaryProperties::scheduleComputeModelSources(SchedulerP& sched,
 
   Ghost::GhostType gac = Ghost::AroundCells;
 
-  t->requires(Task::OldDW, Ilb->delTLabel, level.get_rep());
-  t->requires(Task::NewDW, d_scalar->diffusionCoefLabel, gac, 1);
-  t->requires(Task::OldDW, d_scalar->scalar_CCLabel, gac, 1);
+  t->needs(Task::OldDW, Ilb->delTLabel, level.get_rep());
+  t->needs(Task::NewDW, d_scalar->diffusionCoefLabel, gac, 1);
+  t->needs(Task::OldDW, d_scalar->scalar_CCLabel, gac, 1);
 
   t->modifies(d_scalar->source_CCLabel);
 
@@ -540,12 +540,12 @@ BinaryProperties::scheduleTestConservation(SchedulerP& sched,
                           &BinaryProperties::testConservation);
 
     Ghost::GhostType gn = Ghost::None;
-    t->requires(Task::OldDW, Ilb->delTLabel, getLevel(patches));
-    t->requires(Task::NewDW, d_scalar->scalar_CCLabel, gn, 0);
-    t->requires(Task::NewDW, Ilb->rho_CCLabel, gn, 0);
-    t->requires(Task::NewDW, Ilb->uvel_FCMELabel, gn, 0);
-    t->requires(Task::NewDW, Ilb->vvel_FCMELabel, gn, 0);
-    t->requires(Task::NewDW, Ilb->wvel_FCMELabel, gn, 0);
+    t->needs(Task::OldDW, Ilb->delTLabel, getLevel(patches));
+    t->needs(Task::NewDW, d_scalar->scalar_CCLabel, gn, 0);
+    t->needs(Task::NewDW, Ilb->rho_CCLabel, gn, 0);
+    t->needs(Task::NewDW, Ilb->uvel_FCMELabel, gn, 0);
+    t->needs(Task::NewDW, Ilb->vvel_FCMELabel, gn, 0);
+    t->needs(Task::NewDW, Ilb->wvel_FCMELabel, gn, 0);
     t->computes(Slb->sum_scalar_fLabel);
 
     sched->addTask(t, patches, d_matl_set);

@@ -140,7 +140,7 @@ IntVar_SoilBrannon::addComputesAndRequires(Task* task,
                                            const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, pKappaLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pKappaLabel, matlset, Ghost::None);
   task->computes(pKappaLabel_preReloc, matlset);
 }
 
@@ -589,7 +589,7 @@ IntVar_SoilBrannon::allocateCMDataAddRequires(Task* task,
                                               MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pKappaLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pKappaLabel_preReloc, matlset, Ghost::None);
 }
 
 void

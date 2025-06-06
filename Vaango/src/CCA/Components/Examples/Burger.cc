@@ -96,8 +96,8 @@ Burger::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
 {
   Task* task = scinew Task("Burger::timeAdvance", this, &Burger::timeAdvance);
 
-  task->requires(Task::OldDW, d_u_label, Ghost::AroundNodes, 1);
-  task->requires(Task::OldDW, getDelTLabel());
+  task->needs(Task::OldDW, d_u_label, Ghost::AroundNodes, 1);
+  task->needs(Task::OldDW, getDelTLabel());
 
   task->computes(d_u_label);
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());

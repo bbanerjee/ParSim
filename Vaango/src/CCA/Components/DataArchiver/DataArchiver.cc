@@ -1094,7 +1094,7 @@ DataArchiver::sched_allOutputTasks(const GridP& grid,
 
     for (auto& saveItem : d_saveGlobalLabels) {
       const MaterialSubset* mss = saveItem.getMaterialSubset(nullptr);
-      task->requires(Task::NewDW, saveItem.label, mss, Task::SearchTG::OldTG);
+      task->needs(Task::NewDW, saveItem.label, mss, Task::SearchTG::OldTG);
     }
 
     task->setType(Task::OutputGlobalVars);
@@ -1122,7 +1122,7 @@ DataArchiver::sched_allOutputTasks(const GridP& grid,
 
     for (auto& saveItem : d_checkpointReductionLabels) {
       const MaterialSubset* mss = saveItem.getMaterialSubset(nullptr);
-      task->requires(Task::NewDW, saveItem.label, mss, Task::SearchTG::OldTG);
+      task->needs(Task::NewDW, saveItem.label, mss, Task::SearchTG::OldTG);
     }
 
     sched->addTask(task, nullptr, nullptr);
@@ -2449,7 +2449,7 @@ DataArchiver::sched_outputVariables(
     //             deterministic order
     if (isThisCheckpoint) {
       Ghost::GhostType gn = Ghost::None;
-      task->requires(Task::NewDW, d_sync_io_label, gn, 0);
+      task->needs(Task::NewDW, d_sync_io_label, gn, 0);
       DOUTR(g_DA_dbg, "DataArchiver::output(): add requires for d_sync_io_label");
     } else {
       task->computes(d_sync_io_label);
@@ -2461,7 +2461,7 @@ DataArchiver::sched_outputVariables(
         save_item.getMaterialSubset(level.get_rep());
 
       if (matlSubset != nullptr) {
-        task->requires(Task::NewDW,
+        task->needs(Task::NewDW,
                        save_item.label,
                        matlSubset,
                        Task::OutOfDomain,

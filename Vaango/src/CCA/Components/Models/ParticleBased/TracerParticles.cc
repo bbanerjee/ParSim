@@ -609,7 +609,7 @@ TracerParticles::scheduleInitialize(SchedulerP& sched, const LevelP& level)
     "TracerParticles::initializeTask_(" + d_tracer->fullName + ")";
   Task* t = scinew Task(taskName, this, &TracerParticles::initializeTask);
 
-  t->requires(Task::OldDW, simTimeLabel);
+  t->needs(Task::OldDW, simTimeLabel);
   t->computes(nPPCLabel, d_matl_mss);
   t->computes(pXLabel, d_matl_mss);
   t->computes(pDispLabel, d_matl_mss);
@@ -718,7 +718,7 @@ TracerParticles::scheduleRestartInitialize(SchedulerP& sched,
   Task* t =
     scinew Task(taskName, this, &TracerParticles::restartInitializeTask);
 
-  t->requires(Task::OldDW, simTimeLabel);
+  t->needs(Task::OldDW, simTimeLabel);
   t->modifies(nPPCLabel, d_matl_mss);
   t->modifies(pXLabel, d_matl_mss);
   t->modifies(pDispLabel, d_matl_mss);
@@ -1307,14 +1307,14 @@ TracerParticles::sched_moveParticles(SchedulerP& sched, const LevelP& level)
     "TracerParticles::moveParticles_(" + d_tracer->fullName + ")";
   Task* t = scinew Task(taskName, this, &TracerParticles::moveParticles);
 
-  t->requires(Task::OldDW, Ilb->delTLabel, level.get_rep());
-  t->requires(Task::OldDW, simTimeLabel);
+  t->needs(Task::OldDW, Ilb->delTLabel, level.get_rep());
+  t->needs(Task::OldDW, simTimeLabel);
 
-  t->requires(Task::OldDW, pXLabel, d_matl_mss, d_gn);
-  t->requires(Task::OldDW, pDispLabel, d_matl_mss, d_gn);
-  t->requires(Task::OldDW, pIDLabel, d_matl_mss, d_gn);
+  t->needs(Task::OldDW, pXLabel, d_matl_mss, d_gn);
+  t->needs(Task::OldDW, pDispLabel, d_matl_mss, d_gn);
+  t->needs(Task::OldDW, pIDLabel, d_matl_mss, d_gn);
 
-  t->requires(Task::OldDW,
+  t->needs(Task::OldDW,
               Ilb->velocity_CCLabel,
               d_matl_mss,
               d_gn); // hardwired to use ICE's velocity
@@ -1424,8 +1424,8 @@ TracerParticles::sched_addParticles(SchedulerP& sched, const LevelP& level)
     "TracerParticles::addParticles_(" + d_tracer->fullName + ")";
   Task* t = scinew Task(taskName, this, &TracerParticles::addParticles);
 
-  t->requires(Task::OldDW, Ilb->delTLabel, level.get_rep());
-  t->requires(Task::OldDW, nPPCLabel, d_matl_mss, d_gn);
+  t->needs(Task::OldDW, Ilb->delTLabel, level.get_rep());
+  t->needs(Task::OldDW, nPPCLabel, d_matl_mss, d_gn);
 
   t->modifies(pXLabel_preReloc, d_matl_mss);
   t->modifies(pDispLabel_preReloc, d_matl_mss);
@@ -1620,8 +1620,8 @@ TracerParticles::sched_setParticleVars(SchedulerP& sched, const LevelP& level)
     "TracerParticles::setParticleVars_(" + d_tracer->fullName + ")";
   Task* t = scinew Task(taskName, this, &TracerParticles::setParticleVars);
 
-  t->requires(Task::OldDW, pXLabel, d_matl_mss, d_gn, 0);
-  t->requires(Task::OldDW, nPPCLabel, d_matl_mss, d_gn, 0);
+  t->needs(Task::OldDW, pXLabel, d_matl_mss, d_gn, 0);
+  t->needs(Task::OldDW, nPPCLabel, d_matl_mss, d_gn, 0);
   t->computes(nPPCLabel, d_matl_mss);
 
   //__________________________________
@@ -1629,7 +1629,7 @@ TracerParticles::sched_setParticleVars(SchedulerP& sched, const LevelP& level)
   for (size_t i = 0; i < d_cloneVars.size(); i++) {
     std::shared_ptr<cloneVar> Q = d_cloneVars[i];
 
-    t->requires(Task::OldDW, Q->CCVarLabel, d_matl_mss, d_gn, 0);
+    t->needs(Task::OldDW, Q->CCVarLabel, d_matl_mss, d_gn, 0);
     t->computes(Q->pQLabel_preReloc, d_matl_mss);
   }
 
@@ -1639,10 +1639,10 @@ TracerParticles::sched_setParticleVars(SchedulerP& sched, const LevelP& level)
     std::shared_ptr<scalar> S = d_scalars[i];
 
     if (S->withExpDecayModel) {
-      t->requires(Task::OldDW, Ilb->delTLabel, level.get_rep());
-      t->requires(Task::OldDW, S->label, d_matl_mss, d_gn, 0);
-      t->requires(Task::OldDW, S->expDecayCoefLabel, d_matl_mss, d_gn, 0);
-      t->requires(Task::OldDW, S->totalDecayLabel, d_matl_mss, d_gn, 0);
+      t->needs(Task::OldDW, Ilb->delTLabel, level.get_rep());
+      t->needs(Task::OldDW, S->label, d_matl_mss, d_gn, 0);
+      t->needs(Task::OldDW, S->expDecayCoefLabel, d_matl_mss, d_gn, 0);
+      t->needs(Task::OldDW, S->totalDecayLabel, d_matl_mss, d_gn, 0);
 
       t->computes(S->totalDecayLabel_preReloc, d_matl_mss);
       t->computes(S->expDecayCoefLabel, d_matl_mss);

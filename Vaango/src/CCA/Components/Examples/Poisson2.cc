@@ -98,7 +98,7 @@ Poisson2::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
   Task* task = scinew Task(
     "timeAdvance", this, &Poisson2::timeAdvance, level, sched.get_rep());
   task->hasSubScheduler();
-  task->requires(Task::OldDW, d_phi_label, Ghost::AroundNodes, 1);
+  task->needs(Task::OldDW, d_phi_label, Ghost::AroundNodes, 1);
   task->computes(d_phi_label);
   LoadBalancer* lb                = sched->getLoadBalancer();
   const PatchSet* perproc_patches = lb->getPerProcessorPatchSet(level);
@@ -178,7 +178,7 @@ Poisson2::timeAdvance(const ProcessorGroup* pg,
 
   // Create the tasks
   Task* task = scinew Task("iterate", this, &Poisson2::iterate);
-  task->requires(Task::OldDW, d_phi_label, Ghost::AroundNodes, 1);
+  task->needs(Task::OldDW, d_phi_label, Ghost::AroundNodes, 1);
   task->computes(d_phi_label);
   task->computes(d_residual_label);
   subsched->addTask(

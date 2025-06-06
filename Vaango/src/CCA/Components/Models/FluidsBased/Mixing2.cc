@@ -327,18 +327,18 @@ void Mixing2::scheduleComputeModelSources(SchedulerP& sched,
   Task* t = scinew Task("Mixing2::computeModelSources",this, 
                         &Mixing2::computeModelSources);
   t->modifies(Ilb->modelEng_srcLabel);
-  t->requires(Task::OldDW, Ilb->rho_CCLabel,        Ghost::None);
-  t->requires(Task::OldDW, Ilb->press_CCLabel,      Ghost::None);
-  t->requires(Task::OldDW, Ilb->temperature_CCLabel,       Ghost::None);
-  t->requires(Task::NewDW, Ilb->specific_heatLabel, Ghost::None);
-  t->requires(Task::NewDW, Ilb->gammaLabel,         Ghost::None);
-  t->requires(Task::OldDW, Ilb->delTLabel,         level.get_rep());
-  t->requires(Task::OldDW, Ilb->simulationTimeLabel);
+  t->needs(Task::OldDW, Ilb->rho_CCLabel,        Ghost::None);
+  t->needs(Task::OldDW, Ilb->press_CCLabel,      Ghost::None);
+  t->needs(Task::OldDW, Ilb->temperature_CCLabel,       Ghost::None);
+  t->needs(Task::NewDW, Ilb->specific_heatLabel, Ghost::None);
+  t->needs(Task::NewDW, Ilb->gammaLabel,         Ghost::None);
+  t->needs(Task::OldDW, Ilb->delTLabel,         level.get_rep());
+  t->needs(Task::OldDW, Ilb->simulationTimeLabel);
   
   for(vector<Stream*>::iterator iter = streams.begin();
       iter != streams.end(); iter++){
     Stream* stream = *iter;
-    t->requires(Task::OldDW, stream->massFraction_CCLabel, Ghost::None);
+    t->needs(Task::OldDW, stream->massFraction_CCLabel, Ghost::None);
     t->modifies(stream->massFraction_source_CCLabel);
   }
 

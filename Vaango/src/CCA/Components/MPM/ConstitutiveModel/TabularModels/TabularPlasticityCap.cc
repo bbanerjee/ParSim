@@ -2934,7 +2934,7 @@ TabularPlasticityCap::addRequiresDamageParameter(Task* task,
 {
   // Require the damage parameter
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, lb->pRemoveLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pRemoveLabel_preReloc, matlset, Ghost::None);
 }
 
 void

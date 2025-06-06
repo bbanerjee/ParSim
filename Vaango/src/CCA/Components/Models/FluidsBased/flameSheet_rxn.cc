@@ -310,12 +310,12 @@ flameSheet_rxn::scheduleComputeModelSources(SchedulerP& sched,
   Ghost::GhostType gn  = Ghost::None;
   Ghost::GhostType gac = Ghost::AroundCells;
   t->modifies(Ilb->modelEng_srcLabel);
-  t->requires(Task::OldDW, Ilb->rho_CCLabel, gn);
-  t->requires(Task::OldDW, Ilb->temperature_CCLabel, gn);
-  t->requires(Task::NewDW, Ilb->specific_heatLabel, gn);
-  t->requires(Task::NewDW, Ilb->gammaLabel, gn);
-  t->requires(Task::OldDW, d_scalar->scalar_CCLabel, gac, 1);
-  // t->requires(Task::OldDW, Ilb->delTLabel);   AMR
+  t->needs(Task::OldDW, Ilb->rho_CCLabel, gn);
+  t->needs(Task::OldDW, Ilb->temperature_CCLabel, gn);
+  t->needs(Task::NewDW, Ilb->specific_heatLabel, gn);
+  t->needs(Task::NewDW, Ilb->gammaLabel, gn);
+  t->needs(Task::OldDW, d_scalar->scalar_CCLabel, gac, 1);
+  // t->needs(Task::OldDW, Ilb->delTLabel);   AMR
 
   t->modifies(d_scalar->scalar_source_CCLabel);
   sched->addTask(t, level->eachPatch(), d_matl_set);
@@ -473,11 +473,11 @@ flameSheet_rxn::scheduleTestConservation(SchedulerP& sched,
 
     Ghost::GhostType gn = Ghost::None;
     // compute sum(scalar_f * mass)
-    t->requires(Task::NewDW, d_scalar->scalar_CCLabel, gn, 0);
-    t->requires(Task::NewDW, Ilb->rho_CCLabel, gn, 0);
-    t->requires(Task::NewDW, Ilb->uvel_FCMELabel, gn, 0);
-    t->requires(Task::NewDW, Ilb->vvel_FCMELabel, gn, 0);
-    t->requires(Task::NewDW, Ilb->wvel_FCMELabel, gn, 0);
+    t->needs(Task::NewDW, d_scalar->scalar_CCLabel, gn, 0);
+    t->needs(Task::NewDW, Ilb->rho_CCLabel, gn, 0);
+    t->needs(Task::NewDW, Ilb->uvel_FCMELabel, gn, 0);
+    t->needs(Task::NewDW, Ilb->vvel_FCMELabel, gn, 0);
+    t->needs(Task::NewDW, Ilb->wvel_FCMELabel, gn, 0);
     t->computes(d_scalar->sum_scalar_fLabel);
 
     sched->addTask(t, patches, d_matl_set);

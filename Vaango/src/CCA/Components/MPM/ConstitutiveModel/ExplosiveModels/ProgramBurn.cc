@@ -246,10 +246,10 @@ ProgramBurn::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForExplicit(task, matlset, patches);
 
-  task->requires(Task::OldDW, lb->simulationTimeLabel);
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pProgressFLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pLocalizedLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->simulationTimeLabel);
+  task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pProgressFLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pLocalizedLabel, matlset, Ghost::None);
   task->computes(pProgressFLabel_preReloc, matlset);
   task->computes(pLocalizedLabel_preReloc, matlset);
 }
@@ -451,7 +451,7 @@ ProgramBurn::addRequiresDamageParameter(Task* task,
                                         const PatchSet*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
 }
 
 void
@@ -486,8 +486,8 @@ ProgramBurn::allocateCMDataAddRequires(Task* task,
   // for the particle convert operation
   // This method is defined in the ConstitutiveModel base class.
   addSharedRForConvertExplicit(task, matlset, patches);
-  task->requires(Task::NewDW, pProgressFLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pProgressFLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
 }
 
 void

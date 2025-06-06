@@ -92,11 +92,11 @@ FamilyComputer::addInitialComputesAndRequires(Task* task,
 
   // The quantities that are required by this task
   Ghost::GhostType gac = Ghost::AroundCells;
-  task->requires(
+  task->needs(
     Task::NewDW, d_label->pPositionLabel, gac, d_flags->d_numCellsInHorizon);
-  task->requires(
+  task->needs(
     Task::NewDW, d_label->pParticleIDLabel, gac, d_flags->d_numCellsInHorizon);
-  task->requires(
+  task->needs(
     Task::NewDW, d_label->pHorizonLabel, gac, d_flags->d_numCellsInHorizon);
 
   // The quantities that are computed in this task

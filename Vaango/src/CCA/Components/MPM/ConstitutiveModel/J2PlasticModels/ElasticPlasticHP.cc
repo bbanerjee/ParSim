@@ -701,19 +701,19 @@ ElasticPlasticHP::addComputesAndRequires(Task* task,
   }
 
   // Other constitutive model and input dependent computes and requires
-  task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
 
-  task->requires(Task::OldDW, pRotationLabel, matlset, gnone);
-  task->requires(Task::OldDW, pEqStrainRateLabel, matlset, gnone);
-  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
-  task->requires(Task::OldDW, pEqPlasticStrainLabel, matlset, gnone);
-  task->requires(Task::OldDW, pEqPlasticStrainRateLabel, matlset, gnone);
-  task->requires(Task::OldDW, pDamageLabel, matlset, gnone);
-  task->requires(Task::OldDW, pPorosityLabel, matlset, gnone);
-  task->requires(Task::OldDW, pLocalizedLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
-  task->requires(Task::OldDW, pEnergyLabel, matlset, gnone);
-  task->requires(Task::OldDW, pIntVarLabel, matlset, gnone);
+  task->needs(Task::OldDW, pRotationLabel, matlset, gnone);
+  task->needs(Task::OldDW, pEqStrainRateLabel, matlset, gnone);
+  task->needs(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
+  task->needs(Task::OldDW, pEqPlasticStrainLabel, matlset, gnone);
+  task->needs(Task::OldDW, pEqPlasticStrainRateLabel, matlset, gnone);
+  task->needs(Task::OldDW, pDamageLabel, matlset, gnone);
+  task->needs(Task::OldDW, pPorosityLabel, matlset, gnone);
+  task->needs(Task::OldDW, pLocalizedLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
+  task->needs(Task::OldDW, pEnergyLabel, matlset, gnone);
+  task->needs(Task::OldDW, pIntVarLabel, matlset, gnone);
 
   task->computes(pRotationLabel_preReloc, matlset);
   task->computes(pEqStrainRateLabel_preReloc, matlset);
@@ -2126,12 +2126,12 @@ ElasticPlasticHP::addComputesAndRequires(Task* task,
   Ghost::GhostType gnone = Ghost::None;
   if (SchedParent) {
     // For subscheduler
-    task->requires(Task::ParentOldDW, lb->pTempPreviousLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pTemperatureLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, pPlasticStrainLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, pEqPlasticStrainLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, pEqPlasticStrainRateLabel, matlset, gnone);
-    task->requires(Task::ParentOldDW, pPorosityLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, lb->pTempPreviousLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, lb->pTemperatureLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, pPlasticStrainLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, pEqPlasticStrainLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, pEqPlasticStrainRateLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, pPorosityLabel, matlset, gnone);
 
     task->computes(pPlasticStrainLabel_preReloc, matlset);
     task->computes(pEqPlasticStrainLabel_preReloc, matlset);
@@ -2139,12 +2139,12 @@ ElasticPlasticHP::addComputesAndRequires(Task* task,
     task->computes(pPorosityLabel_preReloc, matlset);
   } else {
     // For scheduleIterate
-    task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
-    task->requires(Task::OldDW, lb->pTemperatureLabel, matlset, gnone);
-    task->requires(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
-    task->requires(Task::OldDW, pEqPlasticStrainLabel, matlset, gnone);
-    task->requires(Task::OldDW, pEqPlasticStrainRateLabel, matlset, gnone);
-    task->requires(Task::OldDW, pPorosityLabel, matlset, gnone);
+    task->needs(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
+    task->needs(Task::OldDW, lb->pTemperatureLabel, matlset, gnone);
+    task->needs(Task::OldDW, pPlasticStrainLabel, matlset, gnone);
+    task->needs(Task::OldDW, pEqPlasticStrainLabel, matlset, gnone);
+    task->needs(Task::OldDW, pEqPlasticStrainRateLabel, matlset, gnone);
+    task->needs(Task::OldDW, pPorosityLabel, matlset, gnone);
   }
 
   // Add internal evolution variables computed by flow model
@@ -3416,15 +3416,15 @@ ElasticPlasticHP::allocateCMDataAddRequires(Task* task,
 
   // Add requires local to this model
   Ghost::GhostType gnone = Ghost::None;
-  task->requires(Task::NewDW, pRotationLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pEqStrainRateLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pPlasticStrainLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pEqPlasticStrainLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pEqPlasticStrainRateLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pDamageLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pPorosityLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pEnergyLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pRotationLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pEqStrainRateLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pPlasticStrainLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pEqPlasticStrainLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pEqPlasticStrainRateLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pDamageLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pPorosityLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pEnergyLabel_preReloc, matlset, gnone);
   d_flow->allocateCMDataAddRequires(task, matl, patch, lb);
 }
 //______________________________________________________________________
@@ -3510,7 +3510,7 @@ ElasticPlasticHP::addRequiresDamageParameter(Task* task,
                                              const PatchSet*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
 }
 //__________________________________
 //
@@ -3721,7 +3721,7 @@ ElasticPlasticHP::scheduleCheckNeedAddMPMMaterial(Task* task,
 {
   Ghost::GhostType gnone        = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pEqPlasticStrainLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pEqPlasticStrainLabel_preReloc, matlset, gnone);
 
   task->computes(lb->NeedAddMPMMaterialLabel);
 }

@@ -202,22 +202,22 @@ LightTime::scheduleComputeModelSources(SchedulerP& sched, const LevelP& level)
   const MaterialSubset* react_matl = matl0->thisMaterial();
   const MaterialSubset* prod_matl  = matl1->thisMaterial();
 
-  t->requires(Task::OldDW, Ilb->timeStepLabel);
-  t->requires(Task::OldDW, Ilb->simulationTimeLabel);
-  t->requires(Task::OldDW, Ilb->delTLabel, level.get_rep());
+  t->needs(Task::OldDW, Ilb->timeStepLabel);
+  t->needs(Task::OldDW, Ilb->simulationTimeLabel);
+  t->needs(Task::OldDW, Ilb->delTLabel, level.get_rep());
   //__________________________________
   // Products
-  t->requires(Task::NewDW, Ilb->rho_CCLabel, prod_matl, gn);
-  t->requires(Task::NewDW, Ilb->vol_frac_CCLabel, prod_matl, gn);
+  t->needs(Task::NewDW, Ilb->rho_CCLabel, prod_matl, gn);
+  t->needs(Task::NewDW, Ilb->vol_frac_CCLabel, prod_matl, gn);
 
   //__________________________________
   // Reactants
-  t->requires(Task::NewDW, Ilb->vol_frac_CCLabel, react_matl, gn);
-  t->requires(Task::NewDW, Ilb->specificVolume_CCLabel, react_matl, gn);
-  t->requires(Task::OldDW, Ilb->velocity_CCLabel, react_matl, gn);
-  t->requires(Task::OldDW, Ilb->temperature_CCLabel, react_matl, gn);
-  t->requires(Task::NewDW, Ilb->rho_CCLabel, react_matl, gn);
-  t->requires(Task::NewDW, Ilb->specific_heatLabel, react_matl, gn);
+  t->needs(Task::NewDW, Ilb->vol_frac_CCLabel, react_matl, gn);
+  t->needs(Task::NewDW, Ilb->specificVolume_CCLabel, react_matl, gn);
+  t->needs(Task::OldDW, Ilb->velocity_CCLabel, react_matl, gn);
+  t->needs(Task::OldDW, Ilb->temperature_CCLabel, react_matl, gn);
+  t->needs(Task::NewDW, Ilb->rho_CCLabel, react_matl, gn);
+  t->needs(Task::NewDW, Ilb->specific_heatLabel, react_matl, gn);
 
   t->computes(reactedFractionLabel, react_matl);
   t->computes(delFLabel, react_matl);
@@ -426,7 +426,7 @@ LightTime::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
   Ghost::GhostType gac             = Ghost::AroundCells;
   const MaterialSubset* react_matl = matl0->thisMaterial();
 
-  t->requires(Task::NewDW, reactedFractionLabel, react_matl, gac, 1);
+  t->needs(Task::NewDW, reactedFractionLabel, react_matl, gac, 1);
 
   t->computes(mag_grad_Fr_Label, react_matl);
   t->modifies(d_regridder->getRefineFlagLabel(),

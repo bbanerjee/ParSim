@@ -310,30 +310,30 @@ Unsteady_Burn::scheduleComputeModelSources(SchedulerP& sched,
     )->getUnion(); const MaterialSubset* mpm_matls =
     d_materialManager->allMaterials( "MPM" )->getUnion();
   */
-  t->requires(Task::OldDW, Ilb->timeStepLabel);
-  t->requires(Task::OldDW, Ilb->delTLabel, level.get_rep());
-  t->requires(Task::OldDW, Ilb->temperature_CCLabel, gac, 1);
-  t->requires(Task::NewDW, Ilb->vol_frac_CCLabel, gac, 1);
+  t->needs(Task::OldDW, Ilb->timeStepLabel);
+  t->needs(Task::OldDW, Ilb->delTLabel, level.get_rep());
+  t->needs(Task::OldDW, Ilb->temperature_CCLabel, gac, 1);
+  t->needs(Task::NewDW, Ilb->vol_frac_CCLabel, gac, 1);
   /*     Products     */
   /*     Reactants    */
-  t->requires(Task::NewDW, Ilb->specificVolume_CCLabel, react_matl, gn);
-  t->requires(Task::NewDW, MIlb->velocity_CCLabel, react_matl, gn);
-  t->requires(Task::NewDW, MIlb->cMassLabel, react_matl, gn);
-  t->requires(Task::NewDW, MIlb->gMassLabel, react_matl, gac, 1);
-  t->requires(Task::OldDW,
+  t->needs(Task::NewDW, Ilb->specificVolume_CCLabel, react_matl, gn);
+  t->needs(Task::NewDW, MIlb->velocity_CCLabel, react_matl, gn);
+  t->needs(Task::NewDW, MIlb->cMassLabel, react_matl, gn);
+  t->needs(Task::NewDW, MIlb->gMassLabel, react_matl, gac, 1);
+  t->needs(Task::OldDW,
               Mlb->pXLabel,
               react_matl,
               particle_ghost_type,
               particle_ghost_layer);
   /*     Misc      */
-  t->requires(Task::NewDW, Ilb->press_equil_CCLabel, one_matl, gac, 1);
-  t->requires(Task::OldDW, Mlb->NC_CCweightLabel, one_matl, gac, 1);
+  t->needs(Task::NewDW, Ilb->press_equil_CCLabel, one_matl, gac, 1);
+  t->needs(Task::OldDW, Mlb->NC_CCweightLabel, one_matl, gac, 1);
 
-  t->requires(Task::OldDW, BurningCellLabel, react_matl, gac, 1);
-  t->requires(Task::OldDW, TsLabel, react_matl, gac, 1);
-  t->requires(Task::OldDW, BetaLabel, react_matl, gac, 1);
-  t->requires(Task::OldDW, PartBetaLabel, react_matl, gn);
-  t->requires(Task::OldDW, PartTsLabel, react_matl, gn);
+  t->needs(Task::OldDW, BurningCellLabel, react_matl, gac, 1);
+  t->needs(Task::OldDW, TsLabel, react_matl, gac, 1);
+  t->needs(Task::OldDW, BetaLabel, react_matl, gac, 1);
+  t->needs(Task::OldDW, PartBetaLabel, react_matl, gn);
+  t->needs(Task::OldDW, PartTsLabel, react_matl, gn);
 
   t->computes(BurningCellLabel, react_matl);
   t->computes(TsLabel, react_matl);

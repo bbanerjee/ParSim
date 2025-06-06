@@ -525,21 +525,21 @@ UCNH::addComputesAndRequires(Task* task,
 
   // Plasticity
   if (d_usePlasticity) {
-    task->requires(Task::OldDW, pPlasticStrain_label, matlset, gnone);
-    task->requires(Task::OldDW, pYieldStress_label, matlset, gnone);
+    task->needs(Task::OldDW, pPlasticStrain_label, matlset, gnone);
+    task->needs(Task::OldDW, pYieldStress_label, matlset, gnone);
     task->computes(pPlasticStrain_label_preReloc, matlset);
     task->computes(pYieldStress_label_preReloc, matlset);
   }
 
   // for pParticleID
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
 
   if (flag->d_withColor) {
-    task->requires(Task::OldDW, lb->pColorLabel, Ghost::None);
+    task->needs(Task::OldDW, lb->pColorLabel, Ghost::None);
   }
 
   // Universal
-  task->requires(Task::OldDW, bElBarLabel, matlset, gnone);
+  task->needs(Task::OldDW, bElBarLabel, matlset, gnone);
   task->computes(bElBarLabel_preReloc, matlset);
   task->computes(pDeformRateLabel_preReloc, matlset);
 }
@@ -816,16 +816,16 @@ UCNH::addComputesAndRequires(Task* task,
   Ghost::GhostType gnone = Ghost::None;
   if (d_usePlasticity) {
     if (SchedParent) {
-      task->requires(Task::ParentOldDW, pPlasticStrain_label, matlset, gnone);
+      task->needs(Task::ParentOldDW, pPlasticStrain_label, matlset, gnone);
     } else {
-      task->requires(Task::OldDW, pPlasticStrain_label, matlset, gnone);
+      task->needs(Task::OldDW, pPlasticStrain_label, matlset, gnone);
     }
   }
 
   if (SchedParent) {
-    task->requires(Task::ParentOldDW, bElBarLabel, matlset, gnone);
+    task->needs(Task::ParentOldDW, bElBarLabel, matlset, gnone);
   } else {
-    task->requires(Task::OldDW, bElBarLabel, matlset, gnone);
+    task->needs(Task::OldDW, bElBarLabel, matlset, gnone);
   }
 }
 void
@@ -1054,17 +1054,17 @@ UCNH::allocateCMDataAddRequires(Task* task,
   // Add requires local to this model
   // Plasticity
   if (d_usePlasticity) {
-    task->requires(Task::NewDW, pPlasticStrain_label_preReloc, matlset, gnone);
-    task->requires(Task::NewDW, pYieldStress_label_preReloc, matlset, gnone);
+    task->needs(Task::NewDW, pPlasticStrain_label_preReloc, matlset, gnone);
+    task->needs(Task::NewDW, pYieldStress_label_preReloc, matlset, gnone);
   }
 
   // Universal
-  task->requires(Task::NewDW, bElBarLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, bElBarLabel_preReloc, matlset, gnone);
   if (flag->d_integrator != MPMFlags::Implicit) { // non implicit
     addSharedRForConvertExplicit(task, matlset, patches);
-    task->requires(Task::NewDW, pDeformRateLabel_preReloc, matlset, gnone);
+    task->needs(Task::NewDW, pDeformRateLabel_preReloc, matlset, gnone);
   } else { // Implicit only stuff
-    task->requires(Task::NewDW, lb->pStressLabel_preReloc, matlset, gnone);
+    task->needs(Task::NewDW, lb->pStressLabel_preReloc, matlset, gnone);
   }
 }
 

@@ -172,8 +172,8 @@ HypoElasticFracture::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 
   Ghost::GhostType gnone = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, lb->pDispGradsLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pStrainEnergyDensityLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pDispGradsLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pStrainEnergyDensityLabel, matlset, gnone);
 
   task->computes(lb->pDispGradsLabel_preReloc, matlset);
   task->computes(lb->pVelGradsLabel, matlset);
@@ -295,8 +295,8 @@ HypoElasticFracture::allocateCMDataAddRequires(Task* task, const MPMMaterial* ma
 
   Ghost::GhostType gnone = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, lb->pDispGradsLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, lb->pStrainEnergyDensityLabel_preReloc, matlset,
+  task->needs(Task::NewDW, lb->pDispGradsLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, lb->pStrainEnergyDensityLabel_preReloc, matlset,
                  gnone);
 }
 

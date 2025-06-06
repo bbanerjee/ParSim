@@ -1595,7 +1595,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid)
         const VarLabel* var   = label;
         MaterialSubset* matls = mat_subset;
 
-        data_tasks.back()->requires(Task::OldDW,
+        data_tasks.back()->needs(Task::OldDW,
                                     var,
                                     nullptr,
                                     Task::OtherGridDomain,
@@ -1628,7 +1628,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid)
         const VarLabel* var   = label;
         MaterialSubset* matls = mat_subset;
 
-        data_tasks.back()->requires(Task::OldDW,
+        data_tasks.back()->needs(Task::OldDW,
                                     var,
                                     nullptr,
                                     Task::OtherGridDomain,

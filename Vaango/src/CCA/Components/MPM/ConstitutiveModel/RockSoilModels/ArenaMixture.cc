@@ -916,9 +916,9 @@ ArenaMixture::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForHypoExplicit(task, matlset, patches);
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pElasticVolStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pStressQSLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pElasticVolStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pStressQSLabel, matlset, Ghost::None);
   task->computes(pElasticVolStrainLabel_preReloc, matlset);
   task->computes(pStressQSLabel_preReloc, matlset);
 
@@ -926,13 +926,13 @@ ArenaMixture::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   d_yield->addComputesAndRequires(task, matl, patches);
 
   // Add internal variable computes and requires
-  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticCumEqStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pBackstressLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPorosityLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pSaturationLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pCapXLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticCumEqStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pBackstressLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPorosityLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pSaturationLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pCapXLabel, matlset, Ghost::None);
   task->computes(pPlasticStrainLabel_preReloc, matlset);
   task->computes(pPlasticCumEqStrainLabel_preReloc, matlset);
   task->computes(pPlasticVolStrainLabel_preReloc, matlset);
@@ -943,13 +943,13 @@ ArenaMixture::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 
 // Add damage variable computes and requires
 #ifdef USE_LOCAL_LOCALIZED_PVAR
-  task->requires(Task::OldDW, pLocalizedLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pLocalizedLabel, matlset, Ghost::None);
 #else
-  task->requires(Task::OldDW, lb->pLocalizedMPMLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->pLocalizedMPMLabel, matlset, Ghost::None);
 #endif
-  task->requires(Task::OldDW, pP3Label, matlset, Ghost::None);
-  task->requires(Task::OldDW, pCoherenceLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pTGrowLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pP3Label, matlset, Ghost::None);
+  task->needs(Task::OldDW, pCoherenceLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pTGrowLabel, matlset, Ghost::None);
 
 #ifdef USE_LOCAL_LOCALIZED_PVAR
   task->computes(pLocalizedLabel_preReloc, matlset);
@@ -2952,9 +2952,9 @@ ArenaMixture::addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
   // Require the damage parameter
   const MaterialSubset* matlset = matl->thisMaterial();
 #ifdef USE_LOCAL_LOCALIZED_PVAR
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
 #else
-  task->requires(Task::NewDW, lb->pLocalizedMPMLabel_preReloc, matlset,
+  task->needs(Task::NewDW, lb->pLocalizedMPMLabel_preReloc, matlset,
                  Ghost::None);
 #endif
 }
@@ -3032,9 +3032,9 @@ ArenaMixture::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
   std::ostringstream out;
   out << "Material conversion after failure not implemented for Arena.";
   throw ProblemSetupException(out.str(), __FILE__, __LINE__);
-  // task->requires(Task::NewDW, pPorosityLabel_preReloc,         matlset,
+  // task->needs(Task::NewDW, pPorosityLabel_preReloc,         matlset,
   // Ghost::None);
-  // task->requires(Task::NewDW, pSaturationLabel_preReloc,       matlset,
+  // task->needs(Task::NewDW, pSaturationLabel_preReloc,       matlset,
   // Ghost::None);
 }
 

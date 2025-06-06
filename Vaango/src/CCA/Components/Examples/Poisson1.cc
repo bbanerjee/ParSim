@@ -91,7 +91,7 @@ Poisson1::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
   Task* task = scinew Task(
     "Poisson1::computeStableTimestep", this, &Poisson1::computeStableTimestep);
 
-  task->requires(Task::NewDW, d_residual_label);
+  task->needs(Task::NewDW, d_residual_label);
   task->computes(getDelTLabel(), level.get_rep());
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
@@ -102,7 +102,7 @@ Poisson1::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
   Task* task =
     scinew Task("Poisson1::timeAdvance", this, &Poisson1::timeAdvance);
 
-  task->requires(Task::OldDW, d_phi_label, Ghost::AroundNodes, 1);
+  task->needs(Task::OldDW, d_phi_label, Ghost::AroundNodes, 1);
   task->computes(d_phi_label);
   task->computes(d_residual_label);
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());

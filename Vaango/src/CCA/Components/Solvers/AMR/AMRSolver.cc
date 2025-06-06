@@ -193,7 +193,7 @@ AMRSolver::scheduleSolve(const LevelP& level,
     const LevelP l            = level->getGrid()->getLevel(i);
     const PatchSubset* subset = l->eachPatch()->getUnion();
 
-    task->requires(which_A_dw, A, subset, Ghost::None, 0);
+    task->needs(which_A_dw, A, subset, Ghost::None, 0);
 
     if (modifies_x) {
       task->modifies(x, subset, 0);
@@ -202,10 +202,10 @@ AMRSolver::scheduleSolve(const LevelP& level,
     }
 
     if (guess) {
-      task->requires(which_guess_dw, guess, subset, Ghost::None, 0);
+      task->needs(which_guess_dw, guess, subset, Ghost::None, 0);
     }
 
-    task->requires(which_b_dw, b, subset, Ghost::None, 0);
+    task->needs(which_b_dw, b, subset, Ghost::None, 0);
   } // numLevels
 
   // task->computes( VarLabel::find(abortTimestep_name) );

@@ -417,13 +417,13 @@ BasicDamageModel::allocateDamageDataAddRequires(Task* task,
                                                 MPMLabel*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW,
+  task->needs(Task::NewDW,
                  pFailureStressOrStrainLabel_preReloc,
                  matlset,
                  Ghost::None);
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pTimeOfLocLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pDamageLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pTimeOfLocLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pDamageLabel_preReloc, matlset, Ghost::None);
 }
 
 //-----------------------------------------------------------------------------------
@@ -641,17 +641,17 @@ BasicDamageModel::addComputesAndRequires(Task* task,
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
-  task->requires(Task::OldDW, lb->simulationTimeLabel);
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW,
+  task->needs(Task::OldDW, lb->simulationTimeLabel);
+  task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW,
                  pFailureStressOrStrainLabel,
                  matlset,
                  Ghost::None);
-  task->requires(Task::OldDW, pLocalizedLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pTimeOfLocLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pDamageLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, lb->pVolumeLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, lb->pDefGradLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pLocalizedLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pTimeOfLocLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pDamageLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->pVolumeLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, lb->pDefGradLabel, matlset, Ghost::None);
 
   task->modifies(lb->pVolumeLabel_preReloc, matlset);
   task->modifies(lb->pDefGradLabel_preReloc, matlset);
@@ -1069,7 +1069,7 @@ BasicDamageModel::addRequiresLocalizationParameter(Task* task,
                                                    const PatchSet*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
 }
 
 // This is for the localization flag to be updated

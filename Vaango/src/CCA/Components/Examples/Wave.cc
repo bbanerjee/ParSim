@@ -161,19 +161,19 @@ Wave::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
 {
   if (d_integration == "Euler") {
     Task* task = scinew Task("timeAdvance", this, &Wave::timeAdvanceEuler);
-    task->requires(Task::OldDW, d_phi_label, Ghost::AroundCells, 1);
-    task->requires(Task::OldDW, d_pi_label, Ghost::None, 0);
+    task->needs(Task::OldDW, d_phi_label, Ghost::AroundCells, 1);
+    task->needs(Task::OldDW, d_pi_label, Ghost::None, 0);
     if (level->getIndex() > 0) { // REFINE
       addRefineDependencies(task, d_phi_label, true, true);
     }
-    // task->requires(Task::OldDW, getDelTLabel());
+    // task->needs(Task::OldDW, getDelTLabel());
     task->computes(d_phi_label);
     task->computes(d_pi_label);
     sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
   } else if (d_integration == "RK4") {
     Task* task = scinew Task("setupRK4", this, &Wave::setupRK4);
-    task->requires(Task::OldDW, d_phi_label, Ghost::AroundCells, 1);
-    task->requires(Task::OldDW, d_pi_label, Ghost::None, 0);
+    task->needs(Task::OldDW, d_phi_label, Ghost::AroundCells, 1);
+    task->needs(Task::OldDW, d_pi_label, Ghost::None, 0);
     if (level->getIndex() > 0) { // REFINE
       // TODO, fix calls to addRefineDependencies and refineFaces
       addRefineDependencies(task, d_phi_label, true, true);
@@ -186,11 +186,11 @@ Wave::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
       Step* s    = &d_rk4steps[i];
       Task* task = scinew Task("timeAdvance", this, &Wave::timeAdvanceRK4, s);
 
-      task->requires(Task::OldDW, getDelTLabel(), level.get_rep());
-      task->requires(Task::OldDW, d_phi_label, Ghost::None);
-      task->requires(Task::OldDW, d_pi_label, Ghost::None);
-      task->requires(s->cur_dw, s->curphi_label, Ghost::AroundCells, 1);
-      task->requires(s->cur_dw, s->curpi_label, Ghost::None, 0);
+      task->needs(Task::OldDW, getDelTLabel(), level.get_rep());
+      task->needs(Task::OldDW, d_phi_label, Ghost::None);
+      task->needs(Task::OldDW, d_pi_label, Ghost::None);
+      task->needs(s->cur_dw, s->curphi_label, Ghost::AroundCells, 1);
+      task->needs(s->cur_dw, s->curpi_label, Ghost::None, 0);
 
       if (level->getIndex() > 0) { // REFINE
         addRefineDependencies(task, s->curphi_label, true, true);

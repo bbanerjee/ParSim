@@ -325,9 +325,9 @@ CamClay::addComputesAndRequires(Task* task,
   addSharedCRForHypoExplicit(task, matlset, patches);
 
   // Other constitutive model and input dependent computes and requires
-  task->requires(Task::OldDW, pStrainLabel, matlset, gnone);
-  task->requires(Task::OldDW, pElasticStrainLabel, matlset, gnone);
-  task->requires(Task::OldDW, pDeltaGammaLabel, matlset, gnone);
+  task->needs(Task::OldDW, pStrainLabel, matlset, gnone);
+  task->needs(Task::OldDW, pElasticStrainLabel, matlset, gnone);
+  task->needs(Task::OldDW, pDeltaGammaLabel, matlset, gnone);
 
   task->computes(pStrainLabel_preReloc, matlset);
   task->computes(pElasticStrainLabel_preReloc, matlset);
@@ -1325,9 +1325,9 @@ CamClay::allocateCMDataAddRequires(Task* task,
 
   // Add requires local to this model
   Ghost::GhostType gnone = Ghost::None;
-  task->requires(Task::NewDW, pStrainLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pElasticStrainLabel_preReloc, matlset, gnone);
-  task->requires(Task::NewDW, pDeltaGammaLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pStrainLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pElasticStrainLabel_preReloc, matlset, gnone);
+  task->needs(Task::NewDW, pDeltaGammaLabel_preReloc, matlset, gnone);
   d_intvar->allocateCMDataAddRequires(task, matl, patch, lb);
 }
 

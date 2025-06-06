@@ -156,14 +156,14 @@ STThermalContact::addComputesAndRequires(Task* t,
                                          const PatchSet*,
                                          const MaterialSet*) const
 {
-  t->requires(Task::OldDW, d_mpm_labels->delTLabel);
-  t->requires(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
-  t->requires(Task::NewDW, d_mpm_labels->gTemperatureLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gTemperatureLabel, Ghost::None);
   t->computes(d_mpm_labels->gThermalContactTemperatureRateLabel);
   if (d_mpm_flags->d_fracture) {
     // for second field, for Fracture ---------------------------------
-    t->requires(Task::NewDW, d_mpm_labels->GMassLabel, Ghost::None);
-    t->requires(Task::NewDW, d_mpm_labels->GTemperatureLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->GMassLabel, Ghost::None);
+    t->needs(Task::NewDW, d_mpm_labels->GTemperatureLabel, Ghost::None);
     t->computes(d_mpm_labels->GThermalContactTemperatureRateLabel);
   }
 }

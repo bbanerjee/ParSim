@@ -327,20 +327,20 @@ momentumAnalysis::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
 
   sched_TimeVars(t0, level, labels->lastCompTime, false);
 
-  t0->requires(Task::NewDW, labels->vel_CC, matl_SS, gn);
-  t0->requires(Task::NewDW, labels->rho_CC, matl_SS, gn);
+  t0->needs(Task::NewDW, labels->vel_CC, matl_SS, gn);
+  t0->needs(Task::NewDW, labels->rho_CC, matl_SS, gn);
 
-  t0->requires(Task::NewDW, labels->uvel_FC, matl_SS, gn);
-  t0->requires(Task::NewDW, labels->vvel_FC, matl_SS, gn);
-  t0->requires(Task::NewDW, labels->wvel_FC, matl_SS, gn);
+  t0->needs(Task::NewDW, labels->uvel_FC, matl_SS, gn);
+  t0->needs(Task::NewDW, labels->vvel_FC, matl_SS, gn);
+  t0->needs(Task::NewDW, labels->wvel_FC, matl_SS, gn);
 
-  t0->requires(Task::NewDW, labels->pressX_FC, d_pressMatl, gn);
-  t0->requires(Task::NewDW, labels->pressY_FC, d_pressMatl, gn);
-  t0->requires(Task::NewDW, labels->pressZ_FC, d_pressMatl, gn);
+  t0->needs(Task::NewDW, labels->pressX_FC, d_pressMatl, gn);
+  t0->needs(Task::NewDW, labels->pressY_FC, d_pressMatl, gn);
+  t0->needs(Task::NewDW, labels->pressZ_FC, d_pressMatl, gn);
 
-  t0->requires(Task::NewDW, labels->tau_X_FC, matl_SS, gn);
-  t0->requires(Task::NewDW, labels->tau_Y_FC, matl_SS, gn);
-  t0->requires(Task::NewDW, labels->tau_Z_FC, matl_SS, gn);
+  t0->needs(Task::NewDW, labels->tau_X_FC, matl_SS, gn);
+  t0->needs(Task::NewDW, labels->tau_Y_FC, matl_SS, gn);
+  t0->needs(Task::NewDW, labels->tau_Z_FC, matl_SS, gn);
 
   t0->computes(labels->totalCVMomentum);
   t0->computes(labels->convectMom_fluxes);
@@ -355,12 +355,12 @@ momentumAnalysis::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
     "momentumAnalysis::doAnalysis", this, &momentumAnalysis::doAnalysis);
 
   sched_TimeVars(t1, level, labels->lastCompTime, true);
-  t1->requires(Task::OldDW, labels->fileVarsStruct, m_zeroMatl, gn, 0);
+  t1->needs(Task::OldDW, labels->fileVarsStruct, m_zeroMatl, gn, 0);
 
-  t1->requires(Task::NewDW, labels->totalCVMomentum);
-  t1->requires(Task::NewDW, labels->convectMom_fluxes);
-  t1->requires(Task::NewDW, labels->viscousMom_fluxes);
-  t1->requires(Task::NewDW, labels->pressForces);
+  t1->needs(Task::NewDW, labels->totalCVMomentum);
+  t1->needs(Task::NewDW, labels->convectMom_fluxes);
+  t1->needs(Task::NewDW, labels->viscousMom_fluxes);
+  t1->needs(Task::NewDW, labels->pressForces);
 
   t1->computes(labels->fileVarsStruct, m_zeroMatl);
   sched->addTask(

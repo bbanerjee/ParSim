@@ -228,11 +228,11 @@ IntVar_Arena::addComputesAndRequires(Task* task,
                                      const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, pKappaLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pCapXLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pP3Label, matlset, Ghost::None);
+  task->needs(Task::OldDW, pKappaLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pCapXLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
+  task->needs(Task::OldDW, pP3Label, matlset, Ghost::None);
   task->computes(pKappaLabel_preReloc, matlset);
   task->computes(pCapXLabel_preReloc, matlset);
   task->computes(pPlasticStrainLabel_preReloc, matlset);
@@ -493,13 +493,13 @@ IntVar_Arena::allocateCMDataAddRequires(Task* task,
                                         MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pKappaLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pCapXLabel_preReloc, matlset, Ghost::None);
-  task->requires(
+  task->needs(Task::NewDW, pKappaLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pCapXLabel_preReloc, matlset, Ghost::None);
+  task->needs(
     Task::NewDW, pPlasticStrainLabel_preReloc, matlset, Ghost::None);
-  task->requires(
+  task->needs(
     Task::NewDW, pPlasticVolStrainLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pP3Label_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, pP3Label_preReloc, matlset, Ghost::None);
 }
 
 /*!-----------------------------------------------------*/

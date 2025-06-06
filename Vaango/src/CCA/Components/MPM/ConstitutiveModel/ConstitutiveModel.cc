@@ -187,7 +187,7 @@ ConstitutiveModel::addSharedCRForHypoExplicit(Task* task,
 {
   Ghost::GhostType gnone = Ghost::None;
   addSharedCRForExplicit(task, matlset, p);
-  task->requires(Task::OldDW, lb->pStressLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pStressLabel, matlset, gnone);
 }
 
 void
@@ -198,25 +198,25 @@ ConstitutiveModel::addSharedCRForExplicit(Task* task,
   Ghost::GhostType gnone = Ghost::None;
   Ghost::GhostType gac   = Ghost::AroundCells;
 
-  task->requires(Task::OldDW, lb->delTLabel);
-  task->requires(Task::OldDW, lb->simulationTimeLabel);
-  task->requires(Task::OldDW, lb->pXLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pMassLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pTemperatureLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVelocityLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pAccelerationLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVelGradLabel, matlset, gnone);
-  task->requires(Task::NewDW, lb->gVelocityStarLabel, matlset, gac, NGN);
+  task->needs(Task::OldDW, lb->delTLabel);
+  task->needs(Task::OldDW, lb->simulationTimeLabel);
+  task->needs(Task::OldDW, lb->pXLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pMassLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pTemperatureLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVelocityLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pAccelerationLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVelGradLabel, matlset, gnone);
+  task->needs(Task::NewDW, lb->gVelocityStarLabel, matlset, gac, NGN);
   if (!flag->d_doGridReset) {
-    task->requires(Task::NewDW, lb->gDisplacementLabel, matlset, gac, NGN);
+    task->needs(Task::NewDW, lb->gDisplacementLabel, matlset, gac, NGN);
   }
-  task->requires(Task::OldDW, lb->pSizeLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pSizeLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
   if (flag->d_fracture) {
-    task->requires(Task::NewDW, lb->pgCodeLabel, matlset, gnone);
-    task->requires(Task::NewDW, lb->GVelocityStarLabel, matlset, gac, NGN);
+    task->needs(Task::NewDW, lb->pgCodeLabel, matlset, gnone);
+    task->needs(Task::NewDW, lb->GVelocityStarLabel, matlset, gac, NGN);
   }
 
   task->modifies(lb->pDefGradLabel_preReloc, matlset);
@@ -233,24 +233,24 @@ ConstitutiveModel::addComputesAndRequiresForRotatedExplicit(
   const PatchSet* patches) const
 {
   Ghost::GhostType gnone = Ghost::None;
-  task->requires(Task::OldDW, lb->delTLabel);
-  task->requires(Task::OldDW, lb->simulationTimeLabel);
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pXLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pMassLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pTemperatureLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVelocityLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pAccelerationLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pSizeLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
-  task->requires(Task::OldDW, lb->pVelGradLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->delTLabel);
+  task->needs(Task::OldDW, lb->simulationTimeLabel);
+  task->needs(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pXLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pMassLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pTemperatureLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVelocityLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pAccelerationLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pSizeLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
+  task->needs(Task::OldDW, lb->pVelGradLabel, matlset, gnone);
 
-  task->requires(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, lb->pDeformRateMidLabel, matlset, Ghost::None);
-  task->requires(Task::NewDW, lb->pStressUnrotatedLabel, matlset, Ghost::None);
-  task->requires(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pDeformRateMidLabel, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pStressUnrotatedLabel, matlset, Ghost::None);
+  task->needs(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, Ghost::None);
 
   task->computes(lb->pStressLabel_preReloc, matlset);
   task->computes(lb->pdTdtLabel_preReloc, matlset);
@@ -354,9 +354,9 @@ ConstitutiveModel::addSharedRForConvertExplicit(Task* task,
                                                 const PatchSet*) const
 {
   Ghost::GhostType gnone = Ghost::None;
-  task->requires(Task::NewDW, lb->pdTdtLabel_preReloc, mset, gnone);
-  // task->requires(Task::NewDW,lb->pDeformationMeasureLabel_preReloc,mset,gnone);
-  task->requires(Task::NewDW, lb->pStressLabel_preReloc, mset, gnone);
+  task->needs(Task::NewDW, lb->pdTdtLabel_preReloc, mset, gnone);
+  // task->needs(Task::NewDW,lb->pDeformationMeasureLabel_preReloc,mset,gnone);
+  task->needs(Task::NewDW, lb->pStressLabel_preReloc, mset, gnone);
 }
 
 void

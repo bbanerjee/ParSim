@@ -289,13 +289,13 @@ PolarOrthotropicLinearElasticStateModel::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
 
   // List the variables needed for this task to execute
-  task->requires(Task::OldDW, d_label->delTLabel,              matlset, gnone);
-  task->requires(Task::OldDW, d_label->pPositionLabel,         matlset, gnone);
-  task->requires(Task::OldDW, d_label->pMassLabel,             matlset, gnone);
-  task->requires(Task::OldDW, d_label->pVelocityLabel,         matlset, gnone);
-  task->requires(Task::OldDW, d_label->pDefGradLabel,          matlset, gnone);
-  task->requires(Task::NewDW, d_label->pDefGradLabel_preReloc, matlset, gnone);
-  task->requires(Task::OldDW, d_label->pStressLabel,           matlset, gnone);
+  task->needs(Task::OldDW, d_label->delTLabel,              matlset, gnone);
+  task->needs(Task::OldDW, d_label->pPositionLabel,         matlset, gnone);
+  task->needs(Task::OldDW, d_label->pMassLabel,             matlset, gnone);
+  task->needs(Task::OldDW, d_label->pVelocityLabel,         matlset, gnone);
+  task->needs(Task::OldDW, d_label->pDefGradLabel,          matlset, gnone);
+  task->needs(Task::NewDW, d_label->pDefGradLabel_preReloc, matlset, gnone);
+  task->needs(Task::OldDW, d_label->pStressLabel,           matlset, gnone);
 
   // List the variables computed by this task
   task->computes(d_label->pVolumeLabel_preReloc, matlset);

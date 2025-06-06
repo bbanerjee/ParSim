@@ -138,20 +138,20 @@ utBlank::scheduleTimeAdvance( const Uintah::LevelP& level, Uintah::SchedulerP& s
   // set this in problemSetup.  0 is no ghost cells, 1 is all with 1 ghost
   // atound-node, and 2 mixes them
   if (d_numGhostCells == 0) {
-    task->requires(Task::OldDW, d_labels->pParticleIDLabel, Ghost::None, 0);
-    task->requires(Task::OldDW, d_labels->pPositionLabel, Ghost::None, 0);
-    task->requires(Task::OldDW, d_labels->pMassLabel, Ghost::None, 0);
+    task->needs(Task::OldDW, d_labels->pParticleIDLabel, Ghost::None, 0);
+    task->needs(Task::OldDW, d_labels->pPositionLabel, Ghost::None, 0);
+    task->needs(Task::OldDW, d_labels->pMassLabel, Ghost::None, 0);
   }
   
   else if (d_numGhostCells == 1) {
-    task->requires(Task::OldDW, d_labels->pPositionLabel, Ghost::AroundNodes, 1);
-    task->requires(Task::OldDW, d_labels->pMassLabel, Ghost::AroundNodes, 1);
-    task->requires(Task::OldDW, d_labels->pParticleIDLabel, Ghost::AroundNodes, 1);
+    task->needs(Task::OldDW, d_labels->pPositionLabel, Ghost::AroundNodes, 1);
+    task->needs(Task::OldDW, d_labels->pMassLabel, Ghost::AroundNodes, 1);
+    task->needs(Task::OldDW, d_labels->pParticleIDLabel, Ghost::AroundNodes, 1);
   }
   else if (d_numGhostCells == 2) {
-    task->requires(Task::OldDW, d_labels->pPositionLabel, Ghost::None, 0);
-    task->requires(Task::OldDW, d_labels->pMassLabel, Ghost::AroundNodes, 1);
-    task->requires(Task::OldDW, d_labels->pParticleIDLabel, Ghost::None, 0);
+    task->needs(Task::OldDW, d_labels->pPositionLabel, Ghost::None, 0);
+    task->needs(Task::OldDW, d_labels->pMassLabel, Ghost::AroundNodes, 1);
+    task->needs(Task::OldDW, d_labels->pParticleIDLabel, Ghost::None, 0);
   }
 
   task->computes(d_labels->pPositionLabel_preReloc);

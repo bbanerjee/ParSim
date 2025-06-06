@@ -123,19 +123,19 @@ Crack::addComputesAndRequiresMoveCracks(Task* t,
                                         const PatchSet* /*patches*/,
                                         const MaterialSet* /*matls*/) const
 {
-  t->requires(Task::OldDW, lb->delTLabel);
+  t->needs(Task::OldDW, lb->delTLabel);
 
   Ghost::GhostType gac = Ghost::AroundCells;
   int NGC              = 2 * NGN;
-  t->requires(Task::NewDW, lb->gMassLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->gNumPatlsLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->gVelocityStarLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GMassLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GNumPatlsLabel, gac, NGC);
-  t->requires(Task::NewDW, lb->GVelocityStarLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->gMassLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->gNumPatlsLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->gVelocityStarLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GMassLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GNumPatlsLabel, gac, NGC);
+  t->needs(Task::NewDW, lb->GVelocityStarLabel, gac, NGC);
 
-  t->requires(Task::OldDW, lb->pSizeLabel, Ghost::None);
-  t->requires(Task::OldDW, lb->pDefGradLabel, Ghost::None);
+  t->needs(Task::OldDW, lb->pSizeLabel, Ghost::None);
+  t->needs(Task::OldDW, lb->pDefGradLabel, Ghost::None);
 }
 
 void
