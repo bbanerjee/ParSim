@@ -41,6 +41,8 @@ SET(GEOM_CREATE_LIBS
   Vaango_Core_Util
   Vaango_Core_GeometryPiece
   Vaango_CCA_Components_ProblemSpecification
+  Vaango::Options
+  Vaango::Warnings
 )
 
 target_link_libraries(createFileGeomPieceFromUda 

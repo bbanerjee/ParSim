@@ -67,13 +67,14 @@ target_link_libraries(Vaango_CCA_Components_Schedulers
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  
   ${XML2_LIBRARY}
   ${TAU_LIBRARY}
   ${MPI_LIBS}
   ${VAMPIR_LIBRARY}
   ${PERFEX_LIBRARY}
   ${CUDA_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

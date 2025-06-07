@@ -66,6 +66,8 @@ target_link_libraries(Vaango_Core_GeometryPiece
   Vaango_Core_Util
   ${M_LIBRARY}
   ${Boost_LIBRARIES}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

@@ -78,6 +78,8 @@ target_link_libraries(Vaango_Core_Grid
   Vaango_Core_Math
   ${MPI_LIBRARY}
   ${Z_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

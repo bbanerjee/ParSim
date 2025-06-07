@@ -77,6 +77,15 @@ add_library(Vaango::Warnings ALIAS vaango_warnings)
 include (CMakeBackwardCompatibilityC)
 
 #----------------------------------------------------------------------------
+# Default to release builds
+#----------------------------------------------------------------------------
+if( NOT CMAKE_BUILD_TYPE )
+  set( CMAKE_BUILD_TYPE "Release" CACHE STRING
+    "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
+    FORCE )
+endif( NOT CMAKE_BUILD_TYPE )
+
+#----------------------------------------------------------------------------
 # C/C++ compiler configuration
 #----------------------------------------------------------------------------
 # Set C++ standard requirements
@@ -202,56 +211,6 @@ if(WIN32)
     endif()
 endif()
 
-#----------------------------------------------------------------------------------
-# Configure options
-#----------------------------------------------------------------------------------
-option(MPM               "Build MPM and MPMICE" ON)
-option(ICE               "Build ICE and MPMICE" ON)
-option(FORTRAN           "Build with fortran" ON)
-option(PETSC             "Build with PETSc" OFF)
-option(HYPRE             "Build with HYPRE" OFF)
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-mark_as_advanced(BUILD_SHARED_LIBS)
-if (DEFINED VISIT_DIR)
-  set(VISIT ON)
-endif ()
-
-#message(STATUS "After Option: Compiling FORTRAN code? ${FORTRAN}")
-
-#----------------------------------------------------------------------------
-# Default to release builds
-#----------------------------------------------------------------------------
-if( NOT CMAKE_BUILD_TYPE )
-  set( CMAKE_BUILD_TYPE "Release" CACHE STRING
-    "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
-    FORCE )
-endif( NOT CMAKE_BUILD_TYPE )
-
-#----------------------------------------------------------------------------
-# Cache the source and  library paths
-#----------------------------------------------------------------------------
-set(BUILD_FROM_TOP_LEVEL 0)
-set(PACKAGE_SRC_PATH ${Vaango_SOURCE_DIR} CACHE INTERNAL "Path to Vaango source tree.")
-set(PACKAGE_LIB_PATH ${Vaango_BINARY_DIR}/lib CACHE INTERNAL "Path to Vaango Libraries.")
-set(scirun_src_dir ${Vaango_SOURCE_DIR})
-set(scirun_obj_dir ${Vaango_BINARY_DIR})
-
-#----------------------------------------------------------------------------
-# Output directories.
-#----------------------------------------------------------------------------
-set (LIBRARY_OUTPUT_PATH ${Vaango_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-set (EXECUTABLE_OUTPUT_PATH ${Vaango_BINARY_DIR} CACHE INTERNAL "Single output directory for building all executables.")
-mark_as_advanced(LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
-
-#----------------------------------------------------------------------------
-# Optional variable intialization  
-#----------------------------------------------------------------------------
-set(HAVE_HDF5 "no")
-set(HAVE_BOOST "no")
-set(HAVE_TABPROPS "no")
-set(HAVE_SPATIALOPS "no")
-set(HAVE_EXPRLIB "no")
-
 #----------------------------------------------------------------------------
 # Platform detection and system information
 #----------------------------------------------------------------------------
@@ -293,6 +252,13 @@ else()
     message(WARNING "Untested system: ${CMAKE_SYSTEM_NAME} - You are on your own!")
 endif()
 
+message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Architecture: ${NBITS}-bit")
+message(STATUS "CPU Count: ${NUM_CPUS}")
+if(CMAKE_BUILD_TYPE)
+    message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
+endif()
 
 #----------------------------------------------------------------------------
 # Type size checks and endianness detection
@@ -346,6 +312,47 @@ configure_file(
 target_include_directories(vaango_options INTERFACE
     ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+#----------------------------------------------------------------------------------
+# Configure options
+#----------------------------------------------------------------------------------
+option(MPM               "Build MPM and MPMICE" ON)
+option(ICE               "Build ICE and MPMICE" ON)
+option(FORTRAN           "Build with fortran" ON)
+option(PETSC             "Build with PETSc" OFF)
+option(HYPRE             "Build with HYPRE" OFF)
+option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+mark_as_advanced(BUILD_SHARED_LIBS)
+if (DEFINED VISIT_DIR)
+  set(VISIT ON)
+endif ()
+
+#message(STATUS "After Option: Compiling FORTRAN code? ${FORTRAN}")
+
+#----------------------------------------------------------------------------
+# Cache the source and  library paths
+#----------------------------------------------------------------------------
+set(BUILD_FROM_TOP_LEVEL 0)
+set(PACKAGE_SRC_PATH ${Vaango_SOURCE_DIR} CACHE INTERNAL "Path to Vaango source tree.")
+set(PACKAGE_LIB_PATH ${Vaango_BINARY_DIR}/lib CACHE INTERNAL "Path to Vaango Libraries.")
+set(scirun_src_dir ${Vaango_SOURCE_DIR})
+set(scirun_obj_dir ${Vaango_BINARY_DIR})
+
+#----------------------------------------------------------------------------
+# Output directories.
+#----------------------------------------------------------------------------
+set (LIBRARY_OUTPUT_PATH ${Vaango_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+set (EXECUTABLE_OUTPUT_PATH ${Vaango_BINARY_DIR} CACHE INTERNAL "Single output directory for building all executables.")
+mark_as_advanced(LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
+
+#----------------------------------------------------------------------------
+# Optional variable intialization  
+#----------------------------------------------------------------------------
+set(HAVE_HDF5 "no")
+set(HAVE_BOOST "no")
+set(HAVE_TABPROPS "no")
+set(HAVE_SPATIALOPS "no")
+set(HAVE_EXPRLIB "no")
 
 #----------------------------------------------------------------------------------
 # Turn off ICE or MPM (for sci_defs/uintah_defs.h)

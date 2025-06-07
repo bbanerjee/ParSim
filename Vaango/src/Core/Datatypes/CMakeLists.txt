@@ -59,6 +59,8 @@ target_link_libraries(Vaango_Core_Datatypes
   Vaango_Core_Util         
   Vaango_Core_ProblemSpec
   ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

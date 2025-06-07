@@ -65,6 +65,8 @@ add_executable(testModelState_Tabular testModelState_Tabular.cc)
 target_link_libraries(testModelState_Tabular
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testModelState_Tabular)
 add_custom_command(
@@ -78,6 +80,8 @@ target_link_libraries(testModelState
   ${GTEST_LIB}
   ${Boost_LIBRARIES}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testModelState)
 add_custom_command(
@@ -91,6 +95,8 @@ add_executable(${BORJA_TEST} ${BORJA_TEST}.cc)
 target_link_libraries(${BORJA_TEST}
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST ${BORJA_TEST})
 add_custom_command(

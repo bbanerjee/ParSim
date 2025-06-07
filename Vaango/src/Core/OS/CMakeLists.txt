@@ -37,6 +37,8 @@ add_library(Vaango_Core_OS ${Vaango_Core_OS_SRCS})
 target_link_libraries(Vaango_Core_OS
   Vaango_Core_Exceptions
   ${SOCKET_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

@@ -63,7 +63,11 @@ SET(LIBS
 
 add_library(Vaango_CCA_Components_Peridynamics ${Vaango_CCA_Components_Peridynamics_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_Peridynamics ${LIBS})
+target_link_libraries(Vaango_CCA_Components_Peridynamics 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_Peridynamics)

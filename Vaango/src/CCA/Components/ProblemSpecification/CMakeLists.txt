@@ -66,6 +66,8 @@ target_link_libraries(Vaango_CCA_Components_ProblemSpecification
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   ${XML2_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

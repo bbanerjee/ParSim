@@ -61,7 +61,11 @@ ENDIF()
 
 add_library(Vaango_CCA_Components_Models ${Vaango_CCA_Components_Models_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_Models ${LIBS})
+target_link_libraries(Vaango_CCA_Components_Models 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_Models)

@@ -39,7 +39,9 @@ IF(NOT WIN32)
   )
 
   target_link_libraries(dumpfields
-     Vaango_Core_DataArchive   
-     Vaango_Core_OS
+    Vaango_Core_DataArchive   
+    Vaango_Core_OS
+    Vaango::Options
+    Vaango::Warnings
   )
 ENDIF(NOT WIN32)

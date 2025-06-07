@@ -42,7 +42,11 @@ SET(Vaango_CCA_Components_MPM_PhysicalBC_SRCS
 
 add_library(MPM_PhysicalBC ${Vaango_CCA_Components_MPM_PhysicalBC_SRCS})
 
-target_link_libraries(MPM_PhysicalBC ${LIBS})
+target_link_libraries(MPM_PhysicalBC 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_PhysicalBC)

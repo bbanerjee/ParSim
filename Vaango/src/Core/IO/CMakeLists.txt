@@ -35,6 +35,8 @@ add_library(Vaango_Core_IO ${Vaango_Core_IO_SRCS})
 target_link_libraries(Vaango_Core_IO
   ${Z_LIBRARY} 
   ${GPERFTOOLS_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

@@ -80,6 +80,8 @@ target_link_libraries(Vaango_CCA_Components_Examples
   ${XML2_LIBRARY}
   ${M_LIBRARY}
   ${CUDA_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

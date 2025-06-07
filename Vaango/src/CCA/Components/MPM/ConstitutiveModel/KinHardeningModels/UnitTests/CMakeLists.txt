@@ -65,6 +65,8 @@ include_directories(${GTEST_INCLUDE_DIR})
 #target_link_libraries(testModelState_Tabular
 #  ${GTEST_LIB}
 #  ${VAANGO_LIBS}
+#  Vaango::Options
+#  Vaango::Warnings
 #)
 #set(UNIT_TEST testModelState_Tabular)
 #add_custom_command(

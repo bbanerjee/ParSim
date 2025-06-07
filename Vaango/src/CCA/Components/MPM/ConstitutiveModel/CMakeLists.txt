@@ -88,7 +88,11 @@ SET(LIBS
 
 add_library(MPM_ConstitutiveModel ${MPM_ConstitutiveModel_SRCS})
 
-target_link_libraries(MPM_ConstitutiveModel ${LIBS})
+target_link_libraries(MPM_ConstitutiveModel 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_ConstitutiveModel)

@@ -72,6 +72,8 @@ target_link_libraries(Vaango_Core_Parallel
   ${XML2_LIBRARY}
   ${MPI_LIBS}
   ${VAMPIR_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

@@ -24,5 +24,7 @@
 
 ADD_EXECUTABLE(compare_mms compare_mms.cc ExpMMS.cc LinearMMS.cc SineMMS.cc)
 target_link_libraries(compare_mms 
-        Vaango_Core_DataArchive 
+  Vaango_Core_DataArchive 
+  Vaango::Options
+  Vaango::Warnings
 )

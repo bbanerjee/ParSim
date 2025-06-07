@@ -43,6 +43,8 @@ target_include_directories(testMaterialManager PRIVATE
 target_link_libraries(testMaterialManager
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testMaterialManager)
 add_custom_command(

@@ -34,7 +34,11 @@ set(Vaango_CCA_Components_MPM_GradientComputer_SRCS
 
 add_library(MPM_GradientComputer ${Vaango_CCA_Components_MPM_GradientComputer_SRCS})
 
-target_link_libraries(MPM_GradientComputer ${LIBS})
+target_link_libraries(MPM_GradientComputer 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_GradientComputer)

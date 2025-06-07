@@ -47,6 +47,8 @@ set(UDA2VTK_LIBS
   ${M_LIBRARY}
   ${MPI_LIBRARY}
   ${F_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 add_executable(uda2vtk ${UDA2VTK_SRC})

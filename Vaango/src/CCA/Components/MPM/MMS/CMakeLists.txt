@@ -31,7 +31,11 @@ SET(Vaango_CCA_Components_MPM_MMS_SRCS
 
 add_library(MPM_MMS ${Vaango_CCA_Components_MPM_MMS_SRCS})
 
-target_link_libraries(MPM_MMS ${LIBS})
+target_link_libraries(MPM_MMS 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_MMS)

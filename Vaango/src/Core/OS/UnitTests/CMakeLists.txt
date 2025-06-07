@@ -45,6 +45,8 @@ target_link_libraries(testDir
   ${GTEST_LIB}
   ${VAANGO_LIBS}
   ${CMAKE_DL_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testDir)
 add_custom_command(

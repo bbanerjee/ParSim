@@ -44,6 +44,8 @@ target_link_libraries(Vaango_CCA_Components_PostProcessUda
   Vaango_CCA_Components_Regridder
   ${XML2_LIBRARY}
   ${M_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

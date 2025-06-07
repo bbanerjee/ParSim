@@ -40,10 +40,11 @@ target_link_libraries(Vaango_CCA_Components_Regridder
   Vaango_Core_Grid
   Vaango_Core_Util
   Vaango_Core_Exceptions
-  
   ${XML2_LIBRARY}
   ${MPI_LIBS}
   ${M_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

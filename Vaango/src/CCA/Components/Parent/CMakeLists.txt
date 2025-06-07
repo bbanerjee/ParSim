@@ -62,7 +62,11 @@ ENDIF(MPM)
 
 SET(LIBS ${LIBS} ${COMPONENTS}_Peridynamics)
 
-target_link_libraries(Vaango_CCA_Components_Parent ${LIBS})
+target_link_libraries(Vaango_CCA_Components_Parent 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 
 IF(BUILD_SHARED_LIBS)

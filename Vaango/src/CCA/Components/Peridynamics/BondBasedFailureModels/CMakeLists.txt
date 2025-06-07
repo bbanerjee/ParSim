@@ -49,7 +49,11 @@ SET(LIBS
 
 add_library(Peridynamics_FailureModels ${Peridynamics_FailureModel_SRCS})
 
-target_link_libraries(Peridynamics_FailureModels ${LIBS})
+target_link_libraries(Peridynamics_FailureModels 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Peridynamics_FailureModels)

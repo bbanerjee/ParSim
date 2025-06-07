@@ -44,6 +44,8 @@ target_link_libraries(Vaango_CCA_Components_MPMICE
   ${XML2_LIBRARY}
   ${M_LIBRARY}
   ${MPI_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

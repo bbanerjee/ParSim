@@ -39,12 +39,13 @@ target_link_libraries(Vaango_CCA_Components_DataArchiver
   Vaango_Core_Exceptions
   Vaango_Core_ProblemSpec
   Vaango_CCA_Components_ProblemSpecification
-  
   Vaango_Core_OS
   ${XML2_LIBRARY}
   ${MPI_LIBS}
   ${M_LIBRARY}
   ${SOCKET_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

@@ -51,7 +51,11 @@ SET(LIBS
 
 add_library(Peridynamics_MaterialModels ${Peridynamics_MaterialModel_SRCS})
 
-target_link_libraries(Peridynamics_MaterialModels ${LIBS})
+target_link_libraries(Peridynamics_MaterialModels 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Peridynamics_MaterialModels)

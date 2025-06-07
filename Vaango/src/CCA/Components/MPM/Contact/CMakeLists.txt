@@ -50,7 +50,11 @@ set(LIBS
 add_library(MPM_Contact 
             ${Vaango_CCA_Components_MPM_Contact_SRCS})
 
-target_link_libraries(MPM_Contact ${LIBS})
+target_link_libraries(MPM_Contact 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_Contact)

@@ -78,9 +78,17 @@ IF(PETSC)
   SET(VAANGO_LIBS ${VAANGO_LIBS} ${PETSC_LIBRARY})
 ENDIF()
 
-target_link_libraries(vaango ${VAANGO_LIBS})
+target_link_libraries(vaango 
+  ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
-target_link_libraries(compare_uda ${VAANGO_LIBS})
+target_link_libraries(compare_uda 
+  ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 set(RESTART_LIBS
   Vaango_Core_DataArchive
@@ -94,13 +102,19 @@ set(RESTART_LIBS
 IF(HYPRE)
   SET(RESTART_LIBS ${RESTART_LIBS} ${HYPRE_LIBRARY})
 ENDIF()
-target_link_libraries(restart_merger ${RESTART_LIBS})
+target_link_libraries(restart_merger 
+  ${RESTART_LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
   
 target_link_libraries(slb
   Vaango_Core_GeometryPiece
   Vaango_Core_Grid
   Vaango_Core_ProblemSpec
   Vaango_CCA_Components_ProblemSpecification
+  Vaango::Options
+  Vaango::Warnings
 )  
 
 # Go to subdirectories

@@ -64,6 +64,8 @@ add_executable(${TEST} ${TEST}.cc)
 target_link_libraries(${TEST}
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST ${TEST})
 add_custom_command(

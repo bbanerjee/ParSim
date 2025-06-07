@@ -54,16 +54,38 @@ set(VAANGO_LIBS
 )
 
 add_library(ut_lib ${UT_SRCS})
-target_link_libraries(ut_lib ${VAANGO_LIBS} ${Boost_LIBRARIES}) 
+target_link_libraries(ut_lib 
+  ${VAANGO_LIBS} 
+  ${Boost_LIBRARIES}
+  Vaango::Options
+  Vaango::Warnings
+) 
 
 add_executable(boostTest boostTest.cc)
-target_link_libraries(boostTest ut_lib ${VAANGO_LIBS} ${Boost_LIBRARIES}) 
+target_link_libraries(boostTest 
+  ut_lib 
+  ${VAANGO_LIBS} 
+  ${Boost_LIBRARIES}
+  Vaango::Options
+  Vaango::Warnings
+) 
 
 #add_executable(utTest1 utTest1.cc)
-#target_link_libraries(utTest1 ut_lib ${VAANGO_LIBS} ${Boost_LIBRARIES})  
+#target_link_libraries(utTest1 
+#  ut_lib 
+#  ${VAANGO_LIBS} 
+#  ${Boost_LIBRARIES}
+#  Vaango::Options
+#  Vaango::Warnings
+#)  
 
 #add_executable(utTest0 utTest0.cc)
-#target_link_libraries(utTest0 ${Boost_LIBRARIES} ${MPI_LIBRARIES})
+#target_link_libraries(utTest0 
+#  ${Boost_LIBRARIES} 
+#  ${MPI_LIBRARIES}
+#  Vaango::Options
+#  Vaango::Warnings
+#)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_ut_lib)

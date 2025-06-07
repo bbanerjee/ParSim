@@ -64,7 +64,8 @@ target_link_libraries(Vaango_CCA_Components_Dummy
   Vaango_Core_Parallel
   Vaango_CCA_Ports
   Vaango_CCA_Components_Solvers
-  
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

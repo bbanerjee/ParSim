@@ -31,6 +31,8 @@ add_library(MPMICE_Core ${Vaango_MPMICE_Core_SRCS})
 
 target_link_libraries(MPMICE_Core
   Vaango_Core_Grid
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

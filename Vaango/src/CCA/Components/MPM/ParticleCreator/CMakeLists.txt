@@ -40,7 +40,11 @@ set(LIBS
 
 add_library(MPM_ParticleCreator ${Vaango_CCA_Components_MPM_ParticleCreator_SRCS})
 
-target_link_libraries(MPM_ParticleCreator ${LIBS})
+target_link_libraries(MPM_ParticleCreator 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
 	add_definitions(-DBUILD_MPM_ParticleCreator)

@@ -40,11 +40,11 @@ target_link_libraries(Vaango_CCA_Components_SwitchingCriteria
   Vaango_Core_Exceptions
   Vaango_Core_Grid
   Vaango_Core_Parallel
-  
-  Vaango_Core_Parallel
   Vaango_Core_Util
   Vaango_Core_ProblemSpec
   ${XML2_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

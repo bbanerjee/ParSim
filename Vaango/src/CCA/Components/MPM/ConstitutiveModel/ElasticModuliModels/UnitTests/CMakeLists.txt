@@ -76,6 +76,8 @@ add_executable(testElasticModuli_Arena testElasticModuli_Arena.cc)
 target_link_libraries(testElasticModuli_Arena
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testElasticModuli_Arena)
 add_custom_command(
@@ -88,6 +90,8 @@ add_executable(testElasticModuli_MetalIso testElasticModuli_MetalIso.cc)
 target_link_libraries(testElasticModuli_MetalIso
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testElasticModuli_MetalIso)
 #add_custom_command(
@@ -100,6 +104,8 @@ add_executable(testElasticModuli_Tabular testElasticModuli_Tabular.cc)
 target_link_libraries(testElasticModuli_Tabular
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testElasticModuli_Tabular)
 add_custom_command(
@@ -112,6 +118,8 @@ add_executable(testElasticModuli_NeuralNet testElasticModuli_NeuralNet.cc)
 target_link_libraries(testElasticModuli_NeuralNet
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testElasticModuli_NeuralNet)
 add_custom_command(
@@ -126,6 +134,8 @@ add_executable(${UNIT_TEST} ${UNIT_TEST}.cc)
 target_link_libraries(${UNIT_TEST}
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 add_custom_command(
   TARGET ${UNIT_TEST}
@@ -138,6 +148,8 @@ add_executable(${UNIT_TEST} ${UNIT_TEST}.cc)
 target_link_libraries(${UNIT_TEST}
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 add_custom_command(
   TARGET ${UNIT_TEST}

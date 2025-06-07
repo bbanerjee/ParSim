@@ -62,7 +62,11 @@ set(LIBS
 
 add_library(MPM_Diffusion ${Vaango_CCA_Components_MPM_Diffusion_SRCS})
 
-target_link_libraries(MPM_Diffusion ${LIBS})
+target_link_libraries(MPM_Diffusion 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_Diffusion)

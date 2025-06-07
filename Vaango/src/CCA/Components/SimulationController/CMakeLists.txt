@@ -45,6 +45,8 @@ target_link_libraries(Vaango_CCA_Components_SimulationController
   Vaango_CCA_Components_PostProcessUda
   ${XML2_LIBRARY}
   ${M_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

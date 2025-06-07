@@ -73,6 +73,8 @@ set(UDA2VIS_LIBS
   ${M_LIBRARY}
   ${MPI_LIBRARY}
   ${F_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 add_library(StandAlone_tools_uda2vis ${UDA2VIS_SRC})

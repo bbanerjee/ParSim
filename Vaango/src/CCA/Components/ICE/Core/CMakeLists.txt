@@ -42,6 +42,8 @@ target_link_libraries(ICE_Core
   ${XML2_LIBRARY}
   ${M_LIBRARY}
   ${MPI_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

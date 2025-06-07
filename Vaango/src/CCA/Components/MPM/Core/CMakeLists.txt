@@ -40,7 +40,11 @@ SET(Vaango_MPM_Core_SRCS
 
 add_library(MPM_Core ${Vaango_MPM_Core_SRCS})
 
-target_link_libraries(MPM_Core ${LIBS})
+target_link_libraries(MPM_Core 
+  ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
+)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_Core)

@@ -38,7 +38,6 @@ endif ()
 
 add_library(Vaango_CCA_Components_Solvers ${Vaango_CCA_Components_Solvers_SRCS})
 target_link_libraries(Vaango_CCA_Components_Solvers
-  
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
   Vaango_Core_Grid
@@ -48,12 +47,16 @@ target_link_libraries(Vaango_CCA_Components_Solvers
   ${XML2_LIBRARY}
   ${LAPACK_LIBRARY}
   ${CBLAS_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF (HYPRE)
   target_link_libraries(Vaango_CCA_Components_Solvers 
     Vaango_CCA_Components_Solvers_AMR 
     ${HYPRE_LIBRARY}
+    Vaango::Options
+    Vaango::Warnings
   )
 
   add_subdirectory(AMR)

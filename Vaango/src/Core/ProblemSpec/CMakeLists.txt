@@ -38,6 +38,8 @@ target_link_libraries(Vaango_Core_ProblemSpec
   Vaango_Core_Math
   Vaango_Core_Util
   ${XML2_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

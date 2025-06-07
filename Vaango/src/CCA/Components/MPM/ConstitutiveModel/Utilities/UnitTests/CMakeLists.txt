@@ -74,6 +74,8 @@ add_executable(testHDF5Reader testHDF5Reader.cc)
 target_link_libraries(testHDF5Reader
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testHDF5Reader)
 add_custom_command(
@@ -87,6 +89,8 @@ add_executable(testTensorUtils testTensorUtils.cc)
 target_link_libraries(testTensorUtils
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testTensorUtils)
 add_custom_command(
@@ -102,6 +106,8 @@ target_link_libraries(testYieldCondUtils
   ${VAANGO_LIBS}
   Vaango_CCA_Components_MPM
   MPM_ConstitutiveModel
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testYieldCondUtils)
 add_custom_command(
@@ -115,6 +121,8 @@ add_executable(testEigen testEigen.cc)
 target_link_libraries(testEigen
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testEigen)
 add_custom_command(
@@ -129,6 +137,8 @@ gtest_discover_tests(${UNIT_TEST})
 #  ${GTEST_LIB}
 #  ${Boost_LIBRARIES}
 #  ${VAANGO_LIBS}
+#  Vaango::Options
+#  Vaango::Warnings
 #)
 #set(UNIT_TEST testBoostAutodiff)
 #add_custom_command(
@@ -143,6 +153,8 @@ target_link_libraries(testBoostClosestPoint
   ${GTEST_LIB}
   ${Boost_LIBRARIES}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testBoostClosestPoint)
 add_custom_command(

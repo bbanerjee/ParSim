@@ -43,9 +43,9 @@ target_link_libraries(Vaango_CCA_Ports
   Vaango_Core_Grid        
   Vaango_Core_Exceptions  
   Vaango_Core_ProblemSpec 
-                        
-  Vaango_Core_Exceptions                  
   ${MPI_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

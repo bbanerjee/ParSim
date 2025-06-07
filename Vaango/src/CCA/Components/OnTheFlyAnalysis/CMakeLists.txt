@@ -52,18 +52,20 @@ target_link_libraries(Vaango_CCA_Components_OnTheFlyAnalysis
   Vaango_Core_Exceptions
   Vaango_Core_Grid
   Vaango_Core_Parallel
-  
-  Vaango_Core_Parallel
   Vaango_Core_Util
   Vaango_Core_ProblemSpec
   ${MPI_LIBRARY}
   ${XML_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 if (WIN32)
   target_link_libraries(Vaango_CCA_Components_OnTheFlyAnalysis
     ${Vaango_CCA_Components_OnTheFlyAnalysis}
     Vaango_Core_OS
+    Vaango::Options
+    Vaango::Warnings
   )
 endif()
 

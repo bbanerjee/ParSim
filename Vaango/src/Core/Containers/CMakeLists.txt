@@ -36,6 +36,8 @@ add_library(Vaango_Core_Containers ${Vaango_Core_Containers_SRCS})
 
 target_link_libraries(Vaango_Core_Containers
   Vaango_Core_Exceptions
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

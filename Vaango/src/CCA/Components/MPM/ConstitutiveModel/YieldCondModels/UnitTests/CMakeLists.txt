@@ -71,6 +71,8 @@ add_executable(testYieldCond_Tabular testYieldCond_Tabular.cc)
 target_link_libraries(testYieldCond_Tabular
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testYieldCond_Tabular)
 add_custom_command(
@@ -83,6 +85,8 @@ add_executable(testYieldCond_TabularCap testYieldCond_TabularCap.cc)
 target_link_libraries(testYieldCond_TabularCap
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testYieldCond_TabularCap)
 add_custom_command(

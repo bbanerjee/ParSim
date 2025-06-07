@@ -75,6 +75,8 @@ target_link_libraries(Vaango_Core_Util ${LIBS}
    ${DL_LIBRARY}
    ${Z_LIBRARY} 
    ${CUDA_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

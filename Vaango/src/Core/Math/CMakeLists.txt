@@ -88,6 +88,8 @@ target_link_libraries(Vaango_Core_Math
   Vaango_Core_Exceptions
   Vaango_Core_Util
   ${LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 IF(BUILD_SHARED_LIBS)

@@ -64,6 +64,8 @@ add_executable(testPressure_Air testPressure_Air.cc)
 target_link_libraries(testPressure_Air
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testPressure_Air)
 add_custom_command(
@@ -76,6 +78,8 @@ add_executable(testPressure_Water testPressure_Water.cc)
 target_link_libraries(testPressure_Water
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testPressure_Water)
 add_custom_command(
@@ -88,6 +92,8 @@ add_executable(testPressure_Granite testPressure_Granite.cc)
 target_link_libraries(testPressure_Granite
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST testPressure_Granite)
 add_custom_command(
@@ -101,6 +107,8 @@ add_executable(${TEST} ${TEST}.cc)
 target_link_libraries(${TEST}
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
 set(UNIT_TEST ${TEST})
 add_custom_command(

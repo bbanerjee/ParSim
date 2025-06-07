@@ -43,6 +43,8 @@ SET(EXTRACTOR_LIBS
   Vaango_Core_Grid
   Vaango_Core_DataArchive
   Vaango_Core_Util
+  Vaango::Options
+  Vaango::Warnings
 )
 
 target_link_libraries(selectpart ${EXTRACTOR_LIBS})

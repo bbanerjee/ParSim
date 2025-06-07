@@ -51,4 +51,6 @@ target_link_libraries(puda
   Vaango_Core_Grid
   Vaango_Core_ProblemSpec
   Vaango_Core_Util
+  Vaango::Options
+  Vaango::Warnings
 )
