@@ -34,8 +34,9 @@ set(Vaango_CCA_Components_MPM_GradientComputer_SRCS
 
 add_library(MPM_GradientComputer ${Vaango_CCA_Components_MPM_GradientComputer_SRCS})
 
-target_link_libraries(MPM_GradientComputer 
+target_link_libraries(MPM_GradientComputer PRIVATE
   ${LIBS}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

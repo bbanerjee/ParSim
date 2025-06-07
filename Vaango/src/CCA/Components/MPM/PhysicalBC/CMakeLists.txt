@@ -42,8 +42,9 @@ SET(Vaango_CCA_Components_MPM_PhysicalBC_SRCS
 
 add_library(MPM_PhysicalBC ${Vaango_CCA_Components_MPM_PhysicalBC_SRCS})
 
-target_link_libraries(MPM_PhysicalBC 
+target_link_libraries(MPM_PhysicalBC PRIVATE
   ${LIBS}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

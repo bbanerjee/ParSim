@@ -71,10 +71,12 @@ endif (HAVE_CUDA)
 
 # message(STATUS "Core/Util Linking to libraries ${LIBS} ${DL_LIBRARY} ${THREAD_LIBRARY} ${SOCKET_LIBRARY}")
 
-target_link_libraries(Vaango_Core_Util ${LIBS}
-   ${DL_LIBRARY}
-   ${Z_LIBRARY} 
-   ${CUDA_LIBRARY}
+target_link_libraries(Vaango_Core_Util PRIVATE
+  ${LIBS}
+  ${DL_LIBRARY}
+  ${Z_LIBRARY} 
+  ${CUDA_LIBRARY}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

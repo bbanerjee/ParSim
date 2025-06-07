@@ -31,8 +31,9 @@ SET(Vaango_CCA_Components_MPM_MMS_SRCS
 
 add_library(MPM_MMS ${Vaango_CCA_Components_MPM_MMS_SRCS})
 
-target_link_libraries(MPM_MMS 
+target_link_libraries(MPM_MMS PRIVATE
   ${LIBS}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

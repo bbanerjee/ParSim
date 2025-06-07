@@ -71,10 +71,10 @@ target_link_libraries(Vaango_CCA_Components_Schedulers
   Vaango_Core_Exceptions
   ${XML2_LIBRARY}
   ${TAU_LIBRARY}
-  ${MPI_LIBS}
   ${VAMPIR_LIBRARY}
   ${PERFEX_LIBRARY}
   ${CUDA_LIBRARY}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

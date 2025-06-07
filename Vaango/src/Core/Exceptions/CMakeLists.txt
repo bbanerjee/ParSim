@@ -75,8 +75,9 @@ SET(Vaango_Core_Exceptions_SRCS
 
 add_library(Vaango_Core_Exceptions ${Vaango_Core_Exceptions_SRCS})
 
-target_link_libraries(Vaango_Core_Exceptions
+target_link_libraries(Vaango_Core_Exceptions PRIVATE
   ${CMAKE_DL_LIBS}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

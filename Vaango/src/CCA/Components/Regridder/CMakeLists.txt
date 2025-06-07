@@ -41,8 +41,8 @@ target_link_libraries(Vaango_CCA_Components_Regridder
   Vaango_Core_Util
   Vaango_Core_Exceptions
   ${XML2_LIBRARY}
-  ${MPI_LIBS}
   ${M_LIBRARY}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

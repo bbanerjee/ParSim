@@ -65,13 +65,13 @@ SET(Vaango_Core_Parallel_SRCS
 
 add_library(Vaango_Core_Parallel ${Vaango_Core_Parallel_SRCS})
 
-target_link_libraries(Vaango_Core_Parallel
+target_link_libraries(Vaango_Core_Parallel PRIVATE
   Vaango_Core_Exceptions
   Vaango_Core_ProblemSpec
   Vaango_Core_Util
   ${XML2_LIBRARY}
-  ${MPI_LIBS}
   ${VAMPIR_LIBRARY}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

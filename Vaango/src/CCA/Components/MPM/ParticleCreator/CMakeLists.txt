@@ -40,8 +40,9 @@ set(LIBS
 
 add_library(MPM_ParticleCreator ${Vaango_CCA_Components_MPM_ParticleCreator_SRCS})
 
-target_link_libraries(MPM_ParticleCreator 
+target_link_libraries(MPM_ParticleCreator PRIVATE
   ${LIBS}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

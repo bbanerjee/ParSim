@@ -42,6 +42,7 @@ add_library(MPM_Core ${Vaango_MPM_Core_SRCS})
 
 target_link_libraries(MPM_Core 
   ${LIBS}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )
