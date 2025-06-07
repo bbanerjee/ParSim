@@ -43,7 +43,7 @@ target_link_libraries(Vaango_CCA_Ports
   Vaango_Core_Grid        
   Vaango_Core_Exceptions  
   Vaango_Core_ProblemSpec 
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

@@ -76,7 +76,7 @@ target_link_libraries(Vaango_Core_Grid
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_Math
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
   ${Z_LIBRARY}
   Vaango::Options
   Vaango::Warnings

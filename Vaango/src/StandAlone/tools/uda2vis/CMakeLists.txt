@@ -71,7 +71,7 @@ set(UDA2VIS_LIBS
   ${XML2_LIBRARY}
   ${Z_LIBRARY}
   ${M_LIBRARY}
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
   ${F_LIBRARY}
   Vaango::Options
   Vaango::Warnings
@@ -79,7 +79,7 @@ set(UDA2VIS_LIBS
 
 add_library(StandAlone_tools_uda2vis ${UDA2VIS_SRC})
 
-target_link_libraries(StandAlone_tools_uda2vis ${UDA2VIS_LIBS})
+target_link_libraries(StandAlone_tools_uda2vis PRIVATE ${UDA2VIS_LIBS})
 	
 if (BUILD_SHARED_LIBS)  
   add_definitions(-DBUILD_StandAlone_tools_uda2vis)

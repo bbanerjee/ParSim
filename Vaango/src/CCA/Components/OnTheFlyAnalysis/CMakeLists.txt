@@ -54,7 +54,7 @@ target_link_libraries(Vaango_CCA_Components_OnTheFlyAnalysis
   Vaango_Core_Parallel
   Vaango_Core_Util
   Vaango_Core_ProblemSpec
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
   ${XML_LIBRARY}
   Vaango::Options
   Vaango::Warnings

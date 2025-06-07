@@ -49,10 +49,10 @@ set(LIBS
   ${BLAS_LIBRARY} 
   ${LAPACK_LIBRARY} 
   ${THREAD_LIBRARY} 
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
 )
 
-target_link_libraries(Vaango_Core_Datatypes
+target_link_libraries(Vaango_Core_Datatypes PRIVATE
   Vaango_Core_Exceptions   
   Vaango_Core_Grid   
   Vaango_Core_Math         

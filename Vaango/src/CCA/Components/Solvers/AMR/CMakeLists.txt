@@ -44,7 +44,7 @@ target_link_libraries(Vaango_CCA_Components_Solvers_AMR
   Vaango_Core_ProblemSpec
   Vaango_Core_Math
   ${XML2_LIBRARY}
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
   ${LAPACK_LIBRARY}
   ${CBLAS_LIBRARY}
   ${HYPRE_LIBRARY}

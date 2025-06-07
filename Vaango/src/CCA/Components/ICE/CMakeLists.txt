@@ -55,7 +55,7 @@ SET(LIBS
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
   ${XML2_LIBRARY}
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
   ${M_LIBRARY}
 )
 

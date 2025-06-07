@@ -61,7 +61,7 @@ ENDIF()
 
 add_library(Vaango_CCA_Components_Models ${Vaango_CCA_Components_Models_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_Models 
+target_link_libraries(Vaango_CCA_Components_Models PRIVATE
   ${LIBS}
   Vaango::Options
   Vaango::Warnings

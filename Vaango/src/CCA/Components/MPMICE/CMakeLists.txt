@@ -43,7 +43,7 @@ target_link_libraries(Vaango_CCA_Components_MPMICE
   Vaango_CCA_Components_ICE
   ${XML2_LIBRARY}
   ${M_LIBRARY}
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

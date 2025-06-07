@@ -46,7 +46,7 @@ SET(LIBS
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
 )
 
 add_library(Peridynamics_MaterialModels ${Peridynamics_MaterialModel_SRCS})

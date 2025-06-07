@@ -1,181 +1,169 @@
-# - FindMPIVaango:
-#   A copy of FindSciMpi
-
-######################################################################
-# - FindSciMpi: This module looks for MPI first as being in the compilers, i.e.,
-# MPI compiler wrappers, by trying to compile sample code.  It then
-# looks for MPI using the standard CMake module, unless the compilers
-# have the Cray names, in which case we know that this will fail.
 #
-# The following varialbes are set:
+# The MIT License
 #
-# TX_HAVE_MPICXX_COMPILER_WRAPPER: TRUE if the C++ compiler automatically
-#   includes and links to MPI.  If this is named 'CC', then no further MPI
-#   searching is done.
-# TX_HAVE_MPIFC_COMPILER_WRAPPER: TRUE if the Fortran compiler automatically
-#   includes and links to MPI.  If this is named 'ftn', then no further
-#   MPI searching is done.
-# TXMPI_FOUND is set to TRUE if either of the above is true.
+# Copyright (c) 2014-2025 Biswajit Banerjee, Parresia Research Limited, NZ
 #
-# In the case where we further search using the standard MPI module,
-# and that is successfule, the following additional variables are set:
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 #
-# MPI_INCLUDE_DIRS: the directories containing the C/C++ MPI header files
-# MPI_MODULE_DIRS:  the directories containing the Fortran module files
-#                   and the Fortran include files
-# MPI_LIBRARY_DIRS: the directories containing the MPI libraries
-# MPI_EXECUTABLES:  mpiexec
-
-######################################################################
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 #
-# FindSciMpi: check whether the compiler wraps MPI, if not, find MPI
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 #
-# $Id: FindSciMpi.cmake 1245 2012-01-31 21:36:22Z dws $
+# - FindMPIVaango
+# This module leverages CMake's built-in FindMPI module for robust MPI discovery.
+# It provides project-specific variables for MPI configuration within Vaango.
 #
-# Copyright 2010-2012 Tech-X Corporation.
-# Arbitrary redistribution allowed provided this copyright remains.
+# The following variables are set:
 #
-######################################################################
+# TXMPI_FOUND: TRUE if MPI is found and configured.
+# HAVE_MPI: TRUE if MPI is found and configured (same as TXMPI_FOUND).
+#
+# If MPI is found (i.e., TXMPI_FOUND is TRUE), the following standard MPI variables
+# provided by FindMPI will be available and used by Vaango:
+#
+# MPI_C_FOUND: TRUE if C MPI is found
+# MPI_CXX_FOUND: TRUE if C++ MPI is found
+# MPI_Fortran_FOUND: TRUE if Fortran MPI is found
+#
+# MPI_INCLUDE_DIRS: the directories containing the C/C++ MPI header files.
+# MPI_MODULE_DIRS: the directories containing the Fortran module files
+#                  and the Fortran include files.
+# MPI_LIBRARY_DIRS: the directories containing the MPI libraries.
+# MPI_LIBRARIES: the list of MPI libraries to link against.
+# MPI_LINK_FLAGS: MPI-specific linker flags.
+# MPI_C_COMPILER: The C MPI compiler wrapper (e.g., mpicc).
+# MPI_CXX_COMPILER: The C++ MPI compiler wrapper (e.g., mpicxx).
+# MPI_Fortran_COMPILER: The Fortran MPI compiler wrapper (e.g., mpifort).
+# MPI_EXECUTABLE: Path to mpiexec or mpirun.
 
-set(SEARCH_FOR_MPI TRUE)
-set(HAVE_MPI 0 CACHE BOOL "Whether have MPI")
+# Make sure we don't try to find MPI multiple times
+if (TXMPI_FOUND)
+    return()
+endif()
 
-# Determine whether mpi is already in the C++ compiler
-set(TXCMAKE_DIR ${Vaango_SOURCE_DIR}/cmake)
-try_compile(TX_HAVE_MPICXX_COMPILER_WRAPPER ${PROJECT_BINARY_DIR}/CMake
-  ${TXCMAKE_DIR}/TryToCompile/mpi_h.cxx)
-if (TX_HAVE_MPICXX_COMPILER_WRAPPER)
-  message(STATUS "Using C/C++ compiler wrappers.")
-# If so, set that to the compiler
-  set(MPI_C_COMPILER ${CMAKE_C_COMPILER})
-  set(MPI_CXX_COMPILER ${CMAKE_CXX_COMPILER})
-  set(TXMPI_FOUND TRUE)
-# Search for MPI libraries not possible with Cray compiler wrappers
-  if (${CMAKE_CXX_COMPILER} MATCHES "CC$")
-    set(SEARCH_FOR_MPI FALSE)
-  endif ()
-endif ()
+# Standard find_package(MPI) handles most cases including compiler wrappers.
+# It will check for C, C++, and Fortran MPI.
+# FindMPI will automatically try compiling test programs with compiler wrappers
+# (like mpicxx, mpifort) before falling back to system-wide searches.
 
-# If have fortran determine whether mpi is already in the Fortran compiler
-if (CMAKE_Fortran_COMPILER_WORKS)
-  try_compile(TX_HAVE_MPIFC_COMPILER_WRAPPER ${PROJECT_BINARY_DIR}/CMake
-    ${TXCMAKE_DIR}/TryToCompile/mpi_mod.f90)
-  if (TX_HAVE_MPIFC_COMPILER_WRAPPER)
-    message(STATUS "Using Fortran compiler wrapper.")
-    set(MPI_Fortran_COMPILER ${CMAKE_Fortran_COMPILER})
-    set(TXMPI_FOUND TRUE)
-  endif ()
-# Search for MPI libraries not possible with Cray compiler wrappers
-  if (${CMAKE_Fortran_COMPILER} MATCHES "ftn$")
-    set(SEARCH_FOR_MPI FALSE)
-  endif ()
-endif ()
+# The REQUIRED argument is passed directly from the parent find_package call.
+# This variable is set by the standard FindPackageHandleStandardArgs module
+# which FindMPI uses.
+# IF MPIVaango_FIND_REQUIRED is true then we set the REQUIRED argument.
+# This handles the case where a higher-level CMakeLists.txt calls
+# find_package(MPIVaango REQUIRED)
+set(MPI_FIND_QUIETLY ${MPIVaango_FIND_QUIETLY})
+set(MPI_FIND_REQUIRED ${MPIVaango_FIND_REQUIRED})
+set(MPI_FIND_COMPONENTS ${MPIVaango_FIND_COMPONENTS})
+set(MPI_FIND_VERSION ${MPIVaango_FIND_VERSION})
 
-# Pass down the required variable.  This has file name capitalization.
-if (SEARCH_FOR_MPI)
-  if (MPIVaango_FIND_REQUIRED)
-    set(mpireq REQUIRED)
-  else ()
-    set(mpireq)
-  endif ()
-  find_package(MPI ${mpireq})
-endif ()
+# Use CMake's standard FindMPI module.
+# FindMPI will set MPI_FOUND, MPI_C_FOUND, MPI_CXX_FOUND, MPI_Fortran_FOUND,
+# and all the other MPI_... variables.
+message(STATUS "Searching for MPI using CMake's FindMPI module...")
+find_package(MPI)
 
-# Either gives MPI
-if (MPI_FOUND OR TXMPI_FOUND)
-  set(HAVE_MPI 1)
-endif ()
-
-# If know more than compiler wrappers, pull out standard values
+# After find_package(MPI) completes, MPI_FOUND will be set.
+# We map MPI_FOUND to TXMPI_FOUND and HAVE_MPI for consistency with existing Vaango code.
 if (MPI_FOUND)
+    set(TXMPI_FOUND TRUE CACHE INTERNAL "MPI found by FindMPIVaango.")
+    set(HAVE_MPI 1 CACHE BOOL "Whether have MPI.") # For consistency with original code
+    message(STATUS "MPI found and configured.")
 
-# Fix the variables
-  set(MPI_INCLUDE_DIRS ${MPI_INCLUDE_PATH})
+    # In modern CMake, you should typically use the imported targets provided by FindMPI.
+    # e.g., target_link_libraries(my_app PRIVATE MPI::MPI_CXX)
+    #
+    # However, if existing Vaango code explicitly uses MPI_INCLUDE_DIRS, MPI_LIBRARIES, etc.,
+    # then these variables are already set by FindMPI.
+    # No need to re-construct MPI_INCLUDE_DIRS, MPI_LIBRARY_DIRS, or MPI_EXECUTABLES.
+    # FindMPI already provides these.
 
-# Get the library dirs.
-# Assuming that finding fortran libs later will not affect this.
-  set(MPI_LIBRARY_DIRS)
-  foreach (lib ${MPI_LIBRARIES})
-    get_filename_component(dir ${lib}/.. REALPATH)
-    set(MPI_LIBRARY_DIRS ${MPI_LIBRARY_DIRS} ${dir})
-  endforeach ()
-  if (MPI_LIBRARY_DIRS)
-    list(REMOVE_DUPLICATES MPI_LIBRARY_DIRS)
-  endif ()
+    # Example: Print some key variables set by FindMPI for verification
+    if (MPI_C_FOUND)
+        message(STATUS "MPI C compiler: ${MPI_C_COMPILER}")
+        message(STATUS "MPI C includes: ${MPI_C_INCLUDE_PATH}")
+        message(STATUS "MPI C libraries: ${MPI_C_LIBRARIES}")
+    endif()
+    if (MPI_CXX_FOUND)
+        message(STATUS "MPI CXX compiler: ${MPI_CXX_COMPILER}")
+        message(STATUS "MPI CXX includes: ${MPI_CXX_INCLUDE_PATH}")
+        message(STATUS "MPI CXX libraries: ${MPI_CXX_LIBRARIES}")
+    endif()
+    if (MPI_Fortran_FOUND)
+        message(STATUS "MPI Fortran compiler: ${MPI_Fortran_COMPILER}")
+        message(STATUS "MPI Fortran includes: ${MPI_Fortran_INCLUDE_PATH}")
+        message(STATUS "MPI Fortran module dirs: ${MPI_Fortran_MODULE_DIR}")
+        message(STATUS "MPI Fortran libraries: ${MPI_Fortran_LIBRARIES}")
+    endif()
 
-# If fortran libraries not found, look for them in the MPI_DIRS by names
-  if (CMAKE_Fortran_COMPILER_WORKS AND NOT MPI_Fortran_LIBRARIES)
-    foreach (libname mpifort mpi_f90 mpi_f77 msmpifec)
-      find_library(MPI_${libname} ${libname} ${MPI_LIBRARY_DIRS})
-      if (MPI_${libname})
-        message(STATUS "Found MPI Fortran library MPI_${libname}")
-        set(MPI_Fortran_LIBRARIES ${MPI_Fortran_LIBRARIES} ${MPI_${libname}})
-      endif ()
-    endforeach ()
-# Fortran depends on C
-    set(MPI_Fortran_LIBRARIES ${MPI_Fortran_LIBRARIES} ${MPI_C_LIBRARIES})
-  endif ()
+    message(STATUS "MPI include directories: ${MPI_INCLUDE_DIRS}")
+    message(STATUS "MPI library directories: ${MPI_LIBRARY_DIRS}")
+    message(STATUS "MPI libraries to link: ${MPI_LIBRARIES}")
+    message(STATUS "MPI executables: ${MPI_EXECUTABLE}")
+    message(STATUS "MPI link flags: ${MPI_LINK_FLAGS}")
 
-# Get master library list, removing duplicates
-  set(mpilibs ${MPI_LIBRARIES})
-  if (MPI_Fortran_LIBRARIES)
-    message(STATUS "Adding fortran mpi libraries, ${MPI_Fortran_LIBRARIES}, to mpi libraries.")
-    set(mpilibs ${MPI_Fortran_LIBRARIES} ${mpilibs})
-  endif ()
-  if (mpilibs)
-    list(REVERSE mpilibs)
-    list(REMOVE_DUPLICATES mpilibs)
-    list(REVERSE mpilibs)
-# Strip any system libs off and put final result into NAMES and LIBRARIES
-    set(MPI_LIBRARIES)
-    set(MPI_LIBRARY_NAMES)
-    foreach (lib ${mpilibs})
-      if (${lib} MATCHES "/libdl\\." OR ${lib} MATCHES "/libnsl\\." OR ${lib} MATCHES "/libutil\\." OR ${lib} MATCHES "/libm\\.")
-      else ()
-        set(MPI_LIBRARIES ${MPI_LIBRARIES} ${lib})
-        get_filename_component(libname ${lib} NAME_WE)
-        string(REGEX REPLACE "^lib" "" libname ${libname})
-        set(MPI_LIBRARY_NAMES ${MPI_LIBRARY_NAMES} ${libname})
-      endif ()
-    endforeach ()
-# Get static libs
-    # message(STATUS "Getting static libraries for ${MPI_LIBRARIES}")
-    #SciGetStaticLibs("${MPI_LIBRARIES}" MPI_STLIBS)
-  endif ()
+else ()
+    # MPI was not found by find_package(MPI)
+    set(TXMPI_FOUND FALSE CACHE INTERNAL "MPI not found by FindMPIVaango.")
+    set(HAVE_MPI 0 CACHE BOOL "Whether have MPI.") # For consistency with original code
 
-# Assume only one include dir
-  if (MPI_DIR AND MPI_INCLUDE_DIRS)
-    get_filename_component(MPI_DIR ${MPI_INCLUDE_DIRS}/.. REALPATH)
-  endif ()
-
-# Get module includes
-  set(MPI_MODULE_DIRS ${MPI_Fortran_INCLUDE_PATH})
-
-# Get the executables
-  set(MPI_EXECUTABLES ${MPIEXEC})
-
-# MPI link for flags
-# The string strip line is needed because cmake
-# doesn't allow for leading/trailing whitespace.
-#
-# Kludge for strip call
-  if (MPI_LINK_FLAGS)
-    string(STRIP "${MPI_LINK_FLAGS}" MPI_LINK_FLAGS)
-  endif ()
-
-  message(STATUS "Enabling MPI")
-  #sciPrintCMakeResults("MPI")
-  #sciPrintVar(MPI_LINK_FLAGS)
-
-# Pass up the found variable.  This is all caps.
-  set(TXMPI_FOUND TRUE)
-
+    if (MPIVaango_FIND_REQUIRED)
+        message(FATAL_ERROR "MPI required but not found by FindMPIVaango.")
+    else ()
+        message(STATUS "MPI not found. Vaango will be built without MPI support.")
+    endif ()
 endif ()
 
-if (NOT TXMPI_FOUND)
-  if (MPIVaango_FIND_REQUIRED)
-    message(FATAL_ERROR "MPI required but not found.")
-  else ()
-    message(STATUS "MPI not enabled.")
-  endif ()
-endif ()
+# Handle the `TX_HAVE_MPICXX_COMPILER_WRAPPER` and `TX_HAVE_MPIFC_COMPILER_WRAPPER`
+# if they are truly needed *outside* the scope of standard MPI variables.
+# Modern FindMPI (since CMake 3.0) does internal checks with try_compile.
+# If these flags are merely indicators that a compiler wrapper was used,
+# MPI_C_COMPILER, MPI_CXX_COMPILER, and MPI_Fortran_COMPILER
+# would already reflect the wrapper paths (e.g., /usr/bin/mpicxx)
+# if CMake found MPI via those wrappers.
+
+# However, if for some reason Vaango's build system specifically needs to know
+# if `CC` or `ftn` were the *exact* compilers that supplied MPI,
+# we can add a lightweight check *after* FindMPI has run:
+
+if (TXMPI_FOUND)
+    # Check if the primary CXX compiler used for MPI is a Cray-like wrapper
+    if (MPI_CXX_COMPILER AND ${MPI_CXX_COMPILER} MATCHES "CC$")
+        set(TX_HAVE_MPICXX_COMPILER_WRAPPER TRUE CACHE INTERNAL "MPI C++ automatically included/linked by CC compiler wrapper.")
+        message(STATUS "Detected MPI C++ compiler is 'CC' wrapper.")
+    endif()
+
+    # Check if the primary Fortran compiler used for MPI is a Cray-like wrapper
+    if (MPI_Fortran_COMPILER AND ${MPI_Fortran_COMPILER} MATCHES "ftn$")
+        set(TX_HAVE_MPIFC_COMPILER_WRAPPER TRUE CACHE INTERNAL "MPI Fortran automatically included/linked by ftn compiler wrapper.")
+        message(STATUS "Detected MPI Fortran compiler is 'ftn' wrapper.")
+    endif()
+endif()
+
+# Cleanup variables used internally by this module if not needed externally
+# unset(MPI_FIND_QUIETLY)
+# unset(MPI_FIND_REQUIRED)
+# unset(MPI_FIND_COMPONENTS)
+# unset(MPI_FIND_VERSION)
+
+include(FindPackageHandleStandardArgs)
+# Use FPHSA to set TXMPI_FOUND (final result) and issue messages.
+# This assumes that MPIVaango_FIND_REQUIRED is passed as a REQUIRED argument
+# to the parent find_package call, or derived from it as done above.
+find_package_handle_standard_args(MPIVaango
+    REQUIRED_VARS MPI_C_FOUND MPI_CXX_FOUND MPI_Fortran_FOUND # Or just MPI_FOUND
+    FAIL_MESSAGE "Could not find a complete MPI installation."
+    VERSION_VAR MPI_VERSION
+)

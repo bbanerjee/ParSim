@@ -41,12 +41,13 @@ include_directories(${GTEST_INCLUDE_DIR})
 add_executable(testDir testDir.cc)
 target_include_directories(testDir PRIVATE
                            ${CMAKE_SOURCE_DIR}/Core/OS) 
-target_link_libraries(testDir
+target_link_libraries(testDir PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
   ${CMAKE_DL_LIBS}
   Vaango::Options
   Vaango::Warnings
+  MPI::MPI_CXX
 )
 set(UNIT_TEST testDir)
 add_custom_command(

@@ -88,7 +88,7 @@ SET(LIBS
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
 )
 
 add_library(Vaango_CCA_Components_MPM ${Vaango_CCA_Components_MPM_SRCS})

@@ -261,6 +261,85 @@ if(CMAKE_BUILD_TYPE)
 endif()
 
 #----------------------------------------------------------------------------
+# Fortran settings
+#----------------------------------------------------------------------------
+# NO_FORTRAN and DEF_NO_FORTRAN settings
+# NO_FORTRAN is used in configVars.mk[.in] and 
+# DEF_NO_FORTRAN is used in uintah_testdefs.h.in
+if (CMAKE_Fortran_COMPILER)
+    # Fortran compiler was found and enabled by the project() command
+    set(NO_FORTRAN "no")
+    set(DEF_NO_FORTRAN "") # No #define NO_FORTRAN needed if Fortran is enabled
+    message(STATUS "Fortran compiler found: ${CMAKE_Fortran_COMPILER}")
+else ()
+    # Fortran compiler was NOT found, even though requested in project()
+    # This scenario is less common if Fortran is a strict requirement,
+    # as project() would typically error out if a language isn't found.
+    # However, it's good to be robust.
+    set(NO_FORTRAN "yes")
+    set(DEF_NO_FORTRAN "#define NO_FORTRAN")
+    message(FATAL_ERROR "Fortran compiler not found, even though specified in project() command. Fortran-dependent features will be disabled.")
+endif ()
+
+message(STATUS "Fortran compiler ID: ${CMAKE_Fortran_COMPILER_ID}")
+
+# Set default values for Fortran underscore style and library.
+# These defaults can be overridden based on specific compiler IDs.
+set(FORTRAN_UNDERSCORE "end" CACHE STRING "What type of Fortran underscore style - linux,end,none")
+set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
+set(F_LIBRARY "" CACHE STRING "Fortran runtime library to link")
+
+# Modern approach using CMAKE_Fortran_COMPILER_ID
+# CMake's internal modules often handle linking the correct runtime library
+# automatically when you enable the Fortran language for targets.
+# However, if explicit linking is still required, use find_library.
+if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    # GFortran typically uses an "end" underscore style.
+    # CMake's Fortran language support usually links libgfortran automatically.
+    # If not, you could explicitly find it:
+    # find_library(F_LIBRARY NAMES gfortran)
+    set(FORTRAN_UNDERSCORE "end" CACHE STRING "What type of Fortran underscore style - linux,end,none")
+    set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
+    message(STATUS "Configured for GFortran.")
+elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
+    # Intel Fortran (ifort) also typically uses an "end" underscore style.
+    # CMake usually handles ifort runtime libraries automatically.
+    # If not, you might need to find ifcore or other Intel libraries.
+    # find_library(F_LIBRARY NAMES ifcore)
+    set(FORTRAN_UNDERSCORE "end" CACHE STRING "What type of Fortran underscore style - linux,end,none")
+    set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
+    message(STATUS "Configured for Intel Fortran.")
+elseif (CMAKE_Fortran_COMPILER_ID MATCHES "PGI|NVHPC") # PGI is now NVHPC SDK
+    # PGI/NVHPC Fortran typically uses an "end" underscore style.
+    # find_library(F_LIBRARY NAMES pgftnrtl)
+    set(FORTRAN_UNDERSCORE "end" CACHE STRING "What type of Fortran underscore style - linux,end,none")
+    set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
+    message(STATUS "Configured for PGI/NVHPC Fortran.")
+elseif (CMAKE_Fortran_COMPILER_ID MATCHES "XL") # IBM XL Fortran
+    # XL Fortran typically uses a "none" underscore style.
+    # find_library(F_LIBRARY NAMES xlf90)
+    set(FORTRAN_UNDERSCORE "none" CACHE STRING "What type of Fortran underscore style - linux,end,none")
+    set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_NONE")
+    message(STATUS "Configured for IBM XL Fortran.")
+elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Cray")
+    # Cray Fortran (ftn) might handle things differently, often no explicit linking needed.
+    set(FORTRAN_UNDERSCORE "end" CACHE STRING "What type of Fortran underscore style - linux,end,none") # Common for Cray
+    set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
+    message(STATUS "Configured for Cray Fortran.")
+else ()
+    # Fallback for unknown compilers.
+    message(WARNING "Unknown Fortran compiler ID: ${CMAKE_Fortran_COMPILER_ID}. "
+                    "Assuming default underscore style 'end' and automatic runtime library linking.")
+    # If Fortran is essential and you can't proceed without a known compiler,
+    # consider uncommenting the FATAL_ERROR below:
+    # message(FATAL_ERROR "Unsupported Fortran compiler ID: ${CMAKE_Fortran_COMPILER_ID}")
+endif ()
+
+message(STATUS "Fortran underscore style: ${FORTRAN_UNDERSCORE}")
+message(STATUS "Fortran underscore define: ${DEF_FORTRAN_UNDERSCORE}")
+message(STATUS "Fortran library: ${F_LIBRARY}")
+
+#----------------------------------------------------------------------------
 # Type size checks and endianness detection
 #----------------------------------------------------------------------------
 check_type_size("long long" SIZEOF_LONG_LONG)
@@ -378,101 +457,6 @@ else()
   set(USE_ICE   "no")
 endif()
 
-# NO_FORTRAN is used in configVars.mk[.in] and DEF_NO_FORTRAN is used in uintah_testdefs.h.in
-if (FORTRAN)
-  set(NO_FORTRAN "no")
-else ()
-  set(NO_FORTRAN "yes")
-  set(DEF_NO_FORTRAN "#define NO_FORTRAN")
-endif ()
-
-#message(STATUS "After NO_FORTRAN: Compiling FORTRAN code? ${FORTRAN}")
-
-#--------------------------------------------------------------------------------
-# Name mangling etc. for fortran files
-# Most fortran compilers need an "_" for C function names.
-# Some have strange underscore needs.  This flag is used in the
-# tools/fspec.pl.in file to generate the correct
-# cname of the fortran function.
-#--------------------------------------------------------------------------------
-enable_language(Fortran)
-
-string(REGEX MATCH ftn HAVE_CRAYFTN ${CMAKE_Fortran_COMPILER})
-string(REGEX MATCH gfortran HAVE_GFORTRAN ${CMAKE_Fortran_COMPILER})
-string(REGEX MATCH f90 HAVE_GFORTRAN ${CMAKE_Fortran_COMPILER})
-#string(REGEX MATCH f95 HAVE_GFORTRAN ${CMAKE_Fortran_COMPILER})
-string(REGEX MATCH xlf HAVE_XLF ${CMAKE_Fortran_COMPILER})
-string(REGEX MATCH pg77 HAVE_PG77 ${CMAKE_Fortran_COMPILER})
-string(REGEX MATCH g77 HAVE_G77 ${CMAKE_Fortran_COMPILER})
-string(REGEX MATCH ifort HAVE_ifort ${CMAKE_Fortran_COMPILER})
-string(REGEX MATCH f77 HAVE_F77 ${CMAKE_Fortran_COMPILER})
-
-# In case regex match fails
-if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-  set(HAVE_GFORTRAN 1)
-endif()
-if(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
-  set(HAVE_ifort 1)
-endif()
-if(CMAKE_Fortran_COMPILER_ID MATCHES "PGI")
-  set(HAVE_PG77 1)
-endif()
-
-message(STATUS "Fortran compiler ${CMAKE_Fortran_COMPILER}")
-message(STATUS "Fortran compiler ID ${CMAKE_Fortran_COMPILER_ID}")
-message(STATUS "HAVE_GFORTRAN ${HAVE_GFORTRAN}")
-
-# DON'T USE find_library - many machine's paths are compiler specific.  The *right* thing would be
-#   to compile a program looking for the fortran lib, but this is probably good enough
-if(HAVE_CRAYFTN)
-  #find_library(F_LIBRARY NAMES ftn)
-  set(F_LIBRARY "" CACHE STRING "fortran library")
-  set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
-  set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
-  message(STATUS "Have CRAY ftn. Setting libraries to ${F_LIBRARY}")
-elseif(HAVE_GFORTRAN)
-  set(F_LIBRARY gfortran CACHE STRING "fortran library")
-  find_library(F_LIBRARY NAMES gfortran)
-  set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
-  set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
-  message(STATUS "Have gfortran. Setting libraries. ${F_LIBRARY}")
-elseif(HAVE_XLF)
-  set(F_LIBRARY xlf90 CACHE STRING "fortran library")
-  find_library(F_LIBRARY NAMES xlf90)
-  set(FORTRAN_UNDERSCORE none CACHE STRING "What type of fortran underscore style - linux,end,none")
-  set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_NONE")
-elseif(HAVE_PGF77)
-  set(F_LIBRARY pgftnrtl CACHE STRING "fortran library")
-  find_library(F_LIBRARY NAMES pgftnrtl)
-  set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
-  set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
-elseif(HAVE_G77)
-  set(F_LIBRARY g2c CACHE STRING "fortran library")
-  find_library(F_LIBRARY NAMES g2c)
-  set(FORTRAN_UNDERSCORE linux CACHE STRING "What type of fortran underscore style - linux,end,none")
-  set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_LINUX")
-elseif(HAVE_ifort)
-  set(F_LIBRARY ifcore CACHE STRING "fortran library")
-  find_library(F_LIBRARY NAMES ifcore)
-  set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
-  set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
-  message(STATUS "Have ifort. Setting libraries. ${F_LIBRARY}")
-elseif(HAVE_F77)
-  # sgi needs ftn fortran
-  #if(CMAKE_SYSTEM MATCHES "IRIX.*")
-  #set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
-  # dec needs for Ufor
-  #if(CMAKE_SYSTEM MATCHES "OSF.*")
-  # find_library(F_LIBRARY NAMES ........)
-  #set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
-  set(FORTRAN_UNDERSCORE end CACHE STRING "What type of fortran underscore style - linux,end,none")
-  set(FORTRAN_LIBRARY "" CACHE STRING "fortran library")
-  set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
-else()
-  message(FATAL_ERROR "Cannot find fortran library")
-endif()
-
-
 #--------------------------------------------------
 # Set the local module path
 #--------------------------------------------------
@@ -488,7 +472,7 @@ configure_file(${Vaango_SOURCE_DIR}/tools/fspec.pl.in ${FSPEC})
 #----------------------------------------------------------------------------------
 # Find the MPI package to use
 #----------------------------------------------------------------------------------
-find_package(MPIVaango REQUIRED)
+find_package(MPI REQUIRED)
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
   set(MPI_DIR "" CACHE PATH "Path to MPI")

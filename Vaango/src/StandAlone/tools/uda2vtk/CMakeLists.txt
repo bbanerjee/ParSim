@@ -45,12 +45,12 @@ set(UDA2VTK_LIBS
   ${XML2_LIBRARY}
   ${Z_LIBRARY}
   ${M_LIBRARY}
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
   ${F_LIBRARY}
   Vaango::Options
   Vaango::Warnings
 )
 
 add_executable(uda2vtk ${UDA2VTK_SRC})
-target_link_libraries(uda2vtk ${UDA2VTK_LIBS})
+target_link_libraries(uda2vtk PRIVATE ${UDA2VTK_LIBS})
 	

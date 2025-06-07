@@ -41,7 +41,7 @@ target_link_libraries(ICE_Core
   Vaango_Core_Math
   ${XML2_LIBRARY}
   ${M_LIBRARY}
-  ${MPI_LIBRARY}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )
