@@ -32,10 +32,9 @@ SET(Vaango_CCA_Components_Solvers_AMR_SRCS
 add_subdirectory(HypreSolvers) 
 add_subdirectory(HyprePreconds)
 
-# message(STATUS "XML2 library is ${XML2_LIBRARY}")
 # message(STATUS "Hypre library is ${HYPRE_LIBRARY}")
 add_library(Vaango_CCA_Components_Solvers_AMR ${Vaango_CCA_Components_Solvers_AMR_SRCS})
-target_link_libraries(Vaango_CCA_Components_Solvers_AMR
+target_link_libraries(Vaango_CCA_Components_Solvers_AMR PRIVATE
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
   Vaango_Core_Grid
@@ -43,11 +42,11 @@ target_link_libraries(Vaango_CCA_Components_Solvers_AMR
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_Math
-  ${XML2_LIBRARY}
-  MPI::MPI_CXX
   ${LAPACK_LIBRARY}
   ${CBLAS_LIBRARY}
   ${HYPRE_LIBRARY}
+  LibXml2::LibXml2
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

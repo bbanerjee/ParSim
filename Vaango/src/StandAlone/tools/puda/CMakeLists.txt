@@ -23,7 +23,7 @@
 # IN THE SOFTWARE.
 #
 
-ADD_EXECUTABLE(puda 
+add_executable(puda 
   asci.cc        
   jacquie.cc     
   monica1.cc     

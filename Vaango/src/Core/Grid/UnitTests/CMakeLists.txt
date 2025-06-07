@@ -40,9 +40,10 @@ include_directories(${GTEST_INCLUDE_DIR})
 add_executable(testMaterialManager testMaterialManager.cc)
 target_include_directories(testMaterialManager PRIVATE
                            ${CMAKE_SOURCE_DIR}/Core/Grid) 
-target_link_libraries(testMaterialManager
+target_link_libraries(testMaterialManager PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
 )

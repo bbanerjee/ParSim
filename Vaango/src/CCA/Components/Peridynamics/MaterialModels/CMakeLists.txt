@@ -37,22 +37,21 @@ SET(LIBS
   Vaango_CCA_Ports
   Vaango_Core_Grid
   Vaango_Core_Util
-  
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
-  ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}
-  MPI::MPI_CXX
 )
 
 add_library(Peridynamics_MaterialModels ${Peridynamics_MaterialModel_SRCS})
 
-target_link_libraries(Peridynamics_MaterialModels 
+target_link_libraries(Peridynamics_MaterialModels PRIVATE
   ${LIBS}
+  LibXml2::LibXml2
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

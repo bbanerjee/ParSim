@@ -41,16 +41,16 @@ SET(LIBS
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
-  ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}
-  MPI::MPI_CXX
 )
 
 add_library(Peridynamics_FailureModels ${Peridynamics_FailureModel_SRCS})
 
-target_link_libraries(Peridynamics_FailureModels 
+target_link_libraries(Peridynamics_FailureModels PRIVATE
   ${LIBS}
+  LibXml2::LibXml2
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

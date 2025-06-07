@@ -77,10 +77,8 @@ SET(LIBS
   MPM_Core
   MPM_ParticleCreator
   MPM_GradientComputer
-  ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}
-  MPI::MPI_CXX
   ${HDF5_LIBRARY}
 )
 
@@ -88,8 +86,10 @@ SET(LIBS
 
 add_library(MPM_ConstitutiveModel ${MPM_ConstitutiveModel_SRCS})
 
-target_link_libraries(MPM_ConstitutiveModel 
+target_link_libraries(MPM_ConstitutiveModel PRIVATE
   ${LIBS}
+  LibXml2::LibXml2
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

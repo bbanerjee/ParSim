@@ -42,7 +42,7 @@ target_link_libraries(Vaango_CCA_Components_PostProcessUda
   Vaango_Core_Util
   Vaango_CCA_Components_DataArchiver
   Vaango_CCA_Components_Regridder
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   ${M_LIBRARY}
   Vaango::Options
   Vaango::Warnings

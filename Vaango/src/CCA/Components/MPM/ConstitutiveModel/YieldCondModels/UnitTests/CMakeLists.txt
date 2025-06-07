@@ -68,9 +68,11 @@ set(GTEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
 add_executable(testYieldCond_Tabular testYieldCond_Tabular.cc)
-target_link_libraries(testYieldCond_Tabular
+target_link_libraries(testYieldCond_Tabular PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -82,9 +84,11 @@ add_custom_command(
 )
 
 add_executable(testYieldCond_TabularCap testYieldCond_TabularCap.cc)
-target_link_libraries(testYieldCond_TabularCap
+target_link_libraries(testYieldCond_TabularCap PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )

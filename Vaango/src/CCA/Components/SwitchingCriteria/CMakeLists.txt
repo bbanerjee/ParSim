@@ -42,7 +42,7 @@ target_link_libraries(Vaango_CCA_Components_SwitchingCriteria
   Vaango_Core_Parallel
   Vaango_Core_Util
   Vaango_Core_ProblemSpec
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
 )

@@ -54,8 +54,6 @@ SET(LIBS
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  ${XML2_LIBRARY}
-  MPI::MPI_CXX
   ${M_LIBRARY}
 )
 
@@ -67,8 +65,10 @@ IF(HYPRE_LIBRARY)
   SET(LIBS ${LIBS} ${HYPRE_LIBRARY})
 ENDIF(HYPRE_LIBRARY)
 
-target_link_libraries(Vaango_CCA_Components_ICE 
+target_link_libraries(Vaango_CCA_Components_ICE PRIVATE
   ${LIBS}
+  LibXml2::LibXml2
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

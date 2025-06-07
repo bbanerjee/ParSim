@@ -33,15 +33,15 @@ SET(Vaango_CCA_Components_Regridder_SRCS
 
 add_library(Vaango_CCA_Components_Regridder ${Vaango_CCA_Components_Regridder_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_Regridder
+target_link_libraries(Vaango_CCA_Components_Regridder PRIVATE
   Vaango_CCA_Ports
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Grid
   Vaango_Core_Util
   Vaango_Core_Exceptions
-  ${XML2_LIBRARY}
   ${M_LIBRARY}
+  LibXml2::LibXml2
   MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings

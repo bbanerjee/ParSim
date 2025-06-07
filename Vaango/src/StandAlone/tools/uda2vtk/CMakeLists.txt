@@ -42,7 +42,7 @@ set(UDA2VTK_LIBS
   Vaango_CCA_Components_ProblemSpecification 
   Vaango_Core_Containers   
   Vaango_Core_Datatypes    
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   ${Z_LIBRARY}
   ${M_LIBRARY}
   MPI::MPI_CXX

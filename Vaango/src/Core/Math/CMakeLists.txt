@@ -77,8 +77,6 @@ set(LIBS
  ${LAPACK_LIBRARY} 
  ${BLAS_LIBRARY} 
  ${F_LIBRARY} 
- ${XML2_LIBRARY} 
- MPI::MPI_CXX 
  ${TEEM_LIBRARY} 
  ${PNG_LIBRARY} 
  ${Z_LIBRARY}
@@ -88,6 +86,8 @@ target_link_libraries(Vaango_Core_Math PRIVATE
   Vaango_Core_Exceptions
   Vaango_Core_Util
   ${LIBS}
+  LibXml2::LibXml2 
+  MPI::MPI_CXX 
   Vaango::Options
   Vaango::Warnings
 )

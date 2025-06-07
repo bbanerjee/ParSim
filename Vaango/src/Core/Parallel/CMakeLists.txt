@@ -69,7 +69,7 @@ target_link_libraries(Vaango_Core_Parallel PRIVATE
   Vaango_Core_Exceptions
   Vaango_Core_ProblemSpec
   Vaango_Core_Util
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   ${VAMPIR_LIBRARY}
   MPI::MPI_CXX
   Vaango::Options

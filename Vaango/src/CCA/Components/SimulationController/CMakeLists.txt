@@ -31,7 +31,7 @@ SET(Vaango_CCA_Components_SimulationController_SRCS
 
 add_library(Vaango_CCA_Components_SimulationController ${Vaango_CCA_Components_SimulationController_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_SimulationController
+target_link_libraries(Vaango_CCA_Components_SimulationController PRIVATE
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions
@@ -43,8 +43,8 @@ target_link_libraries(Vaango_CCA_Components_SimulationController
   Vaango_CCA_Components_DataArchiver
   Vaango_CCA_Components_Regridder
   Vaango_CCA_Components_PostProcessUda
-  ${XML2_LIBRARY}
   ${M_LIBRARY}
+  LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
 )

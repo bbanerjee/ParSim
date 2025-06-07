@@ -28,7 +28,7 @@ SET(Vaango_Core_DataArchive_SRCS
 
 add_library(Vaango_Core_DataArchive ${Vaango_Core_DataArchive_SRCS})
 
-target_link_libraries(Vaango_Core_DataArchive
+target_link_libraries(Vaango_Core_DataArchive PRIVATE
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
@@ -36,7 +36,7 @@ target_link_libraries(Vaango_Core_DataArchive
   Vaango_CCA_Components_ProblemSpecification
   Vaango_Core_Grid
   Vaango_Core_Exceptions
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
 )

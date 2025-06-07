@@ -23,7 +23,7 @@
 #
 
 IF(NOT WIN32)
-  ADD_EXECUTABLE(dumpfields dumpfields.cc
+  add_executable(dumpfields dumpfields.cc
     utils.cc
     Args.cc
     FieldSelection.cc
@@ -38,9 +38,11 @@ IF(NOT WIN32)
     HistogramDumper.cc
   )
 
-  target_link_libraries(dumpfields
+  target_link_libraries(dumpfields PRIVATE
     Vaango_Core_DataArchive   
     Vaango_Core_OS
+    Vaango_Core_Grid
+    MPI::MPI_CXX
     Vaango::Options
     Vaango::Warnings
   )

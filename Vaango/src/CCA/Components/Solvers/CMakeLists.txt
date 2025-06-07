@@ -37,16 +37,16 @@ IF (HYPRE)
 endif ()
 
 add_library(Vaango_CCA_Components_Solvers ${Vaango_CCA_Components_Solvers_SRCS})
-target_link_libraries(Vaango_CCA_Components_Solvers
+target_link_libraries(Vaango_CCA_Components_Solvers PRIVATE
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
   Vaango_Core_Grid
   Vaango_Core_Util
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
-  ${XML2_LIBRARY}
   ${LAPACK_LIBRARY}
   ${CBLAS_LIBRARY}
+  LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
 )

@@ -75,11 +75,11 @@ endif (CUDA)
 
 add_library(Vaango_CCA_Components_Examples ${Vaango_CCA_Components_Examples_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_Examples
+target_link_libraries(Vaango_CCA_Components_Examples PRIVATE
   ${Examples_LIBS}
-  ${XML2_LIBRARY}
   ${M_LIBRARY}
   ${CUDA_LIBRARY}
+  LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
 )

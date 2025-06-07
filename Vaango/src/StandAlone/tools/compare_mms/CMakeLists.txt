@@ -22,9 +22,12 @@
 # IN THE SOFTWARE.
 #
 
-ADD_EXECUTABLE(compare_mms compare_mms.cc ExpMMS.cc LinearMMS.cc SineMMS.cc)
-target_link_libraries(compare_mms 
+add_executable(compare_mms compare_mms.cc ExpMMS.cc LinearMMS.cc SineMMS.cc)
+target_link_libraries(compare_mms PRIVATE
   Vaango_Core_DataArchive 
+  Vaango_CCA_Components_ProblemSpecification
+  Vaango_Core_Grid
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )

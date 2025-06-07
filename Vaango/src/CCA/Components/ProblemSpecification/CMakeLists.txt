@@ -58,14 +58,14 @@ SET(Vaango_CCA_Components_ProblemSpecification_SRCS
 
 add_library(Vaango_CCA_Components_ProblemSpecification ${Vaango_CCA_Components_ProblemSpecification_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_ProblemSpecification
+target_link_libraries(Vaango_CCA_Components_ProblemSpecification PRIVATE
   Vaango_CCA_Ports
   Vaango_Core_Exceptions
   Vaango_Core_Grid
   Vaango_Core_Util
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
 )

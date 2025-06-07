@@ -39,8 +39,6 @@ SET(LIBS
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_IO
-  ${XML2_LIBRARY}
-  ${F_LIBRARY}
   ${M_LIBRARY}
 )
 
@@ -63,6 +61,8 @@ add_library(Vaango_CCA_Components_Models ${Vaango_CCA_Components_Models_SRCS})
 
 target_link_libraries(Vaango_CCA_Components_Models PRIVATE
   ${LIBS}
+  LibXml2::LibXml2
+  ${F_LIBRARY}
   Vaango::Options
   Vaango::Warnings
 )

@@ -473,7 +473,12 @@ configure_file(${Vaango_SOURCE_DIR}/tools/fspec.pl.in ${FSPEC})
 # Find the MPI package to use
 #----------------------------------------------------------------------------------
 find_package(MPI REQUIRED COMPONENTS C CXX Fortran)
-if (MPI_FOUND)
+if (MPI_CXX_FOUND)
+  message(STATUS "MPI found. Version: ${MPI_CXX_VERSION}")
+  #message(STATUS "MPI CXX Libraries: ${MPI_CXX_LIBRARIES}")
+  #message(STATUS "MPI Fortran Libraries: ${MPI_Fortran_LIBRARIES}")
+  #message(STATUS "MPI Include: ${MPI_CXX_INCLUDE_PATH}")
+
   set(DEF_MPI_CONST_WORKS "#define MPICONST const")
   set(DEF_MPI_MAX_THREADS "#define MPI_MAX_THREADS 64")
   set(DEF_MPI3_ENABLED "#define UINTAH_ENABLE_MPI3 true")
@@ -484,14 +489,8 @@ endif()
 #----------------------------------------------------------------------------------
 find_package(LibXml2 REQUIRED)
 if (LIBXML2_FOUND)
-  include_directories(${LIBXML2_INCLUDE_DIR})
-  set(LIBXML2_DIR "" CACHE PATH "Path to MPI")
-  set(XML2_INCLUDE ${LIBXML2_INCLUDE_DIR})
-  set(XML2_LIBRARY ${LIBXML2_LIBRARIES})
-else()
-  message(FATAL_ERROR "No libxml2 found")
-  set(XML2_INCLUDE "")
-  set(XML2_LIBRARY "")
+  #include_directories(${LIBXML2_INCLUDE_DIR})
+  message(STATUS "LibXml2 found. Version: ${LIBXML2_VERSION_STRING}")
 endif()
 
 #-----------------------------------------------------------------------------

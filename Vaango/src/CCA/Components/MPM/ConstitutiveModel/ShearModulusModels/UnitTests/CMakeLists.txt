@@ -62,9 +62,11 @@ include_directories(${GTEST_INCLUDE_DIR})
 
 set(TEST testShearModulus_BorjaT)
 add_executable(${TEST} ${TEST}.cc)
-target_link_libraries(${TEST}
+target_link_libraries(${TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )

@@ -23,14 +23,14 @@
 # IN THE SOFTWARE.
 #
 
-ADD_EXECUTABLE(createFileGeomPieceFromUda createFileGeomPieceFromUda.cc)
-ADD_EXECUTABLE(gambitFileReader gambitFileReader.cc)
-ADD_EXECUTABLE(imageFromGeom ImageFromGeom.cc)
-ADD_EXECUTABLE(objFileReader OBJFileReader.cc)
-ADD_EXECUTABLE(particleFileSplitter particleFileSplitter.cc)
-ADD_EXECUTABLE(particleImageFileSplitter particleImageFileSplitter.cc)
-ADD_EXECUTABLE(plyFileReader PLYFileReader.cc)
-ADD_EXECUTABLE(rawToUniqueGrains rawToUniqueGrains.cc)
+add_executable(createFileGeomPieceFromUda createFileGeomPieceFromUda.cc)
+add_executable(gambitFileReader gambitFileReader.cc)
+add_executable(imageFromGeom ImageFromGeom.cc)
+add_executable(objFileReader OBJFileReader.cc)
+add_executable(particleFileSplitter particleFileSplitter.cc)
+add_executable(particleImageFileSplitter particleImageFileSplitter.cc)
+add_executable(plyFileReader PLYFileReader.cc)
+add_executable(rawToUniqueGrains rawToUniqueGrains.cc)
 
 SET(GEOM_CREATE_LIBS
   Vaango_Core_Exceptions

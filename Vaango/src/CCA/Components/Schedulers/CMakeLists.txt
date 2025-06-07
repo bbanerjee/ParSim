@@ -67,7 +67,7 @@ target_link_libraries(Vaango_CCA_Components_Schedulers
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   ${TAU_LIBRARY}
   ${VAMPIR_LIBRARY}
   ${PERFEX_LIBRARY}

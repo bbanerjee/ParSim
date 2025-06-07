@@ -31,11 +31,9 @@
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-              
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
@@ -61,9 +59,11 @@ set(GTEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
 add_executable(testPressure_Air testPressure_Air.cc)
-target_link_libraries(testPressure_Air
+target_link_libraries(testPressure_Air PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -75,9 +75,11 @@ add_custom_command(
 )
 
 add_executable(testPressure_Water testPressure_Water.cc)
-target_link_libraries(testPressure_Water
+target_link_libraries(testPressure_Water PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -89,9 +91,11 @@ add_custom_command(
 )
 
 add_executable(testPressure_Granite testPressure_Granite.cc)
-target_link_libraries(testPressure_Granite
+target_link_libraries(testPressure_Granite PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -104,9 +108,11 @@ add_custom_command(
 
 set(TEST testEOS_BorjaT)
 add_executable(${TEST} ${TEST}.cc)
-target_link_libraries(${TEST}
+target_link_libraries(${TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )

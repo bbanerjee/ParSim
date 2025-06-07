@@ -61,7 +61,7 @@ endif (CUDA)
 
 add_library(Vaango_CCA_Components_Schedulers ${Vaango_CCA_Components_Schedulers_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_Schedulers
+target_link_libraries(Vaango_CCA_Components_Schedulers PRIVATE
   Vaango_CCA_Components_ProblemSpecification
   Vaango_Core_Grid
   Vaango_Core_Util
@@ -69,11 +69,11 @@ target_link_libraries(Vaango_CCA_Components_Schedulers
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  ${XML2_LIBRARY}
   ${TAU_LIBRARY}
   ${VAMPIR_LIBRARY}
   ${PERFEX_LIBRARY}
   ${CUDA_LIBRARY}
+  LibXml2::LibXml2
   MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings

@@ -23,7 +23,7 @@
 # IN THE SOFTWARE.
 #
 
-ADD_EXECUTABLE(SimpleMath SimpleMath.cc)
+add_executable(SimpleMath SimpleMath.cc)
 
 target_link_libraries(SimpleMath
   Vaango_Core_Exceptions    

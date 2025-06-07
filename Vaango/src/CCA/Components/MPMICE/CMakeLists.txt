@@ -41,7 +41,7 @@ target_link_libraries(Vaango_CCA_Components_MPMICE
   Vaango_Core_Math
   Vaango_CCA_Components_MPM
   Vaango_CCA_Components_ICE
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   ${M_LIBRARY}
   MPI::MPI_CXX
   Vaango::Options

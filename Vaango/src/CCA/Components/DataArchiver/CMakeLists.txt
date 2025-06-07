@@ -29,7 +29,7 @@ SET(Vaango_CCA_Components_DataArchiver_SRCS
 
 add_library(Vaango_CCA_Components_DataArchiver ${Vaango_CCA_Components_DataArchiver_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_DataArchiver
+target_link_libraries(Vaango_CCA_Components_DataArchiver PRIVATE
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_GeometryPiece
@@ -40,7 +40,7 @@ target_link_libraries(Vaango_CCA_Components_DataArchiver
   Vaango_Core_ProblemSpec
   Vaango_CCA_Components_ProblemSpecification
   Vaango_Core_OS
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   ${M_LIBRARY}
   ${SOCKET_LIBRARY}
   MPI::MPI_CXX

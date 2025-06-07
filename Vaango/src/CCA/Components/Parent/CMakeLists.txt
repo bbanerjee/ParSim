@@ -47,7 +47,6 @@ SET(LIBS
   ${COMPONENTS}_Solvers
   ${COMPONENTS}_SwitchingCriteria
   ${COMPONENTS}_SimulationCommon
-  ${XML2_LIBRARY}
 )
 
 IF(ICE)
@@ -62,8 +61,9 @@ ENDIF(MPM)
 
 SET(LIBS ${LIBS} ${COMPONENTS}_Peridynamics)
 
-target_link_libraries(Vaango_CCA_Components_Parent 
+target_link_libraries(Vaango_CCA_Components_Parent PRIVATE
   ${LIBS}
+  LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
 )

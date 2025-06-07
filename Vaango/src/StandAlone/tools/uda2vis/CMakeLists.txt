@@ -68,18 +68,20 @@ set(UDA2VIS_LIBS
   Vaango_CCA_Components_ProblemSpecification 
   Vaango_Core_Containers   
   Vaango_Core_Datatypes    
-  ${XML2_LIBRARY}
-  ${Z_LIBRARY}
-  ${M_LIBRARY}
-  MPI::MPI_CXX
-  ${F_LIBRARY}
-  Vaango::Options
-  Vaango::Warnings
 )
 
 add_library(StandAlone_tools_uda2vis ${UDA2VIS_SRC})
 
-target_link_libraries(StandAlone_tools_uda2vis PRIVATE ${UDA2VIS_LIBS})
+target_link_libraries(StandAlone_tools_uda2vis PRIVATE 
+  ${UDA2VIS_LIBS}
+  ${Z_LIBRARY}
+  ${M_LIBRARY}
+  ${F_LIBRARY}
+  LibXml2::LibXml2
+  MPI::MPI_CXX
+  Vaango::Options
+  Vaango::Warnings
+)
 	
 if (BUILD_SHARED_LIBS)  
   add_definitions(-DBUILD_StandAlone_tools_uda2vis)

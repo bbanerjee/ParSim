@@ -32,11 +32,9 @@
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-              
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
@@ -62,9 +60,11 @@ set(GTEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
 add_executable(testModelState_Tabular testModelState_Tabular.cc)
-target_link_libraries(testModelState_Tabular
+target_link_libraries(testModelState_Tabular PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -76,10 +76,12 @@ add_custom_command(
 )
 
 add_executable(testModelState testModelState.cc)
-target_link_libraries(testModelState
+target_link_libraries(testModelState PRIVATE
   ${GTEST_LIB}
   ${Boost_LIBRARIES}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -92,9 +94,11 @@ add_custom_command(
 
 set(BORJA_TEST testModelState_Borja)
 add_executable(${BORJA_TEST} ${BORJA_TEST}.cc)
-target_link_libraries(${BORJA_TEST}
+target_link_libraries(${BORJA_TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )

@@ -24,14 +24,16 @@
 
 IF(NOT WIN32)
   # doesn't build on windows....
-  ADD_EXECUTABLE(graphview graphview.cc DaVinci.cc GV_TaskGraph.cc)
+  add_executable(graphview graphview.cc DaVinci.cc GV_TaskGraph.cc)
 
-  target_link_libraries(graphview
+  target_link_libraries(graphview PRIVATE
     Vaango_Core_DataArchive
     Vaango_Core_ProblemSpec
     Vaango_Core_Util
     Vaango_CCA_Components_ProblemSpecification
     Vaango_Core_Exceptions
+    Vaango_Core_Parallel
+    MPI::MPI_CXX
     Vaango::Options
     Vaango::Warnings
   )

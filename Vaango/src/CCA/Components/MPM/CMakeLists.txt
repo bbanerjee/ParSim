@@ -85,7 +85,7 @@ SET(LIBS
   MPM_PhysicalBC
   MPM_MMS
   MPM_Diffusion
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   ${VT_LIBRARY}
   ${M_LIBRARY}
   MPI::MPI_CXX

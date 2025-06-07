@@ -23,20 +23,20 @@
 # IN THE SOFTWARE.
 #
 
-ADD_EXECUTABLE(selectpart selectpart.cc)
-ADD_EXECUTABLE(partvarRange partvarRange.cc)
-ADD_EXECUTABLE(timeextract timeextract.cc)
-ADD_EXECUTABLE(lineextract lineextract.cc)
-ADD_EXECUTABLE(partextract partextract.cc)
-ADD_EXECUTABLE(faceextract faceextract.cc)
-ADD_EXECUTABLE(extractF extractF.cc)
-ADD_EXECUTABLE(extractV extractV.cc)
-ADD_EXECUTABLE(extractPvec extractPvector.cc)
-ADD_EXECUTABLE(extractPmat extractPmatrix.cc)
-ADD_EXECUTABLE(extractPscalar extractPscalar.cc)
-ADD_EXECUTABLE(extractS extractS.cc)
-ADD_EXECUTABLE(extractPos extractPos.cc)
-ADD_EXECUTABLE(extractPosVelMasVol extractPosVelMasVol.cc)
+add_executable(selectpart selectpart.cc)
+add_executable(partvarRange partvarRange.cc)
+add_executable(timeextract timeextract.cc)
+add_executable(lineextract lineextract.cc)
+add_executable(partextract partextract.cc)
+add_executable(faceextract faceextract.cc)
+add_executable(extractF extractF.cc)
+add_executable(extractV extractV.cc)
+add_executable(extractPvec extractPvector.cc)
+add_executable(extractPmat extractPmatrix.cc)
+add_executable(extractPscalar extractPscalar.cc)
+add_executable(extractS extractS.cc)
+add_executable(extractPos extractPos.cc)
+add_executable(extractPosVelMasVol extractPosVelMasVol.cc)
 
 SET(EXTRACTOR_LIBS
   Vaango_Core_Exceptions

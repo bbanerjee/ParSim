@@ -43,10 +43,10 @@ set(COMPARE_UDA_UTILS_SRC
     Utils/FieldComparator.cc
 )
 
-ADD_EXECUTABLE(vaango vaango.cc ${VAANGO_UTILS_SRC})
-ADD_EXECUTABLE(compare_uda compare_uda.cc ${COMPARE_UDA_UTILS_SRC})
-ADD_EXECUTABLE(slb slb.cc)
-ADD_EXECUTABLE(restart_merger restart_merger.cc)
+add_executable(vaango vaango.cc ${VAANGO_UTILS_SRC})
+add_executable(compare_uda compare_uda.cc ${COMPARE_UDA_UTILS_SRC})
+add_executable(slb slb.cc)
+add_executable(restart_merger restart_merger.cc)
 
 SET(VAANGO_LIBS 
         Vaango_Core_DataArchive 
@@ -78,13 +78,13 @@ IF(PETSC)
   SET(VAANGO_LIBS ${VAANGO_LIBS} ${PETSC_LIBRARY})
 ENDIF()
 
-target_link_libraries(vaango 
+target_link_libraries(vaango PRIVATE
   ${VAANGO_LIBS}
   Vaango::Options
   Vaango::Warnings
 )
 
-target_link_libraries(compare_uda 
+target_link_libraries(compare_uda PRIVATE
   ${VAANGO_LIBS}
   Vaango::Options
   Vaango::Warnings
@@ -92,23 +92,24 @@ target_link_libraries(compare_uda
 
 set(RESTART_LIBS
   Vaango_Core_DataArchive
-#  Vaango_Core_Grid
-#  Vaango_Core_OS
+  Vaango_Core_OS  
+  Vaango_CCA_Ports
   Vaango_CCA_Components_Parent 
-#  Vaango_Core_ProblemSpec
   Vaango_CCA_Components_DataArchiver
+  Vaango_CCA_Components_ProblemSpecification 
   MPM_ParticleCreator
 )
 IF(HYPRE)
   SET(RESTART_LIBS ${RESTART_LIBS} ${HYPRE_LIBRARY})
 ENDIF()
-target_link_libraries(restart_merger 
+target_link_libraries(restart_merger PRIVATE
   ${RESTART_LIBS}
+  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )
   
-target_link_libraries(slb
+target_link_libraries(slb PRIVATE
   Vaango_Core_GeometryPiece
   Vaango_Core_Grid
   Vaango_Core_ProblemSpec

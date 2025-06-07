@@ -48,7 +48,7 @@ target_link_libraries(Vaango_CCA_Components_LoadBalancers
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
   Vaango_CCA_Components_ProblemSpecification
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings

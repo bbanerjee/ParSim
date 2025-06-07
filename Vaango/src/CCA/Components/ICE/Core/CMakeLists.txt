@@ -31,7 +31,7 @@ set(Vaango_CCA_Components_ICE_Core_SRCS
 
 add_library(ICE_Core ${Vaango_CCA_Components_ICE_Core_SRCS})
 
-target_link_libraries(ICE_Core
+target_link_libraries(ICE_Core PRIVATE
   Vaango_CCA_Ports
   Vaango_Core_Grid
   Vaango_Core_Util
@@ -39,8 +39,8 @@ target_link_libraries(ICE_Core
   Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions
   Vaango_Core_Math
-  ${XML2_LIBRARY}
   ${M_LIBRARY}
+  LibXml2::LibXml2
   MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings

@@ -31,13 +31,13 @@ SET(Vaango_Core_ProblemSpec_SRCS
 
 add_library(Vaango_Core_ProblemSpec ${Vaango_Core_ProblemSpec_SRCS})
 
-# message(STATUS "Core/ProblemSpec linking to xml library ${XML2_LIBRARY}")
+# message(STATUS "Core/ProblemSpec linking to xml library LibXml2::LibXml2")
 
-target_link_libraries(Vaango_Core_ProblemSpec
+target_link_libraries(Vaango_Core_ProblemSpec PRIVATE
   Vaango_Core_Exceptions
   Vaango_Core_Math
   Vaango_Core_Util
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
 )

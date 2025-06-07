@@ -36,7 +36,7 @@ SET(LIBS
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   ${VT_LIBRARY}
   ${M_LIBRARY}
   MPI::MPI_CXX

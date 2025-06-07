@@ -43,11 +43,9 @@ configure_file(DrySand_BulkModulusPressureData_Ten_Com.json DrySand_BulkModulusP
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-              
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
@@ -73,9 +71,11 @@ set(GTEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
 add_executable(testElasticModuli_Arena testElasticModuli_Arena.cc)
-target_link_libraries(testElasticModuli_Arena
+target_link_libraries(testElasticModuli_Arena PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -87,9 +87,11 @@ add_custom_command(
 )
 
 add_executable(testElasticModuli_MetalIso testElasticModuli_MetalIso.cc)
-target_link_libraries(testElasticModuli_MetalIso
+target_link_libraries(testElasticModuli_MetalIso PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -101,9 +103,11 @@ set(UNIT_TEST testElasticModuli_MetalIso)
 #)
 
 add_executable(testElasticModuli_Tabular testElasticModuli_Tabular.cc)
-target_link_libraries(testElasticModuli_Tabular
+target_link_libraries(testElasticModuli_Tabular PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -115,9 +119,11 @@ add_custom_command(
 )
 
 add_executable(testElasticModuli_NeuralNet testElasticModuli_NeuralNet.cc)
-target_link_libraries(testElasticModuli_NeuralNet
+target_link_libraries(testElasticModuli_NeuralNet PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -131,9 +137,11 @@ add_custom_command(
 
 set(UNIT_TEST testElasticModuli_NeuralNet_Bulk)
 add_executable(${UNIT_TEST} ${UNIT_TEST}.cc)
-target_link_libraries(${UNIT_TEST}
+target_link_libraries(${UNIT_TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -145,9 +153,11 @@ add_custom_command(
 
 set(UNIT_TEST testElasticModuli_SupportVector)
 add_executable(${UNIT_TEST} ${UNIT_TEST}.cc)
-target_link_libraries(${UNIT_TEST}
+target_link_libraries(${UNIT_TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )

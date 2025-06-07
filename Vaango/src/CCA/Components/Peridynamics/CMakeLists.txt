@@ -55,7 +55,7 @@ SET(LIBS
   Vaango_CCA_Components_OnTheFlyAnalysis
   Peridynamics_MaterialModels
   Peridynamics_DamageModels
-  ${XML2_LIBRARY}
+  LibXml2::LibXml2
   ${VT_LIBRARY}
   ${M_LIBRARY}
   MPI::MPI_CXX

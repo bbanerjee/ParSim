@@ -79,9 +79,11 @@ set(GTEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
 add_executable(testTabularData testTabularData.cc)
-target_link_libraries(testTabularData
+target_link_libraries(testTabularData PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -93,9 +95,11 @@ target_link_libraries(testTabularData
 #)
 
 add_executable(testTabularEOS testTabularEOS.cc)
-target_link_libraries(testTabularEOS
+target_link_libraries(testTabularEOS PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -107,9 +111,11 @@ target_link_libraries(testTabularEOS
 #)
 
 add_executable(testTabularPlasticity testTabularPlasticity.cc)
-target_link_libraries(testTabularPlasticity
+target_link_libraries(testTabularPlasticity PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -121,9 +127,11 @@ target_link_libraries(testTabularPlasticity
 #)
 
 add_executable(testNeuralNetTabularPlasticity testNeuralNetTabularPlasticity.cc)
-target_link_libraries(testNeuralNetTabularPlasticity
+target_link_libraries(testNeuralNetTabularPlasticity PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
@@ -135,9 +143,11 @@ target_link_libraries(testNeuralNetTabularPlasticity
 #)
 
 add_executable(testTabularPlasticityCap testTabularPlasticityCap.cc)
-target_link_libraries(testTabularPlasticityCap
+target_link_libraries(testTabularPlasticityCap PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )
