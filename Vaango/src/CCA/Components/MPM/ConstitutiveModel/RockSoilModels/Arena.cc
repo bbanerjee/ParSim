@@ -62,10 +62,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
-
-// Boost
-#include <boost/foreach.hpp>
-#include <boost/range/combine.hpp>
+#include <ranges>
 
 #define USE_LOCAL_LOCALIZED_PVAR
 #define CHECK_FOR_NAN
@@ -608,12 +605,14 @@ Arena::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   // Get yield condition parameters and add to the list of parameters
   std::vector<ParameterDict> allParamsVec;
   for(auto iter = pset->begin(); iter != pset->end(); iter++){
-
+    particleIndex idx = iter; // patch index
     std::string                   yield_param_label;
     constParticleVariable<double> yield_param_var;
     ParameterDict particleAllParams;
-    BOOST_FOREACH(boost::tie(yield_param_label, yield_param_var),
-                  boost::combine(pYieldParamLabels, pYieldParamVars)) {
+
+    // Using std::views::zip and structured bindings (C++23)
+    for (const auto& [yield_param_label, yield_param_var] :
+          std::views::zip(pYieldParamVarLabels, pYieldParamVars)) {
       particleAllParams[yield_param_label] = yield_param_var[idx];
     }
     allParamsVec.push_back(particleAllParams);
@@ -1155,8 +1154,10 @@ Arena::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
       // Get the parameters of the yield surface (for variability)
       std::string yield_param_label;
       constParticleVariable<double> yield_param_var;
-      BOOST_FOREACH (boost::tie(yield_param_label, yield_param_var),
-                     boost::combine(pYieldParamVarLabels, pYieldParamVars)) {
+
+      // Using std::views::zip and structured bindings (C++23)
+      for (const auto& [yield_param_label, yield_param_var] :
+           std::views::zip(pYieldParamVarLabels, pYieldParamVars)) {
         state_old.yieldParams[yield_param_label] = yield_param_var[idx];
       }
 

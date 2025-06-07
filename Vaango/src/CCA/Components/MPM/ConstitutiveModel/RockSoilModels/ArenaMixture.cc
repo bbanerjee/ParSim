@@ -64,10 +64,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
-
-// Boost
-#include <boost/foreach.hpp>
-#include <boost/range/combine.hpp>
+#include <ranges>
 
 #define USE_LOCAL_LOCALIZED_PVAR
 //#define CHECK_FOR_NAN
@@ -1172,8 +1169,10 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
       // Get the parameters of the yield surface (for variability)
       std::string yield_param_label;
       constParticleVariable<double> yield_param_var;
-      BOOST_FOREACH (boost::tie(yield_param_label, yield_param_var),
-                     boost::combine(pYieldParamVarLabels, pYieldParamVars)) {
+
+      // Using std::views::zip and structured bindings (C++23)
+      for (const auto& [yield_param_label, yield_param_var] :
+           std::views::zip(pYieldParamVarLabels, pYieldParamVars)) {
         state_old.yieldParams[yield_param_label] = yield_param_var[idx];
       }
 

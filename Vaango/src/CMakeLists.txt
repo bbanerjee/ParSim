@@ -349,7 +349,6 @@ mark_as_advanced(LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
 # Optional variable intialization  
 #----------------------------------------------------------------------------
 set(HAVE_HDF5 "no")
-set(HAVE_BOOST "no")
 set(HAVE_TABPROPS "no")
 set(HAVE_SPATIALOPS "no")
 set(HAVE_EXPRLIB "no")
@@ -518,29 +517,6 @@ else()
   set(XML2_INCLUDE "")
   set(XML2_LIBRARY "")
 endif()
-
-#----------------------------------------------------------------------------------
-# Find the Boost libraries 
-#----------------------------------------------------------------------------------
-set(BOOST_LIBRARYDIR /usr/lib/x86_64-linux-gnu)
-if (BUILD_UNIT_TESTS)
-  find_package(Boost 1.49 COMPONENTS regex unit_test_framework REQUIRED)
-else()
-  find_package(Boost 1.49 COMPONENTS regex REQUIRED)
-endif()
-include_directories(${Boost_INCLUDE_DIR})
-if (Boost_FOUND)
-    message ("\nBoost installation:")
-    message ("   Version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
-    message ("   Include Directory: ${Boost_INCLUDE_DIRS}")
-    message ("   Library Directory: ${Boost_LIBRARY_DIRS}")
-    message ("   The following libraries are included in Boost_LIBRARIES:")
-    foreach (lib ${Boost_LIBRARIES})
-        message ("      ${lib}")
-    endforeach (lib)
-else ()
-    message ("\nBoost NOT FOUND!  (Try defining BOOST_ROOT)\n")
-endif ()
 
 #-----------------------------------------------------------------------------
 # Configure time cross-platform header file generation

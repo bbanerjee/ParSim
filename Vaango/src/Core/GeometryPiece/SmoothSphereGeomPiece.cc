@@ -33,7 +33,6 @@
 #include <Core/Math/Matrix3.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
-#include <boost/math/special_functions/ellint_2.hpp>
 #include <cmath>
 #include <iostream>
 
@@ -765,7 +764,8 @@ SmoothSphereGeomPiece::elliptic2E(double mm)
 {
   double m_inv = -mm / (1.0 - mm);
   double kk    = std::sqrt(m_inv);
-  double EE    = boost::math::ellint_2(kk);
+  double EE    = std::comp_ellint_2(kk);
+
   return std::sqrt(1.0 - mm) * EE;
 }
 
