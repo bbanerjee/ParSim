@@ -4,7 +4,7 @@
  * Copyright (c) 1997-2019 Center for the Simulation of Accidental Fires and
  * Explosions (CSAFE), and  Scientific Computing and Imaging Institute (SCI),
  * University of Utah.
- * Copyright (c) 2015-2024 Biswajit Banerjee
+ * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
  *
  * License for the specific language governing rights and limitations under
  * Permission is hereby granted, free of charge, to any person obtaining a
