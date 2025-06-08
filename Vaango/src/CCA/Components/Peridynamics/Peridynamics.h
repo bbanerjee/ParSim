@@ -107,8 +107,8 @@ public:
   /*! For restarts */
 
   virtual void
-  scheduleRestartInitialize(const Uintah::LevelP& level,
-                            Uintah::SchedulerP& sched)
+  scheduleRestartInitialize([[maybe_unused]] const Uintah::LevelP& level,
+                            [[maybe_unused]] Uintah::SchedulerP& sched)
   {
   }
   virtual void
@@ -337,7 +337,7 @@ protected:
 
   /*! Need taskgraph recompile ? */
   bool
-  needRecompile(double time, double dt, const Uintah::GridP& grid);
+  needRecompile(const Uintah::GridP& grid) override;
 
   template<typename T>
   void

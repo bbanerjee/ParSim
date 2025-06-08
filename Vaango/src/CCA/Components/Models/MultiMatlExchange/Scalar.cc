@@ -547,9 +547,9 @@ ScalarExch::sched_AddExch_Vel_Temp_CC(
  _____________________________________________________________________  */
 void
 ScalarExch::addExch_Vel_Temp_CC(
-  const ProcessorGroup* pg,
+  [[maybe_unused]] const ProcessorGroup* pg,
   const PatchSubset* patches,
-  const MaterialSubset* matls,
+  [[maybe_unused]] const MaterialSubset* matls,
   DataWarehouse* old_dw,
   DataWarehouse* new_dw,
   CustomBCDriver::customBC_globalVars* BC_globalVars)
@@ -901,9 +901,9 @@ ScalarExch::addExch_Vel_Temp_CC(
 //
 void
 ScalarExch::addExch_Vel_Temp_CC_1matl(
-  const ProcessorGroup* pg,
+  [[maybe_unused]] const ProcessorGroup* pg,
   const PatchSubset* patches,
-  const MaterialSubset* matls,
+  [[maybe_unused]] const MaterialSubset* matls,
   DataWarehouse* old_dw,
   DataWarehouse* new_dw,
   CustomBCDriver::customBC_globalVars* BC_globalVars)

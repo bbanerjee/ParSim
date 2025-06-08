@@ -88,7 +88,7 @@ public:
   scheduleInitialize(SchedulerP& sched, const LevelP& level);
 
   virtual void
-  scheduleRestartInitialize(SchedulerP& sched, const LevelP& level){};
+  scheduleRestartInitialize([[maybe_unused]] SchedulerP& sched, [[maybe_unused]] const LevelP& level){};
 
   virtual void
   scheduleDoAnalysis(SchedulerP& sched, const LevelP& level);

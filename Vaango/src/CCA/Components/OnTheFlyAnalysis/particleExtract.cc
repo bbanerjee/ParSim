@@ -89,7 +89,7 @@ void
 particleExtract::problemSetup(
   const ProblemSpecP&,
   const ProblemSpecP&,
-  GridP& grid,
+  [[maybe_unused]] GridP& grid,
   std::vector<std::vector<const VarLabel*>>& PState,
   std::vector<std::vector<const VarLabel*>>& PState_preReloc)
 {
@@ -303,7 +303,7 @@ particleExtract::scheduleDoAnalysis_preReloc(SchedulerP& sched,
 //______________________________________________________________________
 //
 void
-particleExtract::doAnalysis_preReloc(const ProcessorGroup* pg,
+particleExtract::doAnalysis_preReloc([[maybe_unused]] const ProcessorGroup* pg,
                                      const PatchSubset* patches,
                                      const MaterialSubset*,
                                      DataWarehouse* old_dw,

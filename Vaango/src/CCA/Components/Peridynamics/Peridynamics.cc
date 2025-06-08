@@ -158,8 +158,8 @@ Peridynamics::~Peridynamics()
 void
 Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
                            const ProblemSpecP& restart_prob_spec,
-                           Uintah::GridP& grid,
-                           const std::string& input_ups_dir)
+                           [[maybe_unused]] Uintah::GridP& grid,
+                           [[maybe_unused]] const std::string& input_ups_dir)
 {
   cout_doing << "Doing problemSetup: Peridynamics " << __FILE__ << ":"
              << __LINE__ << std::endl;
@@ -714,7 +714,7 @@ void
 Peridynamics::actuallyComputeStableTimestep(const ProcessorGroup*,
                                             const PatchSubset* patches,
                                             const MaterialSubset*,
-                                            DataWarehouse* old_dw,
+                                            [[maybe_unused]] DataWarehouse* old_dw,
                                             DataWarehouse* new_dw)
 {
   cout_doing << "Doing actually compute stable time step: Peridynamics "
@@ -2599,7 +2599,7 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
 }
 
 bool
-Peridynamics::needRecompile(double, double, const Uintah::GridP&)
+Peridynamics::needRecompile(const Uintah::GridP&)
 {
   cout_doing << "Doing need recompile: Peridynamics " << __FILE__ << ":"
              << __LINE__ << std::endl;

@@ -60,14 +60,14 @@ namespace Uintah {
     virtual void scheduleInitialize(SchedulerP  & scheduler,
                                     const LevelP& level) = 0;
                                     
-    virtual void scheduleRestartInitialize(SchedulerP&,
-                                           const LevelP& level){};
+    virtual void scheduleRestartInitialize([[maybe_unused]] SchedulerP&,
+                                           [[maybe_unused]] const LevelP& level){};
 
-    virtual void scheduleComputeStableTimestep(SchedulerP   & scheduler,
-                                               const LevelP & level){};
+    virtual void scheduleComputeStableTimestep([[maybe_unused]] SchedulerP   & scheduler,
+                                               [[maybe_unused]] const LevelP & level){};
 
-    virtual void scheduleRefine(const PatchSet * patches,
-                                SchedulerP     & sched){};
+    virtual void scheduleRefine([[maybe_unused]] const PatchSet * patches,
+                                [[maybe_unused]] SchedulerP & sched){};
 
     virtual void scheduleComputeModelSources(SchedulerP  & scheduler,
                                              const LevelP& level) = 0;

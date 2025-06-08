@@ -186,7 +186,7 @@ PolarOrthotropicLinearElasticStateModel::outputProblemSpec(ProblemSpecP& ps,
 void 
 PolarOrthotropicLinearElasticStateModel::addInitialComputesAndRequires(Task* task,
                                                                     const PeridynamicsMaterial* material,
-                                                                    const PatchSet* patches) const
+                                                                    [[maybe_unused]] const PatchSet* patches) const
 {
   // Identify this material
   const MaterialSubset* matlset = material->thisMaterial();
@@ -279,7 +279,7 @@ PolarOrthotropicLinearElasticStateModel::computeStableTimestep(const Uintah::Pat
 void 
 PolarOrthotropicLinearElasticStateModel::addComputesAndRequires(Task* task, 
                                                              const PeridynamicsMaterial* matl,
-                                                             const PatchSet* patches) const
+                                                             [[maybe_unused]] const PatchSet* patches) const
 {
   // Constants
   Ghost::GhostType gnone = Ghost::None;

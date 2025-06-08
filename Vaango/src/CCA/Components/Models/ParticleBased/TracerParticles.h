@@ -251,11 +251,11 @@ private:
   sched_restartInitializeHACK(SchedulerP&, const LevelP& level);
 
   void
-  restartInitializeHACK(const ProcessorGroup*,
-                        const PatchSubset* patches,
-                        const MaterialSubset* matls,
-                        DataWarehouse*,
-                        DataWarehouse* new_dw){};
+  restartInitializeHACK([[maybe_unused]] const ProcessorGroup*,
+                        [[maybe_unused]] const PatchSubset* patches,
+                        [[maybe_unused]] const MaterialSubset* matls,
+                        [[maybe_unused]] DataWarehouse*,
+                        [[maybe_unused]] DataWarehouse* new_dw){};
 
   void
   sched_moveParticles(SchedulerP& sched, const LevelP& level);

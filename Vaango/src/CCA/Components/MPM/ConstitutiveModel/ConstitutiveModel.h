@@ -144,16 +144,16 @@ public:
                                           DataWarehouse* new_dw) const;
 
   void
-  addReinitializeComputesAndRequires(Task* task,
-                                     const MPMMaterial* matl,
-                                     const PatchSet*) const
+  addReinitializeComputesAndRequires([[maybe_unused]] Task* task,
+                                     [[maybe_unused]] const MPMMaterial* matl,
+                                     [[maybe_unused]] const PatchSet*) const
   {
   }
 
   void
-  reinitializeCMData(const Patch* patch,
-                     const MPMMaterial* matl,
-                     DataWarehouse* new_dw)
+  reinitializeCMData([[maybe_unused]] const Patch* patch,
+                     [[maybe_unused]] const MPMMaterial* matl,
+                     [[maybe_unused]] DataWarehouse* new_dw)
   {
   }
 

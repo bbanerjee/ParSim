@@ -106,7 +106,7 @@ namespace Uintah {
                                Iterator& bound_ptr,
                                const std::string& bc_kind,
                                const double& bc_value,
-                               inletVel_localVars* lv,
+                               [[maybe_unused]] inletVel_localVars* lv,
                                inletVel_globalVars* gv )
 {
 

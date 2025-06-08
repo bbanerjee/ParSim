@@ -166,7 +166,7 @@ void
 ICE::problemSetup(const ProblemSpecP& prob_spec,
                   const ProblemSpecP& restart_prob_spec,
                   GridP& grid,
-                  const std::string& input_ups_dir)
+                  [[maybe_unused]] const std::string& input_ups_dir)
 {
   DOUTR(m_ice_tasks, " ICE::problemSetup ");
 
@@ -1356,7 +1356,7 @@ void
 ICE::scheduleAccumulateEnergySourceSinks(SchedulerP& sched,
                                          const PatchSet* patches,
                                          const MaterialSubset* ice_matls,
-                                         const MaterialSubset* mpm_matls,
+                                         [[maybe_unused]] const MaterialSubset* mpm_matls,
                                          const MaterialSubset* press_matl,
                                          const MaterialSet* matls)
 
@@ -1566,7 +1566,7 @@ ICE::scheduleMaxMach_on_Lodi_BC_Faces(SchedulerP& sched,
  *  Function~  ICE::computesRequires_AMR_Refluxing--
  */
 void
-ICE::computesRequires_AMR_Refluxing(Task* task, const MaterialSet* ice_matls)
+ICE::computesRequires_AMR_Refluxing(Task* task, [[maybe_unused]] const MaterialSet* ice_matls)
 {
   DOUTR(m_ice_tasks, "      computesRequires_AMR_Refluxing\n");
 
@@ -1610,7 +1610,7 @@ ICE::computesRequires_AMR_Refluxing(Task* task, const MaterialSet* ice_matls)
 void
 ICE::scheduleAdvectAndAdvanceInTime(SchedulerP& sched,
                                     const PatchSet* patches,
-                                    const MaterialSubset* ice_matlsub,
+                                    [[maybe_unused]] const MaterialSubset* ice_matlsub,
                                     const MaterialSet* ice_matls)
 {
   printSchedule(patches, m_ice_tasks, " ICE::scheduleAdvectAndAdvanceInTime");
@@ -1826,7 +1826,7 @@ ICE::scheduleTestConservation(SchedulerP& sched,
  *  ICE::scheduleComputeTaskGraphIndex--
  */
 void
-ICE::scheduleComputeTaskGraphIndex(SchedulerP& sched, const LevelP& level)
+ICE::scheduleComputeTaskGraphIndex([[maybe_unused]] SchedulerP& sched, [[maybe_unused]] const LevelP& level)
 {
 }
 
@@ -2798,7 +2798,7 @@ ICE::computeEquilibrationPressure(const ProcessorGroup*,
 void
 ICE::computeEquilPressure_1_matl(const ProcessorGroup*,
                                  const PatchSubset* patches,
-                                 const MaterialSubset* matls,
+                                 [[maybe_unused]] const MaterialSubset* matls,
                                  DataWarehouse* old_dw,
                                  DataWarehouse* new_dw)
 {
@@ -3223,7 +3223,7 @@ ICE::computeVel_FC(const ProcessorGroup*,
  */
 template<class T>
 void
-ICE::updateVelFace(int dir,
+ICE::updateVelFace([[maybe_unused]] int dir,
                    CellIterator it,
                    IntVector adj_offset,
                    double dx,

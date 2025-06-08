@@ -86,8 +86,8 @@ flatPlate_heatFlux::problemSetup(
   const ProblemSpecP&,
   const ProblemSpecP&,
   GridP& grid,
-  std::vector<std::vector<const VarLabel*>>& PState,
-  std::vector<std::vector<const VarLabel*>>& PState_preReloc)
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState_preReloc)
 {
   DOUTR(dout_OTF_FPHF, "Doing flatPlate_heatFlux::problemSetup");
 
@@ -192,17 +192,17 @@ flatPlate_heatFlux::problemSetup(
 
 //______________________________________________________________________
 void
-flatPlate_heatFlux::scheduleInitialize(SchedulerP& sched, const LevelP& level)
+flatPlate_heatFlux::scheduleInitialize([[maybe_unused]] SchedulerP& sched, [[maybe_unused]] const LevelP& level)
 {
   return; // do nothing
 }
 
 void
-flatPlate_heatFlux::initialize(const ProcessorGroup*,
-                               const PatchSubset* patches,
-                               const MaterialSubset*,
-                               DataWarehouse*,
-                               DataWarehouse* new_dw)
+flatPlate_heatFlux::initialize([[maybe_unused]] const ProcessorGroup*,
+                               [[maybe_unused]] const PatchSubset* patches,
+                               [[maybe_unused]] const MaterialSubset*,
+                               [[maybe_unused]] DataWarehouse*,
+                               [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 
@@ -226,10 +226,10 @@ flatPlate_heatFlux::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
 //______________________________________________________________________
 // Compute the total heatRate field.
 void
-flatPlate_heatFlux::doAnalysis(const ProcessorGroup* pg,
+flatPlate_heatFlux::doAnalysis([[maybe_unused]] const ProcessorGroup* pg,
                                const PatchSubset* patches,
-                               const MaterialSubset* matl_sub,
-                               DataWarehouse* old_dw,
+                               [[maybe_unused]] const MaterialSubset* matl_sub,
+                               [[maybe_unused]] DataWarehouse* old_dw,
                                DataWarehouse* new_dw)
 {
   Vector total_heatRate = Vector(0.0);

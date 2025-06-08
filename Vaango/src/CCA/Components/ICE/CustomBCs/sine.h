@@ -113,7 +113,7 @@ namespace Uintah {
                        const Patch::FaceType face,
                        T& vel_FC,
                        Iterator& bound_ptr,
-                       MaterialManagerP& materialManager,
+                       [[maybe_unused]] MaterialManagerP& materialManager,
                        sine_globalVars* gv,
                        sine_localVars* lv)
 {

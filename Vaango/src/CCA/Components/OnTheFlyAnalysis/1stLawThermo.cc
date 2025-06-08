@@ -103,8 +103,8 @@ FirstLawThermo::~FirstLawThermo()
 void FirstLawThermo::problemSetup(const ProblemSpecP &,
                                   const ProblemSpecP & restart_prob_spec,
                                   GridP              & grid,
-                                  std::vector<std::vector<const VarLabel* > > &PState,
-                                  std::vector<std::vector<const VarLabel* > > &PState_preReloc)
+                                  [[maybe_unused]] std::vector<std::vector<const VarLabel* > > &PState,
+                                  [[maybe_unused]] std::vector<std::vector<const VarLabel* > > &PState_preReloc)
 {
   DOUTR(dout_OTF_FLT, "Doing FirstLawThermo::problemSetup");
 
@@ -330,9 +330,9 @@ void FirstLawThermo::scheduleDoAnalysis(SchedulerP   & sched,
 
 //______________________________________________________________________
 //        ICE Contributions to the energy
-void FirstLawThermo::compute_ICE_Contributions(const ProcessorGroup * pg,
+void FirstLawThermo::compute_ICE_Contributions([[maybe_unused]] const ProcessorGroup * pg,
                                                const PatchSubset    * patches,
-                                               const MaterialSubset * matl_sub ,
+                                               [[maybe_unused]] const MaterialSubset * matl_sub ,
                                                DataWarehouse        * old_dw,
                                                DataWarehouse        * new_dw)
 {
@@ -574,9 +574,9 @@ void FirstLawThermo::compute_ICE_Contributions(const ProcessorGroup * pg,
 
 //______________________________________________________________________
 //        MPM Contributions to the energy
-void FirstLawThermo::compute_MPM_Contributions(const ProcessorGroup * pg,
+void FirstLawThermo::compute_MPM_Contributions([[maybe_unused]] const ProcessorGroup * pg,
                                                const PatchSubset    * patches,
-                                               const MaterialSubset * matl_sub ,
+                                               [[maybe_unused]] const MaterialSubset * matl_sub ,
                                                DataWarehouse        * old_dw,
                                                DataWarehouse        * new_dw)
 {
@@ -620,9 +620,9 @@ void FirstLawThermo::compute_MPM_Contributions(const ProcessorGroup * pg,
 
 //______________________________________________________________________
 //
-void FirstLawThermo::doAnalysis(const ProcessorGroup * pg,
+void FirstLawThermo::doAnalysis([[maybe_unused]] const ProcessorGroup * pg,
                                 const PatchSubset    * patches,
-                                const MaterialSubset * matls ,
+                                [[maybe_unused]] const MaterialSubset * matls ,
                                 DataWarehouse        * old_dw,
                                 DataWarehouse        * new_dw)
 {

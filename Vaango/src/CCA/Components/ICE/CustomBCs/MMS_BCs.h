@@ -114,7 +114,7 @@ int set_MMS_BCs_FC( const Patch* patch,
                       T& vel_FC,
                       Iterator& bound_ptr,
                       const Vector& dx,
-                      MaterialManagerP& materialManager,
+                      [[maybe_unused]] MaterialManagerP& materialManager,
                       mms_globalVars* gv,
                       mms_localVars* lv)
 {

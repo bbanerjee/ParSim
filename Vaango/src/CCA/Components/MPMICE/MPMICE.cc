@@ -144,7 +144,7 @@ void
 MPMICE::problemSetup(const ProblemSpecP& prob_spec,
                      const ProblemSpecP& restart_prob_spec,
                      GridP& grid,
-                     const std::string& input_ups_dir)
+                     [[maybe_unused]] const std::string& input_ups_dir)
 {
   cout_doing << "Doing MPMICE::problemSetup " << std::endl;
 
@@ -1447,7 +1447,7 @@ void
 MPMICE::coarsenDriver_stdNC(IntVector cl,
                             IntVector ch,
                             IntVector refinementRatio,
-                            double ratio,
+                            [[maybe_unused]] double ratio,
                             const Level* coarseLevel,
                             constNCVariable<T>& fine_q_NC,
                             NCVariable<T>& coarse_q_NC)
@@ -1585,7 +1585,7 @@ MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
                                      const MaterialSubset*,
                                      DataWarehouse* old_dw,
                                      DataWarehouse* new_dw,
-                                     const MaterialSubset* press_matl)
+                                     [[maybe_unused]] const MaterialSubset* press_matl)
 {
   timeStep_vartype timeStep;
   old_dw->get(timeStep, d_ice_labels->timeStepLabel);
@@ -3312,7 +3312,7 @@ void
 MPMICE::refineCoarseFineInterface(const ProcessorGroup*,
                                   const PatchSubset* patches,
                                   const MaterialSubset*,
-                                  DataWarehouse* fine_old_dw,
+                                  [[maybe_unused]] DataWarehouse* fine_old_dw,
                                   DataWarehouse* fine_new_dw)
 {
   // This isn't actually refining anything, it is simply reinitializing
@@ -3483,8 +3483,8 @@ MPMICE::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
 void
 MPMICE::scheduleRefinePressCC(SchedulerP& sched,
                               const PatchSet* patches,
-                              const MaterialSubset* press_matl,
-                              const MaterialSet* matls)
+                              [[maybe_unused]] const MaterialSubset* press_matl,
+                              [[maybe_unused]] const MaterialSet* matls)
 {
   printSchedule(patches, cout_doing, "MPMICE::scheduleRefinePressCC");
 

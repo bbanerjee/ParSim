@@ -92,15 +92,15 @@ namespace Uintah {
                                                const LevelP& level) = 0;
 
     // Used by DDT1 ONLY.
-    virtual void scheduleRefine(const PatchSet* patches,
-                                SchedulerP& sched) {};
+    virtual void scheduleRefine([[maybe_unused]] const PatchSet* patches,
+                                [[maybe_unused]] SchedulerP& sched) {};
 
     virtual void scheduleComputeModelSources(SchedulerP& scheduler,
                                              const LevelP& level) = 0;
 
     // Used by LightTime ONLY.
-    virtual void scheduleErrorEstimate(const LevelP& coarseLevel,
-                                       SchedulerP& sched) {};
+    virtual void scheduleErrorEstimate([[maybe_unused]] const LevelP& coarseLevel,
+                                       [[maybe_unused]] SchedulerP& sched) {};
                                                
     // Particle state - communicated from MPM 
     inline void setParticleGhostLayer(Ghost::GhostType type, int ngc) {

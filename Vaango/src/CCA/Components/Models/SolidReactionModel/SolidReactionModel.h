@@ -79,8 +79,8 @@ namespace Uintah {
       virtual void scheduleInitialize(SchedulerP&,
                                       const LevelP& level);
 
-      virtual void scheduleRestartInitialize(SchedulerP&,
-                                             const LevelP& level){};
+      virtual void scheduleRestartInitialize([[maybe_unused]] SchedulerP&,
+                                             [[maybe_unused]] const LevelP& level){};
       
       virtual void scheduleComputeStableTimestep(SchedulerP& sched,
                                                  const LevelP& level);

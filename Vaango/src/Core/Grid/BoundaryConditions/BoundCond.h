@@ -53,7 +53,6 @@ public:
   using BoundCondP = std::shared_ptr<BoundCond<T>>;
 
   BoundCond() = default;
-  ;
 
   BoundCond(const std::string& var_name,
             const std::string& type,

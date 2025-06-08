@@ -77,7 +77,8 @@ ShellMPM::~ShellMPM() {}
 void
 ShellMPM::problemSetup(const ProblemSpecP& prob_spec,
                        const ProblemSpecP& restart_prob_spec,
-                       GridP& grid)
+                       GridP& grid,
+                       [[maybe_unused]] const std::string& input_ups_dir)
 {
   SerialMPM::problemSetup(prob_spec, restart_prob_spec, grid);
 }
