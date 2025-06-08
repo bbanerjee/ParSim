@@ -170,6 +170,8 @@ WARNING
   class constCCVariable : public constGridVariable<GridVariableBase, CCVariable<T>, T>
   {
   public:
+    using constGridVariable<GridVariableBase, CCVariable<T>, T>::operator=;
+
     constCCVariable() : constGridVariable<GridVariableBase, CCVariable<T>, T>() {}
     constCCVariable(const CCVariable<T>& copy) : constGridVariable<GridVariableBase, CCVariable<T>, T>(copy) {}
   };

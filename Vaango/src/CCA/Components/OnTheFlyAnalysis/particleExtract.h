@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -83,7 +84,7 @@ public:
                std::vector<std::vector<const VarLabel*>>& PState_preReloc);
 
   virtual void
-  outputProblemSpec(ProblemSpecP& ps){};
+  outputProblemSpec([[maybe_unused]] ProblemSpecP& ps){};
 
   virtual void
   scheduleInitialize(SchedulerP& sched, const LevelP& level);
@@ -95,7 +96,7 @@ public:
   scheduleDoAnalysis(SchedulerP& sched, const LevelP& level);
 
   virtual void
-  scheduleDoAnalysis_preReloc(SchedulerP& sched, const LevelP& level);
+  scheduleDoAnalysis_preReloc([[maybe_unused]] SchedulerP& sched, [[maybe_unused]] const LevelP& level);
 
 private:
   void

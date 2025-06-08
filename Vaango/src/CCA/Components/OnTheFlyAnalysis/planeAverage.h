@@ -82,7 +82,7 @@ public:
                std::vector<std::vector<const VarLabel*>>& PState_preReloc);
 
   virtual void
-  outputProblemSpec(ProblemSpecP& ps){};
+  outputProblemSpec([[maybe_unused]] ProblemSpecP& ps){};
 
   virtual void
   scheduleInitialize(SchedulerP& sched, const LevelP& level);
@@ -94,7 +94,7 @@ public:
   scheduleDoAnalysis(SchedulerP& sched, const LevelP& level);
 
   virtual void
-  scheduleDoAnalysis_preReloc(SchedulerP& sched, const LevelP& level){};
+  scheduleDoAnalysis_preReloc([[maybe_unused]] SchedulerP& sched, [[maybe_unused]] const LevelP& level){};
 
   enum weightingType
   {
@@ -118,7 +118,7 @@ public:
     //  MPI user defined function for computing max for Uintah::Point
     //  we need this so each plane location has a non-zero value
     static void
-    MPI_OP_point(Point* in, Point* inOut, int* len, MPI_Datatype* type)
+    MPI_OP_point(Point* in, Point* inOut, int* len, [[maybe_unused]] MPI_Datatype* type)
     {
 
       for (auto i = 0; i < *len; i++) {
@@ -311,29 +311,29 @@ public:
     // virtual templated functions are not allowed in C++11
     // instantiate the various types
     virtual void
-    getPlanarAve(std::vector<double>& ave)
+    getPlanarAve([[maybe_unused]] std::vector<double>& ave)
     {
     }
     virtual void
-    getPlanarAve(std::vector<Vector>& ave)
-    {
-    }
-
-    virtual void
-    getPlanarSum(std::vector<double>& sum)
-    {
-    }
-    virtual void
-    getPlanarSum(std::vector<Vector>& sum)
+    getPlanarAve([[maybe_unused]] std::vector<Vector>& ave)
     {
     }
 
     virtual void
-    setPlanarSum(std::vector<double>& sum)
+    getPlanarSum([[maybe_unused]] std::vector<double>& sum)
     {
     }
     virtual void
-    setPlanarSum(std::vector<Vector>& sum)
+    getPlanarSum([[maybe_unused]] std::vector<Vector>& sum)
+    {
+    }
+
+    virtual void
+    setPlanarSum([[maybe_unused]] std::vector<double>& sum)
+    {
+    }
+    virtual void
+    setPlanarSum([[maybe_unused]] std::vector<Vector>& sum)
     {
     }
 
@@ -498,7 +498,7 @@ public:
     //___________________________________
     //  MPI user defined function for computing sum for Uintah::Vector
     static void
-    plusEqualVector(Vector* in, Vector* inOut, int* len, MPI_Datatype* type)
+    plusEqualVector(Vector* in, Vector* inOut, int* len, [[maybe_unused]] MPI_Datatype* type)
     {
       for (auto i = 0; i < *len; i++) {
         inOut[i].x(inOut[i].x() + in[i].x());

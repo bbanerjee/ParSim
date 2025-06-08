@@ -67,6 +67,8 @@ public:
     : ParticleVariable<T>() {}
   ShareAssignParticleVariable(const ParticleVariable<T>& pv)
     : ParticleVariable<T>(pv) {}
+  ShareAssignParticleVariable(const ShareAssignParticleVariable<T>& pv)
+    : ParticleVariable<T>(pv) {}
 
   virtual ~ShareAssignParticleVariable() {}
   

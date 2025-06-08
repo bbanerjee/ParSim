@@ -510,7 +510,7 @@ findTimestep_loopLimits(bool tslow_set,
 void
 printParticleID(DataArchive* da,
                 int mat,
-                bool point,
+                [[maybe_unused]] bool point,
                 bool line,
                 bool plane,
                 bool box,

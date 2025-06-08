@@ -121,8 +121,8 @@ controlVolFluxes::problemSetup(
   const ProblemSpecP&,
   const ProblemSpecP&,
   GridP& grid,
-  std::vector<std::vector<const VarLabel*>>& PState,
-  std::vector<std::vector<const VarLabel*>>& PState_preReloc)
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState_preReloc)
 {
   DOUTR(dout_OTF_CVF, "Doing controlVolFluxes::problemSetup");
 
@@ -387,9 +387,9 @@ controlVolFluxes::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
 //______________________________________________________________________
 //
 void
-controlVolFluxes::integrate_Q_overCV(const ProcessorGroup* pg,
+controlVolFluxes::integrate_Q_overCV([[maybe_unused]] const ProcessorGroup* pg,
                                      const PatchSubset* patches,
-                                     const MaterialSubset* matl_sub,
+                                     [[maybe_unused]] const MaterialSubset* matl_sub,
                                      DataWarehouse* old_dw,
                                      DataWarehouse* new_dw)
 {
@@ -524,9 +524,9 @@ controlVolFluxes::integrate_Q_overCV(const ProcessorGroup* pg,
 //______________________________________________________________________
 //
 void
-controlVolFluxes::doAnalysis(const ProcessorGroup* pg,
+controlVolFluxes::doAnalysis([[maybe_unused]] const ProcessorGroup* pg,
                              const PatchSubset* patches,
-                             const MaterialSubset* matls,
+                             [[maybe_unused]] const MaterialSubset* matls,
                              DataWarehouse* old_dw,
                              DataWarehouse* new_dw)
 {
@@ -659,7 +659,7 @@ controlVolFluxes::integrate_Q_overFace(controlVolume::FaceType face,
                                        faceQuantities* faceQ,
                                        SFC_D& vel_FC,
                                        constCCVariable<double>& rho_CC,
-                                       constCCVariable<Vector>& vel_CC)
+                                       [[maybe_unused]] constCCVariable<Vector>& vel_CC)
 {
   double faceArea = cv->getCellArea(face, patch);
   const int pDir  = cv->getFaceAxes(face)[0];

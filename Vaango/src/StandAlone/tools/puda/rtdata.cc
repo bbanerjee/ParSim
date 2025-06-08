@@ -62,17 +62,38 @@
 #include <cstdio>
 
 using namespace Uintah;
-
-using namespace std;
-
-typedef struct {
+struct MaterialData {
   std::vector<ShareAssignParticleVariable<double> > pv_double_list;
   std::vector<ShareAssignParticleVariable<float> > pv_float_list;
   std::vector<ShareAssignParticleVariable<Point> > pv_point_list;
   std::vector<ShareAssignParticleVariable<Vector> > pv_vector_list;
   std::vector<ShareAssignParticleVariable<Matrix3> > pv_matrix3_list;
   ShareAssignParticleVariable<Point> p_x;
-} MaterialData;
+
+  MaterialData() {}
+  MaterialData(const MaterialData& other)
+        : pv_double_list(other.pv_double_list),
+          pv_float_list(other.pv_float_list),
+          pv_point_list(other.pv_point_list),
+          pv_vector_list(other.pv_vector_list),
+          pv_matrix3_list(other.pv_matrix3_list),
+          p_x(other.p_x) // Use the copy constructor of ShareAssignParticleVariable
+  {
+  }
+
+  MaterialData& operator=(const MaterialData& other) 
+  {
+    if (this != &other) {
+      pv_double_list = other.pv_double_list;
+      pv_float_list = other.pv_float_list;
+      pv_point_list = other.pv_point_list;
+      pv_vector_list = other.pv_vector_list;
+      pv_matrix3_list = other.pv_matrix3_list;
+      p_x = other.p_x;
+    }
+    return *this;
+  }
+};
 
 /////
 ///  Helper Functions:
@@ -145,7 +166,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
   for( unsigned long t = clf.time_step_lower; t <= clf.time_step_upper; t++ ) {
     double time = times[t];
      std::ostringstream tempstr_time;
-    tempstr_time << setprecision(17) << time;
+    tempstr_time << std::setprecision(17) << time;
     time_file = replaceChar(string(tempstr_time.str()),'.','_');
     GridP grid = da->queryGrid(t);
     fprintf(filelist,"<TIMESTEP>\n");
@@ -251,6 +272,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
                 }
                 break;
               }
+              break;
             case Uintah::TypeDescription::Type::NCVariable:
               switch(subtype->getType()){
               case Uintah::TypeDescription::Type::double_type:

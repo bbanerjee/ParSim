@@ -448,7 +448,7 @@ template<class T>
 void
 printData_PV(DataArchive* archive,
              string& variable_name,
-             const Uintah::TypeDescription* variable_type,
+             [[maybe_unused]] const Uintah::TypeDescription* variable_type,
              int material,
              const bool use_cellIndex_file,
              int levelIndex,

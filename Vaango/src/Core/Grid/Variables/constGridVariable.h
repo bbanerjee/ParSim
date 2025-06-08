@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -68,6 +69,8 @@ WARNING
   class constGridVariable
     : public constVariable<VariableBase, Variable, T, const IntVector&> {
   public:
+    using constVariableBase<VariableBase>::operator=;
+
     constGridVariable()
       : constVariable<VariableBase, Variable, T, const IntVector&>() {}
 
@@ -110,6 +113,7 @@ WARNING
 
     void print(std::ostream& out) const
     { this->rep_.print(out); }
+
   };
 
   typedef constVariableBase<GridVariableBase> constGridVariableBase;

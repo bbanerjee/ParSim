@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -83,7 +84,7 @@ namespace Uintah {
     void operator()(DataArchive * da, const Patch * patch, 
                     const std::string & fieldname,
                     int imat, int index, 
-                    ParticleSubset * parts,
+                    [[maybe_unused]] ParticleSubset * parts,
                     ParticleVariable<Matrix3> & res) const {
       da->query(res, fieldname, imat, patch, index);
     }
@@ -292,12 +293,12 @@ namespace Uintah {
     return _ttdiagtable.size();
   }
   
-  std::string tensorDiagName(const Uintah::TypeDescription * fldtype, int idiag) {
+  std::string tensorDiagName([[maybe_unused]] const Uintah::TypeDescription * fldtype, int idiag) {
     createTensorDiags();
     return _ttdiagtable[idiag]->name();
   }
   
-  TensorDiag const * createTensorDiag(const Uintah::TypeDescription * fldtype, int idiag,
+  TensorDiag const * createTensorDiag([[maybe_unused]] const Uintah::TypeDescription * fldtype, int idiag,
                                       const TensorDiag * tensorpreop)
   {
     createTensorDiags();

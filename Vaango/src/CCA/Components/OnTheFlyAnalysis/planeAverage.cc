@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -119,9 +120,9 @@ void
 planeAverage::problemSetup(
   const ProblemSpecP&,
   const ProblemSpecP&,
-  GridP& grid,
-  std::vector<std::vector<const VarLabel*>>& PState,
-  std::vector<std::vector<const VarLabel*>>& PState_preReloc)
+  [[maybe_unused]] GridP& grid,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState_preReloc)
 {
   DOUTR(dout_OTF_PA, "Doing problemSetup \t\t\t\t" << d_className);
 
@@ -578,7 +579,7 @@ planeAverage::sched_computePlanarSums(SchedulerP& sched, const LevelP& level)
 //______________________________________________________________________
 //
 void
-planeAverage::computePlanarSums(const ProcessorGroup* pg,
+planeAverage::computePlanarSums([[maybe_unused]] const ProcessorGroup* pg,
                                 const PatchSubset* patches,
                                 const MaterialSubset*,
                                 DataWarehouse* old_dw,
@@ -865,7 +866,7 @@ planeAverage::sumOverAllProcs(const ProcessorGroup* pg,
                               const PatchSubset* patches,
                               const MaterialSubset*,
                               DataWarehouse* old_dw,
-                              DataWarehouse* new_dw)
+                              [[maybe_unused]] DataWarehouse* new_dw)
 {
   // With multiple levels a rank may not own any patches
   if (patches->empty()) {
@@ -1091,7 +1092,7 @@ void
 planeAverage::resetProgressVar(const ProcessorGroup*,
                                const PatchSubset* patches,
                                const MaterialSubset*,
-                               DataWarehouse* old_dw,
+                               [[maybe_unused]] DataWarehouse* old_dw,
                                DataWarehouse*)
 {
   // With multiple levels a rank may not own any patches
@@ -1138,7 +1139,7 @@ planeAverage::createMPICommunicator(const PatchSet* perProcPatches)
 //  Open the file if it doesn't exist
 void
 planeAverage::createFile(const string& filename,
-                         const string& levelIndex,
+                         [[maybe_unused]] const string& levelIndex,
                          FILE*& fp)
 {
   // if the file already exists then exit.  The file could exist but not be

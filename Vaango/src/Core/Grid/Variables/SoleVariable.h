@@ -168,10 +168,10 @@ public:
 
   virtual void
   emitNormal(std::ostream& out,
-             const IntVector& l,
-             const IntVector& h,
+             [[maybe_unused]] const IntVector& l,
+             [[maybe_unused]] const IntVector& h,
              ProblemSpecP /*varnode*/,
-             bool outputDoubleAsFloat)
+             [[maybe_unused]] bool outputDoubleAsFloat)
   {
     ssize_t linesize = (ssize_t)(sizeof(T));
 

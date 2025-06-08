@@ -55,9 +55,6 @@ GENERAL INFORMATION
 KEYWORDS
  Variable, const
 
-DESCRIPTION
- Long description...
-
 WARNING
 
 ****************************************/
@@ -66,6 +63,7 @@ template<class VariableBase, class Variable, class T, class Index>
 class constVariable : public constVariableBase<VariableBase>
 {
 public:
+  using constVariableBase<VariableBase>::operator=;
   typedef T value_type;
 
   constVariable()
@@ -76,6 +74,13 @@ public:
   constVariable(const Variable& copy)
     : rep_(copy)
   {
+  }
+
+  constVariable(const constVariable<VariableBase, Variable, T, Index>& other)
+    : constVariableBase<VariableBase>(other),
+      rep_(other.rep_)
+  {
+    copyPointer(other.rep_);
   }
 
   constVariable<VariableBase, Variable, T, Index>&
@@ -93,19 +98,19 @@ public:
   }
 
   constVariableBase<VariableBase>&
-  operator=(const constVariableBase<VariableBase>& v) override
+  operator=(const VariableBase& v)
+  {
+    copyPointer(v);
+    return *this;
+  }
+
+  constVariableBase<VariableBase>&
+  operator=(const constVariableBase<VariableBase>& v)
   {
     const constVariable<VariableBase, Variable, T, Index>* cvp =
       dynamic_cast<const constVariable<VariableBase, Variable, T, Index>*>(&v);
     ASSERT(cvp != 0);
     copyPointer(cvp->rep_);
-    return *this;
-  }
-
-  constVariableBase<VariableBase>&
-  operator=(const VariableBase& v) override
-  {
-    copyPointer(v);
     return *this;
   }
 

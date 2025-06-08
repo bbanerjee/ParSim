@@ -1611,10 +1611,10 @@ namespace exprtk
 
                #endif
 
-               case  4 : exprtk_process_digit
-               case  3 : exprtk_process_digit
-               case  2 : exprtk_process_digit
-               case  1 : if ((digit = (*itr - '0'))>= 10) { digit = 0; return_result = false; }
+               case  4 : exprtk_process_digit [[fallthrough]];
+               case  3 : exprtk_process_digit [[fallthrough]];
+               case  2 : exprtk_process_digit [[fallthrough]];
+               case  1 : if ((digit = (*itr - '0'))>= 10) { digit = 0; return_result = false; } break;
 
                #undef exprtk_process_digit
             }

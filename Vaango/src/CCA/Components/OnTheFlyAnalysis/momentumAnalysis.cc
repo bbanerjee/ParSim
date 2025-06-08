@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -120,8 +121,8 @@ momentumAnalysis::problemSetup(
   const ProblemSpecP&,
   const ProblemSpecP&,
   GridP& grid,
-  std::vector<std::vector<const VarLabel*>>& PState,
-  std::vector<std::vector<const VarLabel*>>& PState_preReloc)
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState_preReloc)
 {
   DOUTR(dout_OTF_MA, "Doing momentumAnalysis::problemSetup");
   //__________________________________
@@ -374,9 +375,9 @@ momentumAnalysis::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
 //______________________________________________________________________
 //
 void
-momentumAnalysis::integrateMomentumField(const ProcessorGroup* pg,
+momentumAnalysis::integrateMomentumField([[maybe_unused]] const ProcessorGroup* pg,
                                          const PatchSubset* patches,
-                                         const MaterialSubset* matl_sub,
+                                         [[maybe_unused]] const MaterialSubset* matl_sub,
                                          DataWarehouse* old_dw,
                                          DataWarehouse* new_dw)
 {
@@ -579,9 +580,9 @@ momentumAnalysis::integrateMomentumField(const ProcessorGroup* pg,
 //______________________________________________________________________
 //
 void
-momentumAnalysis::doAnalysis(const ProcessorGroup* pg,
+momentumAnalysis::doAnalysis([[maybe_unused]] const ProcessorGroup* pg,
                              const PatchSubset* patches,
-                             const MaterialSubset* matls,
+                             [[maybe_unused]] const MaterialSubset* matls,
                              DataWarehouse* old_dw,
                              DataWarehouse* new_dw)
 {

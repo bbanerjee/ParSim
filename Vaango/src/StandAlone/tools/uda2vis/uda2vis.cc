@@ -315,7 +315,7 @@ getTimestepInfo(DataArchive* archive,
 template<template<typename> class VAR, typename T>
 static GridDataRaw*
 readGridData(DataArchive* archive,
-             const Patch* patch,
+             [[maybe_unused]] const Patch* patch,
              const LevelP level,
              string variable_name,
              int material,

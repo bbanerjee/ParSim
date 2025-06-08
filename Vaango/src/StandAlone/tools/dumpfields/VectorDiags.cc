@@ -87,7 +87,7 @@ namespace Uintah {
     void operator()(DataArchive * da, const Patch * patch, 
                     const std::string & fieldname,
                     int imat, int index, 
-                    ParticleSubset * parts,
+                    [[maybe_unused]] ParticleSubset * parts,
                     ParticleVariable<Vector> & res) const {
       da->query(res, fieldname, imat, patch, index);
     }

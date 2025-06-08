@@ -86,7 +86,7 @@ namespace Uintah {
   }
 
   void
-  InfoDumper::finishStep(FieldDumper::Step * s)
+  InfoDumper::finishStep([[maybe_unused]] FieldDumper::Step * s)
   {
   }
 

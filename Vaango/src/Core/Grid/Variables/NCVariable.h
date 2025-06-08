@@ -189,6 +189,8 @@ class constNCVariable
   : public constGridVariable<GridVariableBase, NCVariable<T>, T>
 {
 public:
+  using constGridVariable<GridVariableBase, NCVariable<T>, T>::operator=;
+
   constNCVariable()
     : constGridVariable<GridVariableBase, NCVariable<T>, T>()
   {

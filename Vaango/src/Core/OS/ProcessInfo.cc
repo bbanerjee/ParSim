@@ -96,7 +96,7 @@ ProcessInfo::getInfo(int info_type)
     while (!feof(file)) {
       [[maybe_unused]] auto status = fscanf(file, "%s", tempString);
       if (!strcmp(tempString, compareString)) {
-        [[maybe_unused]] auto stat = fscanf(file, "%ld", &tempLong);
+        [[maybe_unused]] auto stat = fscanf(file, "%lu", &tempLong);
         fclose(file);
         return tempLong * 1024;
       }

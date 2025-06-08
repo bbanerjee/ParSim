@@ -395,7 +395,7 @@ meanTurbFluxes::sched_populateVerifyLabels(SchedulerP& sched,
 //______________________________________________________________________
 //
 void
-meanTurbFluxes::populateVerifyLabels(const ProcessorGroup* pg,
+meanTurbFluxes::populateVerifyLabels([[maybe_unused]] const ProcessorGroup* pg,
                                      const PatchSubset* patches,
                                      const MaterialSubset*,
                                      DataWarehouse*,
@@ -578,7 +578,7 @@ int
 meanTurbFluxes::findFilePositionOffset(const PatchSubset* patches,
                                        const int nPlaneCellPerPatch,
                                        const IntVector pLo,
-                                       const IntVector pHi)
+                                       [[maybe_unused]] const IntVector pHi)
 {
   map<int, int> fileOffsetMap;
 

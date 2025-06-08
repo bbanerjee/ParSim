@@ -169,7 +169,7 @@ main(int argc, char** argv)
   }
 }
 void
-usage(const std::string& badarg, const std::string& progname)
+usage(const std::string& badarg, [[maybe_unused]] const std::string& progname)
 {
   if (badarg != "") {
     std::cerr << "Error parsing argument: " << badarg << std::endl;

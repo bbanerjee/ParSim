@@ -93,7 +93,7 @@ namespace Uintah {
   }  
 
   void
-  TextDumper::addField(string fieldname, const Uintah::TypeDescription * type)
+  TextDumper::addField([[maybe_unused]] string fieldname, [[maybe_unused]] const Uintah::TypeDescription * type)
   {
   }
 

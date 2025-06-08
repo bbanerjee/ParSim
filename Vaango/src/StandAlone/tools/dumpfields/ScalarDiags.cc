@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -154,12 +155,12 @@ namespace Uintah {
   class VectorCompDiag : public VectorToScalarDiag {
   public:
     VectorCompDiag(char ic) : ic_(ic) {
-      snprintf(name_, 12, "component%d", ic_);
+      snprintf(name_, 18, "component%d", ic_);
     }
     string name() const { return name_; }
     double reduce(const Vector & v) const { return v[ic_]; }
   private:
-    char name_[12];
+    char name_[18];
     char ic_;
   };
   
@@ -297,12 +298,12 @@ namespace Uintah {
   class Matrix3CompDiag : public TensorToScalarDiag {
   public:
     Matrix3CompDiag(char ic, char jc) : ic_(ic), jc_(jc) {
-      snprintf(name_, 12, "component%d%d", ic_, jc_);
+      snprintf(name_, 18, "component%d%d", ic_, jc_);
     }
     string name() const { return name_; }
     double reduce(const Matrix3 & v) const { return v(ic_,jc_); }
   private:
-    char name_[12];
+    char name_[18];
     char ic_, jc_;
   };
   

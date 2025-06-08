@@ -47,7 +47,7 @@ descriptions, namely, x, y and z of the centers, and radii.  This can then be us
 with the file geometry piece type, after processing with particleFileSplitter2, to 
 generate geometry for FileGeometryPiece.
 */
-int main(int argc, char *argv[])
+int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
 {
   // Establish physical size of the image
   std::vector<double> X(3);

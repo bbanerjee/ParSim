@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -108,8 +109,8 @@ void
 MinMax::problemSetup(const ProblemSpecP&,
                      const ProblemSpecP&,
                      GridP& grid,
-                     std::vector<std::vector<const VarLabel*>>& PState,
-                     std::vector<std::vector<const VarLabel*>>& PState_preReloc)
+                     [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState,
+                     [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState_preReloc)
 {
   DOUTR(dout_OTF_MM, "Doing  MinMax::problemSetup");
 
@@ -480,7 +481,7 @@ MinMax::scheduleDoAnalysis(SchedulerP& sched, const LevelP& levelP)
 //  This task computes and min/max of each variable
 //
 void
-MinMax::computeMinMax(const ProcessorGroup* pg,
+MinMax::computeMinMax([[maybe_unused]] const ProcessorGroup* pg,
                       const PatchSubset* patches,
                       const MaterialSubset*,
                       DataWarehouse* old_dw,

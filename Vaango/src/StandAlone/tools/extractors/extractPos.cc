@@ -201,7 +201,7 @@ printPosition(DataArchive* da,
               int matID,
               unsigned long timeStep,
               std::vector<long64>& partID,
-              string outFile)
+              [[maybe_unused]] string outFile)
 {
 
   // Check if the particle variable is available

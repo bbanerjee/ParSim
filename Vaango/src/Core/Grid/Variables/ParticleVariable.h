@@ -734,6 +734,11 @@ class constParticleVariable
                          particleIndex>
 {
 public:
+  using constVariable<ParticleVariableBase,
+                      ParticleVariable<T>,
+                      T,
+                      particleIndex>::operator=;
+
   constParticleVariable()
     : constVariable<ParticleVariableBase,
                     ParticleVariable<T>,

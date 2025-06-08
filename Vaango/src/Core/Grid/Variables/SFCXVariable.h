@@ -165,6 +165,7 @@ WARNING
   class constSFCXVariable : public constGridVariable<GridVariableBase, SFCXVariable<T>, T>
   {
   public:
+    using constGridVariable<GridVariableBase, SFCXVariable<T>, T>::operator=;
     constSFCXVariable() : constGridVariable<GridVariableBase, SFCXVariable<T>, T>() {}
     constSFCXVariable(const SFCXVariable<T>& copy) : constGridVariable<GridVariableBase, SFCXVariable<T>, T>(copy) {}
   };

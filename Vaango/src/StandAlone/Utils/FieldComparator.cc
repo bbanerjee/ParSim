@@ -59,31 +59,33 @@ FieldComparator::makeFieldComparator(const Uintah::TypeDescription* td,
       switch (subtype->getType()) {
         case Uintah::TypeDescription::Type::double_type:
           return scinew SpecificFieldComparator<Uintah::NCVariable<double>,
-                                                Uintah::NodeIterator>(iter);
+                                                Uintah::NodeIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::float_type:
           return scinew SpecificFieldComparator<Uintah::NCVariable<float>,
-                                                Uintah::NodeIterator>(iter);
+                                                Uintah::NodeIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::int_type:
           return scinew SpecificFieldComparator<Uintah::NCVariable<int>,
-                                                Uintah::NodeIterator>(iter);
+                                                Uintah::NodeIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Point:
           return scinew
             SpecificFieldComparator<Uintah::NCVariable<Uintah::Point>,
-                                    Uintah::NodeIterator>(iter);
+                                    Uintah::NodeIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Vector:
           return scinew
             SpecificFieldComparator<Uintah::NCVariable<Uintah::Vector>,
-                                    Uintah::NodeIterator>(iter);
+                                    Uintah::NodeIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Matrix3:
           return scinew
             SpecificFieldComparator<Uintah::NCVariable<Uintah::Matrix3>,
-                                    Uintah::NodeIterator>(iter);
+                                    Uintah::NodeIterator>(iter); [[fallthrough]];
         default:
           std::cerr << "FieldComparator::makeFieldComparator: NC Variable of "
                        "unsupported type: "
                     << subtype->getName() << '\n';
           Uintah::Parallel::exitAll(-1);
+          break;
       }
+      break;
     }
 
     case Uintah::TypeDescription::Type::CCVariable: {
@@ -96,35 +98,37 @@ FieldComparator::makeFieldComparator(const Uintah::TypeDescription* td,
       switch (subtype->getType()) {
         case Uintah::TypeDescription::Type::double_type:
           return scinew SpecificFieldComparator<Uintah::CCVariable<double>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::float_type:
           return scinew SpecificFieldComparator<Uintah::CCVariable<float>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::int_type:
           return scinew SpecificFieldComparator<Uintah::CCVariable<int>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Point:
           return scinew
             SpecificFieldComparator<Uintah::CCVariable<Uintah::Point>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Vector:
           return scinew
             SpecificFieldComparator<Uintah::CCVariable<Uintah::Vector>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Matrix3:
           return scinew
             SpecificFieldComparator<Uintah::CCVariable<Uintah::Matrix3>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Stencil7:
           return scinew
             SpecificFieldComparator<Uintah::CCVariable<Uintah::Stencil7>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         default:
           std::cerr << "FieldComparator::makeFieldComparator: CC Variable of "
                        "unsupported type: "
                     << subtype->getName() << '\n';
           Uintah::Parallel::exitAll(-1);
+          break;
       }
+      break;
     }
 
     case Uintah::TypeDescription::Type::SFCXVariable: {
@@ -137,31 +141,33 @@ FieldComparator::makeFieldComparator(const Uintah::TypeDescription* td,
       switch (subtype->getType()) {
         case Uintah::TypeDescription::Type::double_type:
           return scinew SpecificFieldComparator<Uintah::SFCXVariable<double>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::float_type:
           return scinew SpecificFieldComparator<Uintah::SFCXVariable<float>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::int_type:
           return scinew SpecificFieldComparator<Uintah::SFCXVariable<int>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Point:
           return scinew
             SpecificFieldComparator<Uintah::SFCXVariable<Uintah::Point>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Vector:
           return scinew
             SpecificFieldComparator<Uintah::SFCXVariable<Uintah::Vector>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Matrix3:
           return scinew
             SpecificFieldComparator<Uintah::SFCXVariable<Uintah::Matrix3>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         default:
           std::cerr << "FieldComparator::makeFieldComparator: SFCX Variable of "
                        "unsupported type: "
                     << subtype->getName() << '\n';
           Uintah::Parallel::exitAll(-1);
+          break;
       }
+      break;
     }
 
     case Uintah::TypeDescription::Type::SFCYVariable: {
@@ -174,31 +180,33 @@ FieldComparator::makeFieldComparator(const Uintah::TypeDescription* td,
       switch (subtype->getType()) {
         case Uintah::TypeDescription::Type::double_type:
           return scinew SpecificFieldComparator<Uintah::SFCYVariable<double>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::float_type:
           return scinew SpecificFieldComparator<Uintah::SFCYVariable<float>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::int_type:
           return scinew SpecificFieldComparator<Uintah::SFCYVariable<int>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Point:
           return scinew
             SpecificFieldComparator<Uintah::SFCYVariable<Uintah::Point>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Vector:
           return scinew
             SpecificFieldComparator<Uintah::SFCYVariable<Uintah::Vector>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Matrix3:
           return scinew
             SpecificFieldComparator<Uintah::SFCYVariable<Uintah::Matrix3>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         default:
           std::cerr << "FieldComparator::makeFieldComparator: SFCY Variable of "
                        "unsupported type: "
                     << subtype->getName() << '\n';
           Uintah::Parallel::exitAll(-1);
+          break;
       }
+      break;
     }
 
     case Uintah::TypeDescription::Type::SFCZVariable: {
@@ -211,31 +219,33 @@ FieldComparator::makeFieldComparator(const Uintah::TypeDescription* td,
       switch (subtype->getType()) {
         case Uintah::TypeDescription::Type::double_type:
           return scinew SpecificFieldComparator<Uintah::SFCZVariable<double>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::float_type:
           return scinew SpecificFieldComparator<Uintah::SFCZVariable<float>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::int_type:
           return scinew SpecificFieldComparator<Uintah::SFCZVariable<int>,
-                                                Uintah::CellIterator>(iter);
+                                                Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Point:
           return scinew
             SpecificFieldComparator<Uintah::SFCZVariable<Uintah::Point>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Vector:
           return scinew
             SpecificFieldComparator<Uintah::SFCZVariable<Uintah::Vector>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         case Uintah::TypeDescription::Type::Matrix3:
           return scinew
             SpecificFieldComparator<Uintah::SFCZVariable<Uintah::Matrix3>,
-                                    Uintah::CellIterator>(iter);
+                                    Uintah::CellIterator>(iter); [[fallthrough]];
         default:
           std::cerr << "FieldComparator::makeFieldComparator: SFCZ Variable of "
                        "unsupported type: "
                     << subtype->getName() << '\n';
           Uintah::Parallel::exitAll(-1);
+          break;
       }
+      break;
     }
 
     default:
@@ -244,6 +254,7 @@ FieldComparator::makeFieldComparator(const Uintah::TypeDescription* td,
            "type: "
         << td->getName() << '\n';
       Uintah::Parallel::exitAll(-1);
+      break;
   }
   return nullptr;
 }

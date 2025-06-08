@@ -183,6 +183,8 @@ class constSFCZVariable
   : public constGridVariable<GridVariableBase, SFCZVariable<T>, T>
 {
 public:
+  using constGridVariable<GridVariableBase, SFCZVariable<T>, T>::operator=;
+
   constSFCZVariable()
     : constGridVariable<GridVariableBase, SFCZVariable<T>, T>()
   {

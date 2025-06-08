@@ -99,7 +99,7 @@ namespace Uintah {
   }
 
   string 
-  FieldDumper::dirName(double time_val, int istep) const
+  FieldDumper::dirName([[maybe_unused]] double time_val, int istep) const
   {
     return this->basedir_+"_"+this->directoryExt()+"/"+step_string(istep);
     // return this->basedir_+"_"+this->directoryExt()+"/"+time_string(time_val);
