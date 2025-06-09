@@ -26,6 +26,7 @@
 #define __DERIVED_MODEL_STATE_METAL_TEMPLATED_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateT.h>
+#include <memory>
 
 namespace Vaango {
 
@@ -45,13 +46,25 @@ public:
 
   ModelState_MetalT();
 
-  ModelState_MetalT(const ModelState_MetalT& state);
-  ModelState_MetalT(const ModelState_MetalT* state);
+  ModelState_MetalT(const ModelState_MetalT& state)     = default;
+  ModelState_MetalT(ModelState_MetalT&& state) noexcept = default;
 
-  ~ModelState_MetalT();
+  ~ModelState_MetalT() = default;
 
-  ModelState_MetalT& operator=(const ModelState_MetalT& state);
-  ModelState_MetalT* operator=(const ModelState_MetalT* state);
+  ModelState_MetalT&
+  operator=(const ModelState_MetalT& state) = default;
+
+  ModelState_MetalT&
+  operator=(ModelState_MetalT&& state) noexcept = default;
+
+  // Polymorphic cloning method (preferred over operator=(const T*))
+  [[nodiscard]] std::unique_ptr<ModelStateT<ModelState_MetalT>>
+  clone() const
+  {
+    return std::make_unique<ModelState_MetalT>(*this);
+  }
+
+
   void copyLocalState(const ModelState_MetalT* state);
 
   size_t numLocalStateVar() const 

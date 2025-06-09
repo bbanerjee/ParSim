@@ -26,6 +26,7 @@
 #define __DERIVED_MODEL_STATE_CAMCLAY_BORJA_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateT.h>
+#include <memory>
 
 namespace Vaango {
 
@@ -56,13 +57,24 @@ public:
 
   ModelState_BorjaT();
 
-  ModelState_BorjaT(const ModelState_BorjaT& state);
-  ModelState_BorjaT(const ModelState_BorjaT* state);
+  ModelState_BorjaT(const ModelState_BorjaT& state)     = default;
+  ModelState_BorjaT(ModelState_BorjaT&& state) noexcept = default;
 
-  ~ModelState_BorjaT();
+  ~ModelState_BorjaT() = default;
 
-  ModelState_BorjaT& operator=(const ModelState_BorjaT& state);
-  ModelState_BorjaT* operator=(const ModelState_BorjaT* state);
+  ModelState_BorjaT&
+  operator=(const ModelState_BorjaT& state) = default;
+
+  ModelState_BorjaT&
+  operator=(ModelState_BorjaT&& state) noexcept = default;
+
+  // Polymorphic cloning method (preferred over operator=(const T*))
+  [[nodiscard]] std::unique_ptr<ModelStateT<ModelState_BorjaT>>
+  clone() const
+  {
+    return std::make_unique<ModelState_BorjaT>(*this);
+  }
+
   void copyLocalState(const ModelState_BorjaT* state);
 
   size_t numLocalStateVar() const 

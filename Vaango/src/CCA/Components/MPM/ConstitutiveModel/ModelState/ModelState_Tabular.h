@@ -65,15 +65,27 @@ public:
   Uintah::Matrix3 elasticStrainTensor; 
   Uintah::Matrix3 plasticStrainTensor;
 
+  using ModelStateBase::operator=; // Brings both base copy and move assignment into scope
+
   ModelState_Tabular();
 
-  ModelState_Tabular(const ModelState_Tabular& state) = default;
-  ModelState_Tabular(const ModelState_Tabular* state);
+  ModelState_Tabular(const ModelState_Tabular& state)     = default;
+  ModelState_Tabular(ModelState_Tabular&& state) noexcept = default;
 
-  ~ModelState_Tabular() = default;
+  ~ModelState_Tabular() override = default;
 
-  ModelState_Tabular& operator=(const ModelState_Tabular& state) = default;
-  ModelState_Tabular* operator=(const ModelState_Tabular* state);
+  ModelState_Tabular&
+  operator=(const ModelState_Tabular& state);
+
+  ModelState_Tabular&
+  operator=(const ModelState_Tabular&& state) noexcept;
+
+  // Polymorphic cloning method (preferred over operator=(const T*))
+  [[nodiscard]] std::unique_ptr<ModelStateBase>
+  clone() const override
+  {
+    return std::make_unique<ModelState_Tabular>(*this);
+  }
 
   virtual 
   size_t numStateVar() const override

@@ -70,15 +70,15 @@ TEST(ModelStateTest, Constructors)
   Vaango::ModelStateBase state_copy(state);
   //std::cout << "p copy = " << state_copy.pressure << " phi copy = " << state_copy.porosity << "\n";
 
-  Vaango::ModelStateBase state_pcopy(&state);
-  //std::cout << "p pcopy = " << state_pcopy.pressure << " phi pcopy = " << state_pcopy.porosity << "\n";
+  Vaango::ModelStateBase state_move(std::move(state));
+  //std::cout << "p move = " << state_move.pressure << " phi move = " << state_move.porosity << "\n";
 
-  Vaango::ModelStateBase state_ecopy = state;
+  Vaango::ModelStateBase state_ecopy = state_copy;
   //std::cout << "p ecopy = " << state_ecopy.pressure << " phi ecopy = " << state_ecopy.porosity << "\n";
 
-  Vaango::ModelStateBase state_epcopy = &state;
-  //std::cout << "p epcopy = " << state_epcopy.pressure << " phi epcopy = " << state_epcopy.porosity << "\n";
-  ASSERT_DOUBLE_EQ(state.pressure, state_epcopy.pressure);
+  Vaango::ModelStateBase state_emove = std::move(state_move);
+  //std::cout << "p emove = " << state_emove.pressure << " phi emove = " << state_emove.porosity << "\n";
+  ASSERT_DOUBLE_EQ(state.pressure, state_emove.pressure);
 }
 
 TEST(ModelStateTest, Casts)

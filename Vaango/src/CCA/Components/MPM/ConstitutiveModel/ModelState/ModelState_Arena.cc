@@ -25,6 +25,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
 #include <Core/Exceptions/InternalError.h>
 #include <iostream>
+#include "ModelState_Arena.h"
 
 using namespace Vaango;
 
@@ -71,83 +72,6 @@ ModelState_Arena::ModelState_Arena()
   coherence = 1.0;
 }
 
-ModelState_Arena::ModelState_Arena(const ModelState_Arena& state)
-{
-  particleID = state.particleID;
-
-  bulkModulus = state.bulkModulus;
-  shearModulus = state.shearModulus;
-
-  capX = state.capX;
-  kappa = state.kappa;
-  pbar_w = state.pbar_w;
-
-  stressTensor = state.stressTensor;
-  deviatoricStressTensor = state.deviatoricStressTensor;
-  I1_eff = state.I1_eff;
-  J2 = state.J2;
-  sqrt_J2 = state.sqrt_J2;
-  rr = state.rr;
-  zz_eff = state.zz_eff;
-
-  elasticStrainTensor = state.elasticStrainTensor;
-  plasticStrainTensor = state.plasticStrainTensor;
-  ep_v = state.ep_v;
-  dep_v = state.dep_v;
-  ep_cum_eq = state.ep_cum_eq;
-  ep_eq = state.ep_eq;
-
-  phi0 = state.phi0;
-  Sw0 = state.Sw0;
-  porosity = state.porosity;
-  saturation = state.saturation;
-
-  p3 = state.p3;
-  t_grow = state.t_grow;
-  coherence = state.coherence;
-
-  yieldParams = state.yieldParams;
-}
-
-ModelState_Arena::ModelState_Arena(const ModelState_Arena* state)
-{
-  particleID = state->particleID;
-
-  bulkModulus = state->bulkModulus;
-  shearModulus = state->shearModulus;
-
-  capX = state->capX;
-  kappa = state->kappa;
-  pbar_w = state->pbar_w;
-
-  stressTensor = state->stressTensor;
-  deviatoricStressTensor = state->deviatoricStressTensor;
-  I1_eff = state->I1_eff;
-  J2 = state->J2;
-  sqrt_J2 = state->sqrt_J2;
-  rr = state->rr;
-  zz_eff = state->zz_eff;
-
-  elasticStrainTensor = state->elasticStrainTensor;
-  plasticStrainTensor = state->plasticStrainTensor;
-  ep_v = state->ep_v;
-  dep_v = state->dep_v;
-  ep_cum_eq = state->ep_cum_eq;
-  ep_eq = state->ep_eq;
-
-  phi0 = state->phi0;
-  Sw0 = state->Sw0;
-  porosity = state->porosity;
-  saturation = state->saturation;
-
-  p3 = state->p3;
-  t_grow = state->t_grow;
-  coherence = state->coherence;
-
-  yieldParams = state->yieldParams;
-}
-
-ModelState_Arena::~ModelState_Arena() = default;
 
 ModelState_Arena&
 ModelState_Arena::operator=(const ModelState_Arena& state)
@@ -155,86 +79,94 @@ ModelState_Arena::operator=(const ModelState_Arena& state)
   if (this == &state)
     return *this;
 
-  particleID = state.particleID;
+  // Call base class assignment operator to handle base part
+  ModelStateBase::operator=(state);
 
-  bulkModulus = state.bulkModulus;
-  shearModulus = state.shearModulus;
+  // Copy derived class specific members
+  this->particleID = state.particleID;
 
-  capX = state.capX;
-  kappa = state.kappa;
-  pbar_w = state.pbar_w;
+  this->bulkModulus = state.bulkModulus;
+  this->shearModulus = state.shearModulus;
 
-  stressTensor = state.stressTensor;
-  deviatoricStressTensor = state.deviatoricStressTensor;
-  I1_eff = state.I1_eff;
-  J2 = state.J2;
-  sqrt_J2 = state.sqrt_J2;
-  rr = state.rr;
-  zz_eff = state.zz_eff;
+  this->capX = state.capX;
+  this->kappa = state.kappa;
+  this->pbar_w = state.pbar_w;
 
-  elasticStrainTensor = state.elasticStrainTensor;
-  plasticStrainTensor = state.plasticStrainTensor;
-  ep_v = state.ep_v;
-  dep_v = state.dep_v;
-  ep_cum_eq = state.ep_cum_eq;
-  ep_eq = state.ep_eq;
+  this->stressTensor = state.stressTensor;
+  this->deviatoricStressTensor = state.deviatoricStressTensor;
+  this->I1_eff = state.I1_eff;
+  this->J2 = state.J2;
+  this->sqrt_J2 = state.sqrt_J2;
+  this->rr = state.rr;
+  this->zz_eff = state.zz_eff;
 
-  phi0 = state.phi0;
-  Sw0 = state.Sw0;
-  porosity = state.porosity;
-  saturation = state.saturation;
+  this->elasticStrainTensor = state.elasticStrainTensor;
+  this->plasticStrainTensor = state.plasticStrainTensor;
+  this->ep_v = state.ep_v;
+  this->dep_v = state.dep_v;
+  this->ep_cum_eq = state.ep_cum_eq;
+  this->ep_eq = state.ep_eq;
 
-  p3 = state.p3;
-  t_grow = state.t_grow;
-  coherence = state.coherence;
+  this->phi0 = state.phi0;
+  this->Sw0 = state.Sw0;
+  this->porosity = state.porosity;
+  this->saturation = state.saturation;
 
-  yieldParams = state.yieldParams;
+  this->p3 = state.p3;
+  this->t_grow = state.t_grow;
+  this->coherence = state.coherence;
+
+  this->yieldParams = state.yieldParams;
 
   return *this;
 }
 
-ModelState_Arena*
-ModelState_Arena::operator=(const ModelState_Arena* state)
+ModelState_Arena&
+Vaango::ModelState_Arena::operator=(const ModelState_Arena&& state) noexcept
 {
-  if (this == state)
-    return this;
+  if (this == &state)
+    return *this;
 
-  particleID = state->particleID;
+  // Call base class assignment operator to handle base part
+  ModelStateBase::operator=(std::move(state));
 
-  bulkModulus = state->bulkModulus;
-  shearModulus = state->shearModulus;
+  // Move derived class specific members
+  this->particleID = std::move(state.particleID);
 
-  capX = state->capX;
-  kappa = state->kappa;
-  pbar_w = state->pbar_w;
+  this->bulkModulus = std::move(state.bulkModulus);
+  this->shearModulus = std::move(state.shearModulus);
 
-  stressTensor = state->stressTensor;
-  deviatoricStressTensor = state->deviatoricStressTensor;
-  I1_eff = state->I1_eff;
-  J2 = state->J2;
-  sqrt_J2 = state->sqrt_J2;
-  rr = state->rr;
-  zz_eff = state->zz_eff;
+  this->capX = std::move(state.capX);
+  this->kappa = std::move(state.kappa);
+  this->pbar_w = std::move(state.pbar_w);
 
-  elasticStrainTensor = state->elasticStrainTensor;
-  plasticStrainTensor = state->plasticStrainTensor;
-  ep_v = state->ep_v;
-  dep_v = state->dep_v;
-  ep_eq = state->ep_eq;
-  ep_cum_eq = state->ep_cum_eq;
+  this->stressTensor = std::move(state.stressTensor);
+  this->deviatoricStressTensor = std::move(state.deviatoricStressTensor);
+  this->I1_eff = std::move(state.I1_eff);
+  this->J2 = std::move(state.J2);
+  this->sqrt_J2 = std::move(state.sqrt_J2);
+  this->rr = std::move(state.rr);
+  this->zz_eff = std::move(state.zz_eff);
 
-  phi0 = state->phi0;
-  Sw0 = state->Sw0;
-  porosity = state->porosity;
-  saturation = state->saturation;
+  this->elasticStrainTensor = std::move(state.elasticStrainTensor);
+  this->plasticStrainTensor = std::move(state.plasticStrainTensor);
+  this->ep_v = std::move(state.ep_v);
+  this->dep_v = std::move(state.dep_v);
+  this->ep_cum_eq = std::move(state.ep_cum_eq);
+  this->ep_eq = std::move(state.ep_eq);
 
-  p3 = state->p3;
-  t_grow = state->t_grow;
-  coherence = state->coherence;
+  this->phi0 = std::move(state.phi0);
+  this->Sw0 = std::move(state.Sw0);
+  this->porosity = std::move(state.porosity);
+  this->saturation = std::move(state.saturation);
 
-  yieldParams = state->yieldParams;
+  this->p3 = std::move(state.p3);
+  this->t_grow = std::move(state.t_grow);
+  this->coherence = std::move(state.coherence);
 
-  return this;
+  this->yieldParams = std::move(state.yieldParams);
+
+  return *this;
 }
 
 void

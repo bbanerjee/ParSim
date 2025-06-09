@@ -25,6 +25,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Tabular.h>
 #include <Core/Exceptions/InternalError.h>
 #include <iostream>
+#include "ModelState_Tabular.h"
 
 using namespace Vaango;
 
@@ -33,31 +34,78 @@ const Uintah::Matrix3 ModelState_Tabular::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0,
 const double ModelState_Tabular::sqrtTwo = std::sqrt(2.0);
 const double ModelState_Tabular::sqrtThree = std::sqrt(3.0);
 
-
-ModelState_Tabular::ModelState_Tabular() 
- : ModelStateBase()
- , particleID(0)
- , I1(0) , J2(0) , sqrt_J2(0) , zz(0) , rr(0)
- , ep_v(0) , ep_eq(0), ep_cum_eq(0)
- , stressTensor(0) , deviatoricStressTensor(0)
- , elasticStrainTensor(0) , plasticStrainTensor(0)
+ModelState_Tabular::ModelState_Tabular()
+  : ModelStateBase()
+  , particleID(0)
+  , I1(0)
+  , J2(0)
+  , sqrt_J2(0)
+  , zz(0)
+  , rr(0)
+  , ep_v(0)
+  , ep_eq(0)
+  , ep_cum_eq(0)
+  , stressTensor(0)
+  , deviatoricStressTensor(0)
+  , elasticStrainTensor(0)
+  , plasticStrainTensor(0)
 {
 }
 
-ModelState_Tabular::ModelState_Tabular(const ModelState_Tabular* state)
+ModelState_Tabular&
+Vaango::ModelState_Tabular::operator=(const ModelState_Tabular& state)
 {
-  *this = *state;
+  if (this == &state) {
+    return *this;
+  }
+
+  // Call base class assignment operator to handle base part
+  ModelStateBase::operator=(state);
+
+  // Copy derived class specific members
+  this->particleID = state.particleID;
+  this->I1 = state.I1;
+  this->J2 = state.J2;
+  this->sqrt_J2 = state.sqrt_J2;
+  this->zz = state.zz;
+  this->rr = state.rr;
+  this->ep_v = state.ep_v;
+  this->ep_eq = state.ep_eq;
+  this->ep_cum_eq = state.ep_cum_eq;
+  this->stressTensor = state.stressTensor;
+  this->deviatoricStressTensor = state.deviatoricStressTensor;
+  this->elasticStrainTensor = state.elasticStrainTensor;
+  this->plasticStrainTensor = state.plasticStrainTensor;
+
+  return *this;
 }
 
-ModelState_Tabular*
-ModelState_Tabular::operator=(const ModelState_Tabular* state)
+ModelState_Tabular&
+Vaango::ModelState_Tabular::operator=(const ModelState_Tabular&& state) noexcept
 {
-  if (this == state)
-    return this;
-  
-  *this = *state;
+  if (this == &state) {
+    return *this;
+  }
 
-  return this;
+  // Call base class assignment operator to handle base part
+  ModelStateBase::operator=(std::move(state));
+
+  // Move derived class specific members
+  this->particleID = std::move(state.particleID);
+  this->I1 = std::move(state.I1);
+  this->J2 = std::move(state.J2);
+  this->sqrt_J2 = std::move(state.sqrt_J2);
+  this->zz = std::move(state.zz);
+  this->rr = std::move(state.rr);
+  this->ep_v = std::move(state.ep_v);
+  this->ep_eq = std::move(state.ep_eq);
+  this->ep_cum_eq = std::move(state.ep_cum_eq);
+  this->stressTensor = std::move(state.stressTensor);
+  this->deviatoricStressTensor = std::move(state.deviatoricStressTensor);
+  this->elasticStrainTensor = std::move(state.elasticStrainTensor);
+  this->plasticStrainTensor = std::move(state.plasticStrainTensor);
+
+  return *this;
 }
 
 void

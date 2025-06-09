@@ -53,17 +53,27 @@ public:
   double delta_eps_v; // Change in Volumetrc strain
   double scale_eps_v; // Scale factor for Volumetrc strain
 
+  using ModelStateBase::operator=; // Brings both base copy and move assignment into scope
+
   ModelState_SoilModelBrannon();
 
-  ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon& state);
-  ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon* state);
+  ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon& state)     = default;
+  ModelState_SoilModelBrannon(ModelState_SoilModelBrannon&& state) noexcept = default;
 
-  ~ModelState_SoilModelBrannon() override;
+  ~ModelState_SoilModelBrannon() override = default;
 
-  ModelState_SoilModelBrannon& operator=(
-    const ModelState_SoilModelBrannon& state);
-  ModelState_SoilModelBrannon* operator=(
-    const ModelState_SoilModelBrannon* state);
+  ModelState_SoilModelBrannon&
+  operator=(const ModelState_SoilModelBrannon& state);
+
+  ModelState_SoilModelBrannon&
+  operator=(const ModelState_SoilModelBrannon&& state) noexcept;
+
+  // Polymorphic cloning method (preferred over operator=(const T*))
+  [[nodiscard]] std::unique_ptr<ModelStateBase>
+  clone() const override
+  {
+    return std::make_unique<ModelState_SoilModelBrannon>(*this);
+  }
 
   virtual 
   size_t numStateVar() const override

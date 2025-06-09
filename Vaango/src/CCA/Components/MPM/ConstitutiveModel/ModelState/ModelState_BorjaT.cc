@@ -39,39 +39,6 @@ ModelState_BorjaT::ModelState_BorjaT()
   elasticStrainTensorTrial = Uintah::Matrix3(0.0);
 }
 
-ModelState_BorjaT::ModelState_BorjaT(const ModelState_BorjaT& state)
-{
-  *this = &state;
-}
-
-ModelState_BorjaT::ModelState_BorjaT(const ModelState_BorjaT* state)
-{
-  *this = state;
-}
-
-ModelState_BorjaT::~ModelState_BorjaT() = default;
-
-ModelState_BorjaT&
-ModelState_BorjaT::operator=(const ModelState_BorjaT& state)
-{
-  if (this == &state)
-    return *this;
-
-  *this = &state;
-  return *this;
-
-}
-
-ModelState_BorjaT*
-ModelState_BorjaT::operator=(const ModelState_BorjaT* state)
-{
-  if (this == state) {
-    return this;
-  }
-  this->copyState(state);
-  return this;
-}
-
 void 
 ModelState_BorjaT::copyLocalState(const ModelState_BorjaT* state)
 {

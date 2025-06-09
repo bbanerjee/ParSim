@@ -25,85 +25,69 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
+#include "ModelState_CamClay.h"
 using namespace Vaango;
 
 ModelState_CamClay::ModelState_CamClay()
   : ModelStateBase()
+  , p_c(0.0)
+  , p_c0(0.0)
+  , p(0.0)
+  , q(0.0)
+  , epse_v(0.0)
+  , epse_s(0.0)
+  , epse_v_tr(0.0)
+  , epse_s_tr(0.0)
+  , elasticStrainTensor(Uintah::Matrix3(0.0))
+  , elasticStrainTensorTrial(Uintah::Matrix3(0.0))
 {
-  p_c = 0.0;
-  p_c0 = 0.0;
-  p = 0.0;
-  q = 0.0;
-  epse_v = 0.0;
-  epse_s = 0.0;
-  epse_v_tr = 0.0;
-  epse_s_tr = 0.0;
-  elasticStrainTensor = Uintah::Matrix3(0.0);
-  elasticStrainTensorTrial = Uintah::Matrix3(0.0);
 }
 
-ModelState_CamClay::ModelState_CamClay(const ModelState_CamClay& state)
-{
-  p_c = state.p_c;
-  p_c0 = state.p_c0;
-  p = state.p;
-  q = state.q;
-  epse_v = state.epse_v;
-  epse_s = state.epse_s;
-  epse_v_tr = state.epse_v_tr;
-  epse_s_tr = state.epse_s_tr;
-  elasticStrainTensor = state.elasticStrainTensor;
-  elasticStrainTensorTrial = state.elasticStrainTensorTrial;
-}
-
-ModelState_CamClay::ModelState_CamClay(const ModelState_CamClay* state)
-{
-  p_c = state->p_c;
-  p_c0 = state->p_c0;
-  p = state->p;
-  q = state->q;
-  epse_v = state->epse_v;
-  epse_s = state->epse_s;
-  epse_v_tr = state->epse_v_tr;
-  epse_s_tr = state->epse_s_tr;
-  elasticStrainTensor = state->elasticStrainTensor;
-  elasticStrainTensorTrial = state->elasticStrainTensorTrial;
-}
-
-ModelState_CamClay::~ModelState_CamClay() = default;
 
 ModelState_CamClay&
 ModelState_CamClay::operator=(const ModelState_CamClay& state)
 {
   if (this == &state)
     return *this;
-  p_c = state.p_c;
-  p_c0 = state.p_c0;
-  p = state.p;
-  q = state.q;
-  epse_v = state.epse_v;
-  epse_s = state.epse_s;
-  epse_v_tr = state.epse_v_tr;
-  epse_s_tr = state.epse_s_tr;
-  elasticStrainTensor = state.elasticStrainTensor;
-  elasticStrainTensorTrial = state.elasticStrainTensorTrial;
+
+  // Call base class assignment operator to handle base part
+  ModelStateBase::operator=(state);
+
+  // Copy derived class specific members
+  this->p_c = state.p_c;
+  this->p_c0 = state.p_c0;
+  this->p = state.p;
+  this->q = state.q;
+  this->epse_v = state.epse_v;
+  this->epse_s = state.epse_s;
+  this->epse_v_tr = state.epse_v_tr;
+  this->epse_s_tr = state.epse_s_tr;
+  this->elasticStrainTensor = state.elasticStrainTensor;
+  this->elasticStrainTensorTrial = state.elasticStrainTensorTrial;
+
   return *this;
 }
 
-ModelState_CamClay*
-ModelState_CamClay::operator=(const ModelState_CamClay* state)
+ModelState_CamClay&
+Vaango::ModelState_CamClay::operator=(const ModelState_CamClay&& state) noexcept
 {
-  if (this == state)
-    return this;
-  p_c = state->p_c;
-  p_c0 = state->p_c0;
-  p = state->p;
-  q = state->q;
-  epse_v = state->epse_v;
-  epse_s = state->epse_s;
-  epse_v_tr = state->epse_v_tr;
-  epse_s_tr = state->epse_s_tr;
-  elasticStrainTensor = state->elasticStrainTensor;
-  elasticStrainTensorTrial = state->elasticStrainTensorTrial;
-  return this;
+  if (this == &state)
+    return *this;
+
+  // Call base class assignment operator to handle base part
+  ModelStateBase::operator=(std::move(state));
+
+  this->p_c = std::move(state.p_c);
+  this->p_c0 = std::move(state.p_c0);
+  this->p = std::move(state.p);
+  this->q = std::move(state.q);
+  this->epse_v = std::move(state.epse_v);
+  this->epse_s = std::move(state.epse_s);
+  this->epse_v_tr = std::move(state.epse_v_tr);
+  this->epse_s_tr = std::move(state.epse_s_tr);
+  this->elasticStrainTensor = std::move(state.elasticStrainTensor);
+  this->elasticStrainTensorTrial = std::move(state.elasticStrainTensorTrial);
+
+  // Move derived class specific members
+  return *this;
 }

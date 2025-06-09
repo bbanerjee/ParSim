@@ -25,68 +25,58 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_SoilModelBrannon.h>
+#include "ModelState_SoilModelBrannon.h"
 
 using namespace Vaango;
 
 ModelState_SoilModelBrannon::ModelState_SoilModelBrannon()
   : ModelStateBase()
+  , kappa(0.0)
+  , CR(0.0)
+  , maxX(0.0)
+  , eps_v(0.0)
+  , delta_eps_v(0.0)
+  , scale_eps_v(0.0)
 {
-  kappa = 0.0;
-  CR = 0.0;
-  maxX = 0.0;
-  eps_v = 0.0;
-  delta_eps_v = 0.0;
-  scale_eps_v = 0.0;
 }
-
-ModelState_SoilModelBrannon::ModelState_SoilModelBrannon(
-  const ModelState_SoilModelBrannon& state)
-{
-  kappa = state.kappa;
-  CR = state.CR;
-  maxX = state.maxX;
-  eps_v = state.eps_v;
-  delta_eps_v = state.delta_eps_v;
-  scale_eps_v = state.scale_eps_v;
-}
-
-ModelState_SoilModelBrannon::ModelState_SoilModelBrannon(
-  const ModelState_SoilModelBrannon* state)
-{
-  kappa = state->kappa;
-  CR = state->CR;
-  maxX = state->maxX;
-  eps_v = state->eps_v;
-  delta_eps_v = state->delta_eps_v;
-  scale_eps_v = state->scale_eps_v;
-}
-
-ModelState_SoilModelBrannon::~ModelState_SoilModelBrannon() = default;
 
 ModelState_SoilModelBrannon&
 ModelState_SoilModelBrannon::operator=(const ModelState_SoilModelBrannon& state)
 {
   if (this == &state)
     return *this;
-  kappa = state.kappa;
-  CR = state.CR;
-  maxX = state.maxX;
-  eps_v = state.eps_v;
-  delta_eps_v = state.delta_eps_v;
-  scale_eps_v = state.scale_eps_v;
+
+  // Call base class assignment operator to handle base part
+  ModelStateBase::operator=(state);
+
+  // Copy derived class specific members
+  this->kappa = state.kappa;
+  this->CR = state.CR;
+  this->maxX = state.maxX;
+  this->eps_v = state.eps_v;
+  this->delta_eps_v = state.delta_eps_v;
+  this->scale_eps_v = state.scale_eps_v;
+
   return *this;
 }
 
-ModelState_SoilModelBrannon*
-ModelState_SoilModelBrannon::operator=(const ModelState_SoilModelBrannon* state)
+ModelState_SoilModelBrannon&
+Vaango::ModelState_SoilModelBrannon::operator=(
+  const ModelState_SoilModelBrannon&& state) noexcept
 {
-  if (this == state)
-    return this;
-  kappa = state->kappa;
-  CR = state->CR;
-  maxX = state->maxX;
-  eps_v = state->eps_v;
-  delta_eps_v = state->delta_eps_v;
-  scale_eps_v = state->scale_eps_v;
-  return this;
+  if (this == &state)
+    return *this;
+
+  // Call base class assignment operator to handle base part
+  ModelStateBase::operator=(std::move(state));
+
+  // Move derived class specific members
+  this->kappa = std::move(state.kappa);
+  this->CR = std::move(state.CR);
+  this->maxX = std::move(state.maxX);
+  this->eps_v = std::move(state.eps_v);
+  this->delta_eps_v = std::move(state.delta_eps_v);
+  this->scale_eps_v = std::move(state.scale_eps_v);
+
+  return *this;
 }

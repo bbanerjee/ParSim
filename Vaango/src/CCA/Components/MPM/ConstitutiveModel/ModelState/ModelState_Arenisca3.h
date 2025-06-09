@@ -52,15 +52,27 @@ public:
   double capX; // The cap hydrostatic compressive strength X
   double zeta; // The back stress parameter
 
+  using ModelStateBase::operator=; // Brings both base copy and move assignment into scope
+
   ModelState_Arenisca3();
 
-  ModelState_Arenisca3(const ModelState_Arenisca3& state);
-  ModelState_Arenisca3(const ModelState_Arenisca3* state);
+  ModelState_Arenisca3(const ModelState_Arenisca3& state)     = default;
+  ModelState_Arenisca3(ModelState_Arenisca3&& state) noexcept = default;
 
-  ~ModelState_Arenisca3() override;
+  ~ModelState_Arenisca3() override = default;
 
-  ModelState_Arenisca3& operator=(const ModelState_Arenisca3& state);
-  ModelState_Arenisca3* operator=(const ModelState_Arenisca3* state);
+  ModelState_Arenisca3&
+  operator=(const ModelState_Arenisca3& state);
+
+  ModelState_Arenisca3&
+  operator=(const ModelState_Arenisca3&& state) noexcept;
+
+  // Polymorphic cloning method (preferred over operator=(const T*))
+  [[nodiscard]] std::unique_ptr<ModelStateBase>
+  clone() const override
+  {
+    return std::make_unique<ModelState_Arenisca3>(*this);
+  }
 
   virtual 
   size_t numStateVar() const override

@@ -31,39 +31,6 @@ ModelState_MetalT::ModelState_MetalT()
 {
 }
 
-ModelState_MetalT::ModelState_MetalT(const ModelState_MetalT& state)
-{
-  *this = &state;
-}
-
-ModelState_MetalT::ModelState_MetalT(const ModelState_MetalT* state)
-{
-  *this = state;
-}
-
-ModelState_MetalT::~ModelState_MetalT() = default;
-
-ModelState_MetalT&
-ModelState_MetalT::operator=(const ModelState_MetalT& state)
-{
-  if (this == &state)
-    return *this;
-
-  *this = &state;
-  return *this;
-
-}
-
-ModelState_MetalT*
-ModelState_MetalT::operator=(const ModelState_MetalT* state)
-{
-  if (this == state) {
-    return this;
-  }
-  this->copyState(state);
-  return this;
-}
-
 void 
 ModelState_MetalT::copyLocalState(const ModelState_MetalT* state)
 {

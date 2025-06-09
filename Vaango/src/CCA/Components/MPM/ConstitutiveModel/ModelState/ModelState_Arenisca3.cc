@@ -25,66 +25,58 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arenisca3.h>
+#include "ModelState_Arenisca3.h"
 using namespace Vaango;
 
 ModelState_Arenisca3::ModelState_Arenisca3()
   : ModelStateBase()
+  , I1(0.0)
+  , sqrt_J2(0.0)
+  , plasticStrainTensor(Uintah::Matrix3(0.0)) // The tensor form of plastic strain
+  , kappa(0.0)            // The cap kappa parameter
+  , capX(0.0)             // The cap hydrostatic compressive strength X
+  , zeta(0.0)             // The back stress parameter
 {
-  I1 = 0.0;
-  sqrt_J2 = 0.0;
-  plasticStrainTensor =
-    Uintah::Matrix3(0.0); // The tensor form of plastic strain
-  kappa = 0.0;            // The cap kappa parameter
-  capX = 0.0;             // The cap hydrostatic compressive strength X
-  zeta = 0.0;             // The back stress parameter
 }
 
-ModelState_Arenisca3::ModelState_Arenisca3(const ModelState_Arenisca3& state)
-{
-  I1 = state.I1;
-  sqrt_J2 = state.sqrt_J2;
-  plasticStrainTensor = state.plasticStrainTensor;
-  kappa = state.kappa;
-  capX = state.capX;
-  zeta = state.zeta;
-}
-
-ModelState_Arenisca3::ModelState_Arenisca3(const ModelState_Arenisca3* state)
-{
-  I1 = state->I1;
-  sqrt_J2 = state->sqrt_J2;
-  plasticStrainTensor = state->plasticStrainTensor;
-  kappa = state->kappa;
-  capX = state->capX;
-  zeta = state->zeta;
-}
-
-ModelState_Arenisca3::~ModelState_Arenisca3() = default;
 
 ModelState_Arenisca3&
 ModelState_Arenisca3::operator=(const ModelState_Arenisca3& state)
 {
   if (this == &state)
     return *this;
-  I1 = state.I1;
-  sqrt_J2 = state.sqrt_J2;
-  plasticStrainTensor = state.plasticStrainTensor;
-  kappa = state.kappa;
-  capX = state.capX;
-  zeta = state.zeta;
+
+  // Call base class assignment operator to handle base part
+  ModelStateBase::operator=(state);
+
+  // Copy derived class specific members
+  this->I1 = state.I1;
+  this->sqrt_J2 = state.sqrt_J2;
+  this->plasticStrainTensor = state.plasticStrainTensor;
+  this->kappa = state.kappa;
+  this->capX = state.capX;
+  this->zeta = state.zeta;
+
   return *this;
 }
 
-ModelState_Arenisca3*
-ModelState_Arenisca3::operator=(const ModelState_Arenisca3* state)
+ModelState_Arenisca3&
+Vaango::ModelState_Arenisca3::operator=(
+  const ModelState_Arenisca3&& state) noexcept
 {
-  if (this == state)
-    return this;
-  I1 = state->I1;
-  sqrt_J2 = state->sqrt_J2;
-  plasticStrainTensor = state->plasticStrainTensor;
-  kappa = state->kappa;
-  capX = state->capX;
-  zeta = state->zeta;
-  return this;
+  if (this == &state)
+    return *this;
+
+  // Call base class assignment operator to handle base part
+  ModelStateBase::operator=(std::move(state));
+
+  // Move derived class specific members
+  this->I1 = std::move(state.I1);
+  this->sqrt_J2 = std::move(state.sqrt_J2);
+  this->plasticStrainTensor = std::move(state.plasticStrainTensor);
+  this->kappa = std::move(state.kappa);
+  this->capX = std::move(state.capX);
+  this->zeta = std::move(state.zeta);
+
+  return *this;
 }

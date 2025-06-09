@@ -60,15 +60,27 @@ public:
   Uintah::Matrix3 elasticStrainTensor;
   Uintah::Matrix3 elasticStrainTensorTrial;
 
+  using ModelStateBase::operator=; // Brings both base copy and move assignment into scope
+
   ModelState_CamClay();
 
-  ModelState_CamClay(const ModelState_CamClay& state);
-  ModelState_CamClay(const ModelState_CamClay* state);
+  ModelState_CamClay(const ModelState_CamClay& state)     = default;
+  ModelState_CamClay(ModelState_CamClay&& state) noexcept = default;
 
-  ~ModelState_CamClay() override;
+  ~ModelState_CamClay() override = default;
 
-  ModelState_CamClay& operator=(const ModelState_CamClay& state);
-  ModelState_CamClay* operator=(const ModelState_CamClay* state);
+  ModelState_CamClay&
+  operator=(const ModelState_CamClay& state);
+
+  ModelState_CamClay&
+  operator=(const ModelState_CamClay&& state) noexcept;
+
+  // Polymorphic cloning method (preferred over operator=(const T*))
+  [[nodiscard]] std::unique_ptr<ModelStateBase>
+  clone() const override
+  {
+    return std::make_unique<ModelState_CamClay>(*this);
+  }
 
   virtual 
   size_t numStateVar() const override

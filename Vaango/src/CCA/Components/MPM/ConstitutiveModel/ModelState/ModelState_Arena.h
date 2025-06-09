@@ -92,15 +92,27 @@ public:
   // double porosity;    // Porosity
   // Matrix3 backStress; // Back stress
 
+  using ModelStateBase::operator=; // Brings both base copy and move assignment into scope
+
   ModelState_Arena();
 
-  ModelState_Arena(const ModelState_Arena& state);
-  ModelState_Arena(const ModelState_Arena* state);
+  ModelState_Arena(const ModelState_Arena& state)     = default;
+  ModelState_Arena(ModelState_Arena&& state) noexcept = default;
 
-  ~ModelState_Arena() override;
+  ~ModelState_Arena() override = default;
 
-  ModelState_Arena& operator=(const ModelState_Arena& state);
-  ModelState_Arena* operator=(const ModelState_Arena* state);
+  ModelState_Arena&
+  operator=(const ModelState_Arena& state);
+
+  ModelState_Arena&
+  operator=(const ModelState_Arena&& state) noexcept;
+
+  // Polymorphic cloning method (preferred over operator=(const T*))
+  [[nodiscard]] std::unique_ptr<ModelStateBase>
+  clone() const override
+  {
+    return std::make_unique<ModelState_Arena>(*this);
+  }
 
   virtual 
   size_t numStateVar() const override

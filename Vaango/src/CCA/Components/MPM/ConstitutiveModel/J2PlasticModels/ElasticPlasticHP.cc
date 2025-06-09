@@ -1428,8 +1428,8 @@ ElasticPlasticHP::doApproxReturn(const double& delT,
   int numSubstep = ((int) (state_trial->q / state_trial->yieldStress) + 1) * 5;
   double substep_delT = delT / (double)numSubstep;
 
-  ModelStateBase state_trial_substep(state_trial);
-  ModelStateBase state_old_substep(state_old);
+  ModelStateBase state_trial_substep(*state_trial);
+  ModelStateBase state_old_substep(*state_old);
 
   auto strain_inc = state_old->strainRate * substep_delT;
   auto strain_inc_tr = strain_inc.Trace();
@@ -1456,8 +1456,8 @@ ElasticPlasticHP::doApproxReturn(const double& delT,
      approxHardeningReturn(substep_delT, tolerance, matl, idx, 
                            &state_old_substep, &state_trial_substep, state_new);
     
-    state_trial_substep = state_new;
-    state_old_substep = state_new;
+    state_trial_substep = *state_new;
+    state_old_substep = *state_new;
 
     deltaGamma += deltaGammaInc;
   }
@@ -1490,7 +1490,7 @@ ElasticPlasticHP::approxHardeningReturn(double delT,
                                         ModelStateBase* state_new) const
 {
   // Compute the yield stress
-  ModelStateBase state_iter(state_trial);
+  ModelStateBase state_iter(*state_trial);
   state_iter.yieldStress = 
     d_flow->computeFlowStress(state_trial, delT, tolerance, matl, idx);
 
@@ -1636,7 +1636,7 @@ ElasticPlasticHP::nonHardeningReturn(const ModelStateBase* state_trial,
   auto P = Vaango::Tensor::constructMatrix3(P_vec);
 
   // Initialize variables
-  ModelStateBase state_iter(state_trial);
+  ModelStateBase state_iter(*state_trial);
   double g             = 1.0;
   double deltaGamma    = 0.0;
   double deltaGammaOld = deltaGamma;

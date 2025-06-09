@@ -29,6 +29,9 @@
 
 #include <Core/Math/Matrix3.h>
 
+#include <memory>
+#include <utility>
+
 namespace Vaango {
 
 /////////////////////////////////////////////////////////////////////////////
@@ -82,15 +85,29 @@ public:
 
   ModelStateBase();
 
-  ModelStateBase(const ModelStateBase& state);
-  ModelStateBase(const ModelStateBase* state);
+  // Virtual copy constructor
+  // We'll rely on the clone method for polymorphic copying.
+  ModelStateBase(const ModelStateBase& state) = default;
 
-  virtual ~ModelStateBase();
+  // Virtual move constructor
+  ModelStateBase(ModelStateBase&& other) noexcept = default;
 
-  virtual
-  ModelStateBase& operator=(const ModelStateBase& state);
-  virtual
-  ModelStateBase* operator=(const ModelStateBase* state);
+  virtual ~ModelStateBase() = default;
+
+  // Virtual copy assignment operator (standard for polymorphic assignment)
+  virtual ModelStateBase&
+  operator=(const ModelStateBase& state);
+
+  // Virtual move assignment operator
+  virtual ModelStateBase&
+  operator=(ModelStateBase&& state) noexcept;
+
+  // Polymorphic cloning method (preferred over operator=(const T*))
+  [[nodiscard]] virtual std::unique_ptr<ModelStateBase>
+  clone() const
+  {
+    return std::make_unique<ModelStateBase>(*this);
+  }
 
   virtual
   size_t numStateVar() const

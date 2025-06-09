@@ -26,6 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
+#include "ModelStateBase.h"
 
 using namespace Vaango;
 
@@ -64,67 +65,85 @@ ModelStateBase::ModelStateBase()
   d_stress = Vaango::Util::Zero;
 }
 
-ModelStateBase::ModelStateBase(const ModelStateBase& state)
-{
-  *this = &state;
-}
-
-ModelStateBase::ModelStateBase(const ModelStateBase* state)
-{
-  *this = state;
-}
-
-ModelStateBase::~ModelStateBase() = default;
-
 ModelStateBase&
-ModelStateBase::operator=(const ModelStateBase& state_in)
+ModelStateBase::operator=(const ModelStateBase& state)
 {
-  const ModelStateBase* state = &state_in;
-  if (this == state)
+  if (this == &state)
     return *this;
 
-  *this = state;
+  this->eqStrainRate = state.eqStrainRate;
+  this->pressure = state.pressure;
+  this->temperature = state.temperature;
+  this->initialTemperature = state.initialTemperature;
+  this->density = state.density;
+  this->initialDensity = state.initialDensity;
+  this->volume = state.volume;
+  this->initialVolume = state.initialVolume;
+  this->bulkModulus = state.bulkModulus;
+  this->initialBulkModulus = state.initialBulkModulus;
+  this->shearModulus = state.shearModulus;
+  this->initialShearModulus = state.initialShearModulus;
+  this->meltingTemp = state.meltingTemp;
+  this->initialMeltTemp = state.initialMeltTemp;
+  this->specificHeat = state.specificHeat;
+  this->yieldStress = state.yieldStress;
+  this->lambdaIncPlastic = state.lambdaIncPlastic;
+  this->eqPlasticStrainRate = state.eqPlasticStrainRate;
+  this->eqPlasticStrain = state.eqPlasticStrain;
+  this->porosity = state.porosity;
+  this->energy = state.energy;
+  this->I1 = state.I1;
+  this->J2 = state.J2;
+  this->p = state.p;
+  this->q = state.q;
+  this->devStress = state.devStress;
+  this->backStress = state.backStress;
+  this->strainRate = state.strainRate;
+  this->plasticFlowDirection = state.plasticFlowDirection;
+  this->d_plasticStrain = state.d_plasticStrain;
+  this->d_stress = state.d_stress;
   return *this;
 }
 
-ModelStateBase*
-ModelStateBase::operator=(const ModelStateBase* state)
+ModelStateBase&
+Vaango::ModelStateBase::operator=(ModelStateBase&& state) noexcept
 {
-  if (this == state)
-    return this;
-  eqStrainRate = state->eqStrainRate;
-  pressure = state->pressure;
-  temperature = state->temperature;
-  initialTemperature = state->initialTemperature;
-  density = state->density;
-  initialDensity = state->initialDensity;
-  volume = state->volume;
-  initialVolume = state->initialVolume;
-  bulkModulus = state->bulkModulus;
-  initialBulkModulus = state->initialBulkModulus;
-  shearModulus = state->shearModulus;
-  initialShearModulus = state->initialShearModulus;
-  meltingTemp = state->meltingTemp;
-  initialMeltTemp = state->initialMeltTemp;
-  specificHeat = state->specificHeat;
-  yieldStress = state->yieldStress;
-  lambdaIncPlastic = state->lambdaIncPlastic;
-  eqPlasticStrainRate = state->eqPlasticStrainRate;
-  eqPlasticStrain = state->eqPlasticStrain;
-  porosity = state->porosity;
-  energy = state->energy;
-  I1 = state->I1;
-  J2 = state->J2;
-  p = state->p;
-  q = state->q;
-  devStress = state->devStress;
-  backStress = state->backStress;
-  strainRate = state->strainRate;
-  plasticFlowDirection = state->plasticFlowDirection;
-  d_plasticStrain = state->d_plasticStrain;
-  d_stress = state->d_stress;
-  return this;
-}
+  if (this == &state) { // Correct self-assignment check for reference
+    return *this;
+  }
+  this->eqStrainRate = std::move(state.eqStrainRate);
+  this->pressure = std::move(state.pressure);
+  this->temperature = std::move(state.temperature);
+  this->initialTemperature = std::move(state.initialTemperature);
+  this->density = std::move(state.density);
+  this->initialDensity = std::move(state.initialDensity);
+  this->volume = std::move(state.volume);
+  this->initialVolume = std::move(state.initialVolume);
+  this->bulkModulus = std::move(state.bulkModulus);
+  this->initialBulkModulus = std::move(state.initialBulkModulus);
+  this->shearModulus = std::move(state.shearModulus);
+  this->initialShearModulus = std::move(state.initialShearModulus);
+  this->meltingTemp = std::move(state.meltingTemp);
+  this->initialMeltTemp = std::move(state.initialMeltTemp);
+  this->specificHeat = std::move(state.specificHeat);
+  this->yieldStress = std::move(state.yieldStress);
+  this->lambdaIncPlastic = std::move(state.lambdaIncPlastic);
+  this->eqPlasticStrainRate = std::move(state.eqPlasticStrainRate);
+  this->eqPlasticStrain = std::move(state.eqPlasticStrain);
+  this->porosity = std::move(state.porosity);
+  this->energy = std::move(state.energy);
+  this->I1 = std::move(state.I1);
+  this->J2 = std::move(state.J2);
+  this->p = std::move(state.p);
+  this->q = std::move(state.q);
+  this->devStress = std::move(state.devStress);
+  this->backStress = std::move(state.backStress);
+  this->strainRate = std::move(state.strainRate);
+  this->plasticFlowDirection = std::move(state.plasticFlowDirection);
+  this->d_plasticStrain = std::move(state.d_plasticStrain);
+  this->d_stress = std::move(state.d_stress);
+  return *this;
+} 
 
 /* Set the stress and get deviatoric stress */
 void

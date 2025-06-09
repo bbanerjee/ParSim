@@ -56,18 +56,29 @@ public:
   Uintah::Point closest;  // Closest point to the yield surface in pbar-sqrtJ2 space
   Uintah::Vector tangent; // Tangent at closest point to the yield surface in pbar-sqrtJ2 space
 
-  Polyline            yield_f_pts; // Polyline representing yield function with cap
-                                   // in pbar-sqrtJ2 space
+  Polyline yield_f_pts; // Polyline representing yield function with cap
+                        // in pbar-sqrtJ2 space
+
+  using ModelState_Tabular::operator=; // Brings both base copy and move assignment into scope
 
   ModelState_TabularCap();
 
-  ModelState_TabularCap(const ModelState_TabularCap& state) = default;
-  ModelState_TabularCap(const ModelState_TabularCap* state);
+  ModelState_TabularCap(const ModelState_TabularCap& state)     = default;
+  ModelState_TabularCap(ModelState_TabularCap&& state) noexcept = default;
 
-  ~ModelState_TabularCap() = default;
+  ~ModelState_TabularCap() override = default;
 
-  ModelState_TabularCap& operator=(const ModelState_TabularCap& state) = default;
-  ModelState_TabularCap* operator=(const ModelState_TabularCap* state);
+  ModelState_TabularCap&
+  operator=(const ModelState_TabularCap& state);
+
+  ModelState_TabularCap&
+  operator=(const ModelState_TabularCap&& state) noexcept;
+
+  // Polymorphic cloning method (preferred over operator=(const T*))
+  [[nodiscard]] std::unique_ptr<ModelStateBase>
+  clone() const override {
+    return std::make_unique<ModelState_TabularCap>(*this);
+  }
 
   virtual 
   size_t numStateVar() const override
