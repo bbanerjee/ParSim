@@ -141,7 +141,7 @@ MesoBurn::~MesoBurn()
 
 //______________________________________________________________________
 void
-MesoBurn::problemSetup(GridP&, const bool isRestart)
+MesoBurn::problemSetup(GridP&, [[maybe_unused]] const bool isRestart)
 {
   matl0 = d_materialManager->parseAndLookupMaterial(d_params, "fromMaterial");
   matl1 = d_materialManager->parseAndLookupMaterial(d_params, "toMaterial");

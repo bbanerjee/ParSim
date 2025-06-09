@@ -1054,12 +1054,12 @@ template <int Order, int Steps>
 std::tuple<double, int>
 MohrCoulombClassic::doRungeKuttaEig(
   const Eigen::Matrix<double, Steps, Steps>& AA,
-  const Eigen::Matrix<double, Steps, 1>& BB,
+  [[maybe_unused]] const Eigen::Matrix<double, Steps, 1>& BB,
   const Eigen::Matrix<double, Steps, 1>& BRes,
   const Eigen::Matrix<double, Steps, 1>& CC,
   MohrCoulombState& state,
   const Vector7& epStrain,
-  bool errorEstimate) const
+  [[maybe_unused]] bool errorEstimate) const
 {
   dbg_doing << "Doing MohrCoulombClassic::doRungeKuttaEig\n";
 

@@ -48,7 +48,6 @@ class ElasticModuli_NeuralNet_Bulk : public ElasticModuliModel
 {
 
 public:
-
   ElasticModuli_NeuralNet_Bulk() = delete;
   ElasticModuli_NeuralNet_Bulk(const ElasticModuli_NeuralNet_Bulk& smm) = delete;
   ~ElasticModuli_NeuralNet_Bulk() = default;

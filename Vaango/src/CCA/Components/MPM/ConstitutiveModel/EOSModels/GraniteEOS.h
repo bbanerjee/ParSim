@@ -131,7 +131,7 @@ public:
 
   // Compute pressure derivative of bulk modulus
   inline double
-  computeDerivBulkModulusPressure(const double& pressure) const
+  computeDerivBulkModulusPressure([[maybe_unused]] const double& pressure) const
   {
     return d_n;
   }
@@ -161,7 +161,7 @@ public:
             epse = total elastic strain */
   ////////////////////////////////////////////////////////////////////////
   double
-  computeDpDepse_s(const ModelStateBase* state) const override
+  computeDpDepse_s([[maybe_unused]] const ModelStateBase* state) const override
   {
     return 0.0;
   };

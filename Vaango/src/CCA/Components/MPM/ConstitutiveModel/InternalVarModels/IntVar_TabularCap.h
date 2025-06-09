@@ -78,12 +78,12 @@ public:
                              Uintah::DataWarehouse* new_dw) override;
 
   void
-  initializeInternalVariable(const Uintah::Patch* patch,
-                             const Uintah::MPMMaterial* matl,
-                             Uintah::ParticleSubset* pset,
-                             Uintah::DataWarehouse* new_dw,
-                             Uintah::MPMLabel* lb,
-                             ParameterDict& params) override
+  initializeInternalVariable([[maybe_unused]] const Uintah::Patch* patch,
+                             [[maybe_unused]] const Uintah::MPMMaterial* matl,
+                             [[maybe_unused]] Uintah::ParticleSubset* pset,
+                             [[maybe_unused]] Uintah::DataWarehouse* new_dw,
+                             [[maybe_unused]] Uintah::MPMLabel* lb,
+                             [[maybe_unused]] ParameterDict& params) override
   {
   }
 
@@ -110,9 +110,9 @@ public:
                    std::vector<const Uintah::VarLabel*>& to) override;
 
   virtual void
-  allocateAndPutRigid(Uintah::ParticleSubset* pset,
-                      Uintah::DataWarehouse* new_dw,
-                      Uintah::constParticleVariableBase& intvar) override
+  allocateAndPutRigid([[maybe_unused]] Uintah::ParticleSubset* pset,
+                      [[maybe_unused]] Uintah::DataWarehouse* new_dw,
+                      [[maybe_unused]] Uintah::constParticleVariableBase& intvar) override
   {
   }
 

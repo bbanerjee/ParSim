@@ -134,7 +134,7 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
 
     virtual TaskGraph* getTaskGraph( unsigned int index )
     {
-      ASSERT( 0 <= index && index < m_task_graphs.size() );
+      ASSERT( index < m_task_graphs.size() );
       return m_task_graphs[index];
     }
 

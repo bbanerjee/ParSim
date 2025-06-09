@@ -111,9 +111,9 @@ void
 statistics::problemSetup(
   const ProblemSpecP&,
   const ProblemSpecP& restart_prob_spec,
-  GridP& grid,
-  std::vector<std::vector<const VarLabel*>>& PState,
-  std::vector<std::vector<const VarLabel*>>& PState_preReloc)
+  [[maybe_unused]] GridP& grid,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState_preReloc)
 {
   DOUTR(dout_OTF_stats, "Doing statistics::problemSetup");
 
@@ -693,7 +693,7 @@ statistics::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
 //______________________________________________________________________
 // Compute the statistics for each variable the user requested
 void
-statistics::doAnalysis(const ProcessorGroup* pg,
+statistics::doAnalysis([[maybe_unused]] const ProcessorGroup* pg,
                        const PatchSubset* patches,
                        const MaterialSubset*,
                        DataWarehouse* old_dw,

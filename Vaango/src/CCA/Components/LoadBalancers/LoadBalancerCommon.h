@@ -100,7 +100,7 @@ public:
 
   // Methods for managing the components attached via the ports.
   virtual void
-  setComponents(UintahParallelComponent* comp){};
+  setComponents([[maybe_unused]] UintahParallelComponent* comp){};
 
   virtual void
   getComponents();
@@ -212,7 +212,7 @@ public:
   }
 
   virtual const PatchSet*
-  getPerProcessorPatchSet(const GridP& grid)
+  getPerProcessorPatchSet([[maybe_unused]] const GridP& grid)
   {
     return d_grid_perproc_patchsets.get_rep();
   }

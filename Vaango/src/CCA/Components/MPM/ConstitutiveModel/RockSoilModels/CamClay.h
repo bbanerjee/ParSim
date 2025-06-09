@@ -157,19 +157,19 @@ public:
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
   void
-  addRequiresDamageParameter(Task* task,
-                             const MPMMaterial* matl,
-                             const PatchSet* patches) const override{};
+  addRequiresDamageParameter([[maybe_unused]] Task* task,
+                             [[maybe_unused]] const MPMMaterial* matl,
+                             [[maybe_unused]] const PatchSet* patches) const override{};
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
   void
-  getDamageParameter(const Patch* patch,
-                     ParticleVariable<int>& damage,
-                     int dwi,
-                     DataWarehouse* old_dw,
-                     DataWarehouse* new_dw) override{};
+  getDamageParameter([[maybe_unused]] const Patch* patch,
+                     [[maybe_unused]] ParticleVariable<int>& damage,
+                     [[maybe_unused]] int dwi,
+                     [[maybe_unused]] DataWarehouse* old_dw,
+                     [[maybe_unused]] DataWarehouse* new_dw) override{};
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief allocate CM data requires */

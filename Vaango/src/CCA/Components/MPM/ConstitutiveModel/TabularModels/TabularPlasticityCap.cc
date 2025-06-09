@@ -3006,11 +3006,11 @@ TabularPlasticityCap::addComputesAndRequires(Task*,
  *  ---------------------------------------------------------------------------------------
  */
 void
-TabularPlasticityCap::allocateCMDataAdd(DataWarehouse* new_dw,
-                                        ParticleSubset* addset,
-                                        ParticleLabelVariableMap* newState,
-                                        ParticleSubset* delset,
-                                        DataWarehouse* old_dw)
+TabularPlasticityCap::allocateCMDataAdd([[maybe_unused]] DataWarehouse* new_dw,
+                                        [[maybe_unused]] ParticleSubset* addset,
+                                        [[maybe_unused]] ParticleLabelVariableMap* newState,
+                                        [[maybe_unused]] ParticleSubset* delset,
+                                        [[maybe_unused]] DataWarehouse* old_dw)
 {
   std::ostringstream out;
   out << "Material conversion after failure not implemented for "

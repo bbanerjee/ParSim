@@ -55,7 +55,7 @@ namespace Util {
     }
 
     template <class BBOX>
-    bool kdtree_get_bbox(BBOX& bb) const { return false; }
+    bool kdtree_get_bbox([[maybe_unused]] BBOX& bb) const { return false; }
   };
 #endif
 

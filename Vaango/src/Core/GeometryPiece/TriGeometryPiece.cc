@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Parresia research Limited, New Zealand
+ * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -41,6 +41,8 @@
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
+#include <cctype>
+#include <ranges>
 
 namespace fs = std::filesystem;
 
@@ -481,10 +483,10 @@ TriGeometryPiece::readOBJMesh()
   std::string line;
   while (std::getline(source, line)) {
     // erase white spaces from the beginning of line
-    line.erase(line.begin(),
-               std::find_if(line.begin(),
-                            line.end(),
-                            std::not1(std::ptr_fun<int, int>(std::isspace))));
+    auto first_non_space = std::ranges::find_if(line, [](char c) {
+        return !std::isspace(static_cast<unsigned char>(c));
+    });
+    line.erase(line.begin(), first_non_space);
 
     // Ignore empty lines
     if (line.empty()) {

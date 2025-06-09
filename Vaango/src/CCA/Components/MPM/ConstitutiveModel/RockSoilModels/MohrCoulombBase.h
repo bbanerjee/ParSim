@@ -332,7 +332,7 @@ protected:
     return I3;
   }
 
-  inline double firstDevInvariant(const Vector6& s) const { return 0.0; }
+  inline double firstDevInvariant([[maybe_unused]] const Vector6& s) const { return 0.0; }
 
   inline double secondDevInvariant(const Vector6& s) const
   {

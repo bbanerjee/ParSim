@@ -88,9 +88,9 @@ void
 vorticity::problemSetup(
   const ProblemSpecP&,
   const ProblemSpecP&,
-  GridP& grid,
-  std::vector<std::vector<const VarLabel*>>& PState,
-  std::vector<std::vector<const VarLabel*>>& PState_preReloc)
+  [[maybe_unused]] GridP& grid,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState_preReloc)
 {
   cout_doing << "Doing problemSetup \t\t\t\tvorticity" << std::endl;
 
@@ -150,10 +150,10 @@ vorticity::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
 //______________________________________________________________________
 // Compute the vorticity field.
 void
-vorticity::doAnalysis(const ProcessorGroup* pg,
+vorticity::doAnalysis([[maybe_unused]] const ProcessorGroup* pg,
                       const PatchSubset* patches,
-                      const MaterialSubset* matl_sub,
-                      DataWarehouse* old_dw,
+                      [[maybe_unused]] const MaterialSubset* matl_sub,
+                      [[maybe_unused]] DataWarehouse* old_dw,
                       DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {

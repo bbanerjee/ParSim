@@ -319,9 +319,9 @@ public:
 
   void run();
 
-  const double getWaitTime() const;
-  const int    getLocalTID() const;
-  const int    getAffinity() const;
+  double getWaitTime() const;
+  int    getLocalTID() const;
+  int    getAffinity() const;
 
   void   startWaitTime();
   void   stopWaitTime();

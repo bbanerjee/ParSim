@@ -176,7 +176,7 @@ public:
   // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
   //--------------------------------------------------------------
   double
-  df_dp(const ModelStateBase* state) override
+  df_dp([[maybe_unused]] const ModelStateBase* state) override
   {
     return 0.0;
   };
@@ -185,7 +185,7 @@ public:
   // Compute df/dq  where q = sqrt(3 J_2), J_2 = 2nd invariant deviatoric stress
   //--------------------------------------------------------------
   double
-  df_dq(const ModelStateBase* state) override
+  df_dq([[maybe_unused]] const ModelStateBase* state) override
   {
     return 0.0;
   };
@@ -194,9 +194,9 @@ public:
   // Compute d/depse_v(df/dp)
   //--------------------------------------------------------------
   double
-  d2f_dp_depsVol(const ModelStateBase* state,
-                 const MPMEquationOfState* eos,
-                 const ShearModulusModel* shear) override
+  d2f_dp_depsVol([[maybe_unused]] const ModelStateBase* state,
+                 [[maybe_unused]] const MPMEquationOfState* eos,
+                 [[maybe_unused]] const ShearModulusModel* shear) override
   {
     return 0.0;
   };
@@ -205,9 +205,9 @@ public:
   // Compute d/depse_s(df/dp)
   //--------------------------------------------------------------
   double
-  d2f_dp_depsDev(const ModelStateBase* state,
-                 const MPMEquationOfState* eos,
-                 const ShearModulusModel* shear) override
+  d2f_dp_depsDev([[maybe_unused]] const ModelStateBase* state,
+                 [[maybe_unused]] const MPMEquationOfState* eos,
+                 [[maybe_unused]] const ShearModulusModel* shear) override
   {
     return 0.0;
   };
@@ -216,9 +216,9 @@ public:
   // Compute d/depse_v(df/dq)
   //--------------------------------------------------------------
   double
-  d2f_dq_depsVol(const ModelStateBase* state,
-                 const MPMEquationOfState* eos,
-                 const ShearModulusModel* shear) override
+  d2f_dq_depsVol([[maybe_unused]] const ModelStateBase* state,
+                 [[maybe_unused]] const MPMEquationOfState* eos,
+                 [[maybe_unused]] const ShearModulusModel* shear) override
   {
     return 0.0;
   };
@@ -227,9 +227,9 @@ public:
   // Compute d/depse_s(df/dq)
   //--------------------------------------------------------------
   double
-  d2f_dq_depsDev(const ModelStateBase* state,
-                 const MPMEquationOfState* eos,
-                 const ShearModulusModel* shear) override
+  d2f_dq_depsDev([[maybe_unused]] const ModelStateBase* state,
+                 [[maybe_unused]] const MPMEquationOfState* eos,
+                 [[maybe_unused]] const ShearModulusModel* shear) override
   {
     return 0.0;
   };
@@ -238,9 +238,9 @@ public:
   // Compute df/depse_v
   //--------------------------------------------------------------
   double
-  df_depsVol(const ModelStateBase* state,
-             const MPMEquationOfState* eos,
-             const ShearModulusModel* shear) override
+  df_depsVol([[maybe_unused]] const ModelStateBase* state,
+             [[maybe_unused]] const MPMEquationOfState* eos,
+             [[maybe_unused]] const ShearModulusModel* shear) override
   {
     return 0.0;
   };
@@ -249,16 +249,16 @@ public:
   // Compute df/depse_s
   //--------------------------------------------------------------
   double
-  df_depsDev(const ModelStateBase* state,
-             const MPMEquationOfState* eos,
-             const ShearModulusModel* shear) override
+  df_depsDev([[maybe_unused]] const ModelStateBase* state,
+             [[maybe_unused]] const MPMEquationOfState* eos,
+             [[maybe_unused]] const ShearModulusModel* shear) override
   {
     return 0.0;
   };
 
   double
-  getInternalPoint(const ModelStateBase* state_old,
-                   const ModelStateBase* state_new) override
+  getInternalPoint([[maybe_unused]] const ModelStateBase* state_old,
+                   [[maybe_unused]] const ModelStateBase* state_new) override
   {
     return 0.0;
   }

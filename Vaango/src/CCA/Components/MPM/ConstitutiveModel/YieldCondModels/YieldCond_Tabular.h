@@ -169,8 +169,8 @@ public:
    *   I1 = value of tr(stress) at a point inside the yield surface
    */
   double
-  getInternalPoint(const ModelStateBase* state_old,
-                   const ModelStateBase* state_trial) override
+  getInternalPoint([[maybe_unused]] const ModelStateBase* state_old,
+                   [[maybe_unused]] const ModelStateBase* state_trial) override
   {
     return 0.0;
   }

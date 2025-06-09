@@ -402,7 +402,7 @@ LoadBalancerCommon::useSpaceFillingCurve(const LevelP& level, int* order)
 void
 LoadBalancerCommon::restartInitialize(DataArchive* archive,
                                       const int time_index,
-                                      const string& ts_url,
+                                      [[maybe_unused]] const string& ts_url,
                                       const GridP& grid)
 {
   // Here we need to grab the uda data to reassign patch data to the processor
@@ -906,7 +906,7 @@ LoadBalancerCommon::inNeighborhood(const Patch* patch, bool hasDistalReqs)
 
 void
 LoadBalancerCommon::problemSetup(ProblemSpecP& pspec,
-                                 GridP& grid,
+                                 [[maybe_unused]] GridP& grid,
                                  const MaterialManagerP& mat_manager)
 {
   d_mat_manager = mat_manager;
@@ -939,7 +939,7 @@ LoadBalancerCommon::setDimensionality(bool x, bool y, bool z)
 
 // Cost profiling functions
 void
-LoadBalancerCommon::addContribution(DetailedTask* task, double cost)
+LoadBalancerCommon::addContribution([[maybe_unused]] DetailedTask* task, [[maybe_unused]] double cost)
 {
   static bool warned = false;
   if (!warned) {
@@ -952,7 +952,7 @@ LoadBalancerCommon::addContribution(DetailedTask* task, double cost)
 // Finalize the contributions (updates the weight, should be called once per
 // timestep):
 void
-LoadBalancerCommon::finalizeContributions(const GridP& currentGrid)
+LoadBalancerCommon::finalizeContributions([[maybe_unused]] const GridP& currentGrid)
 {
   static bool warned = false;
   if (!warned) {
@@ -964,7 +964,7 @@ LoadBalancerCommon::finalizeContributions(const GridP& currentGrid)
 
 // Initializes the regions in the new level that are not in the old level.
 void
-LoadBalancerCommon::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
+LoadBalancerCommon::initializeWeights([[maybe_unused]] const Grid* oldgrid, [[maybe_unused]] const Grid* newgrid)
 {
   static bool warned = false;
   if (!warned) {

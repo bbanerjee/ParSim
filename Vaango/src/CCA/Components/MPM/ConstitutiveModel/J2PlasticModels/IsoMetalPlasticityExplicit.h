@@ -295,10 +295,10 @@ public:
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
   void
-  allocateCMDataAddRequires(Task* task,
-                            const MPMMaterial* matl,
-                            const PatchSet* patch,
-                            MPMLabel* lb) const override
+  allocateCMDataAddRequires([[maybe_unused]] Task* task,
+                            [[maybe_unused]] const MPMMaterial* matl,
+                            [[maybe_unused]] const PatchSet* patch,
+                            [[maybe_unused]] MPMLabel* lb) const override
   {
   }
 
@@ -306,11 +306,11 @@ public:
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
   void
-  allocateCMDataAdd(DataWarehouse* new_dw,
-                    ParticleSubset* subset,
-                    ParticleLabelVariableMap* newState,
-                    ParticleSubset* delset,
-                    DataWarehouse* old_dw) override
+  allocateCMDataAdd([[maybe_unused]] DataWarehouse* new_dw,
+                    [[maybe_unused]] ParticleSubset* subset,
+                    [[maybe_unused]] ParticleLabelVariableMap* newState,
+                    [[maybe_unused]] ParticleSubset* delset,
+                    [[maybe_unused]] DataWarehouse* old_dw) override
   {
   }
 
@@ -318,9 +318,9 @@ public:
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
   void
-  scheduleCheckNeedAddMPMMaterial(Task* task,
-                                  const MPMMaterial* matl,
-                                  const PatchSet* patches) const override
+  scheduleCheckNeedAddMPMMaterial([[maybe_unused]] Task* task,
+                                  [[maybe_unused]] const MPMMaterial* matl,
+                                  [[maybe_unused]] const PatchSet* patches) const override
   {
   }
 
@@ -328,10 +328,10 @@ public:
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
   void
-  checkNeedAddMPMMaterial(const PatchSubset* patches,
-                          const MPMMaterial* matl,
-                          DataWarehouse* old_dw,
-                          DataWarehouse* new_dw) override
+  checkNeedAddMPMMaterial([[maybe_unused]] const PatchSubset* patches,
+                          [[maybe_unused]] const MPMMaterial* matl,
+                          [[maybe_unused]] DataWarehouse* old_dw,
+                          [[maybe_unused]] DataWarehouse* new_dw) override
   {
   }
 

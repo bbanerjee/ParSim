@@ -41,6 +41,10 @@ namespace Vaango {
     /*! Copy constructor */
     SphericalStrainEnergyDamageModel(const SphericalStrainEnergyDamageModel* cm);
 
+    /*! Explicitly default copy constructor */
+    SphericalStrainEnergyDamageModel(const SphericalStrainEnergyDamageModel& cm) = default;
+
+
     /*! Make a clone of the constitutive model */
     SphericalStrainEnergyDamageModel* clone();
 

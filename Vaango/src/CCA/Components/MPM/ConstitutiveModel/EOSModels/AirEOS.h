@@ -148,7 +148,7 @@ public:
             epse = total elastic strain */
   ////////////////////////////////////////////////////////////////////////
   double
-  computeDpDepse_s(const ModelStateBase* state) const override
+  computeDpDepse_s([[maybe_unused]] const ModelStateBase* state) const override
   {
     return 0.0;
   };

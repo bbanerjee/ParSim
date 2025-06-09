@@ -97,11 +97,11 @@ public:
                            DataWarehouse* old_dw,
                            DataWarehouse* new_dw) override;
 
-  void addComputesAndRequires(Task* task,
-                              const MPMMaterial* matl,
-                              const PatchSet* patches,
-                              const bool recursion,
-                              const bool schedParent = true) const override {};
+  void addComputesAndRequires([[maybe_unused]] Task* task,
+                              [[maybe_unused]] const MPMMaterial* matl,
+                              [[maybe_unused]] const PatchSet* patches,
+                              [[maybe_unused]] const bool recursion,
+                              [[maybe_unused]] const bool schedParent = true) const override {};
 
   /* For material conversion */
   void allocateCMDataAddRequires(Task* task,

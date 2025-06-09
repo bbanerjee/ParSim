@@ -64,42 +64,62 @@ public:
   virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
 
   // Computes and requires for internal evolution variables
-  virtual void addInitialComputesAndRequires(Task* task,
-                                             const MPMMaterial* matl,
-                                             const PatchSet* patches){};
+  virtual void
+  addInitialComputesAndRequires([[maybe_unused]] Task* task,
+                                [[maybe_unused]] const MPMMaterial* matl,
+                                [[maybe_unused]] const PatchSet* patches) {};
 
-  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                      const PatchSet* patches){};
+  virtual void
+  addComputesAndRequires([[maybe_unused]] Task* task,
+                         [[maybe_unused]] const MPMMaterial* matl,
+                         [[maybe_unused]] const PatchSet* patches) {};
 
-  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                      const PatchSet* patches, bool recurse,
-                                      bool SchedParent){};
+  virtual void
+  addComputesAndRequires([[maybe_unused]] Task* task,
+                         [[maybe_unused]] const MPMMaterial* matl,
+                         [[maybe_unused]] const PatchSet* patches,
+                         [[maybe_unused]] bool recurse,
+                         [[maybe_unused]] bool SchedParent) {};
 
-  virtual void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                         const PatchSet* patch, MPMLabel* lb){};
+  virtual void
+  allocateCMDataAddRequires([[maybe_unused]] Task* task,
+                            [[maybe_unused]] const MPMMaterial* matl,
+                            [[maybe_unused]] const PatchSet* patch,
+                            [[maybe_unused]] MPMLabel* lb) {};
 
-  virtual void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
-                                 ParticleLabelVariableMap* newState,
-                                 ParticleSubset* delset,
-                                 DataWarehouse* old_dw){};
+  virtual void
+  allocateCMDataAdd([[maybe_unused]] DataWarehouse* new_dw,
+                    [[maybe_unused]] ParticleSubset* addset,
+                    [[maybe_unused]] ParticleLabelVariableMap* newState,
+                    [[maybe_unused]] ParticleSubset* delset,
+                    [[maybe_unused]] DataWarehouse* old_dw) {};
 
-  virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                std::vector<const VarLabel*>& to){};
+  virtual void
+  addParticleState([[maybe_unused]] std::vector<const VarLabel*>& from,
+                   [[maybe_unused]] std::vector<const VarLabel*>& to) {};
 
-  virtual void initializeInternalVars(ParticleSubset* pset,
-                                      DataWarehouse* new_dw){};
+  virtual void
+  initializeInternalVars([[maybe_unused]] ParticleSubset* pset,
+                         [[maybe_unused]] DataWarehouse* new_dw) {};
 
-  virtual void getInternalVars(ParticleSubset* pset, DataWarehouse* old_dw){};
+  virtual void
+  getInternalVars([[maybe_unused]] ParticleSubset* pset,
+                  [[maybe_unused]] DataWarehouse* old_dw) {};
 
-  virtual void allocateAndPutInternalVars(ParticleSubset* pset,
-                                          DataWarehouse* new_dw){};
+  virtual void
+  allocateAndPutInternalVars([[maybe_unused]] ParticleSubset* pset,
+                             [[maybe_unused]] DataWarehouse* new_dw) {};
 
-  virtual void allocateAndPutRigid(ParticleSubset* pset,
-                                   DataWarehouse* new_dw){};
+  virtual void
+  allocateAndPutRigid([[maybe_unused]] ParticleSubset* pset,
+                      [[maybe_unused]] DataWarehouse* new_dw) {};
 
-  virtual void updateElastic(const particleIndex idx){};
+  virtual void
+  updateElastic([[maybe_unused]] const particleIndex idx) {};
 
-  virtual void updatePlastic(const particleIndex idx, const double& delGamma){};
+  virtual void
+  updatePlastic([[maybe_unused]] const particleIndex idx,
+                [[maybe_unused]] const double& delGamma) {};
 
   //////////
   /*! \brief Calculate the flow stress */
@@ -130,10 +150,14 @@ public:
     \f$ f_s = \partial f /\partial \sigma \f$ \n
     \f$ f_q = \partial f /\partial q \f$
   */
-  virtual void computeTangentModulus(
-    const Matrix3& stress, const ModelStateBase* state, const double& delT,
-    const MPMMaterial* matl, const particleIndex idx, TangentModulusTensor& Ce,
-    TangentModulusTensor& Cep){};
+  virtual void
+  computeTangentModulus([[maybe_unused]] const Matrix3& stress,
+                        [[maybe_unused]] const ModelStateBase* state,
+                        [[maybe_unused]] const double& delT,
+                        [[maybe_unused]] const MPMMaterial* matl,
+                        [[maybe_unused]] const particleIndex idx,
+                        [[maybe_unused]] TangentModulusTensor& Ce,
+                        [[maybe_unused]] TangentModulusTensor& Cep) {};
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
@@ -146,9 +170,9 @@ public:
        derivs[2] = \f$d\sigma_Y/d(int. var.)\f$)
   */
   ///////////////////////////////////////////////////////////////////////////
-  virtual void evalDerivativeWRTScalarVars(const ModelStateBase* state,
-                                           const particleIndex idx,
-                                           Vector& derivs) const {};
+  virtual void evalDerivativeWRTScalarVars([[maybe_unused]] const ModelStateBase* state,
+                                           [[maybe_unused]] const particleIndex idx,
+                                           [[maybe_unused]] Vector& derivs) const {};
 
   ///////////////////////////////////////////////////////////////////////////
   /*!

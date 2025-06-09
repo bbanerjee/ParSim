@@ -146,9 +146,10 @@ MohrCoulombBase::calcElastic(const Vector7& strainInc,
 }
 
 Vector6
-MohrCoulombBase::calcStressIncElast(double nu0, const Vector6& stress_old,
-                                     const Vector7& strain_old,
-                                     const Vector7& strain_inc) const
+MohrCoulombBase::calcStressIncElast([[maybe_unused]] double nu0,
+                                    [[maybe_unused]] const Vector6& stress_old,
+                                    [[maybe_unused]] const Vector7& strain_old,
+                                    const Vector7& strain_inc) const
 {
   double K = d_elastic.d_K;
   double G = d_elastic.d_G;
@@ -172,7 +173,7 @@ MohrCoulombBase::calcStressIncElast(double nu0, const Vector6& stress_old,
  */
 Matrix67
 MohrCoulombBase::calculateElasticTangentMatrix(
-  const MohrCoulombState& state) const
+  [[maybe_unused]] const MohrCoulombState& state) const
 {
   double K = d_elastic.d_K;
   double G = d_elastic.d_G;
@@ -787,8 +788,9 @@ MohrCoulombBase::findYieldModified(const Vector3& state, const Vector6& stress_o
 }
 
 double
-MohrCoulombBase::computeNu(const Vector6& s, const Vector3& state,
-                            double suction) const
+MohrCoulombBase::computeNu([[maybe_unused]] const Vector6& s,
+                           [[maybe_unused]] const Vector3& state,
+                           [[maybe_unused]] double suction) const
 {
   // does nothing for SMC
   return 1.0;

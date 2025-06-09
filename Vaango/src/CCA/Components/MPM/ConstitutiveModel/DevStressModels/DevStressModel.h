@@ -59,41 +59,56 @@ public:
   virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
 
   // Computes and requires for internal evolution variables
-  virtual void addInitialComputesAndRequires(Task* task,
-                                             const MPMMaterial* matl){};
+  virtual void
+  addInitialComputesAndRequires([[maybe_unused]] Task* task,
+                                [[maybe_unused]] const MPMMaterial* matl) {};
 
-  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl){};
+  virtual void
+  addComputesAndRequires([[maybe_unused]] Task* task,
+                         [[maybe_unused]] const MPMMaterial* matl) {};
 
-  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                      bool SchedParent){};
+  virtual void
+  addComputesAndRequires([[maybe_unused]] Task* task,
+                         [[maybe_unused]] const MPMMaterial* matl,
+                         [[maybe_unused]] bool SchedParent) {};
 
-  virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                std::vector<const VarLabel*>& to){};
+  virtual void
+  addParticleState([[maybe_unused]] std::vector<const VarLabel*>& from,
+                   [[maybe_unused]] std::vector<const VarLabel*>& to) {};
 
-  virtual void initializeInternalVars(ParticleSubset* pset,
-                                      DataWarehouse* new_dw){};
+  virtual void
+  initializeInternalVars([[maybe_unused]] ParticleSubset* pset,
+                         [[maybe_unused]] DataWarehouse* new_dw) {};
 
-  virtual void getInternalVars(ParticleSubset* pset, DataWarehouse* old_dw){};
+  virtual void
+  getInternalVars([[maybe_unused]] ParticleSubset* pset,
+                  [[maybe_unused]] DataWarehouse* old_dw) {};
 
-  virtual void allocateAndPutInternalVars(ParticleSubset* pset,
-                                          DataWarehouse* new_dw){};
+  virtual void
+  allocateAndPutInternalVars([[maybe_unused]] ParticleSubset* pset,
+                             [[maybe_unused]] DataWarehouse* new_dw) {};
 
-  virtual void allocateAndPutRigid(ParticleSubset* pset,
-                                   DataWarehouse* new_dw){};
+  virtual void
+  allocateAndPutRigid([[maybe_unused]] ParticleSubset* pset,
+                      [[maybe_unused]] DataWarehouse* new_dw) {};
 
   //__________________________________
   //  where the work is done
-  virtual void computeDeviatoricStressInc(const particleIndex idx,
-                                          const ModelStateBase* plaState,
-                                          DeformationState* defState,
-                                          const double delT){};
+  virtual void
+  computeDeviatoricStressInc([[maybe_unused]] const particleIndex idx,
+                             [[maybe_unused]] const ModelStateBase* plaState,
+                             [[maybe_unused]] DeformationState* defState,
+                             [[maybe_unused]] const double delT) {};
 
-  virtual void updateInternalStresses(const particleIndex idx, const Matrix3&,
-                                      DeformationState* defState,
-                                      const double delT){};
+  virtual void
+  updateInternalStresses([[maybe_unused]] const particleIndex idx,
+                         [[maybe_unused]] const Matrix3&,
+                         [[maybe_unused]] DeformationState* defState,
+                         [[maybe_unused]] const double delT) {};
 
-  virtual void rotateInternalStresses(const particleIndex idx,
-                                      const Matrix3&){};
+  virtual void
+  rotateInternalStresses([[maybe_unused]] const particleIndex idx,
+                         [[maybe_unused]] const Matrix3&) {};
 };
 } // End namespace Uintah
 

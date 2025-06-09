@@ -126,6 +126,48 @@ ProcessorGroup::myNodeName() const
 }
 
 // For any rank get the node index.
+// Using std::optional for safer return values.
+std::optional<int>
+ProcessorGroup::getNodeIndexFromRank(unsigned int rank) const noexcept
+{
+  // Use .size() directly, and avoid 0 <= rank as unsigned int is always >= 0.
+  if (rank < d_all_proc_indices.size()) {
+    return d_all_proc_indices[rank];
+  } else {
+    return std::nullopt; // Indicate that no valid node index was found.
+  }
+}
+
+// For any rank get the node name.
+// Using std::optional for safer return values.
+std::optional<std::string>
+ProcessorGroup::getNodeNameFromRank(unsigned int rank) const noexcept
+{
+  if (rank < d_all_proc_indices.size()) {
+    int node_index = d_all_proc_indices[rank];
+    // Add an additional check for node_index validity in case
+    // d_all_proc_indices contains an out-of-bounds index for d_all_proc_names.
+    if (node_index >= 0 &&
+        static_cast<unsigned int>(node_index) < d_all_proc_names.size()) {
+      return d_all_proc_names[node_index];
+    }
+  }
+  return std::nullopt; // Indicate that no valid node name was found.
+}
+
+// For any node get the node name.
+// Using std::optional for safer return values.
+std::optional<std::string>
+ProcessorGroup::getNodeName(unsigned int node) const noexcept
+{
+  if (node < d_all_proc_names.size()) {
+    return d_all_proc_names[node];
+  } else {
+    return std::nullopt; // Indicate that no valid node name was found.
+  }
+}
+/*
+// For any rank get the node index.
 int
 ProcessorGroup::getNodeIndexFromRank(unsigned int rank) const
 {
@@ -157,5 +199,6 @@ ProcessorGroup::getNodeName(unsigned int node) const
   else
     return std::string("");
 }
+    */
 
 } // end namespace Uintah

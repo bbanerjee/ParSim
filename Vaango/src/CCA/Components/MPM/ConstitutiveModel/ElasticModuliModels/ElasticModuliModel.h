@@ -99,7 +99,8 @@ public:
   */
   /////////////////////////////////////////////////////////////////////////
   virtual std::pair<ElasticModuli, ElasticModuli>
-    getElasticModuliAndDerivatives(const ModelStateBase* state_input) const 
+  getElasticModuliAndDerivatives(
+    [[maybe_unused]] const ModelStateBase* state_input) const
   {
     return std::make_pair(ElasticModuli(0, 0), ElasticModuli(0, 0));
   }
@@ -118,12 +119,19 @@ public:
            partially saturated moduli
   */
   /////////////////////////////////////////////////////////////////////////
-  virtual void computeDrainedModuli(const double& I1_bar,
-                                    const double& ev_p_bar, double& KK,
-                                    double& GG) const {};
-  virtual void computePartialSaturatedModuli(
-    const double& I1_eff_bar, const double& pw_bar, const double& ev_p_bar,
-    const double& phi, const double& S_w, double& KK, double& GG) const {};
+  virtual void
+  computeDrainedModuli([[maybe_unused]] const double& I1_bar,
+                       [[maybe_unused]] const double& ev_p_bar,
+                       [[maybe_unused]] double& KK,
+                       [[maybe_unused]] double& GG) const {};
+  virtual void
+  computePartialSaturatedModuli([[maybe_unused]] const double& I1_eff_bar,
+                                [[maybe_unused]] const double& pw_bar,
+                                [[maybe_unused]] const double& ev_p_bar,
+                                [[maybe_unused]] const double& phi,
+                                [[maybe_unused]] const double& S_w,
+                                [[maybe_unused]] double& KK,
+                                [[maybe_unused]] double& GG) const {};
 
   /*! Tangent modulus */
   Tensor::Matrix6Mandel

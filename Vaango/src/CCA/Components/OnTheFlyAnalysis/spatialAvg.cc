@@ -108,10 +108,10 @@ spatialAvg::~spatialAvg()
 void
 spatialAvg::problemSetup(
   const ProblemSpecP&,
-  const ProblemSpecP& restart_prob_spec,
-  GridP& grid,
-  std::vector<std::vector<const VarLabel*>>& PState,
-  std::vector<std::vector<const VarLabel*>>& PState_preReloc)
+  [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
+  [[maybe_unused]] GridP& grid,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState_preReloc)
 {
   DOUTR(dout_OTF_spatialAvg, "Doing spatialAvg::problemSetup");
 
@@ -366,7 +366,7 @@ spatialAvg::scheduleDoAnalysis(SchedulerP& sched, const LevelP& level)
 //______________________________________________________________________
 // Compute the spatialAvg for each variable the user requested
 void
-spatialAvg::doAnalysis(const ProcessorGroup* pg,
+spatialAvg::doAnalysis([[maybe_unused]] const ProcessorGroup* pg,
                        const PatchSubset* patches,
                        const MaterialSubset*,
                        DataWarehouse* old_dw,
@@ -410,7 +410,7 @@ template<class T>
 void
 spatialAvg::computeAvgWrapper(DataWarehouse* old_dw,
                               DataWarehouse* new_dw,
-                              const PatchSubset* patches,
+                              [[maybe_unused]] const PatchSubset* patches,
                               const Patch* patch,
                               QavgVar& Q)
 {

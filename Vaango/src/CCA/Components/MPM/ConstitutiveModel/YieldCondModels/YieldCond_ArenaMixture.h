@@ -526,7 +526,7 @@ public:
   void
   addInitialComputesAndRequires(Task* task,
                                 const MPMMaterial* matl,
-                                const PatchSet* patch) const override
+                                [[maybe_unused]] const PatchSet* patch) const override
   {
     const MaterialSubset* matlset = matl->thisMaterial();
     task->computes(pPEAKI1Label, matlset);
@@ -601,7 +601,7 @@ public:
   void
   addComputesAndRequires(Task* task,
                          const MPMMaterial* matl,
-                         const PatchSet* patches) const override
+                         [[maybe_unused]] const PatchSet* patches) const override
   {
     const MaterialSubset* matlset = matl->thisMaterial();
     task->needs(Task::OldDW, pPEAKI1Label, matlset, Ghost::None);

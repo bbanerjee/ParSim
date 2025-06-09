@@ -67,7 +67,12 @@ namespace Vaango {
                                             PeridynamicsFlags* flags);
 
     // Copy constructor
-    PolarOrthotropicLinearElasticStateModel(const PolarOrthotropicLinearElasticStateModel* cm);
+    PolarOrthotropicLinearElasticStateModel(
+      const PolarOrthotropicLinearElasticStateModel* cm);
+
+    // Explicitly default the Copy Constructor
+    PolarOrthotropicLinearElasticStateModel(
+      const PolarOrthotropicLinearElasticStateModel& other) = default;
 
     // Make a clone of the constitutive model
     PolarOrthotropicLinearElasticStateModel* clone();

@@ -111,9 +111,9 @@ void
 turbulentFluxes::problemSetup(
   const ProblemSpecP&,
   const ProblemSpecP& restart_prob_spec,
-  GridP& grid,
-  std::vector<std::vector<const VarLabel*>>& PState,
-  std::vector<std::vector<const VarLabel*>>& PState_preReloc)
+  [[maybe_unused]] GridP& grid,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState,
+  [[maybe_unused]] std::vector<std::vector<const VarLabel*>>& PState_preReloc)
 {
   DOUTR(dbg_OTF_TF, "turbulentFluxes::problemSetup");
 

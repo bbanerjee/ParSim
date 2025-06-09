@@ -49,7 +49,6 @@ namespace Vaango {
     // May be needed at a later stage (BB: 5/15/14)
     // friend const TypeDescription* fun_getTypeDescription(CMData* cm);
 
-    // Prevent assignment
     IsotropicElasticNeoHookeanStateModel& operator=(const IsotropicElasticNeoHookeanStateModel& cm);
 
   public:
@@ -60,6 +59,7 @@ namespace Vaango {
 
     // Copy constructor
     IsotropicElasticNeoHookeanStateModel(const IsotropicElasticNeoHookeanStateModel* cm);
+    IsotropicElasticNeoHookeanStateModel(const IsotropicElasticNeoHookeanStateModel& cm) = default;
 
     // Make a clone of the constitutive model
     IsotropicElasticNeoHookeanStateModel* clone();

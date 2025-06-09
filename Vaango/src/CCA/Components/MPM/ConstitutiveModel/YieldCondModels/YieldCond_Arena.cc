@@ -613,7 +613,7 @@ YieldCond_Arena::df_dsigma(const ModelStateBase* state)
 }
 
 Matrix3
-YieldCond_Arena::df_dsigma(const Matrix3& stress,
+YieldCond_Arena::df_dsigma([[maybe_unused]] const Matrix3& stress,
                            const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
@@ -1446,8 +1446,8 @@ YieldCond_Arena::computeZeff_and_RPrime(const double& X_eff,
 // Requires:  Equation of state and internal variable
 //--------------------------------------------------------------
 double
-YieldCond_Arena::d2f_dp_depsVol(const ModelStateBase* state_input,
-                                const MPMEquationOfState* eos,
+YieldCond_Arena::d2f_dp_depsVol([[maybe_unused]] const ModelStateBase* state_input,
+                                [[maybe_unused]] const MPMEquationOfState* eos,
                                 const ShearModulusModel*)
 {
   std::ostringstream out;
@@ -1466,8 +1466,8 @@ YieldCond_Arena::d2f_dp_depsVol(const ModelStateBase* state_input,
 // Requires:  Equation of state
 //--------------------------------------------------------------
 double
-YieldCond_Arena::d2f_dp_depsDev(const ModelStateBase* state_input,
-                                const MPMEquationOfState* eos,
+YieldCond_Arena::d2f_dp_depsDev([[maybe_unused]] const ModelStateBase* state_input,
+                                [[maybe_unused]] const MPMEquationOfState* eos,
                                 const ShearModulusModel*)
 {
   std::ostringstream out;
@@ -1486,9 +1486,9 @@ YieldCond_Arena::d2f_dp_depsDev(const ModelStateBase* state_input,
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_Arena::d2f_dq_depsVol(const ModelStateBase* state_input,
+YieldCond_Arena::d2f_dq_depsVol([[maybe_unused]] const ModelStateBase* state_input,
                                 const MPMEquationOfState*,
-                                const ShearModulusModel* shear)
+                                [[maybe_unused]] const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dq_depsVol should not be called by "
@@ -1506,9 +1506,9 @@ YieldCond_Arena::d2f_dq_depsVol(const ModelStateBase* state_input,
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_Arena::d2f_dq_depsDev(const ModelStateBase* state_input,
-                                const MPMEquationOfState*,
-                                const ShearModulusModel* shear)
+YieldCond_Arena::d2f_dq_depsDev([[maybe_unused]] const ModelStateBase* state_input,
+                                [[maybe_unused]] const MPMEquationOfState*,
+                                [[maybe_unused]] const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dq_depsDev should not be called by "
@@ -1525,9 +1525,9 @@ YieldCond_Arena::d2f_dq_depsDev(const ModelStateBase* state_input,
 // Requires:  Equation of state, shear modulus model, internal variable model
 //--------------------------------------------------------------
 double
-YieldCond_Arena::df_depsVol(const ModelStateBase* state_input,
-                            const MPMEquationOfState* eos,
-                            const ShearModulusModel* shear)
+YieldCond_Arena::df_depsVol([[maybe_unused]] const ModelStateBase* state_input,
+                            [[maybe_unused]] const MPMEquationOfState* eos,
+                            [[maybe_unused]] const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** df_depsVol should not be called by "
@@ -1544,9 +1544,9 @@ YieldCond_Arena::df_depsVol(const ModelStateBase* state_input,
 // Requires:  Equation of state, shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_Arena::df_depsDev(const ModelStateBase* state_input,
-                            const MPMEquationOfState* eos,
-                            const ShearModulusModel* shear)
+YieldCond_Arena::df_depsDev([[maybe_unused]] const ModelStateBase* state_input,
+                            [[maybe_unused]] const MPMEquationOfState* eos,
+                            [[maybe_unused]] const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** df_depsVol should not be called by "
@@ -1558,7 +1558,7 @@ YieldCond_Arena::df_depsDev(const ModelStateBase* state_input,
 
 // Evaluate yield condition 
 double
-YieldCond_Arena::evalYieldCondition(const Uintah::Matrix3& stress,
+YieldCond_Arena::evalYieldCondition([[maybe_unused]] const Uintah::Matrix3& stress,
                                     const ModelStateBase* state_input)
 {
   std::ostringstream out;
@@ -1576,7 +1576,7 @@ YieldCond_Arena::evalYieldCondition(const Uintah::Matrix3& stress,
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */
 Matrix3
-YieldCond_Arena::df_dxi(const Matrix3& stress,
+YieldCond_Arena::df_dxi([[maybe_unused]] const Matrix3& stress,
                         const ModelStateBase*)
 
 {
@@ -1590,7 +1590,7 @@ YieldCond_Arena::df_dxi(const Matrix3& stress,
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 std::pair<Matrix3, Matrix3>
-YieldCond_Arena::df_dsigmaDev_dbeta(const Matrix3& stress,
+YieldCond_Arena::df_dsigmaDev_dbeta([[maybe_unused]] const Matrix3& stress,
                                     const ModelStateBase*)
 {
   std::ostringstream out;
@@ -1604,13 +1604,13 @@ YieldCond_Arena::df_dsigmaDev_dbeta(const Matrix3& stress,
 //--------------------------------------------------------------
 // Tangent moduli
 void
-YieldCond_Arena::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
-                                               const Matrix3& sigma,
-                                               double sigY,
-                                               double dsigYdep,
-                                               double porosity,
-                                               double,
-                                               TangentModulusTensor& Cep)
+YieldCond_Arena::computeElasPlasTangentModulus([[maybe_unused]] const TangentModulusTensor& Ce,
+                                               [[maybe_unused]] const Matrix3& sigma,
+                                               [[maybe_unused]] double sigY,
+                                               [[maybe_unused]] double dsigYdep,
+                                               [[maybe_unused]] double porosity,
+                                               [[maybe_unused]] double,
+                                               [[maybe_unused]] TangentModulusTensor& Cep)
 {
   std::ostringstream out;
   out << "**ERROR** computeElasPlasTangentModulus with a Matrix3 argument "
@@ -1621,11 +1621,11 @@ YieldCond_Arena::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
 }
 
 void
-YieldCond_Arena::computeTangentModulus(const TangentModulusTensor& Ce,
-                                       const Matrix3& f_sigma,
-                                       double f_q1,
-                                       double h_q1,
-                                       TangentModulusTensor& Cep)
+YieldCond_Arena::computeTangentModulus([[maybe_unused]] const TangentModulusTensor& Ce,
+                                       [[maybe_unused]] const Matrix3& f_sigma,
+                                       [[maybe_unused]] double f_q1,
+                                       [[maybe_unused]] double h_q1,
+                                       [[maybe_unused]] TangentModulusTensor& Cep)
 {
   std::ostringstream out;
   out << "**ERROR** coputeTangentModulus with a Matrix3 argument should not be "

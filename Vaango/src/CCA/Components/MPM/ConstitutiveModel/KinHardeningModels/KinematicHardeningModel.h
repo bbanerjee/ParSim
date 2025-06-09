@@ -87,8 +87,8 @@ public:
                                  const Uintah::Matrix3& backStress_old,
                                  Uintah::Matrix3& backStress_new) = 0;
 
-  virtual void computeBackStress(const ModelStateBase* state,
-                                 Uintah::Matrix3& backStress_new)
+  virtual void computeBackStress([[maybe_unused]] const ModelStateBase* state,
+                                 [[maybe_unused]] Uintah::Matrix3& backStress_new)
   {
   }
 
@@ -128,10 +128,12 @@ public:
   virtual void initializeBackStress(Uintah::ParticleSubset* pset,
                                     Uintah::DataWarehouse* new_dw);
 
-  virtual void initializeLocalVariables(
-    const Uintah::Patch* patch, Uintah::ParticleSubset* pset,
-    Uintah::DataWarehouse* new_dw,
-    Uintah::constParticleVariable<double>& pVolume){};
+  virtual void
+  initializeLocalVariables(
+    [[maybe_unused]] const Uintah::Patch* patch,
+    [[maybe_unused]] Uintah::ParticleSubset* pset,
+    [[maybe_unused]] Uintah::DataWarehouse* new_dw,
+    [[maybe_unused]] Uintah::constParticleVariable<double>& pVolume) {};
 
   virtual void getBackStress(
     Uintah::ParticleSubset* pset, Uintah::DataWarehouse* old_dw,

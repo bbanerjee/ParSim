@@ -115,7 +115,7 @@ IsotropicElasticNeoHookeanStateModel::outputProblemSpec(ProblemSpecP& ps,
 void 
 IsotropicElasticNeoHookeanStateModel::addInitialComputesAndRequires(Task* task,
                                                                     const PeridynamicsMaterial* material,
-                                                                    const PatchSet* patches) const
+                                                                    [[maybe_unused]] const PatchSet* patches) const
 {
   // Identify this material
   const Uintah::MaterialSubset* matlset = material->thisMaterial();
@@ -209,7 +209,7 @@ IsotropicElasticNeoHookeanStateModel::computeStableTimestep(const Patch* patch,
 void 
 IsotropicElasticNeoHookeanStateModel::addComputesAndRequires(Task* task, 
                                                              const PeridynamicsMaterial* matl,
-                                                             const PatchSet* patches) const
+                                                             [[maybe_unused]] const PatchSet* patches) const
 {
   // Constants
   Ghost::GhostType gnone = Ghost::None;

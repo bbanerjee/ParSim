@@ -87,7 +87,7 @@ ParticleInternalForceComputer::~ParticleInternalForceComputer()
 void 
 ParticleInternalForceComputer::addComputesAndRequires(Task* task,
                                                       const PeridynamicsMaterial* matl,
-                                                      const PatchSet* patches) const
+                                                      [[maybe_unused]] const PatchSet* patches) const
 {
   cout_doing << "\t Scheduling task variables in particle internal force computer: Peridynamics: " 
              << __FILE__ << ":" << __LINE__ << std::endl;

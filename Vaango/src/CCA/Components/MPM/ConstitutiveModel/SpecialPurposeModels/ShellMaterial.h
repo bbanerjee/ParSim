@@ -215,8 +215,8 @@ public:
   double getCompressibility() override;
 
   void addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
-                              const bool recursion,
-                              const bool schedParent = true) const override
+                              [[maybe_unused]] const bool recursion,
+                              [[maybe_unused]] const bool schedParent = true) const override
   {
   }
 

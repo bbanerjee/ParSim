@@ -271,7 +271,7 @@ GeometryPieceFactory::getInsidePoints(const Uintah::Patch* const patch)
     GeometryPieceP geomPiece = geomIter->second;
 
     const string geomName = geomPiece->getName();
-    const std::vector<Point>& thisGeomInsidePoints =
+    const std::vector<Point> thisGeomInsidePoints =
       getInsidePoints(geomName, patch);
 
     allInsidePoints.insert(allInsidePoints.end(),

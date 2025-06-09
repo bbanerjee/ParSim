@@ -163,9 +163,9 @@ MohrCoulombSheng::integrate(const Vector7& strainIncrement,
 }
 
 MohrCoulombState 
-MohrCoulombSheng::integrate(const Vector7& strainIncrement,
-                            const MohrCoulombState& initialState, 
-                            RegionType& region)
+MohrCoulombSheng::integrate([[maybe_unused]] const Vector7& strainIncrement,
+                            [[maybe_unused]] const MohrCoulombState& initialState, 
+                            [[maybe_unused]] RegionType& region)
 {
   return initialState;
 }

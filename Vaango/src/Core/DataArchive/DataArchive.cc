@@ -78,7 +78,7 @@ vector<double> DataArchive::m_emptyVectorD = {};
 DataArchive::DataArchive( const string & filebase,
                           const int      processor     /* = 0 */,
                           const int      numProcessors /* = 1 */,
-                          const bool     verbose       /* = true */ ) :
+                          [[maybe_unused]] const bool     verbose       /* = true */ ) :
   timestep_cache_size(10),
   default_cache_size(10),
   d_filebase(filebase),
@@ -598,7 +598,7 @@ DataArchive::queryGlobals( vector<string>                         & names,
 //______________________________________________________________________
 //
 void
-DataArchive::queryVariables( FILE                                   * fp,
+DataArchive::queryVariables( [[maybe_unused]] FILE                  * fp,
                              vector<string>                         & names,
                              vector<int>                            & num_matls,
                              vector<const Uintah::TypeDescription*> & types,
@@ -1956,7 +1956,7 @@ DataArchive::turnOnXMLCaching() {
 // if you want to override the default cache size determined by
 // TimeHashMaps.
 void
-DataArchive::setTimestepCacheSize( int new_size ) {
+DataArchive::setTimestepCacheSize( [[maybe_unused]] int new_size ) {
   d_lock.lock();
   // Now we need to reduce the size
   int current_size = (int)d_lastNtimesteps.size();

@@ -181,8 +181,8 @@ public:
   /*! Set up data required by and computed in computeStressTensor
       for implicit methods */
   void addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
-                              const bool recursion,
-                              const bool schedParent = true) const override
+                              [[maybe_unused]] const bool recursion,
+                              [[maybe_unused]] const bool schedParent = true) const override
   {
   }
 

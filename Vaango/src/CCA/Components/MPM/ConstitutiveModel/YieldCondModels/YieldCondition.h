@@ -68,8 +68,8 @@ public:
   outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
 
   virtual void
-  addParticleState(std::vector<const VarLabel*>& from,
-                   std::vector<const VarLabel*>& to){};
+  addParticleState([[maybe_unused]] std::vector<const VarLabel*>& from,
+                   [[maybe_unused]] std::vector<const VarLabel*>& to){};
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -79,7 +79,7 @@ public:
   virtual std::map<std::string, double>
   getParameters() const = 0;
   virtual void
-  computeModelParameters(double factor){};
+  computeModelParameters([[maybe_unused]] double factor){};
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -135,8 +135,8 @@ public:
 
   /* Derivatives of the yield function wrt internal variables */
   virtual void
-  df_dintvar(const ModelStateBase* state,
-             MetalIntVar& df_dintvar) const 
+  df_dintvar([[maybe_unused]] const ModelStateBase* state,
+             [[maybe_unused]] MetalIntVar& df_dintvar) const 
   {
     std::ostringstream out;
     out << "**ERROR** df_dintvar MetalIntVar argument should not be "
@@ -145,8 +145,8 @@ public:
   }
 
   virtual void
-  df_dintvar(const ModelStateBase* state,
-             ArenaIntVar& df_dintvar) const
+  df_dintvar([[maybe_unused]] const ModelStateBase* state,
+             [[maybe_unused]] ArenaIntVar& df_dintvar) const
   {
     std::ostringstream out;
     out << "**ERROR** df_dintvar ArenaIntVar argument should not be "
@@ -155,8 +155,8 @@ public:
   }
 
   virtual void
-  df_dintvar(const ModelStateBase* state,
-             BorjaIntVar& df_dintvar) const
+  df_dintvar([[maybe_unused]] const ModelStateBase* state,
+             [[maybe_unused]] BorjaIntVar& df_dintvar) const
   {
     std::ostringstream out;
     out << "**ERROR** df_dintvar BorjaIntVar argument should not be "
@@ -165,8 +165,8 @@ public:
   }
 
   virtual void
-  df_dintvar(const ModelStateBase* state,
-             SoilBrannonIntVar& df_dintvar) const
+  df_dintvar([[maybe_unused]] const ModelStateBase* state,
+             [[maybe_unused]] SoilBrannonIntVar& df_dintvar) const
   {
     std::ostringstream out;
     out << "**ERROR** df_dintvar SoilBrannonIntVar argument should not be "
@@ -175,8 +175,8 @@ public:
   }
 
   virtual void
-  df_dintvar(const ModelStateBase* state,
-             TabularCapIntVar& df_dintvar) const
+  df_dintvar([[maybe_unused]] const ModelStateBase* state,
+             [[maybe_unused]] TabularCapIntVar& df_dintvar) const
   {
     std::ostringstream out;
     out << "**ERROR** df_dintvar TabularCapIntVar argument should not be "
@@ -263,7 +263,7 @@ public:
    *   std::vector<Point>
    */
   virtual Polyline
-  computeYieldSurfacePolylinePbarSqrtJ2(const ModelStateBase* state_old)
+  computeYieldSurfacePolylinePbarSqrtJ2([[maybe_unused]] const ModelStateBase* state_old)
   {
     Polyline dummy;
     return dummy;
@@ -281,7 +281,7 @@ public:
    *   std::array<double, 3>  = pbar_min, pbar_max, sqrtJ2_max
    */
   virtual std::array<double, 3>
-  getYieldConditionRange(const Polyline& yield_surface)
+  getYieldConditionRange([[maybe_unused]] const Polyline& yield_surface)
   {
     std::array<double, 3> dummy;
     return dummy;
@@ -326,35 +326,35 @@ public:
    *   false - otherwise
    */
   virtual bool
-  getClosestPoint(const ModelStateBase* state,
-                  const double& px,
-                  const double& py,
-                  double& cpx,
-                  double& cpy)
+  getClosestPoint([[maybe_unused]] const ModelStateBase* state,
+                  [[maybe_unused]] const double& px,
+                  [[maybe_unused]] const double& py,
+                  [[maybe_unused]] double& cpx,
+                  [[maybe_unused]] double& cpy)
   {
     return false;
   }
   virtual bool
-  getClosestPointAndTangent(const ModelStateBase* state,
-                            const double& px,
-                            const double& py,
-                            double& cpx,
-                            double& cpy,
-                            double& tx,
-                            double& ty)
+  getClosestPointAndTangent([[maybe_unused]] const ModelStateBase* state,
+                            [[maybe_unused]] const double& px,
+                            [[maybe_unused]] const double& py,
+                            [[maybe_unused]] double& cpx,
+                            [[maybe_unused]] double& cpy,
+                            [[maybe_unused]] double& tx,
+                            [[maybe_unused]] double& ty)
   {
     return false;
   }
   virtual bool
-  getClosestPointAndTangent(const ModelStateBase* state,
-                            const Polyline& z_r_table,
-                            const Util::PolylineKDTree& z_r_index, 
-                            const double& px,
-                            const double& py,
-                            double& cpx,
-                            double& cpy,
-                            double& tx,
-                            double& ty)
+  getClosestPointAndTangent([[maybe_unused]] const ModelStateBase* state,
+                            [[maybe_unused]] const Polyline& z_r_table,
+                            [[maybe_unused]] const Util::PolylineKDTree& z_r_index, 
+                            [[maybe_unused]] const double& px,
+                            [[maybe_unused]] const double& py,
+                            [[maybe_unused]] double& cpx,
+                            [[maybe_unused]] double& cpy,
+                            [[maybe_unused]] double& tx,
+                            [[maybe_unused]] double& ty)
   {
     return false;
   }
@@ -363,25 +363,25 @@ public:
    * These are needed for keeping track of point-to-point material variability
    */
   virtual void
-  addInitialComputesAndRequires(Task* task,
-                                const MPMMaterial* matl,
-                                const PatchSet* patch) const {};
+  addInitialComputesAndRequires([[maybe_unused]] Task* task,
+                                [[maybe_unused]] const MPMMaterial* matl,
+                                [[maybe_unused]] const PatchSet* patch) const {};
 
   virtual void
-  initializeLocalVariables(const Patch* patch,
-                           ParticleSubset* pset,
-                           DataWarehouse* new_dw,
-                           constParticleVariable<double>& pVolume){};
+  initializeLocalVariables([[maybe_unused]] const Patch* patch,
+                           [[maybe_unused]] ParticleSubset* pset,
+                           [[maybe_unused]] DataWarehouse* new_dw,
+                           [[maybe_unused]] constParticleVariable<double>& pVolume){};
 
   virtual void
-  addComputesAndRequires(Task* task,
-                         const MPMMaterial* matl,
-                         const PatchSet* patches) const {};
+  addComputesAndRequires([[maybe_unused]] Task* task,
+                         [[maybe_unused]] const MPMMaterial* matl,
+                         [[maybe_unused]] const PatchSet* patches) const {};
 
   virtual void
-  copyLocalVariables(ParticleSubset* pset,
-                     DataWarehouse* old_dw,
-                     DataWarehouse* new_dw){};
+  copyLocalVariables([[maybe_unused]] ParticleSubset* pset,
+                     [[maybe_unused]] DataWarehouse* old_dw,
+                     [[maybe_unused]] DataWarehouse* new_dw){};
 
   virtual std::vector<std::string>
   getLocalVariableLabels() const
@@ -392,7 +392,8 @@ public:
   }
 
   virtual std::vector<Uintah::constParticleVariable<double>>
-  getLocalVariables(Uintah::ParticleSubset* pset, Uintah::DataWarehouse* old_dw)
+  getLocalVariables([[maybe_unused]] Uintah::ParticleSubset* pset,
+                    [[maybe_unused]] Uintah::DataWarehouse* old_dw)
   {
     constParticleVariable<double> pNull;
     std::vector<constParticleVariable<double>> pYieldParams;
@@ -404,11 +405,11 @@ public:
    *  This is used to scale the yield parameters
    */
   virtual void
-  updateLocalVariables(ParticleSubset* pset,
-                       DataWarehouse* old_dw,
-                       DataWarehouse* new_dw,
-                       constParticleVariable<double>& pCoherence_old,
-                       const ParticleVariable<double>& pCoherence_new){};
+  updateLocalVariables([[maybe_unused]] ParticleSubset* pset,
+                       [[maybe_unused]] DataWarehouse* old_dw,
+                       [[maybe_unused]] DataWarehouse* new_dw,
+                       [[maybe_unused]] constParticleVariable<double>& pCoherence_old,
+                       [[maybe_unused]] const ParticleVariable<double>& pCoherence_new){};
 
 };
 

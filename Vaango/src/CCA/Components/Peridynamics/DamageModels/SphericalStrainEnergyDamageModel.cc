@@ -132,7 +132,7 @@ SphericalStrainEnergyDamageModel::initialize(const Patch* patch,
 void 
 SphericalStrainEnergyDamageModel::addComputesAndRequires(Task* task, 
                                                          const PeridynamicsMaterial* matl,
-                                                         const PatchSet* patches) const
+                                                         [[maybe_unused]] const PatchSet* patches) const
 {
   // Constants
   Ghost::GhostType gac = Ghost::AroundCells;

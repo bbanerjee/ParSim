@@ -279,14 +279,19 @@ ElasticModuli_NeuralNet_Bulk::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const
     hsize_t dims;
     dataspace.getSimpleExtentDims(&dims, nullptr);
 
-    char layer_names[dims][size];
-    attribute.read(datatype, (void *)layer_names);
+    //char layer_names[dims][size];
+    //attribute.read(datatype, (void *)layer_names);
+    std::vector<char> layer_names(dims * size);
+    attribute.read(datatype, (void *)layer_names.data());
 
     #ifdef DEBUG_HDF5_READ
     std::cout << "Dims from hdf5 = " << dims << "\n";
     #endif
     for (auto ii = 0u; ii < dims; ++ii) {
-      std::string layer_name(layer_names[ii], size);
+      size_t row_start_idx = ii * size;
+      char* layer_names_ii = layer_names.data() + row_start_idx;
+      //std::string layer_name(layer_names[ii], size);
+      std::string layer_name(layer_names_ii, size);
       group = file.openGroup("/model_weights/"+layer_name);
       attribute = group.openAttribute("weight_names");
       datatype = attribute.getDataType();
@@ -295,8 +300,10 @@ ElasticModuli_NeuralNet_Bulk::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const
       hsize_t dims_weights_bias;
       dataspace.getSimpleExtentDims(&dims_weights_bias, nullptr);
 
-      char data_labels[dims_weights_bias][size_weights_bias];
-      attribute.read(datatype, (void *)data_labels);
+      //char data_labels[dims_weights_bias][size_weights_bias];
+      //attribute.read(datatype, (void *)data_labels);
+      std::vector<char> data_labels(dims_weights_bias * size_weights_bias);
+      attribute.read(datatype, (void *)data_labels.data());
       #ifdef DEBUG_HDF5_READ
       std::cout << "Read attribute from hdf5 = " << ii << "\n";
       #endif
@@ -305,13 +312,16 @@ ElasticModuli_NeuralNet_Bulk::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const
       std::cout << "Dims weights/bias from hdf5 = " << dims_weights_bias << "\n";
       #endif
       for (auto jj=0u; jj < dims_weights_bias; ++jj) {
-        std::string weights_name(data_labels[jj], size_weights_bias);
+        char* data_labels_jj = data_labels.data() + (jj * size_weights_bias);
+        //std::string weights_name(data_labels[jj], size_weights_bias);
+        std::string weights_name(data_labels_jj, size_weights_bias);
         auto dataset = group.openDataSet(weights_name);
         datatype = dataset.getDataType();
         dataspace = dataset.getSpace();
         rank = dataspace.getSimpleExtentNdims();
-        hsize_t dims_data[rank];
-        dataspace.getSimpleExtentDims(dims_data, nullptr);
+        //hsize_t dims_data[rank];
+        std::vector<hsize_t> dims_data(rank);
+        dataspace.getSimpleExtentDims(dims_data.data(), nullptr);
         
         #ifdef DEBUG_HDF5_READ
         std::cout << "Read dims/weights from hdf5 = " << jj << "\n";

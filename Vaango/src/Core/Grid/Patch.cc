@@ -52,9 +52,9 @@ static Uintah::MasterLock ids_init{};
 extern Uintah::MasterLock
   coutLock; // Used to sync cout when output by multiple ranks
 
-Patch::Patch(const Level* level,
-             const IntVector& lowIndex,
-             const IntVector& highIndex,
+Patch::Patch([[maybe_unused]] const Level* level,
+             [[maybe_unused]] const IntVector& lowIndex,
+             [[maybe_unused]] const IntVector& highIndex,
              const IntVector& inLowIndex,
              const IntVector& inHighIndex,
              unsigned int levelIndex,

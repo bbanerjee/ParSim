@@ -26,7 +26,7 @@
 
 using namespace Vaango;
 
-LinearElasticBondModel::LinearElasticBondModel(Uintah::ProblemSpecP& ps,
+LinearElasticBondModel::LinearElasticBondModel([[maybe_unused]] Uintah::ProblemSpecP& ps,
                                                PeridynamicsFlags* flags)
   : PeridynamicsMaterialModel(flags)
     
@@ -43,8 +43,8 @@ LinearElasticBondModel::~LinearElasticBondModel()
 }
 
 void 
-LinearElasticBondModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
-                                          bool output_cm_tag)
+LinearElasticBondModel::outputProblemSpec([[maybe_unused]] Uintah::ProblemSpecP& ps,
+                                          [[maybe_unused]] bool output_cm_tag)
 {
   throw Uintah::InternalError("Stub Task: LinearElasticBondModel::outputProblemSpec ", __FILE__, __LINE__);
 }
@@ -59,9 +59,9 @@ LinearElasticBondModel::addInitialComputesAndRequires(Uintah::Task* ,
 
 /*! Initialize the variables used in the CM */
 void 
-LinearElasticBondModel::initialize(const Uintah::Patch* patch,
-                                   const PeridynamicsMaterial* matl,
-                                   Uintah::DataWarehouse* new_dw)
+LinearElasticBondModel::initialize([[maybe_unused]] const Uintah::Patch* patch,
+                                   [[maybe_unused]] const PeridynamicsMaterial* matl,
+                                   [[maybe_unused]] Uintah::DataWarehouse* new_dw)
 {
   throw Uintah::InternalError("Stub Task: LinearElasticBondModel::initialize ", __FILE__, __LINE__);
 }
@@ -75,8 +75,8 @@ LinearElasticBondModel::addComputesAndRequires(Uintah::Task*,
 }
 
 void 
-LinearElasticBondModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                         std::vector<const Uintah::VarLabel*>& to)
+LinearElasticBondModel::addParticleState([[maybe_unused]] std::vector<const Uintah::VarLabel*>& from,
+                                         [[maybe_unused]] std::vector<const Uintah::VarLabel*>& to)
 {
   throw Uintah::InternalError("Stub Task: LinearElasticBondModel::addParticleState ", __FILE__, __LINE__);
 }

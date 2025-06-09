@@ -75,9 +75,9 @@ public:
   void setGlobalComm(int num_comms) const;
 
   // Utilities for getting node based information.
-  int getNodeIndexFromRank(unsigned int rank) const;
-  std::string getNodeNameFromRank(unsigned int rank) const;
-  std::string getNodeName(unsigned int node) const;
+  std::optional<int> getNodeIndexFromRank(unsigned int rank) const noexcept;
+  std::optional<std::string> getNodeNameFromRank(unsigned int rank) const noexcept;
+  std::optional<std::string> getNodeName(unsigned int node) const noexcept;
 
 private:
   friend class Parallel;
