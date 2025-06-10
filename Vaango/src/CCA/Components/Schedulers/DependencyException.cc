@@ -51,13 +51,13 @@ DependencyException::DependencyException(const Task* task,
 #endif
 }
 
-string
+std::string
 DependencyException::makeMessage(const Task* task,
                                  const VarLabel* label,
                                  int matlIndex,
                                  const Patch* patch,
-                                 string has,
-                                 string needs)
+                                 std::string has,
+                                 std::string needs)
 {
   std::ostringstream str;
   str << "Task Dependency Error: (" << has << ") has no corresponding (";
@@ -77,7 +77,7 @@ DependencyException::makeMessage(const Task* task,
 }
 
 DependencyException::DependencyException(const DependencyException& copy)
-  : Exception(copy)
+  : Exception()
   , d_task(copy.d_task)
   , d_label(copy.d_label)
   , d_mat_index(copy.d_mat_index)
