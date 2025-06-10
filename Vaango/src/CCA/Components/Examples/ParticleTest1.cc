@@ -58,9 +58,9 @@ ParticleTest1::~ParticleTest1()
 
 void
 ParticleTest1::problemSetup(const ProblemSpecP& params,
-                            const ProblemSpecP& restart_prob_spec,
-                            GridP& grid,
-                            const std::string& input_ups_dir)
+                            [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
+                            [[maybe_unused]] GridP& grid,
+                            [[maybe_unused]] const std::string& input_ups_dir)
 {
   dynamic_cast<Scheduler*>(getPort("scheduler"))
     ->setPositionVar(d_labels->pXLabel);

@@ -54,7 +54,7 @@ void
 AMRWave::problemSetup(const ProblemSpecP& params,
                       const ProblemSpecP& restart_prob_spec,
                       GridP& grid,
-                      const std::string& input_ups_dir)
+                      [[maybe_unused]] const std::string& input_ups_dir)
 {
   Wave::problemSetup(params, restart_prob_spec, grid);
 
@@ -77,10 +77,10 @@ AMRWave::problemSetup(const ProblemSpecP& params,
 }
 
 void
-AMRWave::scheduleRefineInterface(const LevelP& fineLevel,
-                                 SchedulerP& scheduler,
-                                 bool needCoarseOld,
-                                 bool needCoarseNew)
+AMRWave::scheduleRefineInterface([[maybe_unused]] const LevelP& fineLevel,
+                                 [[maybe_unused]] SchedulerP& scheduler,
+                                 [[maybe_unused]] bool needCoarseOld,
+                                 [[maybe_unused]] bool needCoarseNew)
 {
 }
 

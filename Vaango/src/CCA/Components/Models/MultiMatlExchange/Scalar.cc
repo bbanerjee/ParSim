@@ -90,9 +90,9 @@ ScalarExch::outputProblemSpec(ProblemSpecP& matl_ps)
 void
 ScalarExch::sched_PreExchangeTasks(SchedulerP& sched,
                                    const PatchSet* patches,
-                                   const MaterialSubset* ice_matls,
+                                   [[maybe_unused]] const MaterialSubset* ice_matls,
                                    const MaterialSubset* mpm_matls,
-                                   const MaterialSet* allMatls)
+                                   [[maybe_unused]] const MaterialSet* allMatls)
 {
 
   //__________________________________
@@ -108,7 +108,7 @@ ScalarExch::sched_AddExch_VelFC(
   SchedulerP& sched,
   const PatchSet* patches,
   const MaterialSubset* ice_matls,
-  const MaterialSubset* mpm_matls,
+  [[maybe_unused]] const MaterialSubset* mpm_matls,
   const MaterialSet* all_matls,
   CustomBCDriver::customBC_globalVars* BC_globalVars,
   const bool recursion)
@@ -279,9 +279,9 @@ ScalarExch::vel_FC_exchange(CellIterator iter,
  by Kashiwa, above equation 4.13.
  _____________________________________________________________________  */
 void
-ScalarExch::addExch_VelFC(const ProcessorGroup* pg,
+ScalarExch::addExch_VelFC([[maybe_unused]] const ProcessorGroup* pg,
                           const PatchSubset* patches,
-                          const MaterialSubset* matls,
+                          [[maybe_unused]] const MaterialSubset* matls,
                           DataWarehouse* old_dw,
                           DataWarehouse* new_dw,
                           CustomBCDriver::customBC_globalVars* BC_globalVars,

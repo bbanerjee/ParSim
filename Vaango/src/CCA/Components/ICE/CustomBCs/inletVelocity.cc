@@ -218,7 +218,7 @@ int  set_inletVelocity_BC(const Patch* patch,
                           const string& bc_kind,
                           const Vector& bc_value,
                           inletVel_globalVars* global,
-                          inletVel_localVars* local )
+                          [[maybe_unused]] inletVel_localVars* local )
 {
   int nCells = 0;
   

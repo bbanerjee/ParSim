@@ -65,9 +65,9 @@ Poisson4::~Poisson4()
 //
 void
 Poisson4::problemSetup(const ProblemSpecP& params,
-                       const ProblemSpecP& restart_prob_spec,
-                       GridP& grid,
-                       const std::string& input_ups_dir)
+                       [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
+                       [[maybe_unused]] GridP& grid,
+                       [[maybe_unused]] const std::string& input_ups_dir)
 {
   ProblemSpecP poisson = params->findBlock("Poisson");
 
@@ -177,7 +177,7 @@ Poisson4::computeStableTimestep(const ProcessorGroup* pg,
 void
 Poisson4::initialize(const ProcessorGroup*,
                      const PatchSubset* patches,
-                     const MaterialSubset* matls,
+                     [[maybe_unused]] const MaterialSubset* matls,
                      DataWarehouse* /*old_dw*/,
                      DataWarehouse* new_dw)
 {
@@ -249,7 +249,7 @@ Poisson4::initialize(const ProcessorGroup*,
 void
 Poisson4::timeAdvance(const ProcessorGroup*,
                       const PatchSubset* patches,
-                      const MaterialSubset* matls,
+                      [[maybe_unused]] const MaterialSubset* matls,
                       DataWarehouse* old_dw,
                       DataWarehouse* new_dw)
 {
@@ -339,8 +339,8 @@ Poisson4::timeAdvance(const ProcessorGroup*,
 void
 Poisson4::timeAdvance1(const ProcessorGroup*,
                        const PatchSubset* patches,
-                       const MaterialSubset* matls,
-                       DataWarehouse* old_dw,
+                       [[maybe_unused]] const MaterialSubset* matls,
+                       [[maybe_unused]] DataWarehouse* old_dw,
                        DataWarehouse* new_dw)
 {
   int matl = 0;

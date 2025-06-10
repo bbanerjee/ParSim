@@ -75,28 +75,28 @@ void MPMPetscSolver::initialize()
 }
 
 void 
-MPMPetscSolver::createLocalToGlobalMapping(const ProcessorGroup* d_myworld,
-                                           const PatchSet* perproc_patches,
-                                           const PatchSubset* patches,
-                                           const int DOFsPerNode,
-                                           const int n8or27)
+MPMPetscSolver::createLocalToGlobalMapping([[maybe_unused]] const ProcessorGroup* d_myworld,
+                                           [[maybe_unused]] const PatchSet* perproc_patches,
+                                           [[maybe_unused]] const PatchSubset* patches,
+                                           [[maybe_unused]] const int DOFsPerNode,
+                                           [[maybe_unused]] const int n8or27)
 {
   throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::createLocalToGlobalMapping()!", __FILE__, __LINE__ );
 }
 
-void MPMPetscSolver::solve(vector<double>& guess)
+void MPMPetscSolver::solve([[maybe_unused]] vector<double>& guess)
 {
   throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::solve()!", __FILE__, __LINE__ );
 }
 
-void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
-                                  const  std::map< int,int>& dof_diag)
+void MPMPetscSolver::createMatrix([[maybe_unused]] const ProcessorGroup* d_myworld,
+                                  [[maybe_unused]] const  std::map< int,int>& dof_diag)
 {
   throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::createMatrix()!", __FILE__, __LINE__ );
 }
 
 
-void MPMPetscSolver::destroyMatrix(bool recursion)
+void MPMPetscSolver::destroyMatrix([[maybe_unused]] bool recursion)
 {
  throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::destroyMatrix()!", __FILE__, __LINE__ );
 }
@@ -108,18 +108,18 @@ void MPMPetscSolver::flushMatrix()
 }
 
 
-void MPMPetscSolver::fillVector(int i,double v,bool add)
+void MPMPetscSolver::fillVector([[maybe_unused]] int i,[[maybe_unused]] double v,[[maybe_unused]] bool add)
 {
  throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::fillVector()!", __FILE__, __LINE__ );
 }
 
 
-void MPMPetscSolver::fillTemporaryVector(int i,double v)
+void MPMPetscSolver::fillTemporaryVector([[maybe_unused]] int i,[[maybe_unused]] double v)
 {
  throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::fillTemporaryVector()!", __FILE__, __LINE__ );
 }
 
-void MPMPetscSolver::fillFluxVector(int i,double v)
+void MPMPetscSolver::fillFluxVector([[maybe_unused]] int i,[[maybe_unused]] double v)
 {
  throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::fillFluxVector()!", __FILE__, __LINE__ );
 }
@@ -144,7 +144,7 @@ void MPMPetscSolver::applyBCSToRHS()
 }
 
 
-void MPMPetscSolver::copyL2G(Array3<int>& mapping,const Patch* patch)
+void MPMPetscSolver::copyL2G([[maybe_unused]] Array3<int>& mapping,[[maybe_unused]] const Patch* patch)
 {
  throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::copyL2G()!", __FILE__, __LINE__ );
 }
@@ -167,19 +167,19 @@ void MPMPetscSolver::finalizeMatrix()
 }
 
 
-int MPMPetscSolver::getSolution(vector<double>& xPetsc)
+int MPMPetscSolver::getSolution([[maybe_unused]] vector<double>& xPetsc)
 {
  throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::getSolution()!", __FILE__, __LINE__ );
 }
 
 
-int MPMPetscSolver::getRHS(vector<double>& QPetsc)
+int MPMPetscSolver::getRHS([[maybe_unused]] vector<double>& QPetsc)
 {
  throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::getRHS()!", __FILE__, __LINE__ );
 }
 
-void MPMPetscSolver::fillMatrix(int numi,int i[],int numj,
-                                       int j[],double value[])
+void MPMPetscSolver::fillMatrix([[maybe_unused]] int numi,[[maybe_unused]] int i[],[[maybe_unused]] int numj,
+                                       [[maybe_unused]] int j[],[[maybe_unused]] double value[])
 {
   throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::fillMatrix()!", __FILE__, __LINE__ );
 

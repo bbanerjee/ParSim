@@ -89,7 +89,7 @@ JWLpp::~JWLpp()
 //______________________________________________________________________
 //
 void JWLpp::problemSetup(GridP&,
-                          const bool isRestart)
+                         [[maybe_unused]]  const bool isRestart)
 {
   ProblemSpecP JWL_ps = d_params->findBlock("JWLpp");
 

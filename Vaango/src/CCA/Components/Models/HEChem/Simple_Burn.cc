@@ -108,7 +108,7 @@ Simple_Burn::~Simple_Burn()
 //______________________________________________________________________
 //
 void
-Simple_Burn::problemSetup(GridP&, const bool isRestart)
+Simple_Burn::problemSetup(GridP&, [[maybe_unused]] const bool isRestart)
 {
   ProblemSpecP SB_ps = d_params->findBlock("Simple_Burn");
   SB_ps->require("ThresholdTemp", d_thresholdTemp);

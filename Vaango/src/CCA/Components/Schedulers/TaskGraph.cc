@@ -1621,7 +1621,7 @@ TaskGraph::createDetailedDependencies(DetailedTask* dtask,
 int
 TaskGraph::findVariableLocation(Task::Dependency* req,
                                 const Patch* patch,
-                                int matl,
+                                [[maybe_unused]] int matl,
                                 int iteration)
 {
   // This needs to be improved, especially for re-distribution on restart from

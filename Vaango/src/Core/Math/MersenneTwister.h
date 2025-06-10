@@ -269,7 +269,7 @@ inline void MTRand::seed( uint32 *const bigSeed, const uint32 seedLength )
         initialize(19650218UL);
         int i = 1;
         uint32 j = 0;
-        int k = ( N > seedLength ? N : seedLength );
+        int k = ( +N > seedLength ? +N : seedLength );
         for( ; k; --k )
         {
                 state[i] =
@@ -277,7 +277,7 @@ inline void MTRand::seed( uint32 *const bigSeed, const uint32 seedLength )
                 state[i] += ( bigSeed[j] & 0xffffffffUL ) + j;
                 state[i] &= 0xffffffffUL;
                 ++i;  ++j;
-                if( i >= N ) { state[0] = state[N-1];  i = 1; }
+                if( i >= +N ) { state[0] = state[+N - 1];  i = 1; }
                 if( j >= seedLength ) j = 0;
         }
         for( k = N - 1; k; --k )

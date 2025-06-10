@@ -85,7 +85,7 @@ WARNING
                                     const LevelP& level);
 
     virtual void scheduleRestartInitialize(SchedulerP&,
-                                           const LevelP& level){};
+                                           [[maybe_unused]] const LevelP& level){};
       
     virtual void scheduleComputeStableTimestep(SchedulerP&,
                                                const LevelP& level);

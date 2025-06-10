@@ -3475,7 +3475,7 @@ OnDemandDataWarehouse::getValidNeighbors(
   Ghost::GhostType gtype,
   int numGhostCells,
   std::vector<ValidNeighbors>& validNeighbors,
-  bool ignoreMissingNeighbors /* = false */
+  [[maybe_unused]] bool ignoreMissingNeighbors /* = false */
 )
 {
 
@@ -3733,7 +3733,7 @@ OnDemandDataWarehouse::transferFrom(DataWarehouse* from,
                                     const VarLabel* label,
                                     const PatchSubset* patches,
                                     const MaterialSubset* matls,
-                                    void* dtask,
+                                    [[maybe_unused]] void* dtask,
                                     bool replace,
                                     const PatchSubset* newPatches)
 {
@@ -3957,12 +3957,11 @@ OnDemandDataWarehouse::logMemoryUse(std::ostream& out,
 }
 
 inline void
-OnDemandDataWarehouse::checkGetAccess(const VarLabel* label,
-                                      int matlIndex,
-                                      const Patch* patch,
-                                      Ghost::GhostType gtype /* = Ghost::None */
-                                      ,
-                                      int numGhostCells /* = 0 */
+OnDemandDataWarehouse::checkGetAccess([[maybe_unused]] const VarLabel* label,
+                                      [[maybe_unused]] int matlIndex,
+                                      [[maybe_unused]] const Patch* patch,
+                                      [[maybe_unused]] Ghost::GhostType gtype, /* = Ghost::None */
+                                      [[maybe_unused]] int numGhostCells /* = 0 */
 )
 {
 #if 0
@@ -4083,10 +4082,10 @@ OnDemandDataWarehouse::checkGetAccess(const VarLabel* label,
 }
 
 inline void
-OnDemandDataWarehouse::checkPutAccess(const VarLabel* label,
-                                      int matlIndex,
-                                      const Patch* patch,
-                                      bool replace)
+OnDemandDataWarehouse::checkPutAccess([[maybe_unused]] const VarLabel* label,
+                                      [[maybe_unused]] int matlIndex,
+                                      [[maybe_unused]] const Patch* patch,
+                                      [[maybe_unused]] bool replace)
 {
 #if 0
 

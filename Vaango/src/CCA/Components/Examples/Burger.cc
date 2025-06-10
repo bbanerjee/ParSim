@@ -59,9 +59,9 @@ Burger::~Burger()
 //
 void
 Burger::problemSetup(const ProblemSpecP& params,
-                     const ProblemSpecP& restart_prob_spec,
-                     GridP& grid,
-                     const std::string& input_ups_dir)
+                     [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
+                     [[maybe_unused]] GridP& grid,
+                     [[maybe_unused]] const std::string& input_ups_dir)
 {
   ProblemSpecP burger = params->findBlock("Burger");
   burger->require("delt", d_delT);
@@ -120,7 +120,7 @@ Burger::computeStableTimestep(const ProcessorGroup*,
 void
 Burger::initialize(const ProcessorGroup*,
                    const PatchSubset* patches,
-                   const MaterialSubset* matls,
+                   [[maybe_unused]] const MaterialSubset* matls,
                    DataWarehouse*,
                    DataWarehouse* new_dw)
 {
@@ -150,7 +150,7 @@ Burger::initialize(const ProcessorGroup*,
 void
 Burger::timeAdvance(const ProcessorGroup*,
                     const PatchSubset* patches,
-                    const MaterialSubset* matls,
+                    [[maybe_unused]] const MaterialSubset* matls,
                     DataWarehouse* old_dw,
                     DataWarehouse* new_dw)
 {

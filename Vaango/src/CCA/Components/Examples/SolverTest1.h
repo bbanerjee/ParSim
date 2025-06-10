@@ -91,7 +91,7 @@ public:
   scheduleInitialize(const LevelP& level, SchedulerP& sched);
 
   virtual void
-  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
+  scheduleRestartInitialize([[maybe_unused]] const LevelP& level, [[maybe_unused]] SchedulerP& sched)
   {
   }
 

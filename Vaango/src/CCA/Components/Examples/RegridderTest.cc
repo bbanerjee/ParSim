@@ -74,9 +74,9 @@ RegridderTest::~RegridderTest(void) {}
 // Interface inherited from Simulation Interface
 void
 RegridderTest::problemSetup(const ProblemSpecP& params,
-                            const ProblemSpecP& restart_prob_spec,
-                            GridP& grid,
-                            const std::string& input_ups_dir)
+                            [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
+                            [[maybe_unused]] GridP& grid,
+                            [[maybe_unused]] const std::string& input_ups_dir)
 {
   d_material = std::make_shared<EmptyMaterial>();
   d_materialManager->registerEmptyMaterial(d_material);

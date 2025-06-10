@@ -415,9 +415,9 @@ get_rho_micro(std::vector<CCVariable<double>>& rho_micro,
               const Patch* patch,
               const string& which_Var,
               MaterialManagerP& materialManager,
-              DataWarehouse* new_dw,
+              [[maybe_unused]] DataWarehouse* new_dw,
               CustomBCDriver::customBC_globalVars* globalVars,
-              const bool isNotInitialTimestep)
+              [[maybe_unused]] const bool isNotInitialTimestep)
 {
   BC_dbg << "         get_rho_micro: (" << which_Var << ")" << endl;
 
@@ -1132,7 +1132,7 @@ setSpecificVolBC(CCVariable<double>& sp_vol_CC,
                  constCCVariable<double> rho_CC,
                  constCCVariable<double> vol_frac,
                  const Patch* patch,
-                 MaterialManagerP& materialManager,
+                 [[maybe_unused]] MaterialManagerP& materialManager,
                  const int mat_id)
 {
   if (patch->hasBoundaryFaces() == false) {

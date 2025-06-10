@@ -76,7 +76,7 @@ TestModel::~TestModel()
 
 //______________________________________________________________________
 void
-TestModel::problemSetup(GridP&, const bool isRestart)
+TestModel::problemSetup(GridP&, [[maybe_unused]] const bool isRestart)
 {
   ProblemSpecP test_ps = d_params->findBlock("Test");
   if (!test_ps) {
@@ -133,7 +133,7 @@ TestModel::outputProblemSpec(ProblemSpecP& ps)
 
 //______________________________________________________________________
 void
-TestModel::scheduleInitialize(SchedulerP&, const LevelP& level)
+TestModel::scheduleInitialize(SchedulerP&, [[maybe_unused]] const LevelP& level)
 {
   // None necessary...
 }

@@ -92,7 +92,7 @@ ParticlePressureBC::forcePerParticle(double time) const
 // particle location
 Uintah::Vector
 ParticlePressureBC::getForceVector(const Uintah::Point& px, double forcePerParticle,
-                           const double time) const
+                           [[maybe_unused]] const double time) const
 {
   Uintah::Vector force(0.0,0.0,0.0);
   if (d_surfaceType == "box") {

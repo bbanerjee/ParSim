@@ -47,7 +47,7 @@ DebugStream dbgExch("EXCHANGEMODELS", false);
 
 //______________________________________________________________________
 //
-ExchangeModel::ExchangeModel(const ProblemSpecP     & prob_spec,
+ExchangeModel::ExchangeModel([[maybe_unused]] const ProblemSpecP     & prob_spec,
                              const MaterialManagerP & materialManager,
                              const bool with_mpm )
 {
@@ -115,7 +115,7 @@ void ExchangeModel::schedComputeSurfaceNormal( SchedulerP           & sched,
 //
 void ExchangeModel::ComputeSurfaceNormal( const ProcessorGroup*,
                                           const PatchSubset    * patches,           
-                                          const MaterialSubset * mpm_matls,      
+                                          [[maybe_unused]] const MaterialSubset * mpm_matls,      
                                           DataWarehouse        * old_dw,                
                                           DataWarehouse        * new_dw )               
 {

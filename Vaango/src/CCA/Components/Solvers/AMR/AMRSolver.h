@@ -88,13 +88,13 @@ namespace Uintah {
     
     // AMRSolver does not require initialization... but we need an empty
     // routine to satisfy inheritance.
-    virtual void scheduleInitialize( const LevelP      & level,
-                                           SchedulerP  & sched,
-                                     const MaterialSet * matls ) {}
+    virtual void scheduleInitialize( [[maybe_unused]] const LevelP      & level,
+                                     [[maybe_unused]]       SchedulerP  & sched,
+                                     [[maybe_unused]] const MaterialSet * matls ) {}
 
-    virtual void scheduleRestartInitialize( const LevelP      & level,
-                                                  SchedulerP  & sched,
-                                            const MaterialSet * matls){}
+    virtual void scheduleRestartInitialize( [[maybe_unused]] const LevelP      & level,
+                                            [[maybe_unused]]       SchedulerP  & sched,
+                                            [[maybe_unused]] const MaterialSet * matls){}
   private:
   
   HypreSolverParams * m_params = nullptr;

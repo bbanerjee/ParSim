@@ -248,7 +248,7 @@ flameSheet_rxn::scheduleInitialize(SchedulerP& sched, const LevelP& level)
 void
 flameSheet_rxn::initialize(const ProcessorGroup*,
                            const PatchSubset* patches,
-                           const MaterialSubset* matls,
+                           [[maybe_unused]] const MaterialSubset* matls,
                            DataWarehouse*,
                            DataWarehouse* new_dw)
 {
@@ -324,7 +324,7 @@ flameSheet_rxn::scheduleComputeModelSources(SchedulerP& sched,
 void
 flameSheet_rxn::computeModelSources(const ProcessorGroup*,
                                     const PatchSubset* patches,
-                                    const MaterialSubset* matls,
+                                    [[maybe_unused]] const MaterialSubset* matls,
                                     DataWarehouse* old_dw,
                                     DataWarehouse* new_dw)
 {

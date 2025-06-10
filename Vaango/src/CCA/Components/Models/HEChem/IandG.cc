@@ -94,7 +94,7 @@ IandG::~IandG()
 }
 
 void
-IandG::problemSetup(GridP&, const bool isRestart)
+IandG::problemSetup(GridP&, [[maybe_unused]] const bool isRestart)
 {
   ProblemSpecP IG_ps = d_params->findBlock("IandG");
 

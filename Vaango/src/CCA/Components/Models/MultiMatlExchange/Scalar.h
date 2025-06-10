@@ -59,7 +59,7 @@ public:
   outputProblemSpec(ProblemSpecP& prob_spec);
 
   virtual void
-  sched_initialize(SchedulerP&, const LevelP& level){};
+  sched_initialize(SchedulerP&, [[maybe_unused]] const LevelP& level){};
 
   virtual void
   sched_PreExchangeTasks(SchedulerP& sched,
@@ -69,10 +69,10 @@ public:
                          const MaterialSet* allMatls);
 
   virtual void
-  addExchangeModelRequires(Task* t,
-                           const MaterialSubset* zeroMatls,
-                           const MaterialSubset* iceMatls,
-                           const MaterialSubset* mpmMatls){};
+  addExchangeModelRequires([[maybe_unused]] Task* t,
+                           [[maybe_unused]] const MaterialSubset* zeroMatls,
+                           [[maybe_unused]] const MaterialSubset* iceMatls,
+                           [[maybe_unused]] const MaterialSubset* mpmMatls){};
 
   virtual void
   sched_AddExch_VelFC(SchedulerP& sched,

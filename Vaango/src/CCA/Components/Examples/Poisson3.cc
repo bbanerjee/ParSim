@@ -67,9 +67,9 @@ Poisson3::~Poisson3()
 
 void
 Poisson3::problemSetup(const ProblemSpecP& params,
-                       const ProblemSpecP& restart_prob_spec,
-                       GridP& grid,
-                       const std::string& input_ups_dir)
+                       [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
+                       [[maybe_unused]] GridP& grid,
+                       [[maybe_unused]] const std::string& input_ups_dir)
 {
   ProblemSpecP poisson = params->findBlock("Poisson");
   poisson->require("delt", d_delT);
@@ -329,7 +329,7 @@ Poisson3::refine(const ProcessorGroup*,
 void
 Poisson3::scheduleRefineInterface(const LevelP& fineLevel,
                                   SchedulerP& sched,
-                                  bool needCoarseOld,
+                                  [[maybe_unused]] bool needCoarseOld,
                                   bool needCoarseNew)
 {
   dbg << "Poisson3::scheduleRefineInterface\n";

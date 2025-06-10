@@ -79,7 +79,7 @@ WARNING
 
     virtual ~BinaryProperties();
 
-    virtual void outputProblemSpec(ProblemSpecP& ps){};
+    virtual void outputProblemSpec([[maybe_unused]] ProblemSpecP& ps){};
 
     virtual void problemSetup(GridP& grid,
                                const bool isRestart);
@@ -88,7 +88,7 @@ WARNING
                                     const LevelP& level);
 
     virtual void scheduleRestartInitialize(SchedulerP&,
-                                           const LevelP& level){};
+                                           [[maybe_unused]] const LevelP& level){};
 
     virtual void scheduleComputeStableTimestep(SchedulerP&,
                                                const LevelP& level);

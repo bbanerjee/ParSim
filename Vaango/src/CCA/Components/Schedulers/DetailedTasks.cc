@@ -601,7 +601,7 @@ DetailedTasks::createScrubCounts()
 
 DetailedDep*
 DetailedTasks::findMatchingDetailedDep(DependencyBatch* batch,
-                                       DetailedTask* toTask,
+                                       [[maybe_unused]] DetailedTask* toTask,
                                        Task::Dependency* req,
                                        const Patch* fromPatch,
                                        int matl,
@@ -729,7 +729,7 @@ DetailedTasks::possiblyCreateDependency(DetailedTask* from,
                                         const Patch* fromPatch,
                                         DetailedTask* to,
                                         Task::Dependency* req,
-                                        const Patch* toPatch,
+                                        [[maybe_unused]] const Patch* toPatch,
                                         int matl,
                                         const IntVector& low,
                                         const IntVector& high,

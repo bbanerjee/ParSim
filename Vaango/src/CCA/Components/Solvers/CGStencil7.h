@@ -497,7 +497,7 @@ public:
 
   //______________________________________________________________________
   void
-  solve(const ProcessorGroup* pg,
+  solve([[maybe_unused]] const ProcessorGroup* pg,
         const PatchSubset* patches,
         const MaterialSubset* matls,
         DataWarehouse* old_dw,

@@ -44,7 +44,7 @@ PeridynamicsFlags::~PeridynamicsFlags()
 }
 
 void
-PeridynamicsFlags::readPeridynamicsFlags(ProblemSpecP& ps, Uintah::Output* dataArchive)
+PeridynamicsFlags::readPeridynamicsFlags(ProblemSpecP& ps, [[maybe_unused]] Uintah::Output* dataArchive)
 {
   ProblemSpecP root = ps->getRootNode();
 

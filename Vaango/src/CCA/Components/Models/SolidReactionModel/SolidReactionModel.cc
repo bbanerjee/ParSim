@@ -116,8 +116,8 @@ void SolidReactionModel::outputProblemSpec(ProblemSpecP& ps)
     rateModel->outputProblemSpec(model_ps); 
 }
 
-void SolidReactionModel::problemSetup(GridP& grid,
-                                       const bool isRestart)
+void SolidReactionModel::problemSetup([[maybe_unused]] GridP& grid,
+                                       [[maybe_unused]] const bool isRestart)
 {  
     // Get base includes
     d_params->require("fromMaterial",fromMaterial);
@@ -192,14 +192,14 @@ void SolidReactionModel::problemSetup(GridP& grid,
 }
 
 void SolidReactionModel::scheduleInitialize(SchedulerP&,
-                                            const LevelP& level)
+                                            [[maybe_unused]] const LevelP& level)
 {
    // None necessary... 
 }
 
 
-void SolidReactionModel::scheduleComputeStableTimestep(SchedulerP& sched,
-                                                       const LevelP& level)
+void SolidReactionModel::scheduleComputeStableTimestep([[maybe_unused]] SchedulerP& sched,
+                                                       [[maybe_unused]] const LevelP& level)
 {
    // None necessary... 
 }
@@ -257,7 +257,7 @@ void SolidReactionModel::scheduleComputeModelSources(SchedulerP& sched,
 
 void SolidReactionModel::computeModelSources(const ProcessorGroup*,
                                              const PatchSubset* patches,
-                                             const MaterialSubset* matls,
+                                             [[maybe_unused]] const MaterialSubset* matls,
                                              DataWarehouse* old_dw,
                                              DataWarehouse* new_dw)
 {

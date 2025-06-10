@@ -81,7 +81,7 @@ FamilyComputer::~FamilyComputer() {}
 void
 FamilyComputer::addInitialComputesAndRequires(Task* task,
                                               const PeridynamicsMaterial* matl,
-                                              const PatchSet* patches) const
+                                              [[maybe_unused]] const PatchSet* patches) const
 {
   cout_doing
     << "\t Scheduling task variables in family computer: Peridynamics: "

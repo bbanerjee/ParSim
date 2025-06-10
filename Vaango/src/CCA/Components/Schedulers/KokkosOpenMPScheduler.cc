@@ -358,7 +358,7 @@ KokkosOpenMPScheduler::markTaskConsumed( volatile int          * numTasksDone
 {
 
   // Update the count of tasks consumed by the scheduler.
-  (*numTasksDone)++;
+  (*numTasksDone) += 1;
 
   // Update the count of this phase consumed.
   m_phase_tasks_done[dtask->getTask()->m_phase]++;

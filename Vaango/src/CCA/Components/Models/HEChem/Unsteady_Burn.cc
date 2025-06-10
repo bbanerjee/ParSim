@@ -124,7 +124,7 @@ Unsteady_Burn::~Unsteady_Burn()
 //______________________________________________________________________
 //
 void
-Unsteady_Burn::problemSetup(GridP&, const bool isRestart)
+Unsteady_Burn::problemSetup(GridP&, [[maybe_unused]] const bool isRestart)
 {
 
   ProblemSpecP USB_ps = d_params->findBlock("Unsteady_Burn");
@@ -734,7 +734,7 @@ Unsteady_Burn::computeBurnedMass(double To,
                                  double solidMass,
                                  double& beta,
                                  double& Ts,
-                                 Vector& dx)
+                                 [[maybe_unused]] Vector& dx)
 {
 
   IterationVariable iterVar;

@@ -61,8 +61,8 @@ HeatEquation::~HeatEquation()
 
 void
 HeatEquation::problemSetup(const ProblemSpecP& params,
-                           const ProblemSpecP& restart_prob_spec,
-                           GridP& grid)
+                           [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
+                           [[maybe_unused]] GridP& grid)
 {
   ProblemSpecP heateqn = params->findBlock("HeatEquation");
   heateqn->require("delt", d_delT);
@@ -140,7 +140,7 @@ HeatEquation::initialize(const ProcessorGroup*,
 }
 
 void
-HeatEquation::timeAdvance(const ProcessorGroup* pg,
+HeatEquation::timeAdvance([[maybe_unused]] const ProcessorGroup* pg,
                           const PatchSubset* patches,
                           const MaterialSubset* matls,
                           DataWarehouse* old_dw,

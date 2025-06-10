@@ -1058,8 +1058,8 @@ TracerParticles::initializeScalarVars(ParticleSubset* pset,
 //______________________________________________________________________
 void
 TracerParticles::initializeCloneVars(ParticleSubset* pset,
-                                     const Patch* patch,
-                                     const int indx,
+                                     [[maybe_unused]] const Patch* patch,
+                                     [[maybe_unused]] const int indx,
                                      DataWarehouse* new_dw)
 {
   //__________________________________
@@ -1085,8 +1085,8 @@ TracerParticles::initializeCloneVars(ParticleSubset* pset,
 void
 TracerParticles::initializeTask(const ProcessorGroup*,
                                 const PatchSubset* patches,
-                                const MaterialSubset* matl_mss,
-                                DataWarehouse* old_dw,
+                                [[maybe_unused]] const MaterialSubset* matl_mss,
+                                [[maybe_unused]] DataWarehouse* old_dw,
                                 DataWarehouse* new_dw)
 {
 
@@ -1172,8 +1172,8 @@ TracerParticles::initializeTask(const ProcessorGroup*,
 void
 TracerParticles::restartInitializeTask(const ProcessorGroup*,
                                        const PatchSubset* patches,
-                                       const MaterialSubset* matl_mss,
-                                       DataWarehouse* old_dw,
+                                       [[maybe_unused]] const MaterialSubset* matl_mss,
+                                       [[maybe_unused]] DataWarehouse* old_dw,
                                        DataWarehouse* new_dw)
 {
 
@@ -1333,7 +1333,7 @@ TracerParticles::sched_moveParticles(SchedulerP& sched, const LevelP& level)
 void
 TracerParticles::moveParticles(const ProcessorGroup*,
                                const PatchSubset* patches,
-                               const MaterialSubset* matls,
+                               [[maybe_unused]] const MaterialSubset* matls,
                                DataWarehouse* old_dw,
                                DataWarehouse* new_dw)
 {

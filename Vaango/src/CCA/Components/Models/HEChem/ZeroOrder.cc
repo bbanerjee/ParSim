@@ -90,7 +90,7 @@ ZeroOrder::~ZeroOrder()
 //______________________________________________________________________
 //
 void ZeroOrder::problemSetup(GridP&,
-                              const bool isRestart)
+                              [[maybe_unused]] const bool isRestart)
 {
   ProblemSpecP ZO_ps = d_params->findBlock("ZeroOrder");
   ZO_ps->getWithDefault("ThresholdVolFrac",d_threshold_volFrac, 0.01);

@@ -69,16 +69,16 @@ public:
   // CGSolver does not require initialization... but we need an empty
   // routine to satisfy inheritance.
   virtual void
-  scheduleInitialize(const LevelP& level,
-                     SchedulerP& sched,
-                     const MaterialSet* matls)
+  scheduleInitialize([[maybe_unused]] const LevelP& level,
+                     [[maybe_unused]] SchedulerP& sched,
+                     [[maybe_unused]] const MaterialSet* matls)
   {
   }
 
   virtual void
-  scheduleRestartInitialize(const LevelP& level,
-                            SchedulerP& sched,
-                            const MaterialSet* matls)
+  scheduleRestartInitialize([[maybe_unused]] const LevelP& level,
+                            [[maybe_unused]] SchedulerP& sched,
+                            [[maybe_unused]] const MaterialSet* matls)
   {
   }
 

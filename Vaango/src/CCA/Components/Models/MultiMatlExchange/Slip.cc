@@ -137,9 +137,9 @@ SlipExch::sched_initialize(SchedulerP&, const LevelP& level)
 void
 SlipExch::sched_PreExchangeTasks(SchedulerP& sched,
                                  const PatchSet* patches,
-                                 const MaterialSubset* ice_matls,
+                                 [[maybe_unused]] const MaterialSubset* ice_matls,
                                  const MaterialSubset* mpm_matls,
-                                 const MaterialSet* allMatls)
+                                 [[maybe_unused]] const MaterialSet* allMatls)
 {
   //__________________________________
   // compute surface normal and isSurfaceCell
@@ -391,9 +391,9 @@ SlipExch::vel_FC_exchange(CellIterator iter,
 //______________________________________________________________________
 //
 void
-SlipExch::addExch_VelFC(const ProcessorGroup* pg,
+SlipExch::addExch_VelFC([[maybe_unused]] const ProcessorGroup* pg,
                         const PatchSubset* patches,
-                        const MaterialSubset* matls,
+                        [[maybe_unused]] const MaterialSubset* matls,
                         DataWarehouse* old_dw,
                         DataWarehouse* new_dw,
                         CustomBCDriver::customBC_globalVars* BC_globalVars,
@@ -819,9 +819,9 @@ SlipExch::sched_AddExch_Vel_Temp_CC(
 //
 void
 SlipExch::addExch_Vel_Temp_CC(
-  const ProcessorGroup* pg,
+  [[maybe_unused]] const ProcessorGroup* pg,
   const PatchSubset* patches,
-  const MaterialSubset* matls,
+  [[maybe_unused]] const MaterialSubset* matls,
   DataWarehouse* old_dw,
   DataWarehouse* new_dw,
   CustomBCDriver::customBC_globalVars* BC_globalVars)

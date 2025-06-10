@@ -26,11 +26,11 @@
 
 using namespace Vaango;
 
-ContactModelBase::ContactModelBase(const Uintah::ProcessorGroup* myworld,
+ContactModelBase::ContactModelBase([[maybe_unused]] const Uintah::ProcessorGroup* myworld,
                                    const Uintah::MaterialManagerP& mat_manager,
                                    PeridynamicsLabel* labels,
                                    PeridynamicsFlags* flags,
-                                   Uintah::ProblemSpecP ps)
+                                   [[maybe_unused]] Uintah::ProblemSpecP ps)
   : d_mat_manager(mat_manager)
   , d_labels(labels)
   , d_flags(flags)

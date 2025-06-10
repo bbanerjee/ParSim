@@ -197,7 +197,7 @@ MassMomEng_src::outputProblemSpec(ProblemSpecP& ps)
 
 //______________________________________________________________________
 void
-MassMomEng_src::scheduleInitialize(SchedulerP&, const LevelP& level)
+MassMomEng_src::scheduleInitialize(SchedulerP&, [[maybe_unused]] const LevelP& level)
 {
   // None necessary...
 }
@@ -246,7 +246,7 @@ MassMomEng_src::scheduleComputeModelSources(SchedulerP& sched,
 void
 MassMomEng_src::computeModelSources(const ProcessorGroup*,
                                     const PatchSubset* patches,
-                                    const MaterialSubset* matls,
+                                    [[maybe_unused]] const MaterialSubset* matls,
                                     DataWarehouse* old_dw,
                                     DataWarehouse* new_dw)
 {

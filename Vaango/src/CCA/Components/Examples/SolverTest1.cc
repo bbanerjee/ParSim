@@ -64,9 +64,9 @@ SolverTest1::~SolverTest1()
 //
 void
 SolverTest1::problemSetup(const ProblemSpecP& prob_spec,
-                          const ProblemSpecP& restart_prob_spec,
-                          GridP& grid,
-                          const std::string& input_ups_dir)
+                          [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
+                          [[maybe_unused]] GridP& grid,
+                          [[maybe_unused]] const std::string& input_ups_dir)
 {
   d_solver = dynamic_cast<SolverInterface*>(getPort("solver"));
   if (!d_solver) {
@@ -163,22 +163,22 @@ SolverTest1::computeStableTimestep(const ProcessorGroup*,
 //
 void
 SolverTest1::initialize(const ProcessorGroup*,
-                        const PatchSubset* patches,
-                        const MaterialSubset* matls,
+                        [[maybe_unused]] const PatchSubset* patches,
+                        [[maybe_unused]] const MaterialSubset* matls,
                         DataWarehouse*,
-                        DataWarehouse* new_dw)
+                        [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 //______________________________________________________________________
 //
 void
-SolverTest1::timeAdvance(const ProcessorGroup* pg,
+SolverTest1::timeAdvance([[maybe_unused]] const ProcessorGroup* pg,
                          const PatchSubset* patches,
                          const MaterialSubset* matls,
-                         DataWarehouse* old_dw,
+                         [[maybe_unused]] DataWarehouse* old_dw,
                          DataWarehouse* new_dw,
-                         LevelP level,
-                         Scheduler* sched)
+                         [[maybe_unused]] LevelP level,
+                         [[maybe_unused]] Scheduler* sched)
 {
   int center = 0;
   int n = 0, s = 0, e = 0, w = 0, t = 0, b = 0;

@@ -74,7 +74,7 @@ CostProfiler::finalizeContributions(const GridP currentGrid)
 //
 void
 CostProfiler::getWeights(const Grid* grid,
-                         std::vector<std::vector<int>> num_particles,
+                         [[maybe_unused]] std::vector<std::vector<int>> num_particles,
                          std::vector<std::vector<double>>& costs)
 {
   costs.resize(grid->numLevels());

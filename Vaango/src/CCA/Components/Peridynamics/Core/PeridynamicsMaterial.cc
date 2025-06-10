@@ -87,9 +87,9 @@ PeridynamicsMaterial::PeridynamicsMaterial(
 void
 PeridynamicsMaterial::standardInitialization(
   Uintah::ProblemSpecP& ps,
-  const Uintah::MaterialManagerP& mat_manager,
+  [[maybe_unused]] const Uintah::MaterialManagerP& mat_manager,
   PeridynamicsFlags* flags,
-  bool isRestart)
+  [[maybe_unused]] bool isRestart)
 {
   ps->require("density", d_density);
 

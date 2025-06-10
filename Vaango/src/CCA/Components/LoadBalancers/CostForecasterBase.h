@@ -60,27 +60,45 @@ namespace Uintah {
       
      ****************************************/
 
-  class CostForecasterBase {
-  public:
-    virtual ~CostForecasterBase() {};
-    virtual void setMinPatchSize(const std::vector<IntVector> &min_patch_size) {};
-    //add the contribution for region r on level l
-    virtual void addContribution(DetailedTask *task, double cost) {};
-    //finalize the contributions for this timestep
-    virtual void finalizeContributions(const GridP currentGrid) {};
-    //compute the weights for all patches in the grid.  Particles are provided in the num_particles vectors.
-    virtual void getWeights(const Grid* grid, std::vector<std::vector<int> > num_particles, std::vector<std::vector<double> >&costs) = 0;
-    //sets the decay rate for the exponential average
-    virtual void setTimestepWindow(int window) {};
-    //initializes the regions in the new level that are not in the old level
-    virtual void initializeWeights(const Grid* oldgrid, const Grid* newgrid) {};
-    //resets all counters to zero
-    virtual void reset() {};
-    //returns true if the forecaster is ready to be used
-    virtual bool hasData() {return true;}
-  private:
+class CostForecasterBase
+{
+public:
+  virtual ~CostForecasterBase() {};
+  virtual void
+  setMinPatchSize(
+    [[maybe_unused]] const std::vector<IntVector>& min_patch_size) {};
+  // add the contribution for region r on level l
+  virtual void
+  addContribution([[maybe_unused]] DetailedTask* task,
+                  [[maybe_unused]] double cost) {};
+  // finalize the contributions for this timestep
+  virtual void
+  finalizeContributions([[maybe_unused]] const GridP currentGrid) {};
+  // compute the weights for all patches in the grid.  Particles are provided in
+  // the num_particles vectors.
+  virtual void
+  getWeights(const Grid* grid,
+             std::vector<std::vector<int>> num_particles,
+             std::vector<std::vector<double>>& costs) = 0;
+  // sets the decay rate for the exponential average
+  virtual void
+  setTimestepWindow([[maybe_unused]] int window) {};
+  // initializes the regions in the new level that are not in the old level
+  virtual void
+  initializeWeights([[maybe_unused]] const Grid* oldgrid,
+                    [[maybe_unused]] const Grid* newgrid) {};
+  // resets all counters to zero
+  virtual void
+  reset() {};
+  // returns true if the forecaster is ready to be used
+  virtual bool
+  hasData()
+  {
+    return true;
+  }
 
-  };
+private:
+};
 } // End namespace Uintah
 
 

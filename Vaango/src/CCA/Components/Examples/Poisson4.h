@@ -77,7 +77,7 @@ public:
   scheduleTimeAdvance1(SchedulerP&, const PatchSet*, const MaterialSet*);
 
   virtual void
-  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
+  scheduleRestartInitialize([[maybe_unused]] const LevelP& level, [[maybe_unused]] SchedulerP& sched)
   {
   }
 

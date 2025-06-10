@@ -175,7 +175,7 @@ bool DDT1::isDoubleEqual(double a, double b){
 }
 
 void DDT1::problemSetup(GridP&,
-                         const bool isRestart)
+                        [[maybe_unused]] const bool isRestart)
 {
   ProblemSpecP time_ps = d_prob_spec->findBlock( "Time" );
 
@@ -761,7 +761,7 @@ void DDT1::computeNumPPC(const ProcessorGroup*,
 //
 void DDT1::computeBurnLogic(const ProcessorGroup*, 
                             const PatchSubset* patches,
-                            const MaterialSubset* matls,
+                            [[maybe_unused]] const MaterialSubset* matls,
                             DataWarehouse* old_dw,
                             DataWarehouse* new_dw)
 {

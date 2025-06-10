@@ -857,7 +857,7 @@ DynamicLoadBalancer::thresholdExceeded(
 }
 
 bool
-DynamicLoadBalancer::assignPatchesRandom(const GridP&, bool force)
+DynamicLoadBalancer::assignPatchesRandom(const GridP&, [[maybe_unused]] bool force)
 {
   // enabled in the UPS file with: <dynamicAlgorithm>random</dynamicAlgorithm>
 
@@ -910,7 +910,7 @@ DynamicLoadBalancer::assignPatchesRandom(const GridP&, bool force)
 }
 
 bool
-DynamicLoadBalancer::assignPatchesCyclic(const GridP&, bool force)
+DynamicLoadBalancer::assignPatchesCyclic(const GridP&, [[maybe_unused]] bool force)
 {
   // This assigns patches in a cyclic form - every time we re-load balance
   // we move each patch up one proc - this obviously isn't a very good

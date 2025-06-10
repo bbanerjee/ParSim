@@ -69,7 +69,7 @@ public:
   scheduleInitialize(const LevelP& level, SchedulerP& sched);
 
   virtual void
-  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched) override
+  scheduleRestartInitialize([[maybe_unused]] const LevelP& level, [[maybe_unused]] SchedulerP& sched) override
   {
   }
 
@@ -149,8 +149,8 @@ protected:
   virtual void
   addRefineDependencies(Task* /*task*/,
                         const VarLabel* /*label*/,
-                        bool needCoarseOld,
-                        bool needCoarseNew)
+                        [[maybe_unused]] bool needCoarseOld,
+                        [[maybe_unused]] bool needCoarseNew)
   {
   }
 

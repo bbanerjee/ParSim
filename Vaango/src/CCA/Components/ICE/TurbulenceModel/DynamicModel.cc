@@ -196,7 +196,7 @@ DynamicModel::applyFilter(const Patch* patch,
 void
 DynamicModel::computeSmagCoeff(DataWarehouse* new_dw,
                                const Patch* patch,
-                               const ICELabel* lb, // for debugging
+                               [[maybe_unused]] const ICELabel* lb, // for debugging
                                constCCVariable<Vector>& vel_CC,
                                constSFCXVariable<double>& uvel_FC,
                                constSFCYVariable<double>& vvel_FC,

@@ -264,7 +264,7 @@ void rank_sum_min_max_impl( int64_t const * in, int64_t * inout, int len )
   }
 }
 
-extern "C" void rank_sum_min_max( void * in, void * inout, int * len, MPI_Datatype * type )
+extern "C" void rank_sum_min_max( void * in, void * inout, int * len, [[maybe_unused]] MPI_Datatype * type )
 {
  rank_sum_min_max_impl( reinterpret_cast<int64_t*>(in), reinterpret_cast<int64_t*>(inout), *len );
 }

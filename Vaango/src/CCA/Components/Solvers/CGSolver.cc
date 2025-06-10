@@ -126,7 +126,7 @@ CGSolver::scheduleSolve(const LevelP& level,
                         Task::WhichDW which_b_dw,
                         const VarLabel* guess,
                         Task::WhichDW which_guess_dw,
-                        bool isFirstSolve)
+                        [[maybe_unused]] bool isFirstSolve)
 {
   Task* task;
   // The extra handle arg ensures that the stencil7 object will get freed

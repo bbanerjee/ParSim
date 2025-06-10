@@ -76,13 +76,13 @@ public:
   scheduleTimeAdvance(const LevelP& level, SchedulerP&);
 
   virtual void
-  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
+  scheduleRestartInitialize([[maybe_unused]] const LevelP& level, [[maybe_unused]] SchedulerP& sched)
   {
   }
 
   // New functions
   virtual void
-  scheduleRefine(const PatchSet*, SchedulerP& sched)
+  scheduleRefine(const PatchSet*, [[maybe_unused]] SchedulerP& sched)
   {
   }
 

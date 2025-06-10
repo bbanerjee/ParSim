@@ -103,7 +103,7 @@ logLawModel::~logLawModel()
 //
 void logLawModel::sched_Initialize(SchedulerP& sched,
                                    const LevelP& level,        
-                                   const MaterialSet* matls)   
+                                   [[maybe_unused]] const MaterialSet* matls)   
 {
   printSchedule(level,dbg,"logLawModel::schedInitialize");
   
@@ -156,7 +156,7 @@ void logLawModel::computeWallShearStresses( DataWarehouse* old_dw,
                                             const int indx,
                                             constCCVariable<double>& vol_frac_CC,  
                                             constCCVariable<Vector>& vel_CC,      
-                                            const CCVariable<double>& viscosity,    
+                                            [[maybe_unused]] const CCVariable<double>& viscosity,    
                                             constCCVariable<double>& /* rho_CC */,    
                                             SFCXVariable<Vector>& tau_X_FC,
                                             SFCYVariable<Vector>& tau_Y_FC,

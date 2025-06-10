@@ -1343,7 +1343,7 @@ SchedulerCommon::replaceDataWarehouse(int index,
 //
 const std::vector<const Patch*>*
 SchedulerCommon::getSuperPatchExtents(const VarLabel* label,
-                                      int matlIndex,
+                                      [[maybe_unused]] int matlIndex,
                                       const Patch* patch,
                                       Ghost::GhostType requestedGType,
                                       int requestedNumGCells,
@@ -2517,12 +2517,10 @@ SchedulerCommon::scheduleTaskMonitoring(const PatchSet* patches)
 // Record the global task monitoring attribute values into the data
 // warehouse.
 void
-SchedulerCommon::recordTaskMonitoring(const ProcessorGroup* /*   */
-                                      ,
+SchedulerCommon::recordTaskMonitoring([[maybe_unused]] const ProcessorGroup* pg,
                                       const PatchSubset* patches,
-                                      const MaterialSubset* /*matls*/
-                                      ,
-                                      DataWarehouse* old_dw,
+                                      [[maybe_unused]] const MaterialSubset* matls,
+                                      [[maybe_unused]] DataWarehouse* old_dw,
                                       DataWarehouse* new_dw)
 {
   int matlIndex = 0;

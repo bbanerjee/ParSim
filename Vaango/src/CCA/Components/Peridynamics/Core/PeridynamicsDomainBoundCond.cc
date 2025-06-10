@@ -65,7 +65,7 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
                                                   int matlIndex,
                                                   const std::string& bc_type, 
                                                   NCVariable<Vector>& variable,
-                                                  std::string interp_type)
+                                                  [[maybe_unused]] std::string interp_type)
 {
   for (auto face = Patch::startFace; face <= Patch::endFace; 
             face = Patch::nextFace(face)) {
@@ -144,7 +144,7 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
                                                   int matlIndex,
                                                   const std::string& bc_type, 
                                                   NCVariable<double>& variable,
-                                                  std::string interp_type)
+                                                  [[maybe_unused]] std::string interp_type)
 {
   // Loop through faces of the domain box
   for (auto face = Patch::startFace; face <= Patch::endFace; face = Patch::nextFace(face)) {

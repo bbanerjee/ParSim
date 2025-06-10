@@ -74,20 +74,20 @@ NullContact::outputProblemSpec(ProblemSpecP& ps)
 }
 
 void
-NullContact::exchangeMomentumInterpolated(const ProcessorGroup*,
-                                          const PatchSubset* patches,
-                                          const MaterialSubset* matls,
-                                          DataWarehouse* /*old_dw*/,
-                                          DataWarehouse* new_dw)
+NullContact::exchangeMomentumInterpolated([[maybe_unused]] const ProcessorGroup*,
+                                          [[maybe_unused]] const PatchSubset* patches,
+                                          [[maybe_unused]] const MaterialSubset* matls,
+                                          [[maybe_unused]] DataWarehouse* old_dw,
+                                          [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 
 void
-NullContact::exchangeMomentumIntegrated(const ProcessorGroup*,
-                                        const PatchSubset* patches,
-                                        const MaterialSubset* matls,
-                                        DataWarehouse* /*old_dw*/,
-                                        DataWarehouse* new_dw)
+NullContact::exchangeMomentumIntegrated([[maybe_unused]] const ProcessorGroup*,
+                                        [[maybe_unused]] const PatchSubset* patches,
+                                        [[maybe_unused]] const MaterialSubset* matls,
+                                        [[maybe_unused]] DataWarehouse* old_dw,
+                                        [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 

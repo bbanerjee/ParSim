@@ -113,7 +113,7 @@ Mixing::outputProblemSpec(ProblemSpecP& ps)
 }
 
 void
-Mixing::problemSetup(GridP&, const bool isRestart)
+Mixing::problemSetup(GridP&, [[maybe_unused]] const bool isRestart)
 {
   matl = d_materialManager->parseAndLookupMaterial(d_params, "material");
 
