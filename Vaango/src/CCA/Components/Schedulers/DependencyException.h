@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -34,8 +35,8 @@
  *
  */
 
-#ifndef UINTAH_COMPONENTS_SCHEDULERS_DEPENDENCY_EXCEPTION_H
-#define UINTAH_COMPONENTS_SCHEDULERS_DEPENDENCY_EXCEPTION_H
+#ifndef __COMPONENTS_SCHEDULERS_DEPENDENCY_EXCEPTION_H__
+#define __COMPONENTS_SCHEDULERS_DEPENDENCY_EXCEPTION_H__
 
 #include <Core/Exceptions/Exception.h>
 #include <Core/Grid/Patch.h>
@@ -46,44 +47,42 @@
 
 namespace Uintah {
 
+class DependencyException : public Exception
+{
 
-  class DependencyException : public Exception {
-
-  public:
-    DependencyException(const Task* task,
-                        const VarLabel* label,
-                              int matlIndex,
-                        const Patch* patch,
-                              std::string has,
-                              std::string needs,
-                        const char* file,
-                              int line);
-
-    DependencyException(const DependencyException& copy);
-
-    virtual ~DependencyException() {}
-
-    static std::string
-    makeMessage(const Task* task,
-                const VarLabel* label,
+public:
+  DependencyException(const Task* task,
+                      const VarLabel* label,
                       int matlIndex,
-                const Patch* patch,
+                      const Patch* patch,
                       std::string has,
-                      std::string needs);
-     
-    virtual const char* message() const;
-    virtual const char* type() const;
+                      std::string needs,
+                      const char* file,
+                      int line);
 
-  protected:
+  DependencyException(const DependencyException& copy);
 
-  private:
-    DependencyException& operator=(const DependencyException& copy);
-    const Task*     task_;
-    const VarLabel* label_;
-    int             matlIndex_;
-    const Patch*    patch_;
-    std::string     d_msg;
-  };
+  DependencyException& operator=(const DependencyException& copy) = delete;
+
+  virtual ~DependencyException() {}
+
+  static std::string makeMessage(const Task* task,
+                                 const VarLabel* label,
+                                 int matlIndex,
+                                 const Patch* patch,
+                                 std::string has,
+                                 std::string needs);
+
+  virtual const char* message() const;
+  virtual const char* type() const;
+
+private:
+  const Task* d_task;
+  const VarLabel* d_label;
+  int d_mat_index;
+  const Patch* d_patch;
+  std::string d_msg;
+};
 
 } // End namespace Uintah
 
