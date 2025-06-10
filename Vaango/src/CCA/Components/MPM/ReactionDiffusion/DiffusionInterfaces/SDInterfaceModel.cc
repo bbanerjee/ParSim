@@ -53,18 +53,18 @@ SDInterfaceModel::~SDInterfaceModel()
 }
 
 void
-SDInterfaceModel::addComputesAndRequiresInterpolated(SchedulerP& sched,
-                                                     const PatchSet* patches,
-                                                     const MaterialSet* matls)
+SDInterfaceModel::addComputesAndRequiresInterpolated([[maybe_unused]] SchedulerP& sched,
+                                                     [[maybe_unused]] const PatchSet* patches,
+                                                     [[maybe_unused]] const MaterialSet* matls)
 {
 }
 
 void
-SDInterfaceModel::sdInterfaceInterpolated(const ProcessorGroup*,
-                                          const PatchSubset* patches,
-                                          const MaterialSubset* matls,
-                                          DataWarehouse* old_dw,
-                                          DataWarehouse* new_dw)
+SDInterfaceModel::sdInterfaceInterpolated([[maybe_unused]] const ProcessorGroup*,
+                                          [[maybe_unused]] const PatchSubset* patches,
+                                          [[maybe_unused]] const MaterialSubset* matls,
+                                          [[maybe_unused]] DataWarehouse* old_dw,
+                                          [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 
@@ -102,7 +102,7 @@ void
 SDInterfaceModel::sdInterfaceDivergence(const ProcessorGroup*,
                                         const PatchSubset* patches,
                                         const MaterialSubset* matls,
-                                        DataWarehouse* old_dw,
+                                        [[maybe_unused]] DataWarehouse* old_dw,
                                         DataWarehouse* new_dw)
 {
   // Set the interfacial flux rate to zero for the (default) null model.

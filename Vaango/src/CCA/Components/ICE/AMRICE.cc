@@ -73,7 +73,7 @@ void
 AMRICE::problemSetup(const ProblemSpecP& params,
                      const ProblemSpecP& restart_prob_spec,
                      GridP& grid,
-                     const std::string& input_ups_dir)
+                     [[maybe_unused]] const std::string& input_ups_dir)
 {
   cout_doing << d_myworld->myRank() << " Doing problemSetup  \t\t\t AMRICE"
              << '\n';
@@ -494,7 +494,7 @@ void
 AMRICE::refineCoarseFineInterface(const ProcessorGroup*,
                                   const PatchSubset* patches,
                                   const MaterialSubset* matls,
-                                  DataWarehouse* fine_old_dw,
+                                  [[maybe_unused]] DataWarehouse* fine_old_dw,
                                   DataWarehouse* fine_new_dw,
                                   const VarLabel* variable)
 {

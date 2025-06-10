@@ -106,8 +106,8 @@ void PartialEllipticCrack::outputInitialCrackPlane(int i)
 
 }
 
-void PartialEllipticCrack::discretize(int& nstart0,vector<Point>& cx, 
-                           std::vector<IntVector>& ce,vector<int>& SegNodes)
+void PartialEllipticCrack::discretize([[maybe_unused]] int& nstart0,[[maybe_unused]] vector<Point>& cx, 
+                           [[maybe_unused]] std::vector<IntVector>& ce,[[maybe_unused]] vector<int>& SegNodes)
 {
 }
 

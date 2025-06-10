@@ -56,7 +56,7 @@ ConstantRate::~ConstantRate() {}
 void
 ConstantRate::addInitialComputesAndRequires(Task* task,
                                             const MPMMaterial* matl,
-                                            const PatchSet* patch) const
+                                            [[maybe_unused]] const PatchSet* patch) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(d_lb->diffusion->pFlux, matlset);
@@ -123,7 +123,7 @@ ConstantRate::initializeSDMData(const Patch* patch,
 void
 ConstantRate::scheduleComputeFlux(Task* task,
                                   const MPMMaterial* matl,
-                                  const PatchSet* patch) const
+                                  [[maybe_unused]] const PatchSet* patch) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -134,23 +134,23 @@ ConstantRate::scheduleComputeFlux(Task* task,
 
 void
 ConstantRate::addSplitParticlesComputesAndRequires(
-  Task* task,
-  const MPMMaterial* matl,
-  const PatchSet* patches) const
+  [[maybe_unused]] Task* task,
+  [[maybe_unused]] const MPMMaterial* matl,
+  [[maybe_unused]] const PatchSet* patches) const
 {
   // Do nothing for now
 }
 
 void
-ConstantRate::splitSDMSpecificParticleData(const Patch* patch,
-                                           const int dwi,
-                                           const int nDims,
-                                           ParticleVariable<int>& prefOld,
-                                           ParticleVariable<int>& pref,
-                                           const unsigned int oldNumParts,
-                                           const int numNewPartNeeded,
-                                           DataWarehouse* old_dw,
-                                           DataWarehouse* new_dw)
+ConstantRate::splitSDMSpecificParticleData([[maybe_unused]] const Patch* patch,
+                                           [[maybe_unused]] const int dwi,
+                                           [[maybe_unused]] const int nDims,
+                                           [[maybe_unused]] ParticleVariable<int>& prefOld,
+                                           [[maybe_unused]] ParticleVariable<int>& pref,
+                                           [[maybe_unused]] const unsigned int oldNumParts,
+                                           [[maybe_unused]] const int numNewPartNeeded,
+                                           [[maybe_unused]] DataWarehouse* old_dw,
+                                           [[maybe_unused]] DataWarehouse* new_dw)
 {
   // Do nothing for now
 }
@@ -158,7 +158,7 @@ ConstantRate::splitSDMSpecificParticleData(const Patch* patch,
 void
 ConstantRate::scheduleComputeDivergence(Task* task,
                                         const MPMMaterial* matl,
-                                        const PatchSet* patch) const
+                                        [[maybe_unused]] const PatchSet* patch) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->needs(Task::NewDW, d_lb->gMassLabel, Ghost::None);
@@ -169,7 +169,7 @@ ConstantRate::scheduleComputeDivergence(Task* task,
 void
 ConstantRate::computeDivergence(const Patch* patch,
                                 const MPMMaterial* matl,
-                                DataWarehouse* old_dw,
+                                [[maybe_unused]] DataWarehouse* old_dw,
                                 DataWarehouse* new_dw)
 {
   int dwi             = matl->getDWIndex();
@@ -196,17 +196,17 @@ ConstantRate::computeDivergence(const Patch* patch,
 }
 
 void
-ConstantRate::scheduleComputeDivergence_CFI(Task* t,
-                                            const MPMMaterial* matl,
-                                            const PatchSet* patch) const
+ConstantRate::scheduleComputeDivergence_CFI([[maybe_unused]] Task* t,
+                                            [[maybe_unused]] const MPMMaterial* matl,
+                                            [[maybe_unused]] const PatchSet* patch) const
 {
 }
 
 void
-ConstantRate::computeDivergence_CFI(const PatchSubset* finePatches,
-                                    const MPMMaterial* matl,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw)
+ConstantRate::computeDivergence_CFI([[maybe_unused]] const PatchSubset* finePatches,
+                                    [[maybe_unused]] const MPMMaterial* matl,
+                                    [[maybe_unused]] DataWarehouse* old_dw,
+                                    [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 

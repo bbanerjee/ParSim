@@ -85,12 +85,12 @@ double NASAPolynomialCv::getSpecificHeat(double T)
   return sum/x;
 }
 
-double NASAPolynomialCv::getGamma(double T)
+double NASAPolynomialCv::getGamma([[maybe_unused]] double T)
 {
   return 1.4;  // this should be the input file value
 }
 
-double NASAPolynomialCv::getInternalEnergy(double T)
+double NASAPolynomialCv::getInternalEnergy([[maybe_unused]] double T)
 {
 
   throw new InternalError("No 'getInternalEnergy' function defined for NASAPolynomialCv model.", __FILE__, __LINE__);

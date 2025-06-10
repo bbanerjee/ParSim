@@ -59,7 +59,7 @@ void CommonIFConcDiff::addComputesAndRequiresInterpolated(SchedulerP & sched,
 void CommonIFConcDiff::sdInterfaceInterpolated(const ProcessorGroup *,
                                                const PatchSubset    * patches,
                                                const MaterialSubset * matls,
-                                                     DataWarehouse  * old_dw,
+                                               [[maybe_unused]]       DataWarehouse  * old_dw,
                                                      DataWarehouse  * new_dw
                                               )
 {
@@ -127,7 +127,7 @@ void CommonIFConcDiff::addComputesAndRequiresDivergence(SchedulerP & sched,
 void CommonIFConcDiff::sdInterfaceDivergence(const ProcessorGroup*,
                                              const PatchSubset* patches,
                                              const MaterialSubset* matls,
-                                             DataWarehouse* old_dw,
+                                             [[maybe_unused]] DataWarehouse* old_dw,
                                              DataWarehouse* new_dw)
 {
   int num_matls = d_materialManager->getNumMaterials( "MPM" );

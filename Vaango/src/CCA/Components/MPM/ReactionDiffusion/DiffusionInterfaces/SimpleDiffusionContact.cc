@@ -43,19 +43,19 @@ SimpleSDInterface::SimpleSDInterface(ProblemSpecP& probSpec,
 SimpleSDInterface::~SimpleSDInterface() {}
 
 void
-SimpleSDInterface::addComputesAndRequiresInterpolated(SchedulerP& sched,
-                                                      const PatchSet* patches,
-                                                      const MaterialSet* matls)
+SimpleSDInterface::addComputesAndRequiresInterpolated([[maybe_unused]] SchedulerP& sched,
+                                                      [[maybe_unused]] const PatchSet* patches,
+                                                      [[maybe_unused]] const MaterialSet* matls)
 {
   // Shouldn't need to directly modify the concentration.
 }
 
 void
-SimpleSDInterface::sdInterfaceInterpolated(const ProcessorGroup*,
-                                           const PatchSubset* patches,
-                                           const MaterialSubset* matls,
-                                           DataWarehouse* old_dw,
-                                           DataWarehouse* new_dw)
+SimpleSDInterface::sdInterfaceInterpolated([[maybe_unused]] const ProcessorGroup*,
+                                           [[maybe_unused]] const PatchSubset* patches,
+                                           [[maybe_unused]] const MaterialSubset* matls,
+                                           [[maybe_unused]] DataWarehouse* old_dw,
+                                           [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 

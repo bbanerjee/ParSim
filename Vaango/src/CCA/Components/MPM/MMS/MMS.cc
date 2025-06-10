@@ -44,7 +44,7 @@ MMS::initializeParticleForMMS(ParticleVariable<Point> &position,
                               Point p, 
                               Vector dxcc, 
                               Matrix3 size , 
-                              const Patch* patch,
+                              [[maybe_unused]] const Patch* patch,
                               MPMFlags* flags,
                               particleIndex pidx)
 {
@@ -122,7 +122,7 @@ MMS::computeExternalForceForMMS(DataWarehouse* old_dw,
 //=====================================================================================
 void
 MMS::computeBodyForceForMMS(DataWarehouse* old_dw,
-                            DataWarehouse* new_dw,
+                            [[maybe_unused]] DataWarehouse* new_dw,
                             double time,
                             ParticleSubset* pset, 
                             MPMLabel* lb, 
@@ -187,12 +187,12 @@ MMS::initGeneralizedVortex(const MPMFlags* flags,
 }
 
 void 
-MMS::extForceGeneralizedVortex(const MPMFlags* flags,
+MMS::extForceGeneralizedVortex([[maybe_unused]] const MPMFlags* flags,
                                const MPMLabel* lb,
                                const double& time,
                                ParticleSubset* pset,
                                DataWarehouse* old_dw,
-                               DataWarehouse* new_dw,
+                               [[maybe_unused]] DataWarehouse* new_dw,
                                ParticleVariable<Vector>& pExtForce)
 {
   // std::cout << "Entered the GV loop " << std::endl;
@@ -290,12 +290,12 @@ MMS::initAxisAligned(const MPMFlags* flags,
 }
 
 void 
-MMS::extForceAxisAligned(const MPMFlags* flags,
+MMS::extForceAxisAligned([[maybe_unused]] const MPMFlags* flags,
                          const MPMLabel* lb,
                          const double& time,
                          ParticleSubset* pset,
                          DataWarehouse* old_dw,
-                         DataWarehouse* new_dw,
+                         [[maybe_unused]] DataWarehouse* new_dw,
                          ParticleVariable<Vector>& pExtForce)
 {
   // std::cout << "Entered the AA loop " << std::endl;
@@ -385,12 +385,12 @@ MMS::initExpandingRing(const MPMFlags* flags,
 }
 
 void 
-MMS::extForceExpandingRing(const MPMFlags* flags,
+MMS::extForceExpandingRing([[maybe_unused]] const MPMFlags* flags,
                            const MPMLabel* lb,
                            const double& time,
                            ParticleSubset* pset,
                            DataWarehouse* old_dw,
-                           DataWarehouse* new_dw,
+                           [[maybe_unused]] DataWarehouse* new_dw,
                            ParticleVariable<Vector>& pExtForce)
 {
   double A = 0.1;
@@ -482,7 +482,7 @@ MMS::extForceExpandingRing(const MPMFlags* flags,
 // Uniaxial strain with harmonic displacement
 //=====================================================================================
 void 
-MMS::initUniaxialStrainHarmonic(const MPMFlags* flags,
+MMS::initUniaxialStrainHarmonic([[maybe_unused]] const MPMFlags* flags,
                                 particleIndex pidx,
                                 const Point& p,
                                 const Vector& dxcc,
@@ -595,7 +595,7 @@ MMS::bodyForceUniaxialStrainHarmonic(const MPMLabel* lb,
 }
 
 void 
-MMS::initUniaxialStrainHomogeneousLinear(const MPMFlags* flags,
+MMS::initUniaxialStrainHomogeneousLinear([[maybe_unused]] const MPMFlags* flags,
                                          particleIndex pidx,
                                          const Point& p,
                                          const Vector& dxcc,
@@ -630,10 +630,10 @@ MMS::initUniaxialStrainHomogeneousLinear(const MPMFlags* flags,
 }
 
 void 
-MMS::bodyForceUniaxialStrainHomogeneousLinear(const MPMLabel* lb,
-                                              const double& time,
+MMS::bodyForceUniaxialStrainHomogeneousLinear([[maybe_unused]] const MPMLabel* lb,
+                                              [[maybe_unused]] const double& time,
                                               ParticleSubset* pset,
-                                              DataWarehouse* old_dw,
+                                              [[maybe_unused]] DataWarehouse* old_dw,
                                               ParticleVariable<Vector>& pBodyForce)
 {
   // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
@@ -654,7 +654,7 @@ MMS::bodyForceUniaxialStrainHomogeneousLinear(const MPMLabel* lb,
 }
 
 void 
-MMS::initUniaxialStrainHomogeneousQuadratic(const MPMFlags* flags,
+MMS::initUniaxialStrainHomogeneousQuadratic([[maybe_unused]] const MPMFlags* flags,
                                             particleIndex pidx,
                                             const Point& p,
                                             const Vector& dxcc,
@@ -691,7 +691,7 @@ MMS::initUniaxialStrainHomogeneousQuadratic(const MPMFlags* flags,
 
 void 
 MMS::bodyForceUniaxialStrainHomogeneousQuadratic(const MPMLabel* lb,
-                                                 const double& time,
+                                                 [[maybe_unused]] const double& time,
                                                  ParticleSubset* pset,
                                                  DataWarehouse* old_dw,
                                                  ParticleVariable<Vector>& pBodyForce)

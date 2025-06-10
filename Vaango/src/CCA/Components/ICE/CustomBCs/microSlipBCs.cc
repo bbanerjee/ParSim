@@ -123,7 +123,7 @@ void addRequires_MicroSlip(Task         * t,
                            const string & where,
                            ICELabel     * lb,
                            const MaterialSubset * ice_matls,
-                           slip_globalVars      * var_basket)
+                           [[maybe_unused]] slip_globalVars      * var_basket)
 {
   cout_doing<< "Doing addRequires_microSlip: \t\t" <<t->getName()
             << " " << where << endl;
@@ -238,7 +238,7 @@ void meanFreePath(DataWarehouse     * new_dw,
  Function~  preprocess_MicroSlip_BCs--
  Purpose~   Retrieve variables from the dw
 ______________________________________________________________________ */
-void  preprocess_MicroSlip_BCs(DataWarehouse    * old_dw,
+void  preprocess_MicroSlip_BCs([[maybe_unused]] DataWarehouse    * old_dw,
                                DataWarehouse    * new_dw,
                                ICELabel         * lb,
                                const Patch      * patch,

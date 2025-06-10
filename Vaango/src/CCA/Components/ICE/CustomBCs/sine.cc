@@ -180,7 +180,7 @@ int  set_Sine_Velocity_BC(const Patch* patch,
                           const string& var_desc,
                           Iterator& bound_ptr,
                           const string& bc_kind,
-                          MaterialManagerP& materialManager,
+                          [[maybe_unused]] MaterialManagerP& materialManager,
                           sine_globalVars* gv,
                           sine_localVars* lv)                     
 
@@ -260,8 +260,8 @@ int set_Sine_press_BC(const Patch* patch,
                       const Patch::FaceType face,
                       CCVariable<double>& press_CC,
                       Iterator& bound_ptr,
-                      const string& bc_kind,
-                      MaterialManagerP& materialManager,
+                      [[maybe_unused]] const string& bc_kind,
+                      [[maybe_unused]] MaterialManagerP& materialManager,
                       sine_globalVars* gv,
                       sine_localVars* lv)  
 {

@@ -146,7 +146,7 @@ double ComponentCv::getSpecificHeat(double T)
   return 1000.0 * (cvMolar * R)/ d_massPerMole;
 }
 
-double ComponentCv::getGamma(double T)
+double ComponentCv::getGamma([[maybe_unused]] double T)
 {
   return d_gamma;
 }

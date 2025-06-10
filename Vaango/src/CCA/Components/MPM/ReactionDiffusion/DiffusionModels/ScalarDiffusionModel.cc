@@ -45,7 +45,7 @@ using namespace Uintah;
 static DebugStream cout_doing("AMRMPM", false);
 
 ScalarDiffusionModel::ScalarDiffusionModel(ProblemSpecP& ps,
-                                           MaterialManagerP& sS,
+                                           [[maybe_unused]] MaterialManagerP& sS,
                                            MPMFlags* Mflag,
                                            std::string diff_type)
 {
@@ -144,7 +144,7 @@ ScalarDiffusionModel::setIncludeHydroStress(bool value)
 
 void
 ScalarDiffusionModel::initializeTimestep(const Patch* patch,
-                                         const MPMMaterial* matl,
+                                         [[maybe_unused]] const MPMMaterial* matl,
                                          DataWarehouse* new_dw)
 {
   Vector dx       = patch->dCell();
@@ -157,7 +157,7 @@ ScalarDiffusionModel::initializeTimestep(const Patch* patch,
 void
 ScalarDiffusionModel::scheduleComputeDivergence(Task* task,
                                                 const MPMMaterial* matl,
-                                                const PatchSet* patch) const
+                                                [[maybe_unused]] const PatchSet* patch) const
 {
   Ghost::GhostType gan          = Ghost::AroundNodes;
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -245,7 +245,7 @@ ScalarDiffusionModel::computeDivergence(const Patch* patch,
 void
 ScalarDiffusionModel::scheduleComputeDivergence_CFI(Task* t,
                                                     const MPMMaterial* matl,
-                                                    const PatchSet* patch) const
+                                                    [[maybe_unused]] const PatchSet* patch) const
 {
   Ghost::GhostType gac          = Ghost::AroundCells;
   Task::MaterialDomainSpec ND   = Task::NormalDomain;
@@ -450,9 +450,9 @@ ScalarDiffusionModel::usesChemicalPotential()
 
 void
 ScalarDiffusionModel::addChemPotentialComputesAndRequires(
-  Task* task,
-  const MPMMaterial* matl,
-  const PatchSet* patches) const
+  [[maybe_unused]] Task* task,
+  [[maybe_unused]] const MPMMaterial* matl,
+  [[maybe_unused]] const PatchSet* patches) const
 {
   // Don't override if model doesn't use chemical potential.
   //  Ghost::GhostType        gnone   = Ghost::None;
@@ -463,10 +463,10 @@ ScalarDiffusionModel::addChemPotentialComputesAndRequires(
 }
 
 void
-ScalarDiffusionModel::calculateChemicalPotential(const PatchSubset* patches,
-                                                 const MPMMaterial* matl,
-                                                 DataWarehouse* old_dw,
-                                                 DataWarehouse* new_dw)
+ScalarDiffusionModel::calculateChemicalPotential([[maybe_unused]] const PatchSubset* patches,
+                                                 [[maybe_unused]] const MPMMaterial* matl,
+                                                 [[maybe_unused]] DataWarehouse* old_dw,
+                                                 [[maybe_unused]] DataWarehouse* new_dw)
 {
   // Don't override if model doesn't use chemical potential.
   //  for (int patchIndex = 0; patchIndex < patches->size(); ++patchIndex)
@@ -492,8 +492,8 @@ ScalarDiffusionModel::calculateChemicalPotential(const PatchSubset* patches,
 }
 
 double
-ScalarDiffusionModel::computeDiffusivityTerm(double concentration,
-                                             double pressure)
+ScalarDiffusionModel::computeDiffusivityTerm([[maybe_unused]] double concentration,
+                                             [[maybe_unused]] double pressure)
 {
   // This is just a function stub to be tied into the multiscale
   // component. JH, AH, CG

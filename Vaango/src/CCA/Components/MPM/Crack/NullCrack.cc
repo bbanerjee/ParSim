@@ -53,7 +53,7 @@ using std::vector;
 using namespace Uintah;
 
 
-NullCrack::NullCrack(ProblemSpecP& ps)
+NullCrack::NullCrack([[maybe_unused]] ProblemSpecP& ps)
 {
 }
 
@@ -63,17 +63,17 @@ NullCrack::~NullCrack()
 }
 
 
-void NullCrack::readCrack(ProblemSpecP& arc_ps)
+void NullCrack::readCrack([[maybe_unused]] ProblemSpecP& arc_ps)
 {
 }
 
 
-void NullCrack::outputInitialCrackPlane(int i)
+void NullCrack::outputInitialCrackPlane([[maybe_unused]] int i)
 {
 }
 
-void NullCrack::discretize(int& nstart0,vector<Point>& cx,
-                           std::vector<IntVector>& ce,vector<int>& SegNodes)
+void NullCrack::discretize([[maybe_unused]] int& nstart0,[[maybe_unused]] vector<Point>& cx,
+                           [[maybe_unused]] std::vector<IntVector>& ce,[[maybe_unused]] vector<int>& SegNodes)
 {
 }
 

@@ -99,7 +99,7 @@ double DebyeCv::getSpecificHeat(double T)
   return preIntegralFactor * integralFactor;
 }
 
-double DebyeCv::getGamma(double T)
+double DebyeCv::getGamma([[maybe_unused]] double T)
 {
   return 1.4;  // this should be the input file value
 }

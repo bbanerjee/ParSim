@@ -538,7 +538,7 @@ UofU_MPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
 void
 UofU_MPM::initializeBodyForce(const ProcessorGroup*,
                               const PatchSubset* patches,
-                              const MaterialSubset* matls,
+                              [[maybe_unused]] const MaterialSubset* matls,
                               DataWarehouse*,
                               DataWarehouse* new_dw)
 {
@@ -921,7 +921,7 @@ void
 UofU_MPM::actuallyComputeStableTimestep(const ProcessorGroup*,
                                         const PatchSubset* patches,
                                         const MaterialSubset*,
-                                        DataWarehouse* old_dw,
+                                        [[maybe_unused]] DataWarehouse* old_dw,
                                         DataWarehouse* new_dw)
 {
   // Put something here to satisfy the need for a reduction operation in
@@ -2278,9 +2278,9 @@ UofU_MPM::scheduleComputeAcceleration(SchedulerP& sched,
  * computeAcceleration
  *-----------------------------------------------------------------------*/
 void
-UofU_MPM::computeAcceleration(const ProcessorGroup* pg,
+UofU_MPM::computeAcceleration([[maybe_unused]] const ProcessorGroup* pg,
                               const PatchSubset* patches,
-                              const MaterialSubset* ms,
+                              [[maybe_unused]] const MaterialSubset* ms,
                               DataWarehouse* old_dw,
                               DataWarehouse* new_dw)
 {
@@ -4281,7 +4281,7 @@ UofU_MPM::totalParticleCount(const ProcessorGroup*,
    phase, but get wiped clean when you restart
    _____________________________________________________________________*/
 void
-UofU_MPM::scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
+UofU_MPM::scheduleRestartInitialize([[maybe_unused]] const LevelP& level, [[maybe_unused]] SchedulerP& sched)
 {
 }
 

@@ -954,7 +954,7 @@ void
 AMRMPM::computeZoneOfInfluence(const ProcessorGroup*,
                                const PatchSubset* patches,
                                const MaterialSubset*,
-                               DataWarehouse* old_dw,
+                               [[maybe_unused]] DataWarehouse* old_dw,
                                DataWarehouse* new_dw)
 {
   const Level* level = getLevel(patches);
@@ -1886,7 +1886,7 @@ void
 AMRMPM::coarsenNodalData_CFI(const ProcessorGroup*,
                              const PatchSubset* coarsePatches,
                              const MaterialSubset*,
-                             DataWarehouse* old_dw,
+                             [[maybe_unused]] DataWarehouse* old_dw,
                              DataWarehouse* new_dw,
                              const CoarsenFlag flag)
 {
@@ -2120,7 +2120,7 @@ void
 AMRMPM::coarsenNodalData_CFI2(const ProcessorGroup*,
                               const PatchSubset* coarsePatches,
                               const MaterialSubset*,
-                              DataWarehouse* old_dw,
+                              [[maybe_unused]] DataWarehouse* old_dw,
                               DataWarehouse* new_dw)
 {
   Level::selectType CFI_coarsePatches;
@@ -4248,7 +4248,7 @@ void
 AMRMPM::reduceFlagsExtents(const ProcessorGroup*,
                            const PatchSubset* patches,
                            const MaterialSubset*,
-                           DataWarehouse* old_dw,
+                           [[maybe_unused]] DataWarehouse* old_dw,
                            DataWarehouse* new_dw)
 {
   // Currently doing for levels > 0
@@ -4534,7 +4534,7 @@ AMRMPM::scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched)
 void
 AMRMPM::coarsen(const ProcessorGroup*,
                 const PatchSubset* patches,
-                const MaterialSubset* matls,
+                [[maybe_unused]] const MaterialSubset* matls,
                 DataWarehouse*,
                 DataWarehouse* new_dw)
 {
@@ -4709,8 +4709,8 @@ AMRMPM::errorEstimate(const ProcessorGroup*,
 
 // Schedule to mark initial flags for AMR regridding
 void
-AMRMPM::scheduleInitialErrorEstimate(const LevelP& coarseLevel,
-                                     SchedulerP& sched)
+AMRMPM::scheduleInitialErrorEstimate([[maybe_unused]] const LevelP& coarseLevel,
+                                     [[maybe_unused]] SchedulerP& sched)
 {
   //  std::cout << "scheduleInitialErrorEstimate" << std::endl;
   //  std::cout << "Doing nothing for now" << std::endl;

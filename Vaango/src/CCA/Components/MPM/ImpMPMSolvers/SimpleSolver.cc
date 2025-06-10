@@ -53,7 +53,7 @@ void SimpleSolver::createLocalToGlobalMapping(const ProcessorGroup* d_myworld,
                                               const PatchSet* perproc_patches,
                                               const PatchSubset* patches,
                                               const int DOFsPerNode,
-                                              const int n8or27)
+                                              [[maybe_unused]] const int n8or27)
 {
 
   int numProcessors = d_myworld->nRanks();
@@ -130,7 +130,7 @@ void SimpleSolver::createLocalToGlobalMapping(const ProcessorGroup* d_myworld,
 
 }
 
-void SimpleSolver::solve(vector<double>& guess)
+void SimpleSolver::solve([[maybe_unused]] vector<double>& guess)
 {
 #if 0
   printMatrix();
@@ -160,8 +160,8 @@ void SimpleSolver::solve(vector<double>& guess)
 #endif
 }
 
-void SimpleSolver::createMatrix(const ProcessorGroup* d_myworld,
-                                const  std::map< int,int>& diag)
+void SimpleSolver::createMatrix([[maybe_unused]] const ProcessorGroup* d_myworld,
+                                [[maybe_unused]] const  std::map< int,int>& diag)
 {
   int globalrows = (int)d_totalNodes;
   int globalcolumns = (int)d_totalNodes;

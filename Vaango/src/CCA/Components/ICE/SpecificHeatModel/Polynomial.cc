@@ -88,12 +88,12 @@ double PolynomialCv::getSpecificHeat(double T)
   return sum/x;
 }
 
-double PolynomialCv::getGamma(double T)
+double PolynomialCv::getGamma([[maybe_unused]] double T)
 {
   return 1.4;  // this should be the input file value
 }
 
-double PolynomialCv::getInternalEnergy(double T)
+double PolynomialCv::getInternalEnergy([[maybe_unused]] double T)
 {
 
   throw new InternalError("No 'getInternalEnergy' function defined for PolynomialCv model.", __FILE__, __LINE__);

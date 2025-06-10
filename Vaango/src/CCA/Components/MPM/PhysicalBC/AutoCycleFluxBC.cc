@@ -116,7 +116,7 @@ void
 AutoCycleFluxBC::initializeScalarFluxBC(const ProcessorGroup*,
                                         const PatchSubset* patches,
                                         const MaterialSubset*,
-                                        DataWarehouse* old_dw,
+                                        [[maybe_unused]] DataWarehouse* old_dw,
                                         DataWarehouse* new_dw)
 {
   double time = 0.0;
@@ -387,7 +387,7 @@ void
 AutoCycleFluxBC::countMaterialPointsPerFluxLoadCurve(const ProcessorGroup*,
                                                      const PatchSubset* patches,
                                                      const MaterialSubset*,
-                                                     DataWarehouse* old_dw,
+                                                     [[maybe_unused]] DataWarehouse* old_dw,
                                                      DataWarehouse* new_dw)
 {
   printTask(patches,

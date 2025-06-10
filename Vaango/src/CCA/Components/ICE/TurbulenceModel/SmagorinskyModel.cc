@@ -113,9 +113,9 @@ void Smagorinsky_Model::computeStrainRate(const Patch* patch,
                                     const SFCXVariable<double>& uvel_FC,
                                     const SFCYVariable<double>& vvel_FC,
                                     const SFCZVariable<double>& wvel_FC,
-                                    const int indx,
-                                    MaterialManagerP&  d_materialManager,
-                                    DataWarehouse* new_dw,
+                                    [[maybe_unused]] const int indx,
+                                    [[maybe_unused]] MaterialManagerP&  d_materialManager,
+                                    [[maybe_unused]] DataWarehouse* new_dw,
                                     std::vector<CCVariable<double> >& SIJ)
 {
   Vector dx = patch->dCell();

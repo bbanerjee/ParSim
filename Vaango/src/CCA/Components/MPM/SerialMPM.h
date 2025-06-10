@@ -355,7 +355,7 @@ protected:
                     const PatchSubset* patches,
                     const MaterialSubset*,
                     DataWarehouse* old_dw,
-                    DataWarehouse* new_dw);
+                    DataWarehouse* new_dw) override;
 
   void
   deleteGeometryObjects(const ProcessorGroup*,

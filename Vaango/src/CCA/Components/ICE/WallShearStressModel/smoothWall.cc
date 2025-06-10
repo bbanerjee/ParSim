@@ -95,25 +95,25 @@ smoothwall::~smoothwall()
 
 //______________________________________________________________________
 //
-void smoothwall::sched_Initialize(SchedulerP& sched,
-                                   const LevelP& level,
-                                   const MaterialSet* matls)
+void smoothwall::sched_Initialize([[maybe_unused]] SchedulerP& sched,
+                                   [[maybe_unused]] const LevelP& level,
+                                   [[maybe_unused]] const MaterialSet* matls)
 {
 }
 //______________________________________________________________________
 //
 void smoothwall::Initialize(const ProcessorGroup*,
-                             const PatchSubset* patches,
-                             const MaterialSubset* matls,
+                             [[maybe_unused]] const PatchSubset* patches,
+                             [[maybe_unused]] const MaterialSubset* matls,
                              DataWarehouse*,
-                             DataWarehouse* new_dw)
+                             [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 
 //______________________________________________________________________
 //  Schedule variables that are needed by this model
-void smoothwall::sched_AddComputeRequires(Task* task,
-                                           const MaterialSubset* matls)
+void smoothwall::sched_AddComputeRequires([[maybe_unused]] Task* task,
+                                           [[maybe_unused]] const MaterialSubset* matls)
 {
 }
 
@@ -147,10 +147,10 @@ void smoothwall::computeWallShearStresses( DataWarehouse* old_dw,
 //______________________________________________________________________
 //
 template<class T>
-void smoothwall::wallShearStresses(DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw,
+void smoothwall::wallShearStresses([[maybe_unused]] DataWarehouse* old_dw,
+                                    [[maybe_unused]] DataWarehouse* new_dw,
                                     const Patch* patch,
-                                    const int indx,
+                                    [[maybe_unused]] const int indx,
                                     const CCVariable<double>& viscosity,
                                     constCCVariable<double>& vol_frac_CC,
                                     constCCVariable<double>& rho_CC,

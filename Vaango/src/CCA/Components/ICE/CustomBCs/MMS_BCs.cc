@@ -174,7 +174,7 @@ int set_MMS_Velocity_BC(const Patch* patch,
                          const string& var_desc,
                          Iterator& bound_ptr,
                          const string& bc_kind,
-                         MaterialManagerP& materialManager,
+                         [[maybe_unused]] MaterialManagerP& materialManager,
                          mms_globalVars* gv,
                          mms_localVars* lv)                     
 
@@ -255,7 +255,7 @@ int set_MMS_press_BC(const Patch* patch,
                       CCVariable<double>& press_CC,
                       Iterator& bound_ptr,
                       const string& bc_kind,
-                      MaterialManagerP& materialManager,
+                      [[maybe_unused]] MaterialManagerP& materialManager,
                       mms_globalVars* gv,
                       mms_localVars* lv)  
 {

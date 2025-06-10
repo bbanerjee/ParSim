@@ -760,7 +760,7 @@ void
 SerialMPM::restartInitialize(const ProcessorGroup*,
                              const PatchSubset* patches,
                              const MaterialSubset*,
-                             DataWarehouse* old_dw,
+                             [[maybe_unused]] DataWarehouse* old_dw,
                              DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
@@ -795,10 +795,10 @@ SerialMPM::scheduleDeleteGeometryObjects(const LevelP& level, SchedulerP& sched)
 
 void
 SerialMPM::deleteGeometryObjects(const ProcessorGroup*,
-                                 const PatchSubset* patches,
+                                 [[maybe_unused]] const PatchSubset* patches,
                                  const MaterialSubset*,
                                  DataWarehouse*,
-                                 DataWarehouse* new_dw)
+                                 [[maybe_unused]] DataWarehouse* new_dw)
 {
   printTask(cout_doing, "Doing MPM::deleteGeometryObjects");
 
@@ -935,7 +935,7 @@ SerialMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
 void
 SerialMPM::initializeBodyForce(const ProcessorGroup*,
                                const PatchSubset* patches,
-                               const MaterialSubset* matls,
+                               [[maybe_unused]] const MaterialSubset* matls,
                                DataWarehouse*,
                                DataWarehouse* new_dw)
 {
@@ -1488,7 +1488,7 @@ void
 SerialMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
                                          const PatchSubset* patches,
                                          const MaterialSubset*,
-                                         DataWarehouse* old_dw,
+                                         [[maybe_unused]] DataWarehouse* old_dw,
                                          DataWarehouse* new_dw)
 {
   // Put something here to satisfy the need for a reduction operation in
@@ -6615,7 +6615,7 @@ SerialMPM::computeParticleScaleFactor(const ProcessorGroup*,
 void
 SerialMPM::scheduleParticleRelocation(SchedulerP& sched,
                                       const LevelP& level,
-                                      const PatchSet* patches,
+                                      [[maybe_unused]] const PatchSet* patches,
                                       const MaterialSet* matls)
 {
   //  Unmodified labels and matls subset

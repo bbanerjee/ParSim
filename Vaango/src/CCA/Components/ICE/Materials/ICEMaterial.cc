@@ -49,7 +49,7 @@ using namespace Uintah;
 
 // Constructor
 ICEMaterial::ICEMaterial(ProblemSpecP& ps,
-                         MaterialManagerP& materialManager,
+                         [[maybe_unused]] MaterialManagerP& materialManager,
                          const bool isRestart)
   : Material(ps)
 {

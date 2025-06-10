@@ -156,7 +156,7 @@ public:
   // initializations that are necessary when a simulation is restarted.
   //
   virtual void
-  restartInitialize()
+  restartInitialize(const ProcessorGroup*, const PatchSubset*, const MaterialSubset*, DataWarehouse*, DataWarehouse*)
   {
   }
 

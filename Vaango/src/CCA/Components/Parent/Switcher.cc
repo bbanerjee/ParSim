@@ -84,7 +84,7 @@ DebugStream Switcher::switcher_dbg("SWITCHER",
 Switcher::Switcher(const ProcessorGroup* myworld,
                    const MaterialManagerP& mat_manager,
                    ProblemSpecP& master_ups,
-                   const std::string& uda)
+                   [[maybe_unused]] const std::string& uda)
   : SimulationCommon(myworld, mat_manager)
   , d_master_ups(master_ups)
 {
@@ -273,10 +273,10 @@ Switcher::~Switcher()
 //______________________________________________________________________
 // Setup the first component
 void
-Switcher::problemSetup(const ProblemSpecP& params,
+Switcher::problemSetup([[maybe_unused]] const ProblemSpecP& params,
                        const ProblemSpecP& restart_prob_spec,
                        GridP& grid,
-                       const std::string& input_ups_dir)
+                       [[maybe_unused]] const std::string& input_ups_dir)
 {
   switcher_dbg << "Doing ProblemSetup \t\t\t\tSwitcher" << std::endl;
   if (restart_prob_spec) {
@@ -483,9 +483,9 @@ Switcher::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 //  Set the flag if switch criteria has been satisfied.
 void
 Switcher::switchTest(const ProcessorGroup*,
-                     const PatchSubset* patches,
-                     const MaterialSubset* matls,
-                     DataWarehouse* old_dw,
+                     [[maybe_unused]] const PatchSubset* patches,
+                     [[maybe_unused]] const MaterialSubset* matls,
+                     [[maybe_unused]] DataWarehouse* old_dw,
                      DataWarehouse* new_dw)
 {
   max_vartype switch_condition;
@@ -556,7 +556,7 @@ Switcher::scheduleInitNewVars(const LevelP& level, SchedulerP& sched)
 void
 Switcher::initNewVars(const ProcessorGroup*,
                       const PatchSubset* patches,
-                      const MaterialSubset* matls,
+                      [[maybe_unused]] const MaterialSubset* matls,
                       DataWarehouse* old_dw,
                       DataWarehouse* new_dw)
 {

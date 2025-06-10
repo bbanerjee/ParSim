@@ -114,7 +114,7 @@ void
 FluxBCModel::initializeScalarFluxBC(const ProcessorGroup*,
                                     const PatchSubset* patches,
                                     const MaterialSubset*,
-                                    DataWarehouse* old_dw,
+                                    [[maybe_unused]] DataWarehouse* old_dw,
                                     DataWarehouse* new_dw)
 {
   std::cout << "doing Initialize flux bc" << std::endl;
@@ -344,7 +344,7 @@ void
 FluxBCModel::countMaterialPointsPerFluxLoadCurve(const ProcessorGroup*,
                                                  const PatchSubset* patches,
                                                  const MaterialSubset*,
-                                                 DataWarehouse* old_dw,
+                                                 [[maybe_unused]] DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw)
 {
   printTask(patches,

@@ -53,7 +53,7 @@
 
 using namespace Uintah;
 
-SpecificHeat::SpecificHeat(ProblemSpecP& ps)
+SpecificHeat::SpecificHeat([[maybe_unused]] ProblemSpecP& ps)
 {
 }
 

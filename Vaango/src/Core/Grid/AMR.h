@@ -107,7 +107,7 @@ _____________________________________________________________________*/
 template<class T>
 void
 linearInterpolation(constCCVariable<T>& q_CL, // course level
-                    const Level* coarseLevel,
+                    [[maybe_unused]] const Level* coarseLevel,
                     const Level* fineLevel,
                     const Uintah::IntVector& refineRatio,
                     const Uintah::IntVector& fl,
@@ -673,8 +673,8 @@ select_CFI_Interpolator(constCCVariable<T>& q_CL,
                         const Uintah::IntVector& refineRatio,
                         const Uintah::IntVector& fl,
                         const Uintah::IntVector& fh,
-                        const Patch* finePatch,
-                        Patch::FaceType patchFace,
+                        [[maybe_unused]] const Patch* finePatch,
+                        [[maybe_unused]] Patch::FaceType patchFace,
                         CCVariable<T>& q_FineLevel)
 {
   // piecewise constant

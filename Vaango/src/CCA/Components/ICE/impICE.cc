@@ -1045,7 +1045,7 @@ ICE::computeDel_P(const ProcessorGroup*,
  Function~  ICE::implicitPressureSolve--
 _____________________________________________________________________*/
 void
-ICE::implicitPressureSolve(const ProcessorGroup* pg,
+ICE::implicitPressureSolve([[maybe_unused]] const ProcessorGroup* pg,
                            const PatchSubset* patch_sub,
                            const MaterialSubset*,
                            DataWarehouse* ParentOldDW,

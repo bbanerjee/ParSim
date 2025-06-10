@@ -180,7 +180,7 @@ void
 RigidMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
                                           const PatchSubset* patches,
                                           const MaterialSubset*,
-                                          DataWarehouse* old_dw,
+                                          [[maybe_unused]] DataWarehouse* old_dw,
                                           DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {

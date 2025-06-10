@@ -956,7 +956,7 @@ impAMRICE::scheduleCoarsen_delP(SchedulerP& sched,
 void
 impAMRICE::coarsen_delP(const ProcessorGroup*,
                         const PatchSubset* coarsePatches,
-                        const MaterialSubset* matls,
+                        [[maybe_unused]] const MaterialSubset* matls,
                         DataWarehouse*,
                         DataWarehouse* new_dw,
                         const VarLabel* variable)
@@ -1066,7 +1066,7 @@ void
 impAMRICE::zeroMatrix_UnderFinePatches(const ProcessorGroup*,
                                        const PatchSubset* coarsePatches,
                                        const MaterialSubset*,
-                                       DataWarehouse* old_dw,
+                                       [[maybe_unused]] DataWarehouse* old_dw,
                                        DataWarehouse* new_dw)
 {
   const Level* coarseLevel = getLevel(coarsePatches);
@@ -1124,7 +1124,7 @@ _____________________________________________________________________*/
 void
 impAMRICE::schedule_matrixBC_CFI_coarsePatch(SchedulerP& sched,
                                              const LevelP& coarseLevel,
-                                             const MaterialSubset* one_matl,
+                                             [[maybe_unused]] const MaterialSubset* one_matl,
                                              const MaterialSet* all_matls)
 
 {
@@ -1170,7 +1170,7 @@ _____________________________________________________________________*/
 void
 impAMRICE::matrixBC_CFI_coarsePatch(const ProcessorGroup*,
                                     const PatchSubset* coarsePatches,
-                                    const MaterialSubset* matls,
+                                    [[maybe_unused]] const MaterialSubset* matls,
                                     DataWarehouse*,
                                     DataWarehouse* new_dw)
 {

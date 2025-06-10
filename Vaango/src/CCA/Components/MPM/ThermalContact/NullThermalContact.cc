@@ -45,7 +45,7 @@ NullThermalContact::NullThermalContact(ProblemSpecP&,
 }
 
 void
-NullThermalContact::outputProblemSpec(ProblemSpecP& ps)
+NullThermalContact::outputProblemSpec([[maybe_unused]] ProblemSpecP& ps)
 {
 }
 

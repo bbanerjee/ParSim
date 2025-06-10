@@ -146,7 +146,7 @@ void
 ImpMPM::problemSetup(const ProblemSpecP& prob_spec,
                      const ProblemSpecP& restart_prob_spec,
                      GridP& grid,
-                     const std::string& input_ups_dir)
+                     [[maybe_unused]] const std::string& input_ups_dir)
 {
   cout_doing << " Doing ImpMPM::problemSetup " << std::endl;
 
@@ -419,7 +419,7 @@ ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 }
 
 void
-ImpMPM::scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
+ImpMPM::scheduleRestartInitialize([[maybe_unused]] const LevelP& level, [[maybe_unused]] SchedulerP& sched)
 {
 }
 
@@ -2446,7 +2446,7 @@ ImpMPM::iterate(const ProcessorGroup*,
                 DataWarehouse* old_dw,
                 DataWarehouse* new_dw,
                 LevelP level,
-                Scheduler* sched)
+                [[maybe_unused]] Scheduler* sched)
 {
   Ghost::GhostType gnone = Ghost::None;
 

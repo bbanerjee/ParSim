@@ -1376,7 +1376,7 @@ FractureMPM::actuallyInitialize(const ProcessorGroup*,
 void
 FractureMPM::actuallyInitializeAddedMaterial(const ProcessorGroup*,
                                              const PatchSubset* patches,
-                                             const MaterialSubset* matls,
+                                             [[maybe_unused]] const MaterialSubset* matls,
                                              DataWarehouse*,
                                              DataWarehouse* new_dw)
 {
@@ -1866,7 +1866,7 @@ void
 FractureMPM::computeContactArea(const ProcessorGroup*,
                                 const PatchSubset* patches,
                                 const MaterialSubset*,
-                                DataWarehouse* old_dw,
+                                [[maybe_unused]] DataWarehouse* old_dw,
                                 DataWarehouse* new_dw)
 {
   // six indices for each of the faces

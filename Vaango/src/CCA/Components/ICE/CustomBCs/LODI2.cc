@@ -1126,7 +1126,7 @@ FaceVel_LODI(const Patch* patch,
              CCVariable<Vector>& vel_CC,
              Lodi_localVars* lv,
              const Vector& DX,
-             MaterialManagerP& materialManager)
+             [[maybe_unused]] MaterialManagerP& materialManager)
 
 {
   cout_doing << "   FaceVel_LODI  \t\t" << patch->getFaceName(face) << endl;
@@ -1247,7 +1247,7 @@ FaceTemp_LODI(const Patch* patch,
               CCVariable<double>& temp_CC,
               Lodi_localVars* lv,
               const Vector& DX,
-              MaterialManagerP& materialManager)
+              [[maybe_unused]] MaterialManagerP& materialManager)
 {
   cout_doing << "   FaceTemp_LODI \t\t" << patch->getFaceName(face) << endl;
 
@@ -1361,8 +1361,8 @@ ______________________________________________________________________  */
 int
 FacePress_LODI(const Patch* patch,
                CCVariable<double>& press_CC,
-               std::vector<CCVariable<double>>& rho_micro,
-               MaterialManagerP& materialManager,
+               [[maybe_unused]] std::vector<CCVariable<double>>& rho_micro,
+               [[maybe_unused]] MaterialManagerP& materialManager,
                Patch::FaceType face,
                Lodi_localVars* lv)
 {

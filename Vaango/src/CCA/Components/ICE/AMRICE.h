@@ -334,7 +334,7 @@ AMRICE::refluxOperator_applyCorrectionFluxes(CCVariable<T>& q_CC_coarse,
                                              const int indx,
                                              const Patch* coarsePatch,
                                              const Patch* finePatch,
-                                             const Level* coarseLevel,
+                                             [[maybe_unused]] const Level* coarseLevel,
                                              const Level* fineLevel,
                                              DataWarehouse* new_dw,
                                              const int one_zero)
