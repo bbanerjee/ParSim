@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2023 Biswajit Banerjee, Parresia Research Ltd, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -35,19 +36,18 @@ namespace Uintah {
 
 namespace {
 
-  Dout g_received_dbg( "DependencyBatch", "DependencyBatch", "report when a DependencyBatch is received", false );
+Dout g_received_dbg("DependencyBatch",
+                    "DependencyBatch",
+                    "report when a DependencyBatch is received",
+                    false);
 
-  Uintah::MasterLock g_dep_batch_mutex{};
+Uintah::MasterLock g_dep_batch_mutex{};
 
 }
 
-
-//_____________________________________________________________________________
-//
-DependencyBatch::DependencyBatch( int            to
-                                , DetailedTask * fromTask
-                                , DetailedTask * toTask
-                                )
+DependencyBatch::DependencyBatch(int to,
+                                 DetailedTask* fromTask,
+                                 DetailedTask* toTask)
   : m_from_task(fromTask)
   , m_to_rank(to)
 {
@@ -55,8 +55,7 @@ DependencyBatch::DependencyBatch( int            to
 }
 
 
-//_____________________________________________________________________________
-//
+/*
 DependencyBatch::~DependencyBatch()
 {
   DetailedDep* dep = m_head;
@@ -66,67 +65,52 @@ DependencyBatch::~DependencyBatch()
     dep = tmp;
   }
 }
+*/
 
-//_____________________________________________________________________________
-//
 void
 DependencyBatch::reset()
 {
-  m_received = false;
-  m_made_mpi_request.store(false, std::memory_order_relaxed);
+  d_received = false;
+  d_made_mpi_request.store(false, std::memory_order_relaxed);
 }
 
-//_____________________________________________________________________________
-//
 bool
 DependencyBatch::makeMPIRequest()
 {
   bool expected_val = false;
-  return m_made_mpi_request.compare_exchange_strong(expected_val, true, std::memory_order_seq_cst);
+  return d_made_mpi_request.compare_exchange_strong(
+    expected_val, true, std::memory_order_seq_cst);
 }
 
-//_____________________________________________________________________________
-//
 void
-DependencyBatch::received( const ProcessorGroup * pg )
+DependencyBatch::received([[maybe_unused]] const ProcessorGroup* pg)
 {
   std::lock_guard<Uintah::MasterLock> dep_batch_lock(g_dep_batch_mutex);
 
-  m_received = true;
+  d_received = true;
 
   // set all the toVars to valid, meaning the MPI has been completed
-  for (auto iter = m_to_vars.begin(); iter != m_to_vars.end(); ++iter) {
-    (*iter)->setValid();
+  for (auto& to_var : d_to_vars) {
+    to_var->setValid();
   }
 
   // prepare for placement into the external ready queue
-  for (auto iter = m_to_tasks.begin(); iter != m_to_tasks.end(); ++iter) {
+  for (auto& to_task : m_to_tasks) {
     // if the count is 0, the task will add itself to the external ready queue
-    (*iter)->decrementExternalDepCount();
-    (*iter)->checkExternalDepCount();
+    to_task->decrementExternalDepCount();
+    to_task->checkExternalDepCount();
   }
 
   // clear the variables that have outstanding MPI as they are completed now.
-  m_to_vars.clear();
-
-  // Debug only.
-  if (g_received_dbg) {
-    std::ostringstream message;
-    message << "Received batch message " << m_message_tag << " from task " << *m_from_task << "\n";
-    for (DetailedDep* dep = m_head; dep != nullptr; dep = dep->m_next) {
-      message << "\tSatisfying " << *dep << "\n";
-    }
-    DOUTR(true, message.str());
-  }
+  d_to_vars.clear();
 }
 
-//_____________________________________________________________________________
-//
-void DependencyBatch::addVar( Variable * var )
+void
+DependencyBatch::addVar(Variable* var)
 {
   std::lock_guard<Uintah::MasterLock> dep_batch_lock(g_dep_batch_mutex);
 
-  m_to_vars.push_back(var);
+  d_to_vars.push_back(var);
 }
 
 

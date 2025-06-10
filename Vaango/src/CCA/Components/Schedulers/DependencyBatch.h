@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -38,54 +39,58 @@ class ProcessorGroup;
 class Variable;
 class VarLabel;
 
-
-class DependencyBatch {
+class DependencyBatch
+{
 
 public:
+  DependencyBatch(int to, DetailedTask* fromTask, DetailedTask* toTask);
 
-  DependencyBatch( int            to
-                 , DetailedTask * fromTask
-                 , DetailedTask * toTask
-                 );
+  ~DependencyBatch() = default;
 
-  ~DependencyBatch();
+  DependencyBatch(const DependencyBatch&) = delete;
 
-  // Initialize receiving information for makeMPIRequest() and received() so that it can receive again.
-  void reset();
+  DependencyBatch&
+  operator=(const DependencyBatch&)  = delete;
 
-  // The first thread calling this will return true, all others will return false.
-  bool makeMPIRequest();
+  DependencyBatch(DependencyBatch&&) = delete;
+
+  DependencyBatch&
+  operator=(DependencyBatch&&) = delete;
+
+  // Initialize receiving information for makeMPIRequest() and received() so
+  // that it can receive again.
+  void
+  reset();
+
+  // The first thread calling this will return true, all others will return
+  // false.
+  bool
+  makeMPIRequest();
 
   // Tells this batch that it has actually been received and
   // awakens anybody blocked in makeMPIRequest().
-  void received( const ProcessorGroup * pg );
+  void
+  received(const ProcessorGroup* pg);
 
-  // Add invalid variables to dep batch. These variables will be marked as valid when MPI completes.
-  void addVar( Variable * var );
+  // Add invalid variables to dep batch. These variables will be marked as valid
+  // when MPI completes.
+  void
+  addVar(Variable* var);
 
-  DependencyBatch          * m_comp_next{nullptr};
-  DetailedTask             * m_from_task{nullptr};
-  DetailedDep              * m_head{nullptr};
-  std::list<DetailedTask*>   m_to_tasks{};
-  int                        m_message_tag{-1};
-  int                        m_to_rank{-1};
-
+  DependencyBatch* m_comp_next{ nullptr };
+  DetailedTask* m_from_task{ nullptr };
+  DetailedDep* m_head{ nullptr };
+  std::list<DetailedTask*> m_to_tasks{};
+  int m_message_tag{ -1 };
+  int m_to_rank{ -1 };
 
 private:
+  bool d_received{ false };
+  std::atomic<bool> d_made_mpi_request{ false };
 
-  // eliminate copy, assignment and move
-  DependencyBatch( const DependencyBatch & )            = delete;
-  DependencyBatch& operator=( const DependencyBatch & ) = delete;
-  DependencyBatch( DependencyBatch && )                 = delete;
-  DependencyBatch& operator=( DependencyBatch && )      = delete;
-
-  bool m_received{false};
-  std::atomic<bool> m_made_mpi_request{false};
-
-  std::vector<Variable*> m_to_vars{};
-
+  std::vector<Variable*> d_to_vars{};
 };
 
 } // namespace Uintah
 
-#endif //CCA_COMPONENTS_SCHEDULERS_DEPENDENCY_BATCH_H
+#endif // CCA_COMPONENTS_SCHEDULERS_DEPENDENCY_BATCH_H
