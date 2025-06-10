@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2025 Biswajit Banerjee, Parresia Research Ltd, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -44,33 +45,31 @@
 #include <sstream>
 #include <string>
 
-using namespace Uintah;
-
-// declared in DetailedTasks.cc - used in both places to protect external ready
-// queue (hence, extern here)
-namespace Uintah {
-extern Uintah::MasterLock g_external_ready_mutex;
-extern Dout g_scrubbing_dbg;
-extern std::string g_var_scrub_dbg;
-extern int g_patch_scrub_dbg;
-} // namespace Uintah
-
 namespace {
 Uintah::MasterLock g_internal_dependency_mutex{};
 Uintah::MasterLock g_dtask_output_mutex{};
 
-Dout g_internal_deps_dbg("InternalDeps",
-                         "DetailedTask",
-                         "info on internal (intra-nodal) data dependencies",
-                         false);
-Dout g_external_deps_dbg("ExternalDeps",
-                         "DetailedTask",
-                         "info on external (inter-nodal) data dependencies",
-                         false);
+Uintah::Dout g_internal_deps_dbg(
+  "InternalDeps",
+  "DetailedTask",
+  "info on internal (intra-nodal) data dependencies",
+  false);
+Uintah::Dout g_external_deps_dbg(
+  "ExternalDeps",
+  "DetailedTask",
+  "info on external (inter-nodal) data dependencies",
+  false);
 } // namespace
 
-//_____________________________________________________________________________
-//
+namespace Uintah {
+
+// declared in DetailedTasks.cc - used in both places to protect external ready
+// queue (hence, extern here)
+extern MasterLock g_external_ready_mutex;
+extern Dout g_scrubbing_dbg;
+extern std::string g_var_scrub_dbg;
+extern int g_patch_scrub_dbg;
+
 DetailedTask::DetailedTask(Task* task,
                            const PatchSubset* patches,
                            const MaterialSubset* matls,
@@ -95,8 +94,6 @@ DetailedTask::DetailedTask(Task* task,
   }
 }
 
-//_____________________________________________________________________________
-//
 DetailedTask::~DetailedTask()
 {
   if (m_patches && m_patches->removeReference()) {
@@ -108,8 +105,6 @@ DetailedTask::~DetailedTask()
   }
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::doit(const ProcessorGroup* pg,
                    std::vector<OnDemandDataWarehouseP>& oddws,
@@ -199,8 +194,6 @@ DetailedTask::doit(const ProcessorGroup* pg,
   }
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::scrub(std::vector<OnDemandDataWarehouseP>& dws)
 {
@@ -439,8 +432,6 @@ DetailedTask::scrub(std::vector<OnDemandDataWarehouseP>& dws)
   }
 } // end scrub()
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::findRequiringTasks(const VarLabel* var,
                                  std::list<DetailedTask*>& requiringTasks)
@@ -457,19 +448,14 @@ DetailedTask::findRequiringTasks(const VarLabel* var,
   }
 
   // find internal requires
-  std::map<DetailedTask*, InternalDependency*>::iterator internalDepIter;
-  for (internalDepIter = m_internal_dependents.begin();
-       internalDepIter != m_internal_dependents.end();
-       ++internalDepIter) {
-    if (internalDepIter->second->m_vars.find(var) !=
-        internalDepIter->second->m_vars.end()) {
-      requiringTasks.push_back(internalDepIter->first);
+  for (auto internalDep : m_internal_dependents) {
+    if (internalDep.second->m_vars.find(var) !=
+        internalDep.second->m_vars.end()) {
+      requiringTasks.push_back(internalDep.first);
     }
   }
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::addComputes(DependencyBatch* comp)
 {
@@ -477,8 +463,6 @@ DetailedTask::addComputes(DependencyBatch* comp)
   m_comp_head       = comp;
 }
 
-//_____________________________________________________________________________
-//
 bool
 DetailedTask::addRequires(DependencyBatch* req)
 {
@@ -486,8 +470,6 @@ DetailedTask::addRequires(DependencyBatch* req)
   return m_reqs.insert(std::make_pair(req, req)).second;
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::addInternalComputes(DependencyBatch* comp)
 {
@@ -495,8 +477,6 @@ DetailedTask::addInternalComputes(DependencyBatch* comp)
   m_internal_comp_head = comp;
 }
 
-//_____________________________________________________________________________
-//
 bool
 DetailedTask::addInternalRequires(DependencyBatch* req)
 {
@@ -504,8 +484,7 @@ DetailedTask::addInternalRequires(DependencyBatch* req)
   return m_internal_reqs.insert(std::make_pair(req, req)).second;
 }
 
-//_____________________________________________________________________________
-// can be called in one of two places - when the last MPI Recv has completed, or
+// Can be called in one of two places - when the last MPI Recv has completed, or
 // from MPIScheduler
 void
 DetailedTask::checkExternalDepCount()
@@ -537,8 +516,6 @@ DetailedTask::checkExternalDepCount()
   }
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::resetDependencyCounts()
 {
@@ -550,8 +527,6 @@ DetailedTask::resetDependencyCounts()
   m_exec_timer.reset(true);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::addInternalDependency(DetailedTask* prerequisiteTask,
                                     const VarLabel* var)
@@ -580,8 +555,6 @@ DetailedTask::addInternalDependency(DetailedTask* prerequisiteTask,
   }
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::done(std::vector<OnDemandDataWarehouseP>& dws)
 {
@@ -611,8 +584,6 @@ DetailedTask::done(std::vector<OnDemandDataWarehouseP>& dws)
   m_exec_timer.stop();
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::dependencySatisfied(InternalDependency* dep)
 {
@@ -646,22 +617,18 @@ DetailedTask::dependencySatisfied(InternalDependency* dep)
   }
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::emitEdges(ProblemSpecP edgesElement)
 {
-  for (auto req_iter = m_reqs.begin(); req_iter != m_reqs.end(); ++req_iter) {
-    DetailedTask* fromTask = (*req_iter).first->m_from_task;
+  for (auto& req : m_reqs) {
+    DetailedTask* fromTask = req.first->m_from_task;
     ProblemSpecP edge      = edgesElement->appendChild("edge");
     edge->appendElement("source", fromTask->getName());
     edge->appendElement("target", getName());
   }
 
-  for (auto iter = m_internal_dependencies.begin();
-       iter != m_internal_dependencies.end();
-       ++iter) {
-    DetailedTask* fromTask = (*iter).m_prerequisite_task;
+  for (auto& int_dep : m_internal_dependencies) {
+    DetailedTask* fromTask = int_dep.m_prerequisite_task;
     if (getTask()->isReductionTask() &&
         fromTask->getTask()->isReductionTask()) {
       // Ignore internal links between reduction tasks because they
@@ -674,8 +641,6 @@ DetailedTask::emitEdges(ProblemSpecP edgesElement)
   }
 }
 
-//_____________________________________________________________________________
-//
 class PatchIDIterator
 {
 
@@ -683,6 +648,11 @@ public:
   PatchIDIterator(const std::vector<const Patch*>::const_iterator& iter)
     : m_const_iter(iter)
   {
+  }
+
+  PatchIDIterator(const PatchIDIterator& iter2)
+  {
+    m_const_iter = iter2.m_const_iter;
   }
 
   PatchIDIterator&
@@ -716,8 +686,6 @@ private:
   std::vector<const Patch*>::const_iterator m_const_iter;
 };
 
-//_____________________________________________________________________________
-//
 std::string
 DetailedTask::getName() const
 {
@@ -743,8 +711,6 @@ DetailedTask::getName() const
 
   return m_name;
 }
-
-namespace Uintah {
 
 std::ostream&
 operator<<(std::ostream& out, const DetailedTask& dtask)
@@ -801,12 +767,8 @@ operator<<(std::ostream& out, const DetailedTask& dtask)
   return out;
 }
 
-} // end namespace Uintah
-
 #ifdef HAVE_CUDA
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::assignDevice(unsigned int device_id)
 {
@@ -814,7 +776,6 @@ DetailedTask::assignDevice(unsigned int device_id)
   deviceNums_.insert(device_id);
 }
 
-//_____________________________________________________________________________
 // For tasks where there are multiple devices for the task (i.e. data archiver
 // output tasks)
 std::set<unsigned int>
@@ -823,8 +784,6 @@ DetailedTask::getDeviceNums() const
   return deviceNums_;
 }
 
-//_____________________________________________________________________________
-//
 cudaStream_t*
 DetailedTask::getCudaStreamForThisTask(unsigned int device_id) const
 {
@@ -836,8 +795,6 @@ DetailedTask::getCudaStreamForThisTask(unsigned int device_id) const
   return nullptr;
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::setCudaStreamForThisTask(unsigned int device_id,
                                        cudaStream_t* stream)
@@ -868,16 +825,12 @@ DetailedTask::setCudaStreamForThisTask(unsigned int device_id,
   }
 };
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::clearCudaStreamsForThisTask()
 {
   d_cudaStreams.clear();
 }
 
-//_____________________________________________________________________________
-//
 bool
 DetailedTask::checkCudaStreamDoneForThisTask(unsigned int device_id) const
 {
@@ -949,8 +902,6 @@ DetailedTask::checkCudaStreamDoneForThisTask(unsigned int device_id) const
   }
 }
 
-//_____________________________________________________________________________
-//
 bool
 DetailedTask::checkAllCudaStreamsDoneForThisTask() const
 {
@@ -974,8 +925,6 @@ DetailedTask::checkAllCudaStreamsDoneForThisTask() const
   return true;
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::setTaskGpuDataWarehouse(const unsigned int whichDevice,
                                       Task::WhichDW DW,
@@ -996,8 +945,6 @@ DetailedTask::setTaskGpuDataWarehouse(const unsigned int whichDevice,
   }
 }
 
-//_____________________________________________________________________________
-//
 GPUDataWarehouse*
 DetailedTask::getTaskGpuDataWarehouse(const unsigned int whichDevice,
                                       Task::WhichDW DW)
@@ -1009,8 +956,6 @@ DetailedTask::getTaskGpuDataWarehouse(const unsigned int whichDevice,
   return nullptr;
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::deleteTaskGpuDataWarehouses()
 {
@@ -1031,8 +976,6 @@ DetailedTask::deleteTaskGpuDataWarehouses()
   }
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::clearPreparationCollections()
 {
@@ -1043,16 +986,12 @@ DetailedTask::clearPreparationCollections()
   varsBeingCopiedByTask.clear();
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::addTempHostMemoryToBeFreedOnCompletion(void* ptr)
 {
   taskHostMemoryPoolItems.push(ptr);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::addTempCudaMemoryToBeFreedOnCompletion(unsigned int device_id,
                                                      void* ptr)
@@ -1061,8 +1000,6 @@ DetailedTask::addTempCudaMemoryToBeFreedOnCompletion(unsigned int device_id,
   taskCudaMemoryPoolItems.push_back(gpuItem);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTask::deleteTemporaryTaskVars()
 {
@@ -1082,3 +1019,5 @@ DetailedTask::deleteTemporaryTaskVars()
 }
 
 #endif // HAVE_CUDA
+
+} // namespace Uintah
