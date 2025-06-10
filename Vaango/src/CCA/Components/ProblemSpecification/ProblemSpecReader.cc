@@ -24,6 +24,7 @@
  * IN THE SOFTWARE.
  */
 #include <CCA/Components/ProblemSpecification/ProblemSpecReader.h>
+#include <CCA/Components/ProblemSpecification/ProblemSpecReaderUtils.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Parallel/Parallel.h>       // Only used for MPI cerr
@@ -1534,41 +1535,37 @@ AttributeAndTagBase::validateText(const string& text, xmlNode* node) const
 
   switch (type_) {
     case DOUBLE: {
-      // WARNING: this sscanf isn't a sufficient test to validate that a double
-      // (and only
-      //          a double exists in the text...
-      double value;
-      int num = sscanf(text.c_str(), "%lf", &value);
-
-      if (num != 1) {
-        throw ProblemSetupException(
-          classType + " <" + completeName +
-            "> should have a double value (but has: '" + text +
-            "').  Please fix XML in .ups file or correct validation Tag "
-            "list.\n" +
-            getErrorInfo(node),
-          __FILE__,
-          __LINE__);
-      } else {
-        validateDouble(value);
+      try {
+        Vaango::ProblemSpec::read_and_validate_single_double(
+          text, node, classType, validValues_, getCompleteName());
+      } catch (const Uintah::ProblemSetupException& e) {
+        throw; // Rethrows the ORIGINAL Uintah::ProblemSetupException object
+               // It will now propagate to the next outer try-catch block.
+      } catch (const std::exception& e) {
+        throw; // Rethrows the caught std::exception
+      } catch (...) {
+        // Catch any other unknown exception types
+        std::cerr
+          << "Caught and rethrow an unknown exception type in validateText."
+          << std::endl;
+        throw; // Rethrows the unknown exception
       }
     } break;
     case INTEGER: {
-      int value;
-      int num = sscanf(text.c_str(), "%d", &value); // WARNING: this is probably
-                                                    // not a sufficient check
-                                                    // for an integer...
-      if (num != 1) {
-        throw ProblemSetupException(
-          classType + " <" + completeName +
-            "> should have an integer value (but has: '" + text +
-            "').  Please fix XML in .ups file or correct validation Tag "
-            "list.\n" +
-            getErrorInfo(node),
-          __FILE__,
-          __LINE__);
-      } else {
-        validateDouble((double)value);
+      try {
+        Vaango::ProblemSpec::read_and_validate_single_integer(
+          text, node, classType, validValues_, getCompleteName());
+      } catch (const Uintah::ProblemSetupException& e) {
+        throw; // Rethrows the ORIGINAL Uintah::ProblemSetupException object
+               // It will now propagate to the next outer try-catch block.
+      } catch (const std::exception& e) {
+        throw; // Rethrows the caught std::exception
+      } catch (...) {
+        // Catch any other unknown exception types
+        std::cerr
+          << "Caught and rethrow an unknown exception type in validateText."
+          << std::endl;
+        throw; // Rethrows the unknown exception
       }
     } break;
     case STRING:
@@ -1605,96 +1602,54 @@ AttributeAndTagBase::validateText(const string& text, xmlNode* node) const
       }
     } break;
     case MULTIPLE_INTEGERS: {
-      int loc = text.find(".");
-      if (loc != -1) {
-        throw ProblemSetupException(
-          classType + " ('" + completeName +
-            "') should have a multiple integer values (but has: '" + text +
-            "').  Please fix XML in .ups file or correct validation Tag "
-            "list.\n" +
-            getErrorInfo(node),
-          __FILE__,
-          __LINE__);
-      }
-      char tokens[text.length() + 1];
-      strncpy(tokens, text.c_str(), sizeof(tokens));
-
-      char* token = strtok(tokens, "[,]");
-
-      while (token != nullptr) {
-        int result;
-        int num = sscanf(token, "%d", &result);
-
-        if (num != 1) {
-          throw ProblemSetupException(
-            classType + " ('" + completeName +
-              "') should have a multiple double values (but has: '" + text +
-              "').  Please fix XML in .ups file or correct validation Tag "
-              "list.\n" +
-              getErrorInfo(node),
-            __FILE__,
-            __LINE__);
-        }
-        token = strtok(nullptr, "[,]");
+      try {
+        Vaango::ProblemSpec::read_and_validate_multiple_integers(
+          text, node, classType, getCompleteName());
+      } catch (const Uintah::ProblemSetupException& e) {
+        throw; // Rethrows the ORIGINAL Uintah::ProblemSetupException object
+               // It will now propagate to the next outer try-catch block.
+      } catch (const std::exception& e) {
+        throw; // Rethrows the caught std::exception
+      } catch (...) {
+        // Catch any other unknown exception types
+        std::cerr
+          << "Caught and rethrow an unknown exception type in validateText."
+          << std::endl;
+        throw; // Rethrows the unknown exception
       }
     } break;
     case MULTIPLE_DOUBLES: {
-      char tokens[text.length() + 1];
-      strncpy(tokens, text.c_str(), sizeof(tokens));
-
-      char* token = strtok(tokens, "[,]");
-
-      while (token != nullptr) {
-        double result;
-        int num = sscanf(token, "%lf", &result);
-
-        if (num != 1) {
-          throw ProblemSetupException(
-            classType + " ('" + completeName +
-              "') should have a multiple double values (but has: '" + text +
-              "').  Please fix XML in .ups file or correct validation Tag "
-              "list.\n" +
-              getErrorInfo(node),
-            __FILE__,
-            __LINE__);
-        }
-        token = strtok(nullptr, "[,]");
+      try {
+        Vaango::ProblemSpec::read_and_validate_multiple_doubles(
+          text, node, classType, getCompleteName());
+      } catch (const Uintah::ProblemSetupException& e) {
+        throw; // Rethrows the ORIGINAL Uintah::ProblemSetupException object
+               // It will now propagate to the next outer try-catch block.
+      } catch (const std::exception& e) {
+        throw; // Rethrows the caught std::exception
+      } catch (...) {
+        // Catch any other unknown exception types
+        std::cerr
+          << "Caught and rethrow an unknown exception type in validateText."
+          << std::endl;
+        throw; // Rethrows the unknown exception
       }
     } break;
     case MULTIPLE_VECTORS: {
-      string tempText = text;
-      replace_substring(tempText, " ", "");
-      replace_substring(tempText, "\t", "");
-      collapse(tempText);
-
-      // Vector of Vectors starts with [[ and ends with ]]... verify this...
-      if (tempText.substr(0, 2) != "[[" ||
-          tempText.substr(tempText.length() - 2, 2) != "]]") {
-        throw ProblemSetupException("This does not look like a Vector of "
-                                    "Vectors.  Expected to find [[ and ]] but "
-                                    "have this: '" +
-                                      tempText + "'",
-                                    __FILE__,
-                                    __LINE__);
-      }
-
-      unsigned int pos = 1; // start at first vectors '['
-
-      while (pos < tempText.length() - 2) {
-
-        string vectorStr =
-          tempText.substr(pos, tempText.find("]", pos) - pos + 1);
-        if (!validateVector(vectorStr)) {
-          throw ProblemSetupException(
-            classType + " ('" + completeName +
-              "') should have a MULTIPLE_VECTOR value (but has: '" + text +
-              "').  Please fix XML in .ups file or correct validation Tag "
-              "list.\n" +
-              getErrorInfo(node),
-            __FILE__,
-            __LINE__);
-        }
-        pos = tempText.find("[", pos + 1);
+      try {
+        Vaango::ProblemSpec::read_and_validate_multiple_vectors(
+          text, node, classType, getCompleteName());
+      } catch (const Uintah::ProblemSetupException& e) {
+        throw; // Rethrows the ORIGINAL Uintah::ProblemSetupException object
+               // It will now propagate to the next outer try-catch block.
+      } catch (const std::exception& e) {
+        throw; // Rethrows the caught std::exception
+      } catch (...) {
+        // Catch any other unknown exception types
+        std::cerr
+          << "Caught and rethrow an unknown exception type in validateText."
+          << std::endl;
+        throw; // Rethrows the unknown exception
       }
     } break;
     case NO_DATA:
