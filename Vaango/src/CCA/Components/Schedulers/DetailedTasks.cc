@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2025 Biswajit Banerjee, Parresia Research Ltd, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -124,8 +125,6 @@ using host_ready_queue_monitor = Uintah::CrowdMonitor<host_ready_queue_tag>;
 
 } // namespace
 
-//_____________________________________________________________________________
-//
 DetailedTasks::DetailedTasks(
   SchedulerCommon* sc,
   const ProcessorGroup* pg,
@@ -166,8 +165,6 @@ DetailedTasks::DetailedTasks(
   }
 }
 
-//_____________________________________________________________________________
-//
 DetailedTasks::~DetailedTasks()
 {
   // Free dynamically allocated SrubItems
@@ -184,8 +181,6 @@ DetailedTasks::~DetailedTasks()
   delete m_send_old_data;
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::assignMessageTags(unsigned int index)
 {
@@ -326,16 +321,12 @@ DetailedTasks::assignMessageTags(unsigned int index)
   }
 } // end assignMessageTags()
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::add(DetailedTask* dtask)
 {
   m_tasks.push_back(dtask);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::makeDWKeyDatabase()
 {
@@ -369,12 +360,10 @@ DetailedTasks::makeDWKeyDatabase()
           }
         }
       } // end matls
-    }   // end comps
-  }     // end localtasks
+    } // end comps
+  } // end localtasks
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::computeLocalTasks()
 {
@@ -403,8 +392,6 @@ DetailedTasks::computeLocalTasks()
   }
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::initializeScrubs(std::vector<OnDemandDataWarehouseP>& dws,
                                 int dwmap[])
@@ -453,8 +440,6 @@ DetailedTasks::initializeScrubs(std::vector<OnDemandDataWarehouseP>& dws,
        "Rank-" << Parallel::getMPIRank() << " End initialize scrubs");
 }
 
-//_____________________________________________________________________________
-//
 // used to be in terms of the dw index within the scheduler,
 // but now store WhichDW.  This enables multiple tg execution
 void
@@ -484,8 +469,6 @@ DetailedTasks::addScrubCount(const VarLabel* var,
   }
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::setScrubCount(const Task::Dependency* req,
                              int matl,
@@ -522,8 +505,6 @@ DetailedTasks::setScrubCount(const Task::Dependency* req,
   }
 }
 
-//_____________________________________________________________________________
-//
 bool
 DetailedTasks::getScrubCount(const VarLabel* label,
                              int matlIndex,
@@ -542,8 +523,6 @@ DetailedTasks::getScrubCount(const VarLabel* label,
   }
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::createScrubCounts()
 {
@@ -620,8 +599,6 @@ DetailedTasks::createScrubCounts()
   }
 }
 
-//_____________________________________________________________________________
-//
 DetailedDep*
 DetailedTasks::findMatchingDetailedDep(DependencyBatch* batch,
                                        DetailedTask* toTask,
@@ -1051,8 +1028,6 @@ DetailedTasks::possiblyCreateDependency(DetailedTask* from,
   }
 }
 
-//_____________________________________________________________________________
-//
 DetailedTask*
 DetailedTasks::getOldDWSendTask(int proc)
 {
@@ -1068,8 +1043,6 @@ DetailedTasks::getOldDWSendTask(int proc)
   return m_tasks[m_send_old_map[proc]];
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::internalDependenciesSatisfied(DetailedTask* dtask)
 {
@@ -1080,8 +1053,6 @@ DetailedTasks::internalDependenciesSatisfied(DetailedTask* dtask)
   m_atomic_initial_ready_tasks_size.fetch_add(1, std::memory_order_relaxed);
 }
 
-//_____________________________________________________________________________
-//
 DetailedTask*
 DetailedTasks::getNextInternalReadyTask()
 {
@@ -1100,16 +1071,12 @@ DetailedTasks::getNextInternalReadyTask()
   return nextTask;
 }
 
-//_____________________________________________________________________________
-//
 int
 DetailedTasks::numInternalReadyTasks()
 {
   return m_atomic_initial_ready_tasks_size.load(std::memory_order_seq_cst);
 }
 
-//_____________________________________________________________________________
-//
 DetailedTask*
 DetailedTasks::getNextExternalReadyTask()
 {
@@ -1128,16 +1095,12 @@ DetailedTasks::getNextExternalReadyTask()
   return nextTask;
 }
 
-//_____________________________________________________________________________
-//
 int
 DetailedTasks::numExternalReadyTasks()
 {
   return m_atomic_mpi_completed_tasks_size.load(std::memory_order_seq_cst);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::initTimestep()
 {
@@ -1148,8 +1111,6 @@ DetailedTasks::initTimestep()
   initializeBatches();
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::incrementDependencyGeneration()
 {
@@ -1162,8 +1123,6 @@ DetailedTasks::incrementDependencyGeneration()
   m_current_dependency_generation++;
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::initializeBatches()
 {
@@ -1172,8 +1131,6 @@ DetailedTasks::initializeBatches()
   }
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::logMemoryUse(std::ostream& out,
                             unsigned long& total,
@@ -1224,8 +1181,6 @@ DetailedTasks::logMemoryUse(std::ostream& out,
             0);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::emitEdges(ProblemSpecP edgesElement, int rank)
 {
@@ -1238,8 +1193,6 @@ DetailedTasks::emitEdges(ProblemSpecP edgesElement, int rank)
   }
 }
 
-//_____________________________________________________________________________
-//
 // comparing the priority of two detailed tasks - true means give rtask priority
 bool
 DetailedTaskPriorityComparison::operator()(DetailedTask*& ltask,
@@ -1392,8 +1345,6 @@ DetailedTaskPriorityComparison::operator()(DetailedTask*& ltask,
 
 #ifdef HAVE_CUDA
 
-//_____________________________________________________________________________
-//
 bool
 DetailedTasks::getDeviceValidateRequiresCopiesTask(DetailedTask*& dtask)
 {
@@ -1422,8 +1373,6 @@ DetailedTasks::getDeviceValidateRequiresCopiesTask(DetailedTask*& dtask)
   return retVal;
 }
 
-//_____________________________________________________________________________
-//
 bool
 DetailedTasks::getDevicePerformGhostCopiesTask(DetailedTask*& dtask)
 {
@@ -1450,8 +1399,6 @@ DetailedTasks::getDevicePerformGhostCopiesTask(DetailedTask*& dtask)
   return retVal;
 }
 
-//_____________________________________________________________________________
-//
 bool
 DetailedTasks::getDeviceValidateGhostCopiesTask(DetailedTask*& dtask)
 {
@@ -1478,8 +1425,6 @@ DetailedTasks::getDeviceValidateGhostCopiesTask(DetailedTask*& dtask)
   return retVal;
 }
 
-//______________________________________________________________________
-//
 bool
 DetailedTasks::getDeviceCheckIfExecutableTask(DetailedTask*& dtask)
 {
@@ -1505,8 +1450,6 @@ DetailedTasks::getDeviceCheckIfExecutableTask(DetailedTask*& dtask)
   return retVal;
 }
 
-//______________________________________________________________________
-//
 bool
 DetailedTasks::getDeviceReadyToExecuteTask(DetailedTask*& dtask)
 {
@@ -1532,8 +1475,6 @@ DetailedTasks::getDeviceReadyToExecuteTask(DetailedTask*& dtask)
   return retVal;
 }
 
-//______________________________________________________________________
-//
 bool
 DetailedTasks::getDeviceExecutionPendingTask(DetailedTask*& dtask)
 {
@@ -1559,8 +1500,6 @@ DetailedTasks::getDeviceExecutionPendingTask(DetailedTask*& dtask)
   return retVal;
 }
 
-//_____________________________________________________________________________
-//
 bool
 DetailedTasks::getHostValidateRequiresCopiesTask(DetailedTask*& dtask)
 {
@@ -1588,8 +1527,6 @@ DetailedTasks::getHostValidateRequiresCopiesTask(DetailedTask*& dtask)
   return retVal;
 }
 
-//_____________________________________________________________________________
-//
 bool
 DetailedTasks::getHostCheckIfExecutableTask(DetailedTask*& dtask)
 {
@@ -1615,8 +1552,6 @@ DetailedTasks::getHostCheckIfExecutableTask(DetailedTask*& dtask)
   return retVal;
 }
 
-//______________________________________________________________________
-//
 bool
 DetailedTasks::getHostReadyToExecuteTask(DetailedTask*& dtask)
 {
@@ -1642,80 +1577,60 @@ DetailedTasks::getHostReadyToExecuteTask(DetailedTask*& dtask)
   return retVal;
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::addDeviceValidateRequiresCopies(DetailedTask* dtask)
 {
   device_validateRequiresCopies_pool.insert(dtask);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::addDevicePerformGhostCopies(DetailedTask* dtask)
 {
   device_performGhostCopies_pool.insert(dtask);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::addDeviceValidateGhostCopies(DetailedTask* dtask)
 {
   device_validateGhostCopies_pool.insert(dtask);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::addDeviceCheckIfExecutable(DetailedTask* dtask)
 {
   device_checkIfExecutable_pool.insert(dtask);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::addDeviceReadyToExecute(DetailedTask* dtask)
 {
   device_readyToExecute_pool.insert(dtask);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::addDeviceExecutionPending(DetailedTask* dtask)
 {
   device_executionPending_pool.insert(dtask);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::addHostValidateRequiresCopies(DetailedTask* dtask)
 {
   host_validateRequiresCopies_pool.insert(dtask);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::addHostCheckIfExecutable(DetailedTask* dtask)
 {
   host_checkIfExecutable_pool.insert(dtask);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::addHostReadyToExecute(DetailedTask* dtask)
 {
   host_readyToExecute_pool.insert(dtask);
 }
 
-//_____________________________________________________________________________
-//
 void
 DetailedTasks::createInternalDependencyBatch(DetailedTask* from,
                                              Task::Dependency* comp,
@@ -1972,8 +1887,6 @@ DetailedTasks::createInternalDependencyBatch(DetailedTask* from,
   }
 }
 
-//_____________________________________________________________________________
-//
 DetailedDep*
 DetailedTasks::findMatchingInternalDetailedDep(DependencyBatch* batch,
                                                DetailedTask* toTask,
