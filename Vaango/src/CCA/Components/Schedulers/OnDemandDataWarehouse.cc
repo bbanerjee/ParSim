@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2025 Biswajit Banerjee, Parresia Research Ltd, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -147,8 +148,6 @@ Uintah::MasterLock g_running_tasks_lock{};
 
 bool OnDemandDataWarehouse::s_combine_memory = false;
 
-//______________________________________________________________________
-//
 OnDemandDataWarehouse::OnDemandDataWarehouse(
   const ProcessorGroup* myworld,
   Scheduler* scheduler,
@@ -189,15 +188,11 @@ OnDemandDataWarehouse::OnDemandDataWarehouse(
 #endif
 }
 
-//______________________________________________________________________
-//
 OnDemandDataWarehouse::~OnDemandDataWarehouse()
 {
   clear();
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::clear()
 {
@@ -252,16 +247,12 @@ OnDemandDataWarehouse::clear()
 #endif
 }
 
-//______________________________________________________________________
-//
 bool
 OnDemandDataWarehouse::isFinalized() const
 {
   return m_finalized;
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::finalize()
 {
@@ -269,8 +260,6 @@ OnDemandDataWarehouse::finalize()
   m_finalized = true;
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::unfinalize()
 {
@@ -279,16 +268,12 @@ OnDemandDataWarehouse::unfinalize()
   m_finalized = false;
 }
 
-//__________________________________
-//
 void
 OnDemandDataWarehouse::refinalize()
 {
   m_finalized = true;
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::put(Variable* var,
                            const VarLabel* label,
@@ -324,8 +309,6 @@ OnDemandDataWarehouse::put(Variable* var,
   }
 }
 
-//
-//______________________________________________________________________
 void
 OnDemandDataWarehouse::copyKeyDB(KeyDatabase<Patch>& varkeyDB,
                                  KeyDatabase<Level>& levelkeyDB)
@@ -334,8 +317,6 @@ OnDemandDataWarehouse::copyKeyDB(KeyDatabase<Patch>& varkeyDB,
   m_level_key_DB.merge(levelkeyDB);
 }
 
-//
-//______________________________________________________________________
 void
 OnDemandDataWarehouse::doReserve()
 {
@@ -343,8 +324,6 @@ OnDemandDataWarehouse::doReserve()
   m_level_DB.doReserve(&m_level_key_DB);
 }
 
-//
-//______________________________________________________________________
 void
 OnDemandDataWarehouse::get(ReductionVariableBase& var,
                            const VarLabel* label,
@@ -379,7 +358,6 @@ OnDemandDataWarehouse::get(ReductionVariableBase& var,
   m_level_DB.get(label, matlIndex, level, var);
 }
 
-//______________________________________________________________________
 //    get a std::map<int,T> of reduction variables from the DW
 //    C++ doesn't allow for virtual templated functions, thus the duplication
 //    Use a map instead of a vector since the material indices may not be
@@ -410,7 +388,6 @@ OnDemandDataWarehouse::get_sum_vartypeT(const VarLabel*, const MaterialSubset*);
 template std::map<int, Vector>
 OnDemandDataWarehouse::get_sum_vartypeT(const VarLabel*, const MaterialSubset*);
 
-//__________________________________
 //        double
 std::map<int, double>
 OnDemandDataWarehouse::get_sum_vartypeD(const VarLabel* label,
@@ -419,7 +396,6 @@ OnDemandDataWarehouse::get_sum_vartypeD(const VarLabel* label,
   return get_sum_vartypeT<double>(label, matls);
 }
 
-//__________________________________
 //        Uintah::Vector
 std::map<int, Vector>
 OnDemandDataWarehouse::get_sum_vartypeV(const VarLabel* label,
@@ -428,7 +404,6 @@ OnDemandDataWarehouse::get_sum_vartypeV(const VarLabel* label,
   return get_sum_vartypeT<Vector>(label, matls);
 }
 
-//______________________________________________________________________
 //
 void
 OnDemandDataWarehouse::get(SoleVariableBase& var,
@@ -464,7 +439,6 @@ OnDemandDataWarehouse::get(SoleVariableBase& var,
   m_level_DB.get(label, matlIndex, level, var);
 }
 
-//______________________________________________________________________
 //
 bool
 OnDemandDataWarehouse::exists(const VarLabel* label,
@@ -484,8 +458,6 @@ OnDemandDataWarehouse::exists(const VarLabel* label,
   return false;
 }
 
-//______________________________________________________________________
-//
 bool
 OnDemandDataWarehouse::exists(const VarLabel* label,
                               int matlIndex,
@@ -498,8 +470,6 @@ OnDemandDataWarehouse::exists(const VarLabel* label,
   return false;
 }
 
-//______________________________________________________________________
-//
 bool
 OnDemandDataWarehouse::exists(const VarLabel* label) const
 {
@@ -515,8 +485,6 @@ OnDemandDataWarehouse::exists(const VarLabel* label) const
   }
 }
 
-//______________________________________________________________________
-//
 ReductionVariableBase*
 OnDemandDataWarehouse::getReductionVariable(const VarLabel* label,
                                             int matlIndex,
@@ -686,8 +654,6 @@ OnDemandDataWarehouse::createGPUReductionVariable(
 
 #endif
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::exchangeParticleQuantities(DetailedTasks* dts,
                                                   LoadBalancer* lb,
@@ -894,8 +860,6 @@ OnDemandDataWarehouse::exchangeParticleQuantities(DetailedTasks* dts,
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::sendMPI(DependencyBatch* batch,
                                const VarLabel* pos_var,
@@ -1031,8 +995,6 @@ OnDemandDataWarehouse::sendMPI(DependencyBatch* batch,
   } // end switch( label->getType() );
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::recvMPI(DependencyBatch* batch,
                                BufferInfo& buffer,
@@ -1171,8 +1133,6 @@ OnDemandDataWarehouse::recvMPI(DependencyBatch* batch,
   } // end switch( label->getType() );
 } // end recvMPI()
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::reduceMPI(const VarLabel* label,
                                  const Level* level,
@@ -1235,8 +1195,6 @@ OnDemandDataWarehouse::reduceMPI(const VarLabel* label,
     count += sendcount;
   }
 
-  //__________________________________
-  //
   int packsize;
   Uintah::MPI::Pack_size(
     count, datatype, d_myworld->getGlobalComm(nComm), &packsize);
@@ -1311,8 +1269,6 @@ OnDemandDataWarehouse::reduceMPI(const VarLabel* label,
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::put(const ReductionVariableBase& var,
                            const VarLabel* label,
@@ -1335,8 +1291,6 @@ OnDemandDataWarehouse::put(const ReductionVariableBase& var,
   m_level_DB.putReduce(label, matlIndex, level, var.clone(), init);
 }
 
-//______________________________________________________________________
-//
 //    Put a std::map of Sum<T> reduction variables
 //    C++ doesn't allow for virtual templated functions, thus the duplication
 //    Use a map instead of a vector since the material indices may not be
@@ -1369,7 +1323,6 @@ OnDemandDataWarehouse::put_sum_vartypeT(std::map<int, Vector> rv,
                                         const VarLabel* l,
                                         const MaterialSubset* matls);
 
-//__________________________________
 //  Vector
 void
 OnDemandDataWarehouse::put_sum_vartype(std::map<int, Vector>& reductionVars,
@@ -1378,7 +1331,6 @@ OnDemandDataWarehouse::put_sum_vartype(std::map<int, Vector>& reductionVars,
 {
   put_sum_vartypeT<Vector>(reductionVars, label, matls);
 }
-//__________________________________
 //    double
 void
 OnDemandDataWarehouse::put_sum_vartype(std::map<int, double>& reductionVars,
@@ -1388,8 +1340,6 @@ OnDemandDataWarehouse::put_sum_vartype(std::map<int, double>& reductionVars,
   put_sum_vartypeT<double>(reductionVars, label, matls);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::override(const ReductionVariableBase& var,
                                 const VarLabel* label,
@@ -1406,8 +1356,6 @@ OnDemandDataWarehouse::override(const ReductionVariableBase& var,
   m_level_DB.put(label, matlIndex, level, var.clone(), true, true);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::override(const SoleVariableBase& var,
                                 const VarLabel* label,
@@ -1425,8 +1373,6 @@ OnDemandDataWarehouse::override(const SoleVariableBase& var,
     label, matlIndex, level, var.clone(), d_scheduler->copyTimestep(), true);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::put(const SoleVariableBase& var,
                            const VarLabel* label,
@@ -1450,8 +1396,6 @@ OnDemandDataWarehouse::put(const SoleVariableBase& var,
   }
 }
 
-//______________________________________________________________________
-//
 ParticleSubset*
 OnDemandDataWarehouse::createParticleSubset(
   particleIndex numParticles,
@@ -1483,7 +1427,7 @@ OnDemandDataWarehouse::createParticleSubset(
 
   return psubset;
 }
-//______________________________________________________________________
+
 //  Delete the particle subset from the
 void
 OnDemandDataWarehouse::deleteParticleSubset(ParticleSubset* pset)
@@ -1506,8 +1450,6 @@ OnDemandDataWarehouse::deleteParticleSubset(ParticleSubset* pset)
   deletePSetRecord(m_pset_db, patch, low, high, matlIndex, pset);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::saveParticleSubset(
   ParticleSubset* psubset,
@@ -1538,8 +1480,6 @@ OnDemandDataWarehouse::saveParticleSubset(
   insertPSetRecord(m_pset_db, patch, low, high, matlIndex, psubset);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::printParticleSubsets()
 {
@@ -1554,8 +1494,6 @@ OnDemandDataWarehouse::printParticleSubsets()
   DOUTR(true, "----------------------------------------------");
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::insertPSetRecord(psetDBType& subsetDB,
                                         const Patch* patch,
@@ -1593,7 +1531,7 @@ OnDemandDataWarehouse::insertPSetRecord(psetDBType& subsetDB,
     psubset->addReference();
   }
 }
-//______________________________________________________________________
+
 //    Delete a particleSubset record from the data base
 void
 OnDemandDataWarehouse::deletePSetRecord(psetDBType& subsetDB,
@@ -1632,8 +1570,7 @@ OnDemandDataWarehouse::deletePSetRecord(psetDBType& subsetDB,
     }
   }
 }
-//______________________________________________________________________
-//
+
 ParticleSubset*
 OnDemandDataWarehouse::queryPSetDB(psetDBType& subsetDB,
                                    const Patch* patch,
@@ -1729,8 +1666,6 @@ OnDemandDataWarehouse::queryPSetDB(psetDBType& subsetDB,
   return newsubset;
 }
 
-//______________________________________________________________________
-//
 ParticleSubset*
 OnDemandDataWarehouse::getParticleSubset(int matlIndex, const Patch* patch)
 {
@@ -1740,8 +1675,6 @@ OnDemandDataWarehouse::getParticleSubset(int matlIndex, const Patch* patch)
                            patch->getExtraCellHighIndex());
 }
 
-//______________________________________________________________________
-//
 ParticleSubset*
 OnDemandDataWarehouse::getParticleSubset(int matlIndex,
                                          const Patch* patch,
@@ -1770,8 +1703,6 @@ OnDemandDataWarehouse::getParticleSubset(int matlIndex,
   return subset;
 }
 
-//______________________________________________________________________
-//
 ParticleSubset*
 OnDemandDataWarehouse::getParticleSubset(int matlIndex,
                                          const Patch* patch,
@@ -1802,8 +1733,6 @@ OnDemandDataWarehouse::getParticleSubset(int matlIndex,
   return subset;
 }
 
-//______________________________________________________________________
-//
 ParticleSubset*
 OnDemandDataWarehouse::getParticleSubset(int matlIndex,
                                          const Patch* patch,
@@ -1827,8 +1756,6 @@ OnDemandDataWarehouse::getParticleSubset(int matlIndex,
   return getParticleSubset(matlIndex, lowIndex, highIndex, patch, posvar);
 }
 
-//______________________________________________________________________
-//
 ParticleSubset*
 OnDemandDataWarehouse::getParticleSubset(
   int matlIndex,
@@ -1936,8 +1863,6 @@ OnDemandDataWarehouse::getParticleSubset(
   return newsubset;
 }
 
-//______________________________________________________________________
-//
 ParticleSubset*
 OnDemandDataWarehouse::getDeleteSubset(int matlIndex, const Patch* patch)
 {
@@ -1963,8 +1888,6 @@ OnDemandDataWarehouse::getDeleteSubset(int matlIndex, const Patch* patch)
   return subset;
 }
 
-//______________________________________________________________________
-//
 std::map<const VarLabel*, ParticleVariableBase*>*
 OnDemandDataWarehouse::getNewParticleState(int matlIndex, const Patch* patch)
 {
@@ -1984,8 +1907,6 @@ OnDemandDataWarehouse::getNewParticleState(int matlIndex, const Patch* patch)
   }
 }
 
-//______________________________________________________________________
-//
 bool
 OnDemandDataWarehouse::haveParticleSubset(
   int matlIndex,
@@ -2019,8 +1940,6 @@ OnDemandDataWarehouse::haveParticleSubset(
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::get(constParticleVariableBase& constVar,
                            const VarLabel* label,
@@ -2038,8 +1957,6 @@ OnDemandDataWarehouse::get(constParticleVariableBase& constVar,
     *dynamic_cast<ParticleVariableBase*>(m_var_DB.get(label, matlIndex, patch));
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::get(constParticleVariableBase& constVar,
                            const VarLabel* label,
@@ -2099,8 +2016,6 @@ OnDemandDataWarehouse::get(constParticleVariableBase& constVar,
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::getModifiable(ParticleVariableBase& var,
                                      const VarLabel* label,
@@ -2127,8 +2042,6 @@ OnDemandDataWarehouse::getModifiable(ParticleVariableBase& var,
   }
 }
 
-//______________________________________________________________________
-//
 ParticleVariableBase*
 OnDemandDataWarehouse::getParticleVariable(const VarLabel* label,
                                            ParticleSubset* pset)
@@ -2149,8 +2062,6 @@ OnDemandDataWarehouse::getParticleVariable(const VarLabel* label,
   }
 }
 
-//______________________________________________________________________
-//
 ParticleVariableBase*
 OnDemandDataWarehouse::getParticleVariable(const VarLabel* label,
                                            int matlIndex,
@@ -2175,8 +2086,6 @@ OnDemandDataWarehouse::getParticleVariable(const VarLabel* label,
   return var;
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::allocateTemporary(ParticleVariableBase& var,
                                          ParticleSubset* pset)
@@ -2184,8 +2093,6 @@ OnDemandDataWarehouse::allocateTemporary(ParticleVariableBase& var,
   var.allocate(pset);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::allocateAndPut(ParticleVariableBase& var,
                                       const VarLabel* label,
@@ -2206,8 +2113,6 @@ OnDemandDataWarehouse::allocateAndPut(ParticleVariableBase& var,
   put(var, label);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::put(ParticleVariableBase& var,
                            const VarLabel* label,
@@ -2239,8 +2144,6 @@ OnDemandDataWarehouse::put(ParticleVariableBase& var,
     label, matlIndex, patch, var.clone(), d_scheduler->copyTimestep(), replace);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::copyOut(ParticleVariableBase& var,
                                const VarLabel* label,
@@ -2252,8 +2155,6 @@ OnDemandDataWarehouse::copyOut(ParticleVariableBase& var,
   delete constVar;
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::getCopy(ParticleVariableBase& var,
                                const VarLabel* label,
@@ -2266,8 +2167,6 @@ OnDemandDataWarehouse::getCopy(ParticleVariableBase& var,
   delete constVar;
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::get(constGridVariableBase& constVar,
                            const VarLabel* label,
@@ -2285,8 +2184,6 @@ OnDemandDataWarehouse::get(constGridVariableBase& constVar,
   delete var;
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::getModifiable(GridVariableBase& var,
                                      const VarLabel* label,
@@ -2301,8 +2198,6 @@ OnDemandDataWarehouse::getModifiable(GridVariableBase& var,
   getGridVar(var, label, matlIndex, patch, gtype, numGhostCells);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::allocateTemporary(GridVariableBase& var,
                                          const Patch* patch,
@@ -2326,8 +2221,6 @@ OnDemandDataWarehouse::allocateTemporary(GridVariableBase& var,
   var.allocate(lowIndex, highIndex);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::allocateAndPut(GridVariableBase& var,
                                       const VarLabel* label,
@@ -2643,8 +2536,6 @@ OnDemandDataWarehouse::allocateAndPut(GridVariableBase& var,
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::copyOut(GridVariableBase& var,
                                const VarLabel* label,
@@ -2661,8 +2552,6 @@ OnDemandDataWarehouse::copyOut(GridVariableBase& var,
   delete tmpVar;
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::getCopy(GridVariableBase& var,
                                const VarLabel* label,
@@ -2680,8 +2569,6 @@ OnDemandDataWarehouse::getCopy(GridVariableBase& var,
   delete tmpVar;
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::put(GridVariableBase& var,
                            const VarLabel* label,
@@ -2723,8 +2610,6 @@ OnDemandDataWarehouse::put(GridVariableBase& var,
     label, matlIndex, patch, var.clone(), d_scheduler->copyTimestep(), true);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::get(PerPatchBase& var,
                            const VarLabel* label,
@@ -2744,8 +2629,6 @@ OnDemandDataWarehouse::get(PerPatchBase& var,
   m_var_DB.get(label, matlIndex, patch, var);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::put(PerPatchBase& var,
                            const VarLabel* label,
@@ -2763,13 +2646,10 @@ OnDemandDataWarehouse::put(PerPatchBase& var,
     label, matlIndex, patch, var.clone(), d_scheduler->copyTimestep(), true);
 }
 
-//______________________________________________________________________
-// This returns a constGridVariable for *ALL* patches on a level.
 // This method is essentially identical to "getRegion" except the call to
 // level->selectPatches( ) has been replaced by level->allPatches()
 // For grids containing a large number of patches selectPatches() is very slow
 // This assumes that the variable is not in the DWDatabase<Level>  m_level_DB;
-//______________________________________________________________________
 void
 OnDemandDataWarehouse::getLevel(constGridVariableBase& constGridVar,
                                 const VarLabel* label,
@@ -2787,7 +2667,6 @@ OnDemandDataWarehouse::getLevel(constGridVariableBase& constGridVar,
 
   std::vector<const Patch*> missing_patches; // for bulletproofing
 
-  //__________________________________
   // define the patches for the entire level
   const PatchSet* myPatchesSet = level->allPatches();
   std::vector<const Patch*> patches(level->numPatches());
@@ -2808,7 +2687,6 @@ OnDemandDataWarehouse::getLevel(constGridVariableBase& constGridVar,
     m_var_DB.getlist(label, matlIndex, patch, varlist);
     GridVariableBase* this_var = nullptr;
 
-    //__________________________________
     //  is this variable on this patch?
     for (auto iter = varlist.begin();; ++iter) {
       if (iter == varlist.end()) {
@@ -2840,7 +2718,6 @@ OnDemandDataWarehouse::getLevel(constGridVariableBase& constGridVar,
       tmpVar->offset(patch->getVirtualOffset());
     }
 
-    //__________________________________
     //  copy this patch's data
     IntVector lo = patch->getExtraLowIndex(basis, label->getBoundaryLayer());
     IntVector hi = patch->getExtraHighIndex(basis, label->getBoundaryLayer());
@@ -2880,7 +2757,6 @@ OnDemandDataWarehouse::getLevel(constGridVariableBase& constGridVar,
                         __LINE__);
   }
 
-  //__________________________________
   //  Diagnostics
   DOUTR(g_dw_get_put_dbg,
         " getLevel:  Variable " << *label << ", matl " << matlIndex << ", L-"
@@ -2890,7 +2766,6 @@ OnDemandDataWarehouse::getLevel(constGridVariableBase& constGridVar,
   delete gridVar;
 }
 
-//______________________________________________________________________
 // This putLevel is meant for the Unified Scheduler only.
 void
 OnDemandDataWarehouse::putLevelDB(GridVariableBase* gridVar,
@@ -2908,8 +2783,6 @@ OnDemandDataWarehouse::putLevelDB(GridVariableBase* gridVar,
   m_level_DB.put(label, matlIndex, level, gridVar, init, true);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::getRegion(constGridVariableBase& constVar,
                                  const VarLabel* label,
@@ -2927,8 +2800,6 @@ OnDemandDataWarehouse::getRegion(constGridVariableBase& constVar,
   delete var;
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::getRegionModifiable(GridVariableBase& var,
                                            const VarLabel* label,
@@ -2977,7 +2848,6 @@ OnDemandDataWarehouse::getRegionModifiable(GridVariableBase& var,
       continue;
     }
 
-    //__________________________________
     //  For this patch find the intersection of the requested region
     IntVector patchLo = patch->getLowIndex(basis);
     IntVector patchHi = patch->getHighIndex(basis);
@@ -3001,7 +2871,6 @@ OnDemandDataWarehouse::getRegionModifiable(GridVariableBase& var,
       continue;
     }
 
-    //__________________________________
     //  search varDB for variable
     std::vector<Variable*> varlist;
     m_var_DB.getlist(label, matlIndex, patch, varlist);
@@ -3035,7 +2904,6 @@ OnDemandDataWarehouse::getRegionModifiable(GridVariableBase& var,
       continue;
     }
 
-    //__________________________________
     // Copy data into the variable
     GridVariableBase* tmpVar = var.cloneType();
     tmpVar->copyPointer(*v);
@@ -3067,7 +2935,6 @@ OnDemandDataWarehouse::getRegionModifiable(GridVariableBase& var,
     nCellsCopied += diff.x() * diff.y() * diff.z();
   } // patches loop
 
-  //__________________________________
   //  BULLETPROOFING  Verify that the correct number of cells were copied
   //
   // compute the number of cells in the region
@@ -3141,8 +3008,6 @@ OnDemandDataWarehouse::getRegionModifiable(GridVariableBase& var,
   }
 }
 
-//______________________________________________________________________
-//
 size_t
 OnDemandDataWarehouse::emit(OutputContext& oc,
                             const VarLabel* label,
@@ -3319,8 +3184,6 @@ OnDemandDataWarehouse::emitPIDX(PIDXOutputContext& pc,
 
 #endif
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::print(std::ostream& intout,
                              const VarLabel* label,
@@ -3357,8 +3220,6 @@ OnDemandDataWarehouse::print(std::ostream& intout,
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::deleteParticles(ParticleSubset* delset)
 {
@@ -3393,8 +3254,6 @@ OnDemandDataWarehouse::deleteParticles(ParticleSubset* delset)
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::addParticles(const Patch* patch,
                                     int matlIndex,
@@ -3415,8 +3274,6 @@ OnDemandDataWarehouse::addParticles(const Patch* patch,
   }
 }
 
-//______________________________________________________________________
-//
 int
 OnDemandDataWarehouse::decrementScrubCount(const VarLabel* var,
                                            int matlIndex,
@@ -3458,8 +3315,6 @@ OnDemandDataWarehouse::decrementScrubCount(const VarLabel* var,
   return count;
 }
 
-//______________________________________________________________________
-//
 DataWarehouse::ScrubMode
 OnDemandDataWarehouse::setScrubbing(ScrubMode scrubMode)
 {
@@ -3468,8 +3323,6 @@ OnDemandDataWarehouse::setScrubbing(ScrubMode scrubMode)
   return oldmode;
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::setScrubCount(const VarLabel* var,
                                      int matlIndex,
@@ -3509,8 +3362,6 @@ OnDemandDataWarehouse::setScrubCount(const VarLabel* var,
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::scrub(const VarLabel* var,
                              int matlIndex,
@@ -3549,8 +3400,6 @@ OnDemandDataWarehouse::scrub(const VarLabel* var,
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::initializeScrubs(
   int dwid,
@@ -3560,8 +3409,6 @@ OnDemandDataWarehouse::initializeScrubs(
   m_var_DB.initializeScrubs(dwid, scrubcounts, add);
 }
 
-//______________________________________________________________________
-//
 // This is for the Unified Scheduler.  It retrieves a list of patches that are
 // neighbors in the requested region It doesn't need a list of neighbor Variable
 // objects in host-memory, as some patches may exist in GPU memory but not in
@@ -3617,11 +3464,9 @@ OnDemandDataWarehouse::getNeighborPatches(
       adjacentNeighbors.push_back(neighbor);
 
     } // end if neighbor
-  }   // end for neighbors
+  } // end for neighbors
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::getValidNeighbors(
   const VarLabel* label,
@@ -3732,11 +3577,9 @@ OnDemandDataWarehouse::getValidNeighbors(
         validNeighbors.push_back(temp);
       }
     } // end if neighbor
-  }   // end for neighbors
+  } // end for neighbors
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::getGridVar(GridVariableBase& var,
                                   const VarLabel* label,
@@ -3848,8 +3691,6 @@ OnDemandDataWarehouse::getGridVar(GridVariableBase& var,
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::transferFrom(DataWarehouse* from,
                                     const VarLabel* label,
@@ -3859,8 +3700,6 @@ OnDemandDataWarehouse::transferFrom(DataWarehouse* from,
   this->transferFrom(from, label, patches, matls, nullptr, false, nullptr);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::transferFrom(DataWarehouse* from,
                                     const VarLabel* label,
@@ -3871,8 +3710,6 @@ OnDemandDataWarehouse::transferFrom(DataWarehouse* from,
   this->transferFrom(from, label, patches, matls, nullptr, replace, nullptr);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::transferFrom(DataWarehouse* from,
                                     const VarLabel* label,
@@ -3884,8 +3721,6 @@ OnDemandDataWarehouse::transferFrom(DataWarehouse* from,
   this->transferFrom(from, label, patches, matls, nullptr, replace, newPatches);
 }
 
-//______________________________________________________________________
-//
 //! Copy a var from the parameter DW to this one.  If newPatches
 //! is not null, then it associates the copy of the variable with
 //! newPatches, and otherwise it uses patches (the same it finds
@@ -4093,8 +3928,6 @@ OnDemandDataWarehouse::transferFrom(DataWarehouse* from,
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::logMemoryUse(std::ostream& out,
                                     unsigned long& total,
@@ -4123,8 +3956,6 @@ OnDemandDataWarehouse::logMemoryUse(std::ostream& out,
   }
 }
 
-//______________________________________________________________________
-//
 inline void
 OnDemandDataWarehouse::checkGetAccess(const VarLabel* label,
                                       int matlIndex,
@@ -4251,8 +4082,6 @@ OnDemandDataWarehouse::checkGetAccess(const VarLabel* label,
 #endif // end #if SCI_ASSERTION_LEVEL >= 1
 }
 
-//______________________________________________________________________
-//
 inline void
 OnDemandDataWarehouse::checkPutAccess(const VarLabel* label,
                                       int matlIndex,
@@ -4330,8 +4159,6 @@ OnDemandDataWarehouse::checkPutAccess(const VarLabel* label,
 #endif // end #if SCI_ASSERTION_LEVEL >= 1
 }
 
-//______________________________________________________________________
-//
 inline void
 OnDemandDataWarehouse::checkModifyAccess(const VarLabel* label,
                                          int matlIndex,
@@ -4340,8 +4167,6 @@ OnDemandDataWarehouse::checkModifyAccess(const VarLabel* label,
   checkPutAccess(label, matlIndex, patch, true);
 }
 
-//______________________________________________________________________
-//
 inline Task::WhichDW
 OnDemandDataWarehouse::getWhichDW(RunningTaskInfo* info)
 {
@@ -4363,8 +4188,6 @@ OnDemandDataWarehouse::getWhichDW(RunningTaskInfo* info)
   throw InternalError("Unknown DW\n", __FILE__, __LINE__);
 }
 
-//______________________________________________________________________
-//
 inline bool
 OnDemandDataWarehouse::hasGetAccess(const Task* runningTask,
                                     const VarLabel* label,
@@ -4378,8 +4201,6 @@ OnDemandDataWarehouse::hasGetAccess(const Task* runningTask,
     label, matlIndex, patch, lowOffset, highOffset, getWhichDW(info));
 }
 
-//______________________________________________________________________
-//
 inline bool
 OnDemandDataWarehouse::hasPutAccess(const Task* runningTask,
                                     const VarLabel* label,
@@ -4389,8 +4210,6 @@ OnDemandDataWarehouse::hasPutAccess(const Task* runningTask,
   return runningTask->hasComputes(label, matlIndex, patch);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::pushRunningTask(const Task* task,
                                        std::vector<OnDemandDataWarehouseP>* dws)
@@ -4412,8 +4231,6 @@ OnDemandDataWarehouse::pushRunningTask(const Task* task,
                               : " not pushed, element exists."));
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::popRunningTask()
 {
@@ -4430,8 +4247,6 @@ OnDemandDataWarehouse::popRunningTask()
   }
 }
 
-//______________________________________________________________________
-//
 inline std::map<std::thread::id, OnDemandDataWarehouse::RunningTaskInfo>*
 OnDemandDataWarehouse::getRunningTasksInfo()
 {
@@ -4445,8 +4260,6 @@ OnDemandDataWarehouse::getRunningTasksInfo()
   }
 }
 
-//______________________________________________________________________
-//
 inline bool
 OnDemandDataWarehouse::hasRunningTask()
 {
@@ -4457,8 +4270,6 @@ OnDemandDataWarehouse::hasRunningTask()
           m_running_tasks.end());
 }
 
-//______________________________________________________________________
-//
 inline OnDemandDataWarehouse::RunningTaskInfo*
 OnDemandDataWarehouse::getCurrentTaskInfo()
 {
@@ -4474,8 +4285,6 @@ OnDemandDataWarehouse::getCurrentTaskInfo()
   }
 }
 
-//______________________________________________________________________
-//
 DataWarehouse*
 OnDemandDataWarehouse::getOtherDataWarehouse(Task::WhichDW dw,
                                              RunningTaskInfo* info)
@@ -4485,8 +4294,6 @@ OnDemandDataWarehouse::getOtherDataWarehouse(Task::WhichDW dw,
   return result;
 }
 
-//______________________________________________________________________
-//
 DataWarehouse*
 OnDemandDataWarehouse::getOtherDataWarehouse(Task::WhichDW dw)
 {
@@ -4496,11 +4303,10 @@ OnDemandDataWarehouse::getOtherDataWarehouse(Task::WhichDW dw)
   return result;
 }
 
-//______________________________________________________________________
-//
 void
-OnDemandDataWarehouse::checkTasksAccesses(const PatchSubset* patches,
-                                          const MaterialSubset* matls)
+OnDemandDataWarehouse::checkTasksAccesses(
+  [[maybe_unused]] const PatchSubset* patches,
+  [[maybe_unused]] const MaterialSubset* matls)
 {
 #if 0
 
@@ -4528,8 +4334,6 @@ OnDemandDataWarehouse::checkTasksAccesses(const PatchSubset* patches,
 #endif
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::checkAccesses(RunningTaskInfo* currentTaskInfo,
                                      const Task::Dependency* dep,
@@ -4680,8 +4484,6 @@ OnDemandDataWarehouse::checkAccesses(RunningTaskInfo* currentTaskInfo,
   }
 }
 
-//______________________________________________________________________
-//
 // For timestep abort/recomute
 bool
 OnDemandDataWarehouse::abortTimestep()
@@ -4702,8 +4504,6 @@ OnDemandDataWarehouse::abortTimestep()
   }
 }
 
-//__________________________________
-//
 bool
 OnDemandDataWarehouse::recomputeTimestep()
 {
@@ -4718,8 +4518,6 @@ OnDemandDataWarehouse::recomputeTimestep()
   }
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::getVarLabelMatlLevelTriples(
   std::vector<VarLabelMatl<Level>>& vars) const
@@ -4727,8 +4525,6 @@ OnDemandDataWarehouse::getVarLabelMatlLevelTriples(
   m_level_DB.getVarLabelMatlTriples(vars);
 }
 
-//______________________________________________________________________
-//
 void
 OnDemandDataWarehouse::print()
 {
@@ -4742,7 +4538,6 @@ OnDemandDataWarehouse::print()
   m_level_DB.print(d_myworld->myRank());
 }
 
-//______________________________________________________________________
 //  print debugging information
 void
 OnDemandDataWarehouse::printDebuggingPutInfo(const VarLabel* label,
@@ -4762,7 +4557,6 @@ OnDemandDataWarehouse::printDebuggingPutInfo(const VarLabel* label,
   }
 }
 
-//______________________________________________________________________
 //  print debugging information
 void
 OnDemandDataWarehouse::printDebuggingPutInfo(const VarLabel* label,

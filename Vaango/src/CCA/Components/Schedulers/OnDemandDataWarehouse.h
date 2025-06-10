@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2022-2025 Biswajit Banerjee, Parresia Research Ltd, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -188,7 +189,6 @@ public:
         const Level* level,
         int matlIndex = -1);
 
-  //__________________________________
   // Sole Variables
 
   virtual bool
@@ -212,7 +212,6 @@ public:
            const Level* level = nullptr,
            int matlIndex      = -1);
 
-  //__________________________________
   // Particle Variables
 
   virtual ParticleSubset*
@@ -372,7 +371,6 @@ public:
                    particleIndex& pParticleIndex);
   /****************************/
 
-  //__________________________________
   // Grid Variables
 
   virtual void
@@ -484,7 +482,6 @@ public:
 
   virtual ScrubMode setScrubbing(ScrubMode);
 
-  //__________________________________
   // For related datawarehouses
 
   virtual DataWarehouse* getOtherDataWarehouse(Task::WhichDW);
@@ -688,7 +685,6 @@ private:
     ModifyAccess
   };
 
-  //__________________________________
   // AccessInfo
   struct AccessInfo
   {
@@ -711,7 +707,6 @@ private:
     IntVector highOffset{ 0, 0, 0 };
   };
 
-  //__________________________________
   // RunningTaskInfo
   using VarAccessMap = std::map<VarLabelMatl<Patch>, AccessInfo>;
   struct RunningTaskInfo
