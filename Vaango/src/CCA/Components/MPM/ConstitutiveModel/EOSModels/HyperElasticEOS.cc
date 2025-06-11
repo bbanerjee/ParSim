@@ -73,8 +73,8 @@ double
 HyperElasticEOS::computePressure(const MPMMaterial* matl,
                                  const ModelStateBase* state,
                                  const Matrix3&,
-                                 const Matrix3& rateOfDeformation,
-                                 const double& delT)
+                                 [[maybe_unused]] const Matrix3& rateOfDeformation,
+                                 [[maybe_unused]] const double& delT)
 {
   double rho_0 = matl->getInitialDensity();
   double rho   = state->density;
@@ -86,7 +86,7 @@ HyperElasticEOS::computePressure(const MPMMaterial* matl,
 }
 
 double
-HyperElasticEOS::eval_dp_dJ(const MPMMaterial* matl,
+HyperElasticEOS::eval_dp_dJ([[maybe_unused]] const MPMMaterial* matl,
                             const double& detF,
                             const ModelStateBase* state)
 {
@@ -205,8 +205,8 @@ HyperElasticEOS::computeDpDepse_s(const Vaango::ModelStateBase*) const
 }
 
 double
-HyperElasticEOS::computeElasticVolumetricStrain(const double& pp,
-                                                const double& p0)
+HyperElasticEOS::computeElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                                [[maybe_unused]] const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute volume strain of hyperelastic material."
@@ -219,8 +219,8 @@ HyperElasticEOS::computeElasticVolumetricStrain(const double& pp,
 }
 
 double
-HyperElasticEOS::computeExpElasticVolumetricStrain(const double& pp,
-                                                   const double& p0)
+HyperElasticEOS::computeExpElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                                   [[maybe_unused]] const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute exp(volume strain) of hyperelastic material."
@@ -233,9 +233,9 @@ HyperElasticEOS::computeExpElasticVolumetricStrain(const double& pp,
 }
 
 double
-HyperElasticEOS::computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                        const double& p0,
-                                                        double& exp_eps_e_v)
+HyperElasticEOS::computeDerivExpElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                                        [[maybe_unused]] const double& p0,
+                                                        [[maybe_unused]] double& exp_eps_e_v)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute derivative of exp(volume strain) of "

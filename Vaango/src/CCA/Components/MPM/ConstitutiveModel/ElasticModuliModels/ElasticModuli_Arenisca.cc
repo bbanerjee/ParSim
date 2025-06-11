@@ -149,7 +149,7 @@ ElasticModuli_Arenisca::getCurrentElasticModuli(
 
 /*! Compute derivatives of moduli with respect to internal variables */
 std::vector<ElasticModuli> 
-ElasticModuli_Arenisca::computeDModuliDIntVar(const ModelStateBase* state) const
+ElasticModuli_Arenisca::computeDModuliDIntVar([[maybe_unused]] const ModelStateBase* state) const
 {
   std::vector<ElasticModuli> derivs;
   return derivs;

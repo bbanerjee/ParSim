@@ -69,8 +69,8 @@ double
 AirEOS::computePressure(const MPMMaterial* matl,
                         const ModelStateBase* state_input,
                         const Matrix3&,
-                        const Matrix3& rateOfDeformation,
-                        const double& delT)
+                        [[maybe_unused]] const Matrix3& rateOfDeformation,
+                        [[maybe_unused]] const double& delT)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -117,7 +117,7 @@ AirEOS::computePressure(const double& rho_orig,
 
 // Compute derivative of pressure
 double
-AirEOS::eval_dp_dJ(const MPMMaterial* matl,
+AirEOS::eval_dp_dJ([[maybe_unused]] const MPMMaterial* matl,
                    const double& detF,
                    const ModelStateBase*)
 {
@@ -184,7 +184,7 @@ AirEOS::computeBulkModulus(const ModelStateBase* state_input) const
 
 // Compute strain energy
 double
-AirEOS::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
+AirEOS::computeStrainEnergy([[maybe_unused]] const double& rho_orig, [[maybe_unused]] const double& rho_cur)
 {
   throw InternalError(
     "ComputeStrainEnergy has not been implemented yet for Air.",
@@ -194,7 +194,7 @@ AirEOS::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
 }
 
 double
-AirEOS::computeStrainEnergy(const ModelStateBase* state)
+AirEOS::computeStrainEnergy([[maybe_unused]] const ModelStateBase* state)
 {
   throw InternalError(
     "ComputeStrainEnergy has not been implemented yet for Air.",
@@ -205,7 +205,7 @@ AirEOS::computeStrainEnergy(const ModelStateBase* state)
 
 // Compute density given pressure (tension +ve)
 double
-AirEOS::computeDensity(const double& rho_orig, const double& pressure)
+AirEOS::computeDensity([[maybe_unused]] const double& rho_orig, [[maybe_unused]] const double& pressure)
 {
   throw InternalError(
     "ComputeDensity has not been implemented yet for Air.", __FILE__, __LINE__);
@@ -234,7 +234,7 @@ AirEOS::computeDpDepse_v(const ModelStateBase* state_input) const
 
 // Compute the volumetric strain given a pressure (p)
 double
-AirEOS::computeElasticVolumetricStrain(const double& pp, const double& p0)
+AirEOS::computeElasticVolumetricStrain(const double& pp, [[maybe_unused]] const double& p0)
 {
   // ASSERT(!(pp < 0))
   double eps_e_v = (pp < 0.0) ? 0.0 : -1 / d_gamma * std::log(pp / d_p0 + 1.0);
@@ -243,7 +243,7 @@ AirEOS::computeElasticVolumetricStrain(const double& pp, const double& p0)
 
 // Compute the exponential of volumetric strain given a pressure (p)
 double
-AirEOS::computeExpElasticVolumetricStrain(const double& pp, const double& p0)
+AirEOS::computeExpElasticVolumetricStrain(const double& pp, [[maybe_unused]] const double& p0)
 {
   // ASSERT(!(pp < 0))
   double eps_e_v = (pp < 0.0) ? 0.0 : -1 / d_gamma * std::log(pp / d_p0 + 1.0);

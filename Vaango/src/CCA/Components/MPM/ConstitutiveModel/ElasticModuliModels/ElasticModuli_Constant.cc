@@ -84,7 +84,7 @@ ElasticModuli_Constant::getElasticModuliUpperBound() const
 
 /*! Compute derivatives of moduli with respect to internal variables */
 std::vector<ElasticModuli> 
-ElasticModuli_Constant::computeDModuliDIntVar(const ModelStateBase* state) const
+ElasticModuli_Constant::computeDModuliDIntVar([[maybe_unused]] const ModelStateBase* state) const
 {
   std::vector<ElasticModuli> derivs;
   return derivs;

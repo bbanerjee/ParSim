@@ -115,7 +115,7 @@ MieGruneisenEOS::computePressure(const MPMMaterial* matl,
 double
 MieGruneisenEOS::eval_dp_dJ(const MPMMaterial* matl,
                             const double& detF,
-                            const ModelStateBase* state)
+                            [[maybe_unused]] const ModelStateBase* state)
 {
   double rho_0   = matl->getInitialDensity();
   double C_0     = d_const.C_0;
@@ -383,8 +383,8 @@ MieGruneisenEOS::computeDpDepse_s(const Vaango::ModelStateBase*) const
 }
 
 double
-MieGruneisenEOS::computeElasticVolumetricStrain(const double& pp,
-                                                const double& p0)
+MieGruneisenEOS::computeElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                                [[maybe_unused]] const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute volume strain of Mie-Gruneisen material"
@@ -398,8 +398,8 @@ MieGruneisenEOS::computeElasticVolumetricStrain(const double& pp,
 }
 
 double
-MieGruneisenEOS::computeExpElasticVolumetricStrain(const double& pp,
-                                                   const double& p0)
+MieGruneisenEOS::computeExpElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                                   [[maybe_unused]] const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute exp(volume strain) of Mie-Gruneisen material"
@@ -413,9 +413,9 @@ MieGruneisenEOS::computeExpElasticVolumetricStrain(const double& pp,
 }
 
 double
-MieGruneisenEOS::computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                        const double& p0,
-                                                        double& exp_eps_e_v)
+MieGruneisenEOS::computeDerivExpElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                                        [[maybe_unused]] const double& p0,
+                                                        [[maybe_unused]] double& exp_eps_e_v)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute derivative of exp(volume strain) of "

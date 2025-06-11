@@ -305,7 +305,7 @@ BorjaEOS::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
 }
 
 double
-BorjaEOS::computeElasticVolumetricStrain(const double& pp, const double& p0)
+BorjaEOS::computeElasticVolumetricStrain([[maybe_unused]] const double& pp, [[maybe_unused]] const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute volume strain of Borja material."
@@ -318,7 +318,7 @@ BorjaEOS::computeElasticVolumetricStrain(const double& pp, const double& p0)
 }
 
 double
-BorjaEOS::computeExpElasticVolumetricStrain(const double& pp, const double& p0)
+BorjaEOS::computeExpElasticVolumetricStrain([[maybe_unused]] const double& pp, [[maybe_unused]] const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute exp(volume strain) of Borja material."
@@ -330,9 +330,9 @@ BorjaEOS::computeExpElasticVolumetricStrain(const double& pp, const double& p0)
   return -1;
 }
 double
-BorjaEOS::computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                 const double& p0,
-                                                 double& exp_eps_e_v)
+BorjaEOS::computeDerivExpElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                                 [[maybe_unused]] const double& p0,
+                                                 [[maybe_unused]] double& exp_eps_e_v)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute derivative of exp(volume strain) of "

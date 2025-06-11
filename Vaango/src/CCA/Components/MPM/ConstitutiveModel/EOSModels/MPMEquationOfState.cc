@@ -35,10 +35,10 @@ MPMEquationOfState::~MPMEquationOfState() = default;
 
 // Calculate rate of temperature change due to compression/expansion
 double
-MPMEquationOfState::computeIsentropicTemperatureRate(const double T,
-                                                     const double rho_0,
-                                                     const double rho_cur,
-                                                     const double Dtrace)
+MPMEquationOfState::computeIsentropicTemperatureRate([[maybe_unused]] const double T,
+                                                     [[maybe_unused]] const double rho_0,
+                                                     [[maybe_unused]] const double rho_cur,
+                                                     [[maybe_unused]] const double Dtrace)
 {
   double dTdt = 0.;
   return dTdt;

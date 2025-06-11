@@ -1569,11 +1569,11 @@ TabularPlasticity::addComputesAndRequires(Task*,
  *  ---------------------------------------------------------------------------------------
  */
 void
-TabularPlasticity::allocateCMDataAdd(DataWarehouse* new_dw,
-                                     ParticleSubset* addset,
-                                     ParticleLabelVariableMap* newState,
-                                     ParticleSubset* delset,
-                                     DataWarehouse* old_dw)
+TabularPlasticity::allocateCMDataAdd([[maybe_unused]] DataWarehouse* new_dw,
+                                     [[maybe_unused]] ParticleSubset* addset,
+                                     [[maybe_unused]] ParticleLabelVariableMap* newState,
+                                     [[maybe_unused]] ParticleSubset* delset,
+                                     [[maybe_unused]] DataWarehouse* old_dw)
 {
   std::ostringstream out;
   out << "**ERROR** Material conversion after failure DOES NOT EXIST YET for "
@@ -1588,8 +1588,8 @@ double
 TabularPlasticity::computeRhoMicroCM(double pressure,
                                      const double p_ref,
                                      const MPMMaterial* matl,
-                                     double temperature,
-                                     double rho_guess)
+                                     [[maybe_unused]] double temperature,
+                                     [[maybe_unused]] double rho_guess)
 {
   double rho_0   = matl->getInitialDensity();
   double p_gauge = pressure - p_ref;
@@ -1619,7 +1619,7 @@ TabularPlasticity::computePressEOSCM(double rho_cur,
                                      double& dp_drho,
                                      double& soundSpeedSq,
                                      const MPMMaterial* matl,
-                                     double temperature)
+                                     [[maybe_unused]] double temperature)
 {
   double rho_0 = matl->getInitialDensity();
   double J     = rho_0 / rho_cur;

@@ -90,7 +90,7 @@ PTWFlow::outputProblemSpec(ProblemSpecP& ps)
 double
 PTWFlow::computeFlowStress(const ModelStateBase* state, const double&,
                            const double&, const MPMMaterial*,
-                           const particleIndex idx)
+                           [[maybe_unused]] const particleIndex idx)
 {
   // Retrieve plastic strain and strain rate
   double epdot = state->eqPlasticStrainRate;
@@ -263,7 +263,7 @@ PTWFlow::evalFAndFPrime(const double& tau, const double& epdot,
 }
 
 void
-PTWFlow::computeTangentModulus(const Matrix3& stress, const ModelStateBase*,
+PTWFlow::computeTangentModulus([[maybe_unused]] const Matrix3& stress, const ModelStateBase*,
                                const double&, const MPMMaterial*,
                                const particleIndex, TangentModulusTensor&,
                                TangentModulusTensor&)
@@ -535,7 +535,7 @@ PTWFlow::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*)
 }
 
 void
-PTWFlow::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+PTWFlow::addComputesAndRequires([[maybe_unused]] Task* task, [[maybe_unused]] const MPMMaterial* matl,
                                 const PatchSet*, bool, bool)
 {
 }

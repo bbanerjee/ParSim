@@ -58,7 +58,7 @@ HypoElasticDevStress::computeDeviatoricStressInc(
 //______________________________________________________________________
 
 void
-HypoElasticDevStress::outputProblemSpec(ProblemSpecP& ps)
+HypoElasticDevStress::outputProblemSpec([[maybe_unused]] ProblemSpecP& ps)
 {
 }
 

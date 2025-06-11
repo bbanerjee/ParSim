@@ -72,8 +72,8 @@ double
 WaterEOS::computePressure(const MPMMaterial* matl,
                           const ModelStateBase* state_input,
                           const Matrix3&,
-                          const Matrix3& rateOfDeformation,
-                          const double& delT)
+                          [[maybe_unused]] const Matrix3& rateOfDeformation,
+                          [[maybe_unused]] const double& delT)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -125,7 +125,7 @@ WaterEOS::computePressure(const double& rho_orig,
 
 // Compute derivative of pressure
 double
-WaterEOS::eval_dp_dJ(const MPMMaterial* matl,
+WaterEOS::eval_dp_dJ([[maybe_unused]] const MPMMaterial* matl,
                      const double& detF,
                      const ModelStateBase*)
 {
@@ -190,7 +190,7 @@ WaterEOS::computeBulkModulus(const ModelStateBase* state_input) const
 
 // Compute strain energy
 double
-WaterEOS::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
+WaterEOS::computeStrainEnergy([[maybe_unused]] const double& rho_orig, [[maybe_unused]] const double& rho_cur)
 {
   throw InternalError(
     "ComputeStrainEnergy has not been implemented yet for Water.",
@@ -200,7 +200,7 @@ WaterEOS::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
 }
 
 double
-WaterEOS::computeStrainEnergy(const ModelStateBase* state)
+WaterEOS::computeStrainEnergy([[maybe_unused]] const ModelStateBase* state)
 {
   throw InternalError(
     "ComputeStrainEnergy has not been implemented yet for Water.",
@@ -211,7 +211,7 @@ WaterEOS::computeStrainEnergy(const ModelStateBase* state)
 
 // Compute density given pressure (tension +ve)
 double
-WaterEOS::computeDensity(const double& rho_orig, const double& pressure)
+WaterEOS::computeDensity([[maybe_unused]] const double& rho_orig, [[maybe_unused]] const double& pressure)
 {
   throw InternalError("ComputeDensity has not been implemented yet for Water.",
                       __FILE__,

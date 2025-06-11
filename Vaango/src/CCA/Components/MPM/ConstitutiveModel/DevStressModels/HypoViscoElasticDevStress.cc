@@ -220,7 +220,7 @@ HypoViscoElasticDevStress::allocateAndPutRigid(ParticleSubset* pset,
 ///
 void
 HypoViscoElasticDevStress::computeDeviatoricStressInc(
-  const particleIndex idx, const ModelStateBase* plaState,
+  const particleIndex idx, [[maybe_unused]] const ModelStateBase* plaState,
   DeformationState* defState, const double delT)
 {
 

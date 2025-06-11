@@ -153,7 +153,7 @@ IntVar_Arena::addInitialComputesAndRequires(Task* task,
 
 /*!-----------------------------------------------------*/
 void
-IntVar_Arena::initializeInternalVariable(const Patch* patch,
+IntVar_Arena::initializeInternalVariable([[maybe_unused]] const Patch* patch,
                                          const MPMMaterial* matl,
                                          ParticleSubset* pset,
                                          DataWarehouse* new_dw,
@@ -264,9 +264,9 @@ IntVar_Arena::addParticleState(std::vector<const VarLabel*>& from,
 /* Get one (possibly composite) internal variable */
 template <>
 void
-IntVar_Arena::getInternalVariable(ParticleSubset* pset,
-                                  DataWarehouse* old_dw,
-                                  constParticleVariable<ArenaIntVar>& intvar)
+IntVar_Arena::getInternalVariable([[maybe_unused]] ParticleSubset* pset,
+                                  [[maybe_unused]] DataWarehouse* old_dw,
+                                  [[maybe_unused]] constParticleVariable<ArenaIntVar>& intvar)
 {
   std::ostringstream err;
   err << "**ERROR** getInternalVariable with ArenaIntVar not implemented yet.";
@@ -333,10 +333,10 @@ IntVar_Arena::allocateAndPutInternalVariable(
 template <>
 void
 IntVar_Arena::evolveInternalVariable(
-  Uintah::particleIndex pidx,
-  const ModelStateBase* state,
-  Uintah::constParticleVariable<ArenaIntVar>& var_old,
-  Uintah::ParticleVariable<ArenaIntVar>& var)
+  [[maybe_unused]] Uintah::particleIndex pidx,
+  [[maybe_unused]] const ModelStateBase* state,
+  [[maybe_unused]] Uintah::constParticleVariable<ArenaIntVar>& var_old,
+  [[maybe_unused]] Uintah::ParticleVariable<ArenaIntVar>& var)
 {
 }
 
@@ -344,8 +344,8 @@ IntVar_Arena::evolveInternalVariable(
 // Compute hydrostatic strength
 //--------------------------------------------------------------------------------------
 double
-IntVar_Arena::computeInternalVariable(const std::string& label,
-                                      const ModelStateBase* state_old,
+IntVar_Arena::computeInternalVariable([[maybe_unused]] const std::string& label,
+                                      [[maybe_unused]] const ModelStateBase* state_old,
                                       const ModelStateBase* state_cur) const
 {
   const ModelState_Arena* state =
@@ -504,7 +504,7 @@ IntVar_Arena::allocateCMDataAddRequires(Task* task,
 
 /*!-----------------------------------------------------*/
 void
-IntVar_Arena::allocateCMDataAdd(DataWarehouse* old_dw,
+IntVar_Arena::allocateCMDataAdd([[maybe_unused]] DataWarehouse* old_dw,
                                 ParticleSubset* addset,
                                 ParticleLabelVariableMap* newState,
                                 ParticleSubset* delset,

@@ -1451,7 +1451,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
                                           DataWarehouse* old_dw,
                                           DataWarehouse* new_dw,
                                           Solver* solver,
-                                          const bool recurs)
+                                          [[maybe_unused]] const bool recurs)
 {
   // Constants
   Ghost::GhostType gac = Ghost::AroundCells;
@@ -1791,14 +1791,14 @@ ViscoPlastic::computeElasticTangentModulus(const double& K,
     Uses alogorithm for small strain plasticity (Simo 1998, p.124)
 */
 void
-ViscoPlastic::computeEPlasticTangentModulus(const double& K,
-                                            const double& mu,
-                                            const double& delGamma,
-                                            const double& normTrialS,
-                                            const particleIndex idx,
-                                            const Matrix3& n,
-                                            ModelStateBase* state,
-                                            double Cep[6][6])
+ViscoPlastic::computeEPlasticTangentModulus([[maybe_unused]] const double& K,
+                                            [[maybe_unused]] const double& mu,
+                                            [[maybe_unused]] const double& delGamma,
+                                            [[maybe_unused]] const double& normTrialS,
+                                            [[maybe_unused]] const particleIndex idx,
+                                            [[maybe_unused]] const Matrix3& n,
+                                            [[maybe_unused]] ModelStateBase* state,
+                                            [[maybe_unused]] double Cep[6][6])
 {
 }
 
@@ -2718,8 +2718,8 @@ ViscoPlastic::getPlasticTemperatureIncrement(ParticleSubset* pset,
 }
 
 void
-ViscoPlastic::addRequiresDamageParameter(Task* task,
-                                         const MPMMaterial* matl,
+ViscoPlastic::addRequiresDamageParameter([[maybe_unused]] Task* task,
+                                         [[maybe_unused]] const MPMMaterial* matl,
                                          const PatchSet*) const
 {
   // const MaterialSubset* matlset = matl->thisMaterial();
@@ -2728,11 +2728,11 @@ ViscoPlastic::addRequiresDamageParameter(Task* task,
 }
 
 void
-ViscoPlastic::getDamageParameter(const Patch* patch,
-                                 ParticleVariable<int>& damage,
-                                 int dwi,
-                                 DataWarehouse* old_dw,
-                                 DataWarehouse* new_dw)
+ViscoPlastic::getDamageParameter([[maybe_unused]] const Patch* patch,
+                                 [[maybe_unused]] ParticleVariable<int>& damage,
+                                 [[maybe_unused]] int dwi,
+                                 [[maybe_unused]] DataWarehouse* old_dw,
+                                 [[maybe_unused]] DataWarehouse* new_dw)
 {
   //   ParticleSubset* pset = old_dw->getParticleSubset(dwi,patch);
   //   constParticleVariable<int> pLocalized;
@@ -2908,8 +2908,8 @@ double
 ViscoPlastic::computeRhoMicroCM(double pressure,
                                 const double p_ref,
                                 const MPMMaterial* matl,
-                                double temperature,
-                                double rho_guess)
+                                [[maybe_unused]] double temperature,
+                                [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double bulk     = d_initialData.Bulk;
@@ -2941,7 +2941,7 @@ ViscoPlastic::computePressEOSCM(double rho_cur,
                                 double& dp_drho,
                                 double& tmp,
                                 const MPMMaterial* matl,
-                                double temperature)
+                                [[maybe_unused]] double temperature)
 {
   double bulk     = d_initialData.Bulk;
   double rho_orig = matl->getInitialDensity();

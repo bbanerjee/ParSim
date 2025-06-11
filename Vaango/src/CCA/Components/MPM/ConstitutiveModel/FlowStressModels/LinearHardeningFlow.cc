@@ -187,7 +187,7 @@ LinearHardeningFlow::updatePlastic(const particleIndex idx, const double& delGam
 double
 LinearHardeningFlow::computeFlowStress(const ModelStateBase* state, const double&,
                                     const double&, const MPMMaterial*,
-                                    const particleIndex idx)
+                                    [[maybe_unused]] const particleIndex idx)
 {
   //  double flowStress = d_CM.sigma_0 + d_CM.K*pAlpha[idx];
   double flowStress = d_CM.sigma_0 + d_CM.K * state->eqPlasticStrain;
@@ -203,7 +203,7 @@ LinearHardeningFlow::computeEpdot(const ModelStateBase* state, const double&,
 }
 
 void
-LinearHardeningFlow::computeTangentModulus(const Matrix3& stress,
+LinearHardeningFlow::computeTangentModulus([[maybe_unused]] const Matrix3& stress,
                                         const ModelStateBase*, const double&,
                                         const MPMMaterial*, const particleIndex,
                                         TangentModulusTensor&,

@@ -89,7 +89,7 @@ JohnsonCookFlow::addComputesAndRequires(Task*, const MPMMaterial*,
 }
 
 void
-JohnsonCookFlow::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+JohnsonCookFlow::addComputesAndRequires([[maybe_unused]] Task* task, [[maybe_unused]] const MPMMaterial* matl,
                                         const PatchSet*, bool /*recurse*/,
                                         bool /*SchedParent*/)
 {
@@ -146,7 +146,7 @@ JohnsonCookFlow::updatePlastic(const particleIndex, const double&)
 
 double
 JohnsonCookFlow::computeFlowStress(const ModelStateBase* state, const double&,
-                                   const double&, const MPMMaterial* matl,
+                                   const double&, [[maybe_unused]] const MPMMaterial* matl,
                                    const particleIndex idx)
 {
   //double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
@@ -181,7 +181,7 @@ JohnsonCookFlow::computeFlowStress(const ModelStateBase* state, const double&,
 
 double
 JohnsonCookFlow::computeEpdot(const ModelStateBase* state, const double&,
-                              const double&, const MPMMaterial* matl,
+                              const double&, [[maybe_unused]] const MPMMaterial* matl,
                               const particleIndex)
 {
   // All quantities should be at the beginning of the
@@ -211,7 +211,7 @@ JohnsonCookFlow::computeEpdot(const ModelStateBase* state, const double&,
 }
 
 void
-JohnsonCookFlow::computeTangentModulus(const Matrix3& stress,
+JohnsonCookFlow::computeTangentModulus([[maybe_unused]] const Matrix3& stress,
                                        const ModelStateBase*, const double&,
                                        const MPMMaterial*, const particleIndex,
                                        TangentModulusTensor&,

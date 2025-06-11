@@ -272,7 +272,7 @@ IdealGasMP::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
 // The "CM" versions use the pressure-volume relationship of the CNH model
 double
 IdealGasMP::computeRhoMicroCM(double press, const double, const MPMMaterial*,
-                              double Temp, double rho_guess)
+                              double Temp, [[maybe_unused]] double rho_guess)
 {
   double gamma = d_initialData.gamma;
   double cv = d_initialData.cv;

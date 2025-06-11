@@ -298,7 +298,7 @@ ElasticModuli_ArenaMixture::computePartialSaturatedModuli(
 void
 ElasticModuli_ArenaMixture::computeDrainedModuli(int phase,
                                                  const double& I1_eff_bar,
-                                                 const double& ev_p_bar,
+                                                 [[maybe_unused]] const double& ev_p_bar,
                                                  double& KK, double& GG) const
 {
   if (I1_eff_bar > 0.0) { // Compressive mean stress
@@ -389,7 +389,7 @@ ElasticModuli_ArenaMixture::computePartialSaturatedModuli(
 
 /*! Compute derivatives of moduli with respect to internal variables */
 std::vector<ElasticModuli> 
-ElasticModuli_ArenaMixture::computeDModuliDIntVar(const ModelStateBase* state) const
+ElasticModuli_ArenaMixture::computeDModuliDIntVar([[maybe_unused]] const ModelStateBase* state) const
 {
   std::vector<ElasticModuli> derivs;
   return derivs;

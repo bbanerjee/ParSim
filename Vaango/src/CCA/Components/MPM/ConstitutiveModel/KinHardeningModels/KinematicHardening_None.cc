@@ -34,12 +34,12 @@ KinematicHardening_None::KinematicHardening_None()
 {
 }
 
-KinematicHardening_None::KinematicHardening_None(ProblemSpecP& ps)
+KinematicHardening_None::KinematicHardening_None([[maybe_unused]] ProblemSpecP& ps)
 {
 }
 
 KinematicHardening_None::KinematicHardening_None(
-  const KinematicHardening_None* cm)
+  [[maybe_unused]] const KinematicHardening_None* cm)
 {
 }
 
@@ -54,9 +54,9 @@ KinematicHardening_None::outputProblemSpec(ProblemSpecP& ps)
 
 void
 KinematicHardening_None::computeBackStress(
-  const ModelStateBase*, const double& delT, const particleIndex idx,
-  const double& delLambda, const Matrix3& df_dsigma_new,
-  const Matrix3& backStress_old, Matrix3& backStress_new)
+  const ModelStateBase*, [[maybe_unused]] const double& delT, [[maybe_unused]] const particleIndex idx,
+  [[maybe_unused]] const double& delLambda, [[maybe_unused]] const Matrix3& df_dsigma_new,
+  [[maybe_unused]] const Matrix3& backStress_old, Matrix3& backStress_new)
 {
   Matrix3 Zero(0.0);
   backStress_new = Zero;
@@ -64,7 +64,7 @@ KinematicHardening_None::computeBackStress(
 }
 
 void
-KinematicHardening_None::eval_h_beta(const Matrix3& df_dsigma,
+KinematicHardening_None::eval_h_beta([[maybe_unused]] const Matrix3& df_dsigma,
                                      const ModelStateBase*, Matrix3& h_beta)
 {
   Matrix3 Zero(0.0);

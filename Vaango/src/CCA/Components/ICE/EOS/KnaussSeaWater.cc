@@ -85,8 +85,8 @@ void KnaussSeaWater::outputProblemSpec(ProblemSpecP& ps)
 }
 
 //__________________________________
-double KnaussSeaWater::computeRhoMicro(double press, double gamma,
-                                 double cv, double Temp, double)
+double KnaussSeaWater::computeRhoMicro(double press, [[maybe_unused]] double gamma,
+                                 [[maybe_unused]] double cv, double Temp, double)
 {
   // Pointwise computation of microscopic density
   return d_rho0 + d_a*(Temp - d_T0) + d_b*(d_S - d_S0) + d_k*(press-d_P0);

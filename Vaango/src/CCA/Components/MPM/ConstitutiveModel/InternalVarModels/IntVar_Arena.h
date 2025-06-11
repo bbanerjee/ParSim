@@ -117,8 +117,8 @@ public:
                                 const Uintah::MPMMaterial* matl,
                                 const Uintah::PatchSet* patches) override;
   void
-  initializeInternalVariable(Uintah::ParticleSubset* pset,
-                             Uintah::DataWarehouse* new_dw) override
+  initializeInternalVariable([[maybe_unused]] Uintah::ParticleSubset* pset,
+                             [[maybe_unused]] Uintah::DataWarehouse* new_dw) override
   {
   }
   void
@@ -177,7 +177,7 @@ public:
   // Compute derivative of internal variable with respect to volumetric
   // elastic strain
   double
-  computeVolStrainDerivOfInternalVariable(const std::string& label,
+  computeVolStrainDerivOfInternalVariable([[maybe_unused]] const std::string& label,
                                           const ModelStateBase*) const override
   {
     return 0.0;
@@ -198,9 +198,9 @@ public:
 
   /* For RigidMPM */
   virtual void
-  allocateAndPutRigid(Uintah::ParticleSubset* pset,
-                      Uintah::DataWarehouse* new_dw,
-                      Uintah::constParticleVariableBase& intvar) override
+  allocateAndPutRigid([[maybe_unused]] Uintah::ParticleSubset* pset,
+                      [[maybe_unused]] Uintah::DataWarehouse* new_dw,
+                      [[maybe_unused]] Uintah::constParticleVariableBase& intvar) override
   {
   }
   void

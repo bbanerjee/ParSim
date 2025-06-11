@@ -180,10 +180,10 @@ IntVar_BorjaPressure::allocateAndPutInternalVariable(
 template<>
 void
 IntVar_BorjaPressure::evolveInternalVariable(
-  Uintah::particleIndex pidx,
-  const ModelStateBase* state,
-  Uintah::constParticleVariable<BorjaIntVar>& var_old,
-  Uintah::ParticleVariable<BorjaIntVar>& var)
+  [[maybe_unused]] Uintah::particleIndex pidx,
+  [[maybe_unused]] const ModelStateBase* state,
+  [[maybe_unused]] Uintah::constParticleVariable<BorjaIntVar>& var_old,
+  [[maybe_unused]] Uintah::ParticleVariable<BorjaIntVar>& var)
 {
 }
 
@@ -191,8 +191,8 @@ IntVar_BorjaPressure::evolveInternalVariable(
 //  Compute the internal variable
 double
 IntVar_BorjaPressure::computeInternalVariable(
-  const std::string& label,
-  const ModelStateBase* state_old,
+  [[maybe_unused]] const std::string& label,
+  [[maybe_unused]] const ModelStateBase* state_old,
   const ModelStateBase* state_cur) const
 {
   const ModelState_CamClay* state =
@@ -238,7 +238,7 @@ IntVar_BorjaPressure::computeInternalVariable(
 // elastic strain
 double
 IntVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
-  const std::string& label,
+  [[maybe_unused]] const std::string& label,
   const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
@@ -276,7 +276,7 @@ IntVar_BorjaPressure::allocateCMDataAddRequires(Task* task,
 }
 
 void
-IntVar_BorjaPressure::allocateCMDataAdd(DataWarehouse* old_dw,
+IntVar_BorjaPressure::allocateCMDataAdd([[maybe_unused]] DataWarehouse* old_dw,
                                         ParticleSubset* addset,
                                         ParticleLabelVariableMap* newState,
                                         ParticleSubset* delset,

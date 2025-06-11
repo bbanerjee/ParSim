@@ -72,8 +72,8 @@ double
 GraniteEOS::computePressure(const MPMMaterial* matl,
                             const ModelStateBase* state_input,
                             const Matrix3&,
-                            const Matrix3& rateOfDeformation,
-                            const double& delT)
+                            [[maybe_unused]] const Matrix3& rateOfDeformation,
+                            [[maybe_unused]] const double& delT)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -118,7 +118,7 @@ GraniteEOS::computePressure(const double& rho_orig,
 
 // Compute derivative of pressure
 double
-GraniteEOS::eval_dp_dJ(const MPMMaterial* matl,
+GraniteEOS::eval_dp_dJ([[maybe_unused]] const MPMMaterial* matl,
                        const double& detF,
                        const ModelStateBase*)
 {
@@ -191,7 +191,7 @@ GraniteEOS::computeBulkModulus(const ModelStateBase* state_input) const
 
 // Compute strain energy
 double
-GraniteEOS::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
+GraniteEOS::computeStrainEnergy([[maybe_unused]] const double& rho_orig, [[maybe_unused]] const double& rho_cur)
 {
   throw InternalError(
     "ComputeStrainEnergy has not been implemented yet for Granite.",
@@ -201,7 +201,7 @@ GraniteEOS::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
 }
 
 double
-GraniteEOS::computeStrainEnergy(const ModelStateBase* state)
+GraniteEOS::computeStrainEnergy([[maybe_unused]] const ModelStateBase* state)
 {
   throw InternalError(
     "ComputeStrainEnergy has not been implemented yet for Granite.",
@@ -212,7 +212,7 @@ GraniteEOS::computeStrainEnergy(const ModelStateBase* state)
 
 // Compute density given pressure (tension +ve)
 double
-GraniteEOS::computeDensity(const double& rho_orig, const double& pressure)
+GraniteEOS::computeDensity([[maybe_unused]] const double& rho_orig, [[maybe_unused]] const double& pressure)
 {
   throw InternalError(
     "ComputeDensity has not been implemented yet for Granite.",

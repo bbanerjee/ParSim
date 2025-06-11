@@ -88,7 +88,7 @@ DefaultHypoElasticEOS::computePressure(const MPMMaterial*,
 
 /* **WARNING** Not hypoelastic.  Hypoelastic is history-dependent. */
 double
-DefaultHypoElasticEOS::eval_dp_dJ(const MPMMaterial* matl,
+DefaultHypoElasticEOS::eval_dp_dJ([[maybe_unused]] const MPMMaterial* matl,
                                   const double& detF,
                                   const ModelStateBase* state)
 {
@@ -147,14 +147,14 @@ DefaultHypoElasticEOS::computeInitialBulkModulus() const
 }
 
 double
-DefaultHypoElasticEOS::computeBulkModulus(const double& rho_orig,
-                                          const double& rho_cur) const
+DefaultHypoElasticEOS::computeBulkModulus([[maybe_unused]] const double& rho_orig,
+                                          [[maybe_unused]] const double& rho_cur) const
 {
   return d_bulkModulus;
 }
 
 double
-DefaultHypoElasticEOS::computeBulkModulus(const ModelStateBase* state) const
+DefaultHypoElasticEOS::computeBulkModulus([[maybe_unused]] const ModelStateBase* state) const
 {
   return d_bulkModulus;
 }
@@ -168,8 +168,8 @@ DefaultHypoElasticEOS::computeStrainEnergy(const ModelStateBase* state)
 
 /* **WARNING** Hypoelastic is history-dependent. */
 double
-DefaultHypoElasticEOS::computeStrainEnergy(const double& rho_orig,
-                                           const double& rho_cur)
+DefaultHypoElasticEOS::computeStrainEnergy([[maybe_unused]] const double& rho_orig,
+                                           [[maybe_unused]] const double& rho_cur)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute strain energy of hypoelastic material"
@@ -183,8 +183,8 @@ DefaultHypoElasticEOS::computeStrainEnergy(const double& rho_orig,
 /* **WARNING** Hypoelastic is history-dependent. */
 // Compute density given pressure
 double
-DefaultHypoElasticEOS::computeDensity(const double& rho_orig,
-                                      const double& pressure)
+DefaultHypoElasticEOS::computeDensity([[maybe_unused]] const double& rho_orig,
+                                      [[maybe_unused]] const double& pressure)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute density of hypoelastic material"
@@ -221,8 +221,8 @@ DefaultHypoElasticEOS::computeDpDepse_s(const Vaango::ModelStateBase*) const
   return -1;
 }
 double
-DefaultHypoElasticEOS::computeElasticVolumetricStrain(const double& pp,
-                                                      const double& p0)
+DefaultHypoElasticEOS::computeElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                                      [[maybe_unused]] const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute volume strain of hypoelastic material."
@@ -235,8 +235,8 @@ DefaultHypoElasticEOS::computeElasticVolumetricStrain(const double& pp,
 }
 
 double
-DefaultHypoElasticEOS::computeExpElasticVolumetricStrain(const double& pp,
-                                                         const double& p0)
+DefaultHypoElasticEOS::computeExpElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                                         [[maybe_unused]] const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute exp(volume strain) of hypoelastic material."
@@ -249,9 +249,9 @@ DefaultHypoElasticEOS::computeExpElasticVolumetricStrain(const double& pp,
 }
 double
 DefaultHypoElasticEOS::computeDerivExpElasticVolumetricStrain(
-  const double& pp,
-  const double& p0,
-  double& exp_eps_e_v)
+  [[maybe_unused]] const double& pp,
+  [[maybe_unused]] const double& p0,
+  [[maybe_unused]] double& exp_eps_e_v)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute derivative of exp(volume strain) of "

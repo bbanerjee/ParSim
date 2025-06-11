@@ -801,8 +801,8 @@ TabularPlasticityCap::computeTrialStress(const ModelState_TabularCap& state_old,
  */
 int
 TabularPlasticityCap::computeStepDivisions(
-  particleIndex idx,
-  long64 particleID,
+  [[maybe_unused]] particleIndex idx,
+  [[maybe_unused]] long64 particleID,
   const ModelState_TabularCap& state_old,
   const ModelState_TabularCap& state_trial)
 {
@@ -2201,8 +2201,8 @@ TabularPlasticityCap::firstOrderHardeningUpdate(
   const Matrix3& deltaEps_new,
   const ModelState_TabularCap& state_k_old,
   const ModelState_TabularCap& state_k_trial,
-  const Matrix3& deltaEps_e_fixed,
-  const Matrix3& deltaEps_p_fixed,
+  [[maybe_unused]] const Matrix3& deltaEps_e_fixed,
+  [[maybe_unused]] const Matrix3& deltaEps_p_fixed,
   const Matrix3& sig_fixed,
   ModelState_TabularCap& state_k_new)
 {
@@ -2406,7 +2406,7 @@ TabularPlasticity::Status
 TabularPlasticityCap::consistencyBisectionSimplified(
   const Matrix3& deltaEps_new,
   const ModelState_TabularCap& state_k_old,
-  const ModelState_TabularCap& state_k_trial,
+  [[maybe_unused]] const ModelState_TabularCap& state_k_trial,
   const Matrix3& deltaEps_e_fixed,
   const Matrix3& deltaEps_p_fixed,
   const Matrix3& sig_fixed,

@@ -63,7 +63,7 @@ KinematicHardening_Armstrong::outputProblemSpec(ProblemSpecP& ps)
 
 void
 KinematicHardening_Armstrong::computeBackStress(
-  const ModelStateBase*, const double& delT, const particleIndex idx,
+  const ModelStateBase*, [[maybe_unused]] const double& delT, [[maybe_unused]] const particleIndex idx,
   const double& delLambda, const Matrix3& df_dsigma_normal_new,
   const Matrix3& backStress_old, Matrix3& backStress_new)
 {

@@ -1188,7 +1188,7 @@ ShellMaterial::particleNormalRotRateUpdate(const PatchSubset* patches,
 // The "CM" versions use the pressure-volume relationship of the CNH model
 double
 ShellMaterial::computeRhoMicroCM(double pressure, const double p_ref,
-                                 const MPMMaterial* matl, double temperature,
+                                 const MPMMaterial* matl, [[maybe_unused]] double temperature,
                                  [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();

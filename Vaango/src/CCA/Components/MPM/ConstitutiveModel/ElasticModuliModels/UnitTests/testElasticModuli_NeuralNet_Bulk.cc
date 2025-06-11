@@ -62,6 +62,7 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
 
   // Print the document to stdout
   //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  // std::cout << "Created doc" << std::endl;
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -70,6 +71,8 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
     std::cout << __FILE__ << ":" << __LINE__ << std::endl;
     exit(-1);
   }
+
+  //std::cout << "Created ps" << std::endl;
 
   // Test model creation
   try {
@@ -87,6 +90,8 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
     std::cout << "**ERROR** Unknown exception during model creation\n";
     throw;
   }
+
+  //std::cout << "Created model 1" << std::endl;
 
   // Create a model
   ElasticModuli_NeuralNet_Bulk model(ps);
@@ -110,6 +115,8 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
     throw;
   }
 
+  //std::cout << "Created model 2" << std::endl;
+
   // Copy
   ElasticModuli_NeuralNet_Bulk modelCopy(&model);
   try {
@@ -122,6 +129,8 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
     std::cout << e.message() << std::endl;
     throw;
   }
+
+  //std::cout << "Created model 3" << std::endl;
 
   // Modelstate test
   ModelState_Tabular state;
@@ -145,6 +154,8 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
     std::cout << e.message() << std::endl;
     throw;
   }
+
+  //std::cout << "Created model 4" << std::endl;
 
   state.elasticStrainTensor = Uintah::Matrix3(0.03, 0, 0, 0, 0.03, 0, 0, 0, 0.03);
   state.plasticStrainTensor = Uintah::Matrix3(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02);
@@ -179,4 +190,5 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
     std::cout << e.message() << std::endl;
     throw;
   }
+  //std::cout << "Created model 5" << std::endl;
 }

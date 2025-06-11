@@ -45,7 +45,7 @@ KinematicHardeningModel::~KinematicHardeningModel()
 
 void
 KinematicHardeningModel::addInitialComputesAndRequires(
-  Task* task, const MPMMaterial* matl, const PatchSet* patches) const
+  Task* task, const MPMMaterial* matl, [[maybe_unused]] const PatchSet* patches) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pBackStressLabel, matlset);
@@ -54,7 +54,7 @@ KinematicHardeningModel::addInitialComputesAndRequires(
 void
 KinematicHardeningModel::addComputesAndRequires(Task* task,
                                                 const MPMMaterial* matl,
-                                                const PatchSet* patches) const
+                                                [[maybe_unused]] const PatchSet* patches) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->needs(Task::OldDW, pBackStressLabel, matlset, Ghost::None);
@@ -64,8 +64,8 @@ KinematicHardeningModel::addComputesAndRequires(Task* task,
 void
 KinematicHardeningModel::addComputesAndRequires(Task* task,
                                                 const MPMMaterial* matl,
-                                                const PatchSet* patches,
-                                                bool recurse) const
+                                                [[maybe_unused]] const PatchSet* patches,
+                                                [[maybe_unused]] bool recurse) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->needs(Task::ParentOldDW, pBackStressLabel, matlset, Ghost::None);
@@ -74,8 +74,8 @@ KinematicHardeningModel::addComputesAndRequires(Task* task,
 void
 KinematicHardeningModel::allocateCMDataAddRequires(Task* task,
                                                    const MPMMaterial* matl,
-                                                   const PatchSet* patch,
-                                                   MPMLabel* lb) const
+                                                   [[maybe_unused]] const PatchSet* patch,
+                                                   [[maybe_unused]] MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->needs(Task::NewDW, pBackStressLabel_preReloc, matlset, Ghost::None);
@@ -85,7 +85,7 @@ void
 KinematicHardeningModel::allocateCMDataAdd(
   DataWarehouse* new_dw, ParticleSubset* addset,
   ParticleLabelVariableMap* newState, ParticleSubset* delset,
-  DataWarehouse* old_dw)
+  [[maybe_unused]] DataWarehouse* old_dw)
 {
   ParticleVariable<double> pBackStress_upd;
   constParticleVariable<double> pBackStress_old;

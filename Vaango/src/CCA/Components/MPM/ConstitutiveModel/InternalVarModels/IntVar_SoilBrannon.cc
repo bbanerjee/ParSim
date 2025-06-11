@@ -168,10 +168,10 @@ IntVar_SoilBrannon::allocateAndPutInternalVariable(
 template <>
 void
 IntVar_SoilBrannon::evolveInternalVariable(
-  Uintah::particleIndex pidx,
-  const ModelStateBase* state,
-  Uintah::constParticleVariable<SoilBrannonIntVar>& var_old,
-  Uintah::ParticleVariable<SoilBrannonIntVar>& var)
+  [[maybe_unused]] Uintah::particleIndex pidx,
+  [[maybe_unused]] const ModelStateBase* state,
+  [[maybe_unused]] Uintah::constParticleVariable<SoilBrannonIntVar>& var_old,
+  [[maybe_unused]] Uintah::ParticleVariable<SoilBrannonIntVar>& var)
 {
 }
 
@@ -180,8 +180,8 @@ IntVar_SoilBrannon::evolveInternalVariable(
 //--------------------------------------------------------------------------------------
 double
 IntVar_SoilBrannon::computeInternalVariable(
-  const std::string& label,
-  const ModelStateBase* state_old,
+  [[maybe_unused]] const std::string& label,
+  [[maybe_unused]] const ModelStateBase* state_old,
   const ModelStateBase* state_cur) const
 {
   const ModelState_SoilModelBrannon* state =
@@ -395,7 +395,7 @@ IntVar_SoilBrannon::computeX1(const double& kappa_old,
 //       Delta epsv = 0
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilBrannon::computeDerivX1dkappa(const double& kappa_old,
+IntVar_SoilBrannon::computeDerivX1dkappa([[maybe_unused]] const double& kappa_old,
                                          const double& kappa_new,
                                          const double& delEpsv) const
 {
@@ -442,7 +442,7 @@ IntVar_SoilBrannon::computeX2(const double& kappa_old,
 //       Delta epsv = 0
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilBrannon::computeDerivX2dkappa(const double& kappa_old,
+IntVar_SoilBrannon::computeDerivX2dkappa([[maybe_unused]] const double& kappa_old,
                                          const double& kappa_new,
                                          const double& delEpsv) const
 {
@@ -593,7 +593,7 @@ IntVar_SoilBrannon::allocateCMDataAddRequires(Task* task,
 }
 
 void
-IntVar_SoilBrannon::allocateCMDataAdd(DataWarehouse* old_dw,
+IntVar_SoilBrannon::allocateCMDataAdd([[maybe_unused]] DataWarehouse* old_dw,
                                       ParticleSubset* addset,
                                       ParticleLabelVariableMap* newState,
                                       ParticleSubset* delset,

@@ -90,21 +90,21 @@ public:
   //////////
   /*! \brief Calculate the back stress */
   //////////
-  void computeBackStress(const ModelStateBase* state, const double& delT,
-                         const Uintah::particleIndex idx,
-                         const double& delLambda,
-                         const Uintah::Matrix3& df_dsigma_new,
-                         const Uintah::Matrix3& backStress_old,
-                         Uintah::Matrix3& backStress_new) override
+  void computeBackStress([[maybe_unused]] const ModelStateBase* state, [[maybe_unused]] const double& delT,
+                         [[maybe_unused]] const Uintah::particleIndex idx,
+                         [[maybe_unused]] const double& delLambda,
+                         [[maybe_unused]] const Uintah::Matrix3& df_dsigma_new,
+                         [[maybe_unused]] const Uintah::Matrix3& backStress_old,
+                         [[maybe_unused]] Uintah::Matrix3& backStress_new) override
   {
   }
 
   void computeBackStress(const ModelStateBase* state,
                          Uintah::Matrix3& backStress_new) override;
 
-  void eval_h_beta(const Uintah::Matrix3& df_dsigma,
-                   const ModelStateBase* state,
-                   Uintah::Matrix3& h_beta) override
+  void eval_h_beta([[maybe_unused]] const Uintah::Matrix3& df_dsigma,
+                   [[maybe_unused]] const ModelStateBase* state,
+                   [[maybe_unused]] Uintah::Matrix3& h_beta) override
   {
   }
 
@@ -160,7 +160,7 @@ public:
    */
   void addInitialComputesAndRequires(
     Uintah::Task* task, const Uintah::MPMMaterial* matl,
-    const Uintah::PatchSet* patch) const override
+    [[maybe_unused]] const Uintah::PatchSet* patch) const override
   {
     const Uintah::MaterialSubset* matlset = matl->thisMaterial();
     task->computes(pBackStressLabel, matlset);
@@ -170,9 +170,9 @@ public:
    *  Actually initialize the pore pressure
    */
   void initializeLocalVariables(
-    const Uintah::Patch* patch, Uintah::ParticleSubset* pset,
+    [[maybe_unused]] const Uintah::Patch* patch, Uintah::ParticleSubset* pset,
     Uintah::DataWarehouse* new_dw,
-    Uintah::constParticleVariable<double>& pVolume) override
+    [[maybe_unused]] Uintah::constParticleVariable<double>& pVolume) override
   {
     Uintah::ParticleVariable<Uintah::Matrix3> pBackStress;
     new_dw->allocateAndPut(pBackStress, pBackStressLabel, pset);
@@ -187,7 +187,7 @@ public:
    */
   void addComputesAndRequires(Uintah::Task* task,
                               const Uintah::MPMMaterial* matl,
-                              const Uintah::PatchSet* patches) const override
+                              [[maybe_unused]] const Uintah::PatchSet* patches) const override
   {
     const Uintah::MaterialSubset* matlset = matl->thisMaterial();
     task->needs(Uintah::Task::OldDW, pBackStressLabel, matlset,
@@ -198,9 +198,9 @@ public:
   /**
    *  Update the pore pressure
    */
-  void computeBackStress(Uintah::ParticleSubset* pset,
-                         Uintah::DataWarehouse* old_dw,
-                         Uintah::DataWarehouse* new_dw)
+  void computeBackStress([[maybe_unused]] Uintah::ParticleSubset* pset,
+                         [[maybe_unused]] Uintah::DataWarehouse* old_dw,
+                         [[maybe_unused]] Uintah::DataWarehouse* new_dw)
   {
   }
 

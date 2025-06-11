@@ -149,7 +149,7 @@ MieGruneisenEOSEnergy::computeIsentropicTemperatureRate(const double T,
 double
 MieGruneisenEOSEnergy::eval_dp_dJ(const MPMMaterial* matl,
                                   const double& detF,
-                                  const ModelStateBase* state)
+                                  [[maybe_unused]] const ModelStateBase* state)
 {
   double rho_0   = matl->getInitialDensity();
   double rho_cur = rho_0 / detF;
@@ -637,8 +637,8 @@ MieGruneisenEOSEnergy::computeDpDepse_s(const Vaango::ModelStateBase*) const
   return -1;
 }
 double
-MieGruneisenEOSEnergy::computeElasticVolumetricStrain(const double& pp,
-                                                      const double& p0)
+MieGruneisenEOSEnergy::computeElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                                      [[maybe_unused]] const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute volume strain of 5 parameter Mie-Gruneisen "
@@ -652,8 +652,8 @@ MieGruneisenEOSEnergy::computeElasticVolumetricStrain(const double& pp,
 }
 
 double
-MieGruneisenEOSEnergy::computeExpElasticVolumetricStrain(const double& pp,
-                                                         const double& p0)
+MieGruneisenEOSEnergy::computeExpElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                                         [[maybe_unused]] const double& p0)
 {
   std::ostringstream err;
   err << "**ERROR** Cannot compute exp(volume strain) of 5 parameter "
@@ -667,9 +667,9 @@ MieGruneisenEOSEnergy::computeExpElasticVolumetricStrain(const double& pp,
 }
 double
 MieGruneisenEOSEnergy::computeDerivExpElasticVolumetricStrain(
-  const double& pp,
-  const double& p0,
-  double& exp_eps_e_v)
+  [[maybe_unused]] const double& pp,
+  [[maybe_unused]] const double& p0,
+  [[maybe_unused]] double& exp_eps_e_v)
 {
   std::ostringstream err;
   err

@@ -163,7 +163,7 @@ SCGFlow::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*)
 }
 
 void
-SCGFlow::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+SCGFlow::addComputesAndRequires([[maybe_unused]] Task* task, [[maybe_unused]] const MPMMaterial* matl,
                                 const PatchSet*, bool, bool)
 {
 }
@@ -406,11 +406,11 @@ SCGFlow::computeEpdot(const ModelStateBase* state, const double&,
 }
 
 void
-SCGFlow::computeTangentModulus(const Matrix3& stress,
-                               const ModelStateBase* state, const double&,
-                               const MPMMaterial*, const particleIndex idx,
-                               TangentModulusTensor& Ce,
-                               TangentModulusTensor& Cep)
+SCGFlow::computeTangentModulus([[maybe_unused]] const Matrix3& stress,
+                               [[maybe_unused]] const ModelStateBase* state, const double&,
+                               const MPMMaterial*, [[maybe_unused]] const particleIndex idx,
+                               [[maybe_unused]] TangentModulusTensor& Ce,
+                               [[maybe_unused]] TangentModulusTensor& Cep)
 {
   throw InternalError("Empty Function: SCGFlow::computeTangentModulus",
                       __FILE__, __LINE__);

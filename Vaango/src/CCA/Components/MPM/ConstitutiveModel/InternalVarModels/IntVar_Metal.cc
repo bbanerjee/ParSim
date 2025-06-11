@@ -216,7 +216,7 @@ IntVar_Metal::computeInternalVariable(const std::string& label,
 }
 
 double
-IntVar_Metal::computeEqPlasticStrain(double eqPlasticStrain_old,
+IntVar_Metal::computeEqPlasticStrain([[maybe_unused]] double eqPlasticStrain_old,
                                      const ModelStateBase* state) const
 {
   double h_epdot = eqPlasticStrainHardeningModulus(state);
@@ -224,7 +224,7 @@ IntVar_Metal::computeEqPlasticStrain(double eqPlasticStrain_old,
 }
 
 double
-IntVar_Metal::computePlasticPorosity(double plasticPorosity_old,
+IntVar_Metal::computePlasticPorosity([[maybe_unused]] double plasticPorosity_old,
                                      const ModelStateBase* state) const
 {
   double h_phi = plasticPorosityHardeningModulus(state);
@@ -241,7 +241,7 @@ IntVar_Metal::computeHardeningModulus(const ModelStateBase* state,
 }
 
 double
-IntVar_Metal::eqPlasticStrainHardeningModulus(const ModelStateBase* state) const
+IntVar_Metal::eqPlasticStrainHardeningModulus([[maybe_unused]] const ModelStateBase* state) const
 {
   return 1.0;
 }
@@ -285,8 +285,8 @@ IntVar_Metal::voidNucleationFactor(double eqPlasticStrain) const
 
 double
 IntVar_Metal::computeVolStrainDerivOfInternalVariable(
-  const std::string& label,
-  const ModelStateBase* state) const
+  [[maybe_unused]] const std::string& label,
+  [[maybe_unused]] const ModelStateBase* state) const
 {
   return 0.0;
 }
@@ -303,7 +303,7 @@ IntVar_Metal::allocateCMDataAddRequires(Task* task,
 }
 
 void
-IntVar_Metal::allocateCMDataAdd(DataWarehouse* old_dw,
+IntVar_Metal::allocateCMDataAdd([[maybe_unused]] DataWarehouse* old_dw,
                                 ParticleSubset* addset,
                                 ParticleLabelVariableMap* newState,
                                 ParticleSubset* delset,
