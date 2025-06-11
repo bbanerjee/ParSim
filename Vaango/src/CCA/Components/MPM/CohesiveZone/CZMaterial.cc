@@ -67,7 +67,7 @@ CZMaterial::CZMaterial(ProblemSpecP& ps,
 }
 
 void
-CZMaterial::standardInitialization(ProblemSpecP& ps, const MPMFlags* flags)
+CZMaterial::standardInitialization(ProblemSpecP& ps, [[maybe_unused]] const MPMFlags* flags)
 
 {
   ps->require("delta_n", d_delta_n);
@@ -106,9 +106,9 @@ CZMaterial::outputProblemSpec(ProblemSpecP& ps)
 }
 
 void
-CZMaterial::copyWithoutGeom(ProblemSpecP& ps,
+CZMaterial::copyWithoutGeom([[maybe_unused]] ProblemSpecP& ps,
                             const CZMaterial* mat,
-                            const MPMFlags* flags)
+                            [[maybe_unused]] const MPMFlags* flags)
 {
   d_delta_n      = mat->d_delta_n;
   d_delta_t      = mat->d_delta_t;

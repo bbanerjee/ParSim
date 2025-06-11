@@ -31,7 +31,7 @@
 
 using namespace Uintah;
 
-Contact::Contact(const ProcessorGroup* myworld,
+Contact::Contact([[maybe_unused]] const ProcessorGroup* myworld,
                  const MaterialManagerP& mat_manager,
                  const MPMLabel* mpm_labels,
                  const MPMFlags* mpm_flags,

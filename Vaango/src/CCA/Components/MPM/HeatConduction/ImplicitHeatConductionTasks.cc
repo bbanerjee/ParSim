@@ -536,9 +536,9 @@ ImplicitHeatConductionTasks::scheduleComputeHeatExchange(
  *-----------------------------------------------------------------------*/
 void
 ImplicitHeatConductionTasks::scheduleComputeInternalHeatRate(
-  SchedulerP& sched,
-  const PatchSet* patches,
-  const MaterialSet* matls)
+  [[maybe_unused]] SchedulerP& sched,
+  [[maybe_unused]] const PatchSet* patches,
+  [[maybe_unused]] const MaterialSet* matls)
 {
 }
 
@@ -547,9 +547,9 @@ ImplicitHeatConductionTasks::scheduleComputeInternalHeatRate(
  *-----------------------------------------------------------------------*/
 void
 ImplicitHeatConductionTasks::scheduleComputeNodalHeatFlux(
-  SchedulerP& sched,
-  const PatchSet* patches,
-  const MaterialSet* matls)
+  [[maybe_unused]] SchedulerP& sched,
+  [[maybe_unused]] const PatchSet* patches,
+  [[maybe_unused]] const MaterialSet* matls)
 {
 }
 
@@ -558,9 +558,9 @@ ImplicitHeatConductionTasks::scheduleComputeNodalHeatFlux(
  *-----------------------------------------------------------------------*/
 void
 ImplicitHeatConductionTasks::scheduleSolveHeatEquations(
-  SchedulerP& sched,
-  const PatchSet* patches,
-  const MaterialSet* matls)
+  [[maybe_unused]] SchedulerP& sched,
+  [[maybe_unused]] const PatchSet* patches,
+  [[maybe_unused]] const MaterialSet* matls)
 {
 }
 
@@ -569,8 +569,8 @@ ImplicitHeatConductionTasks::scheduleSolveHeatEquations(
  *-----------------------------------------------------------------------*/
 void
 ImplicitHeatConductionTasks::scheduleIntegrateTemperatureRate(
-  SchedulerP& sched,
-  const PatchSet* patches,
-  const MaterialSet* matls)
+  [[maybe_unused]] SchedulerP& sched,
+  [[maybe_unused]] const PatchSet* patches,
+  [[maybe_unused]] const MaterialSet* matls)
 {
 }

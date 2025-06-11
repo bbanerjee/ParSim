@@ -73,11 +73,11 @@ NullContact::outputProblemSpec(ProblemSpecP& ps)
 
 void
 NullContact::exchangeMomentum(const ProcessorGroup*,
-                              const PatchSubset* patches,
-                              const MaterialSubset* matls,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw,
-                              const VarLabel* gVelocity_label)
+                              [[maybe_unused]] const PatchSubset* patches,
+                              [[maybe_unused]] const MaterialSubset* matls,
+                              [[maybe_unused]] DataWarehouse* old_dw,
+                              [[maybe_unused]] DataWarehouse* new_dw,
+                              [[maybe_unused]] const VarLabel* gVelocity_label)
 {
 }
 

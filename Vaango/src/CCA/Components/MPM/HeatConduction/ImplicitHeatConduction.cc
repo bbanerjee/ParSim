@@ -282,11 +282,11 @@ ImplicitHeatConduction::scheduleGetTemperatureIncrement(
 }
 
 void
-ImplicitHeatConduction::destroyHCMatrix(const ProcessorGroup*,
-                                        const PatchSubset* patches,
-                                        const MaterialSubset*,
-                                        DataWarehouse* old_dw,
-                                        DataWarehouse* new_dw)
+ImplicitHeatConduction::destroyHCMatrix([[maybe_unused]] const ProcessorGroup*,
+                                        [[maybe_unused]] const PatchSubset* patches,
+                                        [[maybe_unused]] const MaterialSubset*,
+                                        [[maybe_unused]] DataWarehouse* old_dw,
+                                        [[maybe_unused]] DataWarehouse* new_dw)
 {
   if (cout_doing.active()) {
     cout_doing << "Doing destroyHCMatrix "
@@ -414,7 +414,7 @@ void
 ImplicitHeatConduction::applyHCBoundaryConditions(const ProcessorGroup*,
                                                   const PatchSubset* patches,
                                                   const MaterialSubset*,
-                                                  DataWarehouse* old_dw,
+                                                  [[maybe_unused]] DataWarehouse* old_dw,
                                                   DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
@@ -513,7 +513,7 @@ void
 ImplicitHeatConduction::findFixedHCDOF(const ProcessorGroup*,
                                        const PatchSubset* patches,
                                        const MaterialSubset*,
-                                       DataWarehouse* old_dw,
+                                       [[maybe_unused]] DataWarehouse* old_dw,
                                        DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
@@ -575,7 +575,7 @@ ImplicitHeatConduction::formHCStiffnessMatrix(const ProcessorGroup*,
                                               const PatchSubset* patches,
                                               const MaterialSubset*,
                                               DataWarehouse* old_dw,
-                                              DataWarehouse* new_dw)
+                                              [[maybe_unused]] DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -784,7 +784,7 @@ void
 ImplicitHeatConduction::adjustHCQAndHCKForBCs(const ProcessorGroup*,
                                               const PatchSubset* patches,
                                               const MaterialSubset*,
-                                              DataWarehouse* old_dw,
+                                              [[maybe_unused]] DataWarehouse* old_dw,
                                               DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
@@ -837,8 +837,8 @@ void
 ImplicitHeatConduction::solveForTemp(const ProcessorGroup*,
                                      const PatchSubset* patches,
                                      const MaterialSubset*,
-                                     DataWarehouse* old_dw,
-                                     DataWarehouse* new_dw)
+                                     [[maybe_unused]] DataWarehouse* old_dw,
+                                     [[maybe_unused]] DataWarehouse* new_dw)
 {
   std::vector<double> guess;
   for (int p = 0; p < patches->size(); p++) {
@@ -926,7 +926,7 @@ void
 ImplicitHeatConduction::fillgTemperatureRate(const ProcessorGroup*,
                                              const PatchSubset* patches,
                                              const MaterialSubset*,
-                                             DataWarehouse* old_dw,
+                                             [[maybe_unused]] DataWarehouse* old_dw,
                                              DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {

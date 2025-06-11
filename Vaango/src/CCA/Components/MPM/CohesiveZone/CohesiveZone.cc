@@ -227,7 +227,7 @@ CohesiveZone::returnCohesiveZoneStatePreReloc()
 //__________________________________
 //
 void
-CohesiveZone::registerPermanentCohesiveZoneState(CZMaterial* czmat)
+CohesiveZone::registerPermanentCohesiveZoneState([[maybe_unused]] CZMaterial* czmat)
 {
   d_cz_state.push_back(d_cz_labels->czAreaLabel);
   d_cz_state_preReloc.push_back(d_cz_labels->czAreaLabel_preReloc);

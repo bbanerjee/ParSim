@@ -372,11 +372,11 @@ ScalarDiffusionTasks::getAndAllocateForParticlesToGrid(
 }
 
 void
-ScalarDiffusionTasks::getForParticlesToGrid(const Patch* patch,
+ScalarDiffusionTasks::getForParticlesToGrid([[maybe_unused]] const Patch* patch,
                                             ParticleSubset* pset,
                                             DataWarehouse* old_dw,
                                             DataWarehouse* new_dw,
-                                            int matl_dw_index,
+                                            [[maybe_unused]] int matl_dw_index,
                                             ScalarDiffusionTaskData& data)
 {
   new_dw->get(data.pExternalScalarFlux,
@@ -394,8 +394,8 @@ ScalarDiffusionTasks::getForParticlesToGrid(const Patch* patch,
 
 void
 ScalarDiffusionTasks::allocateForParticlesToGrid(const Patch* patch,
-                                                 ParticleSubset* pset,
-                                                 DataWarehouse* old_dw,
+                                                 [[maybe_unused]] ParticleSubset* pset,
+                                                 [[maybe_unused]] DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw,
                                                  int matl_dw_index,
                                                  ScalarDiffusionTaskData& data)
@@ -552,7 +552,7 @@ ScalarDiffusionTasks::getForParticlesToGrid_CFI(const Patch* coarsePatch,
 void
 ScalarDiffusionTasks::getModifiableForParticlesToGrid_CFI(
   const Patch* finePatch,
-  DataWarehouse* old_dw,
+  [[maybe_unused]] DataWarehouse* old_dw,
   DataWarehouse* new_dw,
   int matl_dw_index,
   ScalarDiffusionTaskData& data)
@@ -578,7 +578,7 @@ ScalarDiffusionTasks::interpolateParticlesToGrid_CFI(
   const Patch* patch,
   const std::vector<IntVector>& ni,
   const std::vector<double>& S,
-  constParticleVariable<Point>& px,
+  [[maybe_unused]] constParticleVariable<Point>& px,
   constParticleVariable<double>& pMass,
   particleIndex idx,
   ScalarDiffusionTaskData& data)
@@ -1395,9 +1395,9 @@ ScalarDiffusionTasks::scheduleComputeFlux(SchedulerP& sched,
 }
 
 void
-ScalarDiffusionTasks::computeFlux(const ProcessorGroup* procs,
+ScalarDiffusionTasks::computeFlux([[maybe_unused]] const ProcessorGroup* procs,
                                   const PatchSubset* patches,
-                                  const MaterialSubset* matls,
+                                  [[maybe_unused]] const MaterialSubset* matls,
                                   DataWarehouse* old_dw,
                                   DataWarehouse* new_dw)
 {
@@ -1446,9 +1446,9 @@ ScalarDiffusionTasks::scheduleComputeDivergence(SchedulerP& sched,
 }
 
 void
-ScalarDiffusionTasks::computeDivergence(const ProcessorGroup* procs,
+ScalarDiffusionTasks::computeDivergence([[maybe_unused]] const ProcessorGroup* procs,
                                         const PatchSubset* patches,
-                                        const MaterialSubset* matls,
+                                        [[maybe_unused]] const MaterialSubset* matls,
                                         DataWarehouse* old_dw,
                                         DataWarehouse* new_dw)
 {
@@ -1514,7 +1514,7 @@ ScalarDiffusionTasks::scheduleComputeDivergence_CFI(SchedulerP& sched,
 void
 ScalarDiffusionTasks::computeDivergence_CFI(const ProcessorGroup*,
                                             const PatchSubset* patches,
-                                            const MaterialSubset* matls,
+                                            [[maybe_unused]] const MaterialSubset* matls,
                                             DataWarehouse* old_dw,
                                             DataWarehouse* new_dw)
 {

@@ -155,6 +155,11 @@ public:
   // is restarted. This allows the simulation component to handle
   // initializations that are necessary when a simulation is restarted.
   //
+  virtual void restartInitialize()
+  {
+
+  }
+
   virtual void
   restartInitialize(const ProcessorGroup*, const PatchSubset*, const MaterialSubset*, DataWarehouse*, DataWarehouse*)
   {
