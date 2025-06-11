@@ -2,7 +2,7 @@ C
 C The MIT License
 C
 C Copyright (c) 1997-2012 The University of Utah
-C Copyright (c) 2014-2023 Biswajit Banerjee
+C Copyright (c) 2014-2025 Biswajit Banerjee, Parresia Research Ltd, NZ
 C
 C Permission is hereby granted, free of charge, to any person obtaining a copy
 C of this software and associated documentation files (the "Software"), to

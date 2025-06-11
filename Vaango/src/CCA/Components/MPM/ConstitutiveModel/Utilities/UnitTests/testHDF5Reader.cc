@@ -102,6 +102,7 @@ TEST(HDF5Tests, readTest)
     ASSERT_EQ(ndims, 1);
     ASSERT_EQ(dims, 4);
 
+
     // Create a 2D buffer
     std::vector<std::vector<char>> layer_names_buffer(dims);
     for (auto& name_buffer : layer_names_buffer) {
