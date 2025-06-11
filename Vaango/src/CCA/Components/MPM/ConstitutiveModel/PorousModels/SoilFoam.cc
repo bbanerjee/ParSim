@@ -217,7 +217,7 @@ void
 SoilFoam::allocateCMDataAddRequires(Task* task,
                                     const MPMMaterial* matl,
                                     const PatchSet* patches,
-                                    MPMLabel* lb) const
+                                    [[maybe_unused]] MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -568,8 +568,8 @@ double
 SoilFoam::computeRhoMicroCM(double pressure,
                             const double /*p_ref*/,
                             const MPMMaterial* matl,
-                            double temperature,
-                            double rho_guess)
+                            [[maybe_unused]] double temperature,
+                            [[maybe_unused]] double rho_guess)
 {
 
   // std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR SoilFoam"
@@ -596,7 +596,7 @@ SoilFoam::computePressEOSCM(double rho_cur,
                             double& dp_drho,
                             double& tmp,
                             const MPMMaterial* matl,
-                            double temperature)
+                            [[maybe_unused]] double temperature)
 {
   double rho_orig   = matl->getInitialDensity();
   double vol_strain = log(rho_orig / rho_cur);

@@ -396,8 +396,8 @@ BasicDamageModel::outputProblemSpecDamage(ProblemSpecP& cm_ps)
 void
 BasicDamageModel::addInitialComputesAndRequires(Task* task,
                                                 const MPMMaterial* matl,
-                                                const PatchSet* patches,
-                                                MPMLabel* lb) const
+                                                [[maybe_unused]] const PatchSet* patches,
+                                                [[maybe_unused]] MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pFailureStressOrStrainLabel, matlset);
@@ -413,7 +413,7 @@ BasicDamageModel::addInitialComputesAndRequires(Task* task,
 void
 BasicDamageModel::allocateDamageDataAddRequires(Task* task,
                                                 const MPMMaterial* matl,
-                                                const PatchSet* patches,
+                                                [[maybe_unused]] const PatchSet* patches,
                                                 MPMLabel*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -542,7 +542,7 @@ BasicDamageModel::copyDamageDataFromDeletedToAddedParticle(
   ParticleSubset* addset,
   ParticleLabelVariableMap* newState,
   ParticleSubset* delset,
-  DataWarehouse* old_dw)
+  [[maybe_unused]] DataWarehouse* old_dw)
 {
   constParticleVariable<double> o_pFailureStrain;
   constParticleVariable<int> o_pLocalized;
@@ -583,7 +583,7 @@ void
 BasicDamageModel::carryForwardDamageData(ParticleSubset* pset,
                                          DataWarehouse* old_dw,
                                          DataWarehouse* new_dw,
-                                         const MPMMaterial* matl)
+                                         [[maybe_unused]] const MPMMaterial* matl)
 {
   constParticleVariable<double> pFailureStrain;
   constParticleVariable<int> pLocalized;
@@ -636,7 +636,7 @@ BasicDamageModel::addParticleState(std::vector<const VarLabel*>& from,
 void
 BasicDamageModel::addComputesAndRequires(Task* task,
                                          const MPMMaterial* matl,
-                                         const PatchSet* patches,
+                                         [[maybe_unused]] const PatchSet* patches,
                                          MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -826,7 +826,7 @@ BasicDamageModel::updateDamageAndModifyStress(const Matrix3& defGrad,
                                               const double& pDamage,
                                               double& pDamage_new,
                                               Matrix3& pStress,
-                                              const long64 particleID)
+                                              [[maybe_unused]] const long64 particleID)
 {
   Matrix3 Identity, zero(0.0);
   Identity.Identity();
@@ -937,7 +937,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
   const double& pTimeOfLoc,
   double& pTimeOfLoc_new,
   Matrix3& pStress,
-  const long64 particleID,
+  [[maybe_unused]] const long64 particleID,
   double time)
 {
   Matrix3 Identity, zero(0.0);

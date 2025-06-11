@@ -335,7 +335,7 @@ HypoElastic::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
 void
 HypoElastic::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
                                        const PatchSet* patches,
-                                       MPMLabel* lb) const
+                                       [[maybe_unused]] MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -358,8 +358,8 @@ HypoElastic::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
 
 double
 HypoElastic::computeRhoMicroCM(double pressure, const double p_ref,
-                               const MPMMaterial* matl, double temperature,
-                               double rho_guess)
+                               const MPMMaterial* matl, [[maybe_unused]] double temperature,
+                               [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   // double p_ref=101325.0;
@@ -376,7 +376,7 @@ HypoElastic::computeRhoMicroCM(double pressure, const double p_ref,
 void
 HypoElastic::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
                                double& dp_drho, double& csquared,
-                               const MPMMaterial* matl, double temperature)
+                               const MPMMaterial* matl, [[maybe_unused]] double temperature)
 {
 
   // double G = d_modelParam.G;

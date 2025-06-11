@@ -286,8 +286,8 @@ Water::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
 // The "CM" versions use the pressure-volume relationship of the CNH model
 double
 Water::computeRhoMicroCM(double pressure, const double p_ref,
-                         const MPMMaterial* matl, double temperature,
-                         double rho_guess)
+                         const MPMMaterial* matl, [[maybe_unused]] double temperature,
+                         [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double bulk = d_initialData.d_Bulk;
@@ -305,7 +305,7 @@ Water::computeRhoMicroCM(double pressure, const double p_ref,
 void
 Water::computePressEOSCM(const double rho_cur, double& pressure,
                          const double p_ref, double& dp_drho, double& tmp,
-                         const MPMMaterial* matl, double temperature)
+                         const MPMMaterial* matl, [[maybe_unused]] double temperature)
 {
   double bulk = d_initialData.d_Bulk;
   double rho_orig = matl->getInitialDensity();

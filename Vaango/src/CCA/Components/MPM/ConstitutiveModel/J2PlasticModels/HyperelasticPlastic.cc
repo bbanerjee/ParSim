@@ -603,7 +603,7 @@ HyperelasticPlastic::allocateCMDataAdd(DataWarehouse* new_dw,
                                        ParticleSubset* addset,
                                        ParticleLabelVariableMap* newState,
                                        ParticleSubset* delset,
-                                       DataWarehouse* old_dw)
+                                       [[maybe_unused]] DataWarehouse* old_dw)
 {
   // Copy the data common to all constitutive models from the particle to be
   // deleted to the particle to be added.
@@ -1087,8 +1087,8 @@ HyperelasticPlastic::addComputesAndRequires(Task* task,
 void
 HyperelasticPlastic::addComputesAndRequires(Task* task,
                                             const MPMMaterial* matl,
-                                            const PatchSet* patches,
-                                            const bool recurse,
+                                            [[maybe_unused]] const PatchSet* patches,
+                                            [[maybe_unused]] const bool recurse,
                                             const bool SchedParent) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -1161,7 +1161,7 @@ HyperelasticPlastic::computePressEOSCM(const double rho_cur,
                                        double& dp_drho,
                                        double& cSquared,
                                        const MPMMaterial* matl,
-                                       double temperature)
+                                       [[maybe_unused]] double temperature)
 {
   double bulk     = d_initialData.Bulk;
   double rho_orig = matl->getInitialDensity();
@@ -1194,7 +1194,7 @@ double
 HyperelasticPlastic::computeRhoMicroCM(double pressure,
                                        const double p_ref,
                                        const MPMMaterial* matl,
-                                       double temperature,
+                                       [[maybe_unused]] double temperature,
                                        double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
@@ -1579,7 +1579,7 @@ HyperelasticPlastic::computeStressTensor(const PatchSubset* patches,
 void
 HyperelasticPlastic::computeStressTensorImplicit(const PatchSubset* patches,
                                                  const MPMMaterial* matl,
-                                                 DataWarehouse* old_dw,
+                                                 [[maybe_unused]] DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw,
                                                  Solver* solver,
                                                  const bool)

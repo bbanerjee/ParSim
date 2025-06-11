@@ -399,7 +399,7 @@ ViscoScramImplicit::computeStableTimestep(const Patch*,
 void
 ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
                                                 const MPMMaterial* matl,
-                                                DataWarehouse* old_dw,
+                                                [[maybe_unused]] DataWarehouse* old_dw,
                                                 DataWarehouse* new_dw,
                                                 Solver* solver,
                                                 const bool)
@@ -705,7 +705,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
 void
 ViscoScramImplicit::addComputesAndRequires(Task* task,
                                            const MPMMaterial* matl,
-                                           const PatchSet* patches,
+                                           [[maybe_unused]] const PatchSet* patches,
                                            const bool,
                                            const bool) const
 {
@@ -766,8 +766,8 @@ double
 ViscoScramImplicit::computeRhoMicroCM(double pressure,
                                       const double p_ref,
                                       const MPMMaterial* matl,
-                                      double temperature,
-                                      double rho_guess)
+                                      [[maybe_unused]] double temperature,
+                                      [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double p_gauge  = pressure - p_ref;
@@ -785,7 +785,7 @@ ViscoScramImplicit::computePressEOSCM(const double rho_cur,
                                       double& dp_drho,
                                       double& tmp,
                                       const MPMMaterial* matl,
-                                      double temperature)
+                                      [[maybe_unused]] double temperature)
 {
   double rho_orig = matl->getInitialDensity();
 

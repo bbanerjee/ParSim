@@ -401,7 +401,7 @@ void
 ViscoElasticFortran::allocateCMDataAddRequires(Task* task,
                                                const MPMMaterial* matl,
                                                const PatchSet* patches,
-                                               MPMLabel* lb) const
+                                               [[maybe_unused]] MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -778,8 +778,8 @@ double
 ViscoElasticFortran::computeRhoMicroCM(double pressure,
                                        const double p_ref,
                                        const MPMMaterial* matl,
-                                       double temperature,
-                                       double rho_guess)
+                                       [[maybe_unused]] double temperature,
+                                       [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double p_gauge  = pressure - p_ref;
@@ -803,7 +803,7 @@ ViscoElasticFortran::computePressEOSCM(double rho_cur,
                                        double& dp_drho,
                                        double& tmp,
                                        const MPMMaterial* matl,
-                                       double temperature)
+                                       [[maybe_unused]] double temperature)
 {
   double bulk     = d_param.K;
   double rho_orig = matl->getInitialDensity();

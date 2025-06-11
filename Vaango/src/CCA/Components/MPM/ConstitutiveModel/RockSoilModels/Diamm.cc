@@ -245,7 +245,7 @@ Diamm::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
 void
 Diamm::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                 const PatchSet* patches, MPMLabel* lb) const
+                                 const PatchSet* patches, [[maybe_unused]] MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -615,8 +615,8 @@ Diamm::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
 
 double
 Diamm::computeRhoMicroCM(double pressure, const double p_ref,
-                         const MPMMaterial* matl, double temperature,
-                         double rho_guess)
+                         const MPMMaterial* matl, [[maybe_unused]] double temperature,
+                         [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double p_gauge = pressure - p_ref;
@@ -635,7 +635,7 @@ Diamm::computeRhoMicroCM(double pressure, const double p_ref,
 void
 Diamm::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
                          double& dp_drho, double& tmp, const MPMMaterial* matl,
-                         double temperature)
+                         [[maybe_unused]] double temperature)
 {
 
   double bulk = UI[0];

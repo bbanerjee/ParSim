@@ -681,7 +681,7 @@ CamClay::plasticUpdate(particleIndex idx,
                        double strain_elast_s_tr,
                        const Matrix3& nn,
                        double pDeltaGamma_old,
-                       double pPc_old,
+                       [[maybe_unused]] double pPc_old,
                        ModelState_CamClay& state)
 {
   // Calc volumetric and deviatoric elastic strains at beginninging of
@@ -1380,8 +1380,8 @@ double
 CamClay::computeRhoMicroCM(double pressure,
                            const double p_ref,
                            const MPMMaterial* matl,
-                           double temperature,
-                           double rho_guess)
+                           [[maybe_unused]] double temperature,
+                           [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   pressure -= p_ref;
@@ -1404,7 +1404,7 @@ CamClay::computePressEOSCM(double rho_cur,
                            double& dp_drho,
                            double& csquared,
                            const MPMMaterial* matl,
-                           double temperature)
+                           [[maybe_unused]] double temperature)
 {
   double rho_orig = matl->getInitialDensity();
   d_eos->computePressure(rho_orig, rho_cur, pressure, dp_drho, csquared);

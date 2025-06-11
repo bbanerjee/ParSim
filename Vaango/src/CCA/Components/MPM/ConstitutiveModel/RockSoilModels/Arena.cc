@@ -668,9 +668,9 @@ Arena::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 }
 
 void
-Arena::initializeInternalVariables(const Patch* patch, const MPMMaterial* matl,
+Arena::initializeInternalVariables([[maybe_unused]] const Patch* patch, const MPMMaterial* matl,
                                    ParticleSubset* pset, DataWarehouse* new_dw,
-                                   ParameterDict& params)
+                                   [[maybe_unused]] ParameterDict& params)
 {
   Uintah::constParticleVariable<double> pMass, pVolume;
   new_dw->get(pVolume, lb->pVolumeLabel, pset);
@@ -2902,9 +2902,9 @@ Arena::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
  *  ---------------------------------------------------------------------------------------
  */
 void
-Arena::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
-                         ParticleLabelVariableMap* newState,
-                         ParticleSubset* delset, DataWarehouse* old_dw)
+Arena::allocateCMDataAdd([[maybe_unused]] DataWarehouse* new_dw, [[maybe_unused]] ParticleSubset* addset,
+                         [[maybe_unused]] ParticleLabelVariableMap* newState,
+                         [[maybe_unused]] ParticleSubset* delset, [[maybe_unused]] DataWarehouse* old_dw)
 {
   std::ostringstream out;
   out << "Material conversion after failure not implemented for Arena.";
@@ -2920,8 +2920,8 @@ Arena::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
  *---------------------------------------------------------------------------------------*/
 double
 Arena::computeRhoMicroCM(double pressure, const double p_ref,
-                         const MPMMaterial* matl, double temperature,
-                         double rho_guess)
+                         const MPMMaterial* matl, [[maybe_unused]] double temperature,
+                         [[maybe_unused]] double rho_guess)
 {
   double rho_0 = matl->getInitialDensity();
   double K0 = d_cm.K0_Murnaghan_EOS;
@@ -2936,7 +2936,7 @@ Arena::computeRhoMicroCM(double pressure, const double p_ref,
 void
 Arena::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
                          double& dp_drho, double& soundSpeedSq,
-                         const MPMMaterial* matl, double temperature)
+                         const MPMMaterial* matl, [[maybe_unused]] double temperature)
 {
   double rho_0 = matl->getInitialDensity();
   double K0 = d_cm.K0_Murnaghan_EOS;

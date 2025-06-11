@@ -422,9 +422,9 @@ P_Alpha::computeStressTensor(const PatchSubset* patches,
 }
 
 void
-P_Alpha::allocateCMDataAddRequires(Task* task,
-                                   const MPMMaterial* matl,
-                                   const PatchSet* patches,
+P_Alpha::allocateCMDataAddRequires([[maybe_unused]] Task* task,
+                                   [[maybe_unused]] const MPMMaterial* matl,
+                                   [[maybe_unused]] const PatchSet* patches,
                                    MPMLabel*) const
 {
   std::ostringstream err;
@@ -434,10 +434,10 @@ P_Alpha::allocateCMDataAddRequires(Task* task,
 }
 
 void
-P_Alpha::allocateCMDataAdd(DataWarehouse* new_dw,
-                           ParticleSubset* addset,
-                           ParticleLabelVariableMap* newState,
-                           ParticleSubset* delset,
+P_Alpha::allocateCMDataAdd([[maybe_unused]] DataWarehouse* new_dw,
+                           [[maybe_unused]] ParticleSubset* addset,
+                           [[maybe_unused]] ParticleLabelVariableMap* newState,
+                           [[maybe_unused]] ParticleSubset* delset,
                            DataWarehouse*)
 {
   std::ostringstream err;
@@ -447,11 +447,11 @@ P_Alpha::allocateCMDataAdd(DataWarehouse* new_dw,
 }
 
 double
-P_Alpha::computeRhoMicroCM(double press,
-                           const double Temp,
-                           const MPMMaterial* matl,
-                           double temperature,
-                           double rho_guess)
+P_Alpha::computeRhoMicroCM([[maybe_unused]] double press,
+                           [[maybe_unused]] const double Temp,
+                           [[maybe_unused]] const MPMMaterial* matl,
+                           [[maybe_unused]] double temperature,
+                           [[maybe_unused]] double rho_guess)
 {
   std::ostringstream err;
   err << "**INTERNAL ERROR** No version of computeRhoMicroCM exists yet for "
@@ -462,13 +462,13 @@ P_Alpha::computeRhoMicroCM(double press,
 }
 
 void
-P_Alpha::computePressEOSCM(double rhoM,
-                           double& pressure,
-                           double Temp,
-                           double& dp_drho,
-                           double& tmp,
+P_Alpha::computePressEOSCM([[maybe_unused]] double rhoM,
+                           [[maybe_unused]] double& pressure,
+                           [[maybe_unused]] double Temp,
+                           [[maybe_unused]] double& dp_drho,
+                           [[maybe_unused]] double& tmp,
                            const MPMMaterial*,
-                           double temperature)
+                           [[maybe_unused]] double temperature)
 {
   std::ostringstream err;
   err << "**INTERNAL ERROR** No version of computePressEOSCM exists yet for "

@@ -551,11 +551,11 @@ ProgramBurn::carryForward(const PatchSubset* patches,
 
 // This is not yet implemented - JG- 7/26/10
 double
-ProgramBurn::computeRhoMicroCM(double pressure,
-                               const double p_ref,
-                               const MPMMaterial* matl,
-                               double temperature,
-                               double rho_guess)
+ProgramBurn::computeRhoMicroCM([[maybe_unused]] double pressure,
+                               [[maybe_unused]] const double p_ref,
+                               [[maybe_unused]] const MPMMaterial* matl,
+                               [[maybe_unused]] double temperature,
+                               [[maybe_unused]] double rho_guess)
 {
   std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR ProgramBurn"
             << "\n";
@@ -567,11 +567,11 @@ ProgramBurn::computeRhoMicroCM(double pressure,
 void
 ProgramBurn::computePressEOSCM(const double rhoM,
                                double& pressure,
-                               const double p_ref,
+                               [[maybe_unused]] const double p_ref,
                                double& dp_drho,
                                double& tmp,
                                const MPMMaterial* matl,
-                               double temperature)
+                               [[maybe_unused]] double temperature)
 {
   double A    = d_cm.d_A;
   double B    = d_cm.d_B;

@@ -121,7 +121,7 @@ TransIsoHyperImplicit::addComputesAndRequires(Task* task,
 void
 TransIsoHyperImplicit::computeStressTensorImplicit(const PatchSubset* patches,
                                                    const MPMMaterial* matl,
-                                                   DataWarehouse* old_dw,
+                                                   [[maybe_unused]] DataWarehouse* old_dw,
                                                    DataWarehouse* new_dw,
                                                    Solver* solver,
                                                    const bool)

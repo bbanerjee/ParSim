@@ -49,7 +49,7 @@
 
 using namespace Uintah;
 
-HypoElastic_MMS::HypoElastic_MMS(ProblemSpecP& ps, MPMFlags* Mflag)
+HypoElastic_MMS::HypoElastic_MMS([[maybe_unused]] ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
   // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100
@@ -215,7 +215,7 @@ HypoElastic_MMS::initStressAndDefGradUniaxialStrainHomogeneous(
 void
 HypoElastic_MMS::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
                                            const PatchSet* patches,
-                                           MPMLabel* lb) const
+                                           [[maybe_unused]] MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -238,8 +238,8 @@ HypoElastic_MMS::allocateCMDataAdd(DataWarehouse* new_dw,
 }
 
 void
-HypoElastic_MMS::addParticleState(std::vector<const VarLabel*>& from,
-                                  std::vector<const VarLabel*>& to)
+HypoElastic_MMS::addParticleState([[maybe_unused]] std::vector<const VarLabel*>& from,
+                                  [[maybe_unused]] std::vector<const VarLabel*>& to)
 {
 }
 
@@ -436,8 +436,8 @@ HypoElastic_MMS::addComputesAndRequires(Task*, const MPMMaterial*,
 
 double
 HypoElastic_MMS::computeRhoMicroCM(double pressure, const double p_ref,
-                                   const MPMMaterial* matl, double temperature,
-                                   double rho_guess)
+                                   [[maybe_unused]] const MPMMaterial* matl, [[maybe_unused]] double temperature,
+                                   [[maybe_unused]] double rho_guess)
 {
   double rho_orig = d_cm.rho0;
   double p_gauge = pressure - p_ref;
@@ -450,7 +450,7 @@ HypoElastic_MMS::computeRhoMicroCM(double pressure, const double p_ref,
 void
 HypoElastic_MMS::computePressEOSCM(double rho_cur, double& pressure,
                                    double p_ref, double& dp_drho, double& tmp,
-                                   const MPMMaterial* matl, double temperature)
+                                   [[maybe_unused]] const MPMMaterial* matl, [[maybe_unused]] double temperature)
 {
   double bulk = d_cm.kappa;
   double rho_orig = d_cm.rho0;

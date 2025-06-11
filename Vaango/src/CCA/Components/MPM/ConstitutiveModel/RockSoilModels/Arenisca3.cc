@@ -1123,7 +1123,7 @@ Arenisca3::computeStep(particleIndex idx,
                        const double& coher, // scalar-valued coherence XXX
                        const double& P3,    // initial disaggregation strain
                        AreniscaState& state_np1, // State at end of step t_n+1
-                       long64 ParticleID) // ParticleID for debug purposes
+                       [[maybe_unused]] long64 ParticleID) // ParticleID for debug purposes
 {
   // All stress values within computeStep are quasistatic.
   int n;
@@ -2720,7 +2720,7 @@ Arenisca3::addParticleState(std::vector<const VarLabel*>& from,
 void
 Arenisca3::addInitialComputesAndRequires(Task* task,
                                          const MPMMaterial* matl,
-                                         const PatchSet* patch) const
+                                         [[maybe_unused]] const PatchSet* patch) const
 {
   // Add the computes and requires that are common to all explicit
   // constitutive models.  The method is defined in the ConstitutiveModel
@@ -2808,8 +2808,8 @@ double
 Arenisca3::computeRhoMicroCM(double pressure,
                              const double p_ref,
                              const MPMMaterial* matl,
-                             double temperature,
-                             double rho_guess)
+                             [[maybe_unused]] double temperature,
+                             [[maybe_unused]] double rho_guess)
 {
   double rho_0 = matl->getInitialDensity();
   double K0    = d_cm.K0_Murnaghan_EOS;
@@ -2828,7 +2828,7 @@ Arenisca3::computePressEOSCM(double rho_cur,
                              double& dp_drho,
                              double& soundSpeedSq,
                              const MPMMaterial* matl,
-                             double temperature)
+                             [[maybe_unused]] double temperature)
 {
   double rho_0 = matl->getInitialDensity();
   double K0    = d_cm.K0_Murnaghan_EOS;
@@ -3073,11 +3073,11 @@ Arenisca3::WeibullParser(WeibParameters& iP)
  *  ---------------------------------------------------------------------------------------
  */
 void
-Arenisca3::allocateCMDataAdd(DataWarehouse* new_dw,
-                             ParticleSubset* addset,
-                             ParticleLabelVariableMap* newState,
-                             ParticleSubset* delset,
-                             DataWarehouse* old_dw)
+Arenisca3::allocateCMDataAdd([[maybe_unused]] DataWarehouse* new_dw,
+                             [[maybe_unused]] ParticleSubset* addset,
+                             [[maybe_unused]] ParticleLabelVariableMap* newState,
+                             [[maybe_unused]] ParticleSubset* delset,
+                             [[maybe_unused]] DataWarehouse* old_dw)
 {
   std::ostringstream out;
   out << "Material conversion after failure not implemented for Arenisca.";

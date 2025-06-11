@@ -591,11 +591,11 @@ JWLppMPM::carryForward(const PatchSubset* patches,
 
 // This is not yet implemented - JG- 7/26/10
 double
-JWLppMPM::computeRhoMicroCM(double pressure,
-                            const double p_ref,
+JWLppMPM::computeRhoMicroCM([[maybe_unused]] double pressure,
+                            [[maybe_unused]] const double p_ref,
                             const MPMMaterial* matl,
-                            double temperature,
-                            double rho_guess)
+                            [[maybe_unused]] double temperature,
+                            [[maybe_unused]] double rho_guess)
 {
   std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR JWLppMPM"
             << "\n";
@@ -608,11 +608,11 @@ JWLppMPM::computeRhoMicroCM(double pressure,
 void
 JWLppMPM::computePressEOSCM(const double rhoM,
                             double& pressure,
-                            const double p_ref,
+                            [[maybe_unused]] const double p_ref,
                             double& dp_drho,
                             double& tmp,
                             const MPMMaterial* matl,
-                            double temperature)
+                            [[maybe_unused]] double temperature)
 {
   double A     = d_cm.A;
   double B     = d_cm.B;
@@ -734,7 +734,7 @@ JWLppMPM::computeUpdatedFractionAndPressure(const double& J_old,
 
 //  This is the original two stage Backward Euler
 void
-JWLppMPM::computeWithTwoStageBackwardEuler(const double& J,
+JWLppMPM::computeWithTwoStageBackwardEuler([[maybe_unused]] const double& J,
                                            const double& f_old,
                                            const double& p_old,
                                            const double& delT,
@@ -870,7 +870,7 @@ JWLppMPM::computeWithNewtonIterations(const double& J,
 //   P_n+1 = 0 = p_n+1 - (1 - f_n+1) p_m - f_n+1 p_jwl
 //------------------------------------------------------------------
 void
-JWLppMPM::computeG(const double& J,
+JWLppMPM::computeG([[maybe_unused]] const double& J,
                    const double& f_old,
                    const double& f_new,
                    const double& p_new,
@@ -898,7 +898,7 @@ JWLppMPM::computeG(const double& J,
 //   dP_n+1/dp_n+1 = 1
 //------------------------------------------------------------------
 void
-JWLppMPM::computeJacobianG(const double& J,
+JWLppMPM::computeJacobianG([[maybe_unused]] const double& J,
                            const double& f_new,
                            const double& p_new,
                            const double& pM,

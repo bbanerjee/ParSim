@@ -230,7 +230,7 @@ void
 ConstitutiveModel::addComputesAndRequiresForRotatedExplicit(
   Task* task,
   const MaterialSubset* matlset,
-  const PatchSet* patches) const
+  [[maybe_unused]] const PatchSet* patches) const
 {
   Ghost::GhostType gnone = Ghost::None;
   task->needs(Task::OldDW, lb->delTLabel);
@@ -439,7 +439,7 @@ ConstitutiveModel::computeRhoMicro(double press,
                                    double gamma,
                                    double cv,
                                    double Temp,
-                                   double rho_guess)
+                                   [[maybe_unused]] double rho_guess)
 {
   // Pointwise computation of microscopic density
   return press / ((gamma - 1.0) * cv * Temp);
@@ -580,14 +580,14 @@ ConstitutiveModel::addSplitParticlesComputesAndRequires(Task*,
 
 void
 ConstitutiveModel::splitCMSpecificParticleData(
-  const Patch* patch,
-  const int dwi,
-  const int nDims,
-  ParticleVariable<int>& prefOld,
-  ParticleVariable<int>& prefNew,
-  const unsigned int oldNumPar,
-  const unsigned int numNewPartNeeded,
-  DataWarehouse* old_dw,
-  DataWarehouse* new_dw)
+  [[maybe_unused]] const Patch* patch,
+  [[maybe_unused]] const int dwi,
+  [[maybe_unused]] const int nDims,
+  [[maybe_unused]] ParticleVariable<int>& prefOld,
+  [[maybe_unused]] ParticleVariable<int>& prefNew,
+  [[maybe_unused]] const unsigned int oldNumPar,
+  [[maybe_unused]] const unsigned int numNewPartNeeded,
+  [[maybe_unused]] DataWarehouse* old_dw,
+  [[maybe_unused]] DataWarehouse* new_dw)
 {
 }

@@ -584,11 +584,11 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
 // Set up computes and requires for implicit time integration.
 //        @todo:  This task has not been implemented yet.
 void
-PolarOrthotropicHypoElastic::addComputesAndRequires(Task* task,
-                                                    const MPMMaterial* matl,
-                                                    const PatchSet* patches,
-                                                    const bool recursion,
-                                                    const bool schedPar) const
+PolarOrthotropicHypoElastic::addComputesAndRequires([[maybe_unused]] Task* task,
+                                                    [[maybe_unused]] const MPMMaterial* matl,
+                                                    [[maybe_unused]] const PatchSet* patches,
+                                                    [[maybe_unused]] const bool recursion,
+                                                    [[maybe_unused]] const bool schedPar) const
 {
   std::ostringstream out;
   out << "**ERROR** Implicit time integration not implemented yet for";
@@ -599,10 +599,10 @@ PolarOrthotropicHypoElastic::addComputesAndRequires(Task* task,
 // Set up task variables for situations where particles are moved to
 //        another material type
 void
-PolarOrthotropicHypoElastic::allocateCMDataAddRequires(Task* task,
-                                                       const MPMMaterial* matl,
-                                                       const PatchSet* patch,
-                                                       MPMLabel* lb) const
+PolarOrthotropicHypoElastic::allocateCMDataAddRequires([[maybe_unused]] Task* task,
+                                                       [[maybe_unused]] const MPMMaterial* matl,
+                                                       [[maybe_unused]] const PatchSet* patch,
+                                                       [[maybe_unused]] MPMLabel* lb) const
 {
   std::ostringstream out;
   out << "**ERROR** Conversion to another material cannot be use in "
@@ -617,11 +617,11 @@ PolarOrthotropicHypoElastic::allocateCMDataAddRequires(Task* task,
 //        transformed into a different type of material
 void
 PolarOrthotropicHypoElastic::allocateCMDataAdd(
-  DataWarehouse* new_dw,
-  ParticleSubset* subset,
-  ParticleLabelVariableMap* newState,
-  ParticleSubset* delset,
-  DataWarehouse* old_dw)
+  [[maybe_unused]] DataWarehouse* new_dw,
+  [[maybe_unused]] ParticleSubset* subset,
+  [[maybe_unused]] ParticleLabelVariableMap* newState,
+  [[maybe_unused]] ParticleSubset* delset,
+  [[maybe_unused]] DataWarehouse* old_dw)
 {
   std::ostringstream out;
   out << "**ERROR** Conversion to another material cannot be use in "
@@ -634,10 +634,10 @@ PolarOrthotropicHypoElastic::allocateCMDataAdd(
 
 // Carry forward CM data for RigidMPM
 void
-PolarOrthotropicHypoElastic::carryForward(const PatchSubset* patches,
-                                          const MPMMaterial* matl,
-                                          DataWarehouse* old_dw,
-                                          DataWarehouse* new_dw)
+PolarOrthotropicHypoElastic::carryForward([[maybe_unused]] const PatchSubset* patches,
+                                          [[maybe_unused]] const MPMMaterial* matl,
+                                          [[maybe_unused]] DataWarehouse* old_dw,
+                                          [[maybe_unused]] DataWarehouse* new_dw)
 {
   std::ostringstream out;
   out << "**ERROR** RigigMPM cannot be use in conjunction with ";
@@ -649,11 +649,11 @@ PolarOrthotropicHypoElastic::carryForward(const PatchSubset* patches,
 // Compute grid cell microscopic density for MPMICE calculations.
 //        @todo:  This task has not been implemented yet.
 double
-PolarOrthotropicHypoElastic::computeRhoMicroCM(double pressure,
-                                               const double p_ref,
-                                               const MPMMaterial* matl,
-                                               double temperature,
-                                               double rho_guess)
+PolarOrthotropicHypoElastic::computeRhoMicroCM([[maybe_unused]] double pressure,
+                                               [[maybe_unused]] const double p_ref,
+                                               [[maybe_unused]] const MPMMaterial* matl,
+                                               [[maybe_unused]] double temperature,
+                                               [[maybe_unused]] double rho_guess)
 {
   std::ostringstream out;
   out << "**ERROR** No computation of rho_micro is available for ";
@@ -666,13 +666,13 @@ PolarOrthotropicHypoElastic::computeRhoMicroCM(double pressure,
 //        for MPMICE calculations.
 //        @todo:  This task has not been implemented yet.
 void
-PolarOrthotropicHypoElastic::computePressEOSCM(double rho_m,
-                                               double& press_eos,
-                                               double p_ref,
-                                               double& dp_drho,
-                                               double& ss_new,
-                                               const MPMMaterial* matl,
-                                               double temperature)
+PolarOrthotropicHypoElastic::computePressEOSCM([[maybe_unused]] double rho_m,
+                                               [[maybe_unused]] double& press_eos,
+                                               [[maybe_unused]] double p_ref,
+                                               [[maybe_unused]] double& dp_drho,
+                                               [[maybe_unused]] double& ss_new,
+                                               [[maybe_unused]] const MPMMaterial* matl,
+                                               [[maybe_unused]] double temperature)
 {
   std::ostringstream out;
   out << "**ERROR** No computation of pressure EOS is available for ";

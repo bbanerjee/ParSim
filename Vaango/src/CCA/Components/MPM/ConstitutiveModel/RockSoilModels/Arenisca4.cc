@@ -987,7 +987,7 @@ Arenisca4::computeStep(
   double& X_p,       // hydrostatic comrpessive strength at end of step(t_n+1)
   double& Zeta_p,    // trace of isotropic backstress at end of step(t_n+1)
   Matrix3& ep_p,     // plastic strain at end of step (t_n+1)
-  long64 ParticleID) // ParticleID for debug purposes
+  [[maybe_unused]] long64 ParticleID) // ParticleID for debug purposes
 {
   // All stress values within computeStep are quasistatic.
   int n,
@@ -1290,7 +1290,7 @@ Arenisca4::computeTrialStress(const Matrix3& sigma_old, // old stress
 // [nsub] = computeStepDivisions(X,Zeta,ep,sigma_n,sigma_trial)
 int
 Arenisca4::computeStepDivisions(const double& X,
-                                const double& Zeta,
+                                [[maybe_unused]] const double& Zeta,
                                 const double& P3,
                                 const Matrix3& ep,
                                 const Matrix3& sigma_n,
@@ -2855,7 +2855,7 @@ Arenisca4::addParticleState(std::vector<const VarLabel*>& from,
 void
 Arenisca4::addInitialComputesAndRequires(Task* task,
                                          const MPMMaterial* matl,
-                                         const PatchSet* patch) const
+                                         [[maybe_unused]] const PatchSet* patch) const
 {
   // Add the computes and requires that are common to all explicit
   // constitutive models.  The method is defined in the ConstitutiveModel
@@ -2940,8 +2940,8 @@ double
 Arenisca4::computeRhoMicroCM(double pressure,
                              const double p_ref,
                              const MPMMaterial* matl,
-                             double temperature,
-                             double rho_guess)
+                             [[maybe_unused]] double temperature,
+                             [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double p_gauge  = pressure - p_ref;
@@ -2963,7 +2963,7 @@ Arenisca4::computePressEOSCM(double rho_cur,
                              double& dp_drho,
                              double& tmp,
                              const MPMMaterial* matl,
-                             double temperature)
+                             [[maybe_unused]] double temperature)
 {
   double bulk     = d_cm.B0;
   double shear    = d_cm.G0;
@@ -3191,11 +3191,11 @@ Arenisca4::WeibullParser(WeibParameters& iP)
  *  ---------------------------------------------------------------------------------------
  */
 void
-Arenisca4::allocateCMDataAdd(DataWarehouse* new_dw,
-                             ParticleSubset* addset,
-                             ParticleLabelVariableMap* newState,
-                             ParticleSubset* delset,
-                             DataWarehouse* old_dw)
+Arenisca4::allocateCMDataAdd([[maybe_unused]] DataWarehouse* new_dw,
+                             [[maybe_unused]] ParticleSubset* addset,
+                             [[maybe_unused]] ParticleLabelVariableMap* newState,
+                             [[maybe_unused]] ParticleSubset* delset,
+                             [[maybe_unused]] DataWarehouse* old_dw)
 {
   std::ostringstream out;
   out << "Material conversion after failure not implemented for Arenisca.";

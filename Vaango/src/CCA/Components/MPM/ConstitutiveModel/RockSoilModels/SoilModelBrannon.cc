@@ -2191,8 +2191,8 @@ SoilModelBrannon::addComputesAndRequires(Task*, const MPMMaterial*,
 
 double
 SoilModelBrannon::computeRhoMicroCM(double pressure, const double p_ref,
-                                    const MPMMaterial* matl, double temperature,
-                                    double rho_guess)
+                                    const MPMMaterial* matl, [[maybe_unused]] double temperature,
+                                    [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double p_gauge = pressure - p_ref;
@@ -2212,7 +2212,7 @@ SoilModelBrannon::computeRhoMicroCM(double pressure, const double p_ref,
 void
 SoilModelBrannon::computePressEOSCM(double rho_cur, double& pressure,
                                     double p_ref, double& dp_drho, double& tmp,
-                                    const MPMMaterial* matl, double temperature)
+                                    const MPMMaterial* matl, [[maybe_unused]] double temperature)
 {
 
   double bulk = d_cm.B0;

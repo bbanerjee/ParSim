@@ -439,7 +439,7 @@ Kayenta::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
 void
 Kayenta::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                   const PatchSet* patches, MPMLabel* lb) const
+                                   const PatchSet* patches, [[maybe_unused]] MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -954,8 +954,8 @@ Kayenta::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
 
 double
 Kayenta::computeRhoMicroCM(double pressure, const double p_ref,
-                           const MPMMaterial* matl, double temperature,
-                           double rho_guess)
+                           const MPMMaterial* matl, [[maybe_unused]] double temperature,
+                           [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double p_gauge = pressure - p_ref;
@@ -974,7 +974,7 @@ Kayenta::computeRhoMicroCM(double pressure, const double p_ref,
 void
 Kayenta::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
                            double& dp_drho, double& tmp,
-                           const MPMMaterial* matl, double temperature)
+                           const MPMMaterial* matl, [[maybe_unused]] double temperature)
 {
 
   double bulk = UI[0];

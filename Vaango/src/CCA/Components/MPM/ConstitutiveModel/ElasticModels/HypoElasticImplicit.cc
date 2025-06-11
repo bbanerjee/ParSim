@@ -69,8 +69,8 @@ HypoElasticImplicit::clone()
 }
 
 void 
-HypoElasticImplicit::addParticleState(std::vector<const VarLabel*>& from,
-                                      std::vector<const VarLabel*>& to)
+HypoElasticImplicit::addParticleState([[maybe_unused]] std::vector<const VarLabel*>& from,
+                                      [[maybe_unused]] std::vector<const VarLabel*>& to)
 {
 }
 
@@ -89,9 +89,9 @@ HypoElasticImplicit::initializeCMData(const Patch* patch,
 }
 
 void 
-HypoElasticImplicit::computeStableTimestep(const Patch* patch,
-                                           const MPMMaterial* matl,
-                                           DataWarehouse* new_dw)
+HypoElasticImplicit::computeStableTimestep([[maybe_unused]] const Patch* patch,
+                                           [[maybe_unused]] const MPMMaterial* matl,
+                                           [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 
@@ -109,7 +109,7 @@ HypoElasticImplicit::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 void
 HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
                                                  const MPMMaterial* matl,
-                                                 DataWarehouse* old_dw,
+                                                 [[maybe_unused]] DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw,
                                                  Solver* solver, const bool)
 

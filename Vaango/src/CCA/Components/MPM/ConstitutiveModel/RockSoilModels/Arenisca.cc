@@ -1570,7 +1570,7 @@ Arenisca::computeStressTensorStep(
   double& Zeta_new,           // trace of isotropic backstress
   double& bulk,               // bulk modulus for the step
   double& PEAKI1,
-  long64 ParticleID)
+  [[maybe_unused]] long64 ParticleID)
 {
   // Define and initialize some variables
 
@@ -2242,7 +2242,7 @@ Arenisca::addParticleState(std::vector<const VarLabel*>& from,
 void
 Arenisca::addInitialComputesAndRequires(Task* task,
                                         const MPMMaterial* matl,
-                                        const PatchSet* patch) const
+                                        [[maybe_unused]] const PatchSet* patch) const
 {
   // Add the computes and requires that are common to all explicit
   // constitutive models.  The method is defined in the ConstitutiveModel
@@ -2343,8 +2343,8 @@ double
 Arenisca::computeRhoMicroCM(double pressure,
                             const double p_ref,
                             const MPMMaterial* matl,
-                            double temperature,
-                            double rho_guess)
+                            [[maybe_unused]] double temperature,
+                            [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double p_gauge  = pressure - p_ref;
@@ -2369,7 +2369,7 @@ Arenisca::computePressEOSCM(double rho_cur,
                             double& dp_drho,
                             double& tmp,
                             const MPMMaterial* matl,
-                            double temperature)
+                            [[maybe_unused]] double temperature)
 {
 
   double bulk     = d_cm.B0;
@@ -2902,11 +2902,11 @@ Arenisca::WeibullParser(WeibParameters& iP)
  *  ---------------------------------------------------------------------------------------
  */
 void
-Arenisca::allocateCMDataAdd(DataWarehouse* new_dw,
-                            ParticleSubset* addset,
-                            ParticleLabelVariableMap* newState,
-                            ParticleSubset* delset,
-                            DataWarehouse* old_dw)
+Arenisca::allocateCMDataAdd([[maybe_unused]] DataWarehouse* new_dw,
+                            [[maybe_unused]] ParticleSubset* addset,
+                            [[maybe_unused]] ParticleLabelVariableMap* newState,
+                            [[maybe_unused]] ParticleSubset* delset,
+                            [[maybe_unused]] DataWarehouse* old_dw)
 {
 // Needed by ConstitutiveModelFactory.cc:116
 #ifdef JC_USE_BB_STATE_UPDATE

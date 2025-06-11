@@ -312,10 +312,10 @@ MurnaghanMPM::carryForward(const PatchSubset* patches,
 // The "CM" versions use the pressure-volume relationship of the CNH model
 double
 MurnaghanMPM::computeRhoMicroCM(double pressure,
-                                const double p_ref,
-                                const MPMMaterial* matl,
-                                double temperature,
-                                double rho_guess)
+                                [[maybe_unused]] const double p_ref,
+                                [[maybe_unused]] const MPMMaterial* matl,
+                                [[maybe_unused]] double temperature,
+                                [[maybe_unused]] double rho_guess)
 {
   double rhoM;
   double rho_orig = d_modelParam.d_rho0; // matl->getInitialDensity();
@@ -335,11 +335,11 @@ MurnaghanMPM::computeRhoMicroCM(double pressure,
 void
 MurnaghanMPM::computePressEOSCM(const double rhoM,
                                 double& pressure,
-                                const double p_ref,
+                                [[maybe_unused]] const double p_ref,
                                 double& dp_drho,
-                                double& tmp,
+                                [[maybe_unused]] double& tmp,
                                 const MPMMaterial* matl,
-                                double temperature)
+                                [[maybe_unused]] double temperature)
 {
   double rho_orig = matl->getInitialDensity();
   double K        = d_modelParam.d_K;

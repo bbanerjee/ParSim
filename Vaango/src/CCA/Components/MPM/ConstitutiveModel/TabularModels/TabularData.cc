@@ -484,7 +484,7 @@ template <>
 DoubleVec1D
 TabularData::findLimitValues<1>(
   const std::array<double, 1>& indepValues, const IndepVarPArray& indepVars,
-  const DepVarPArray& depVars) const
+  [[maybe_unused]] const DepVarPArray& depVars) const
 {
   // First find the segment containing the first independent variable value
   // and the value of parameter s
@@ -506,7 +506,7 @@ template <>
 DoubleVec1D
 TabularData::findLimitValues<2>(
   const std::array<double, 2>& indepValues, const IndepVarPArray& indepVars,
-  const DepVarPArray& depVars) const
+  [[maybe_unused]] const DepVarPArray& depVars) const
 {
   // First find the segment containing the first independent variable value
   // and the value of parameter s
@@ -544,7 +544,7 @@ template <>
 DoubleVec1D
 TabularData::findLimitValues<3>(
   const std::array<double, 3>& indepValues, const IndepVarPArray& indepVars,
-  const DepVarPArray& depVars) const
+  [[maybe_unused]] const DepVarPArray& depVars) const
 {
   // First find the segment containing the first independent variable value
   // and the value of parameter s

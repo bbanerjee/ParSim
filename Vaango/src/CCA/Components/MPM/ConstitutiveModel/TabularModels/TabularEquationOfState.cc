@@ -120,7 +120,7 @@ void
 TabularEquationOfState::allocateCMDataAddRequires(Task* task,
                                                   const MPMMaterial* matl,
                                                   const PatchSet* patches,
-                                                  MPMLabel* lb) const
+                                                  [[maybe_unused]] MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -304,8 +304,8 @@ TabularEquationOfState::carryForward(const PatchSubset* patches,
 }
 
 void
-TabularEquationOfState::addParticleState(std::vector<const VarLabel*>& from,
-                                         std::vector<const VarLabel*>& to)
+TabularEquationOfState::addParticleState([[maybe_unused]] std::vector<const VarLabel*>& from,
+                                         [[maybe_unused]] std::vector<const VarLabel*>& to)
 {
 }
 
@@ -332,7 +332,7 @@ double
 TabularEquationOfState::computeRhoMicroCM(double /*pressure*/,
                                           const double /*p_ref*/,
                                           const MPMMaterial* /*matl*/,
-                                          double temperature, double rho_guess)
+                                          [[maybe_unused]] double temperature, [[maybe_unused]] double rho_guess)
 {
 #if 0
   double rho_0 = matl->getInitialDensity();
@@ -359,7 +359,7 @@ TabularEquationOfState::computePressEOSCM(double /*rho_cur*/,
                                           double /*p_ref*/, double& /*dp_drho*/,
                                           double& /*tmp*/,
                                           const MPMMaterial* /*matl*/,
-                                          double temperature)
+                                          [[maybe_unused]] double temperature)
 {
 #if 0
   double bulk = d_initialData.Bulk;

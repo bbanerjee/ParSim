@@ -47,7 +47,7 @@ ImplicitCM::ImplicitCM()
   d_lb = scinew MPMLabel();
 }
 
-ImplicitCM::ImplicitCM(const ImplicitCM* cm)
+ImplicitCM::ImplicitCM([[maybe_unused]] const ImplicitCM* cm)
 {
   d_lb = scinew MPMLabel();
 }
@@ -93,7 +93,7 @@ ImplicitCM::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
 
 void
 ImplicitCM::addSharedCRForImplicit(Task* task, const MaterialSubset* matlset,
-                                   const bool reset) const
+                                   [[maybe_unused]] const bool reset) const
 {
   Ghost::GhostType gnone = Ghost::None;
   // Ghost::GhostType  gac   = Ghost::AroundCells;
@@ -129,7 +129,7 @@ ImplicitCM::addSharedCRForImplicitHypo(Task* task,
 
 void
 ImplicitCM::addSharedCRForImplicit(Task* task, const MaterialSubset* matlset,
-                                   const bool reset, const bool /*recurse*/,
+                                   [[maybe_unused]] const bool reset, const bool /*recurse*/,
                                    const bool SchedParent) const
 {
   Ghost::GhostType gnone = Ghost::None;
@@ -183,7 +183,7 @@ void
 ImplicitCM::carryForwardSharedDataImplicit(ParticleSubset* pset,
                                            DataWarehouse* old_dw,
                                            DataWarehouse* new_dw,
-                                           const MPMMaterial* matl)
+                                           [[maybe_unused]] const MPMMaterial* matl)
 {
   // double rho_orig = matl->getInitialDensity();
   Matrix3 Id, Zero(0.0);

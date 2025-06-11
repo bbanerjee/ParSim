@@ -200,7 +200,7 @@ RigidMaterial::addParticleState(std::vector<const VarLabel*>&,
 
 double
 RigidMaterial::computeRhoMicroCM(double, const double, const MPMMaterial* matl,
-                                 double temperature, double rho_guess)
+                                 [[maybe_unused]] double temperature, [[maybe_unused]] double rho_guess)
 {
   return matl->getInitialDensity();
 }
@@ -208,7 +208,7 @@ RigidMaterial::computeRhoMicroCM(double, const double, const MPMMaterial* matl,
 void
 RigidMaterial::computePressEOSCM(double, double& pressure, double p_ref,
                                  double& dp_drho, double& tmp,
-                                 const MPMMaterial* matl, double temperature)
+                                 const MPMMaterial* matl, [[maybe_unused]] double temperature)
 {
   double K = d_initialData.K;
   double rho_0 = matl->getInitialDensity();

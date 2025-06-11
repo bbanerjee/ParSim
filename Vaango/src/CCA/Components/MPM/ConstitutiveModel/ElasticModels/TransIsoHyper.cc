@@ -690,8 +690,8 @@ TransIsoHyper::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
 // The "CM" versions use the pressure-volume relationship of the CNH model
 double
 TransIsoHyper::computeRhoMicroCM(double pressure, const double p_ref,
-                                 const MPMMaterial* matl, double temperature,
-                                 double rho_guess)
+                                 const MPMMaterial* matl, [[maybe_unused]] double temperature,
+                                 [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double bulkModulus = d_param.bulkModulus;
@@ -714,7 +714,7 @@ void
 TransIsoHyper::computePressEOSCM(const double rho_cur, double& pressure,
                                  const double p_ref, double& dp_drho,
                                  double& tmp, const MPMMaterial* matl,
-                                 double temperature)
+                                 [[maybe_unused]] double temperature)
 {
   double bulkModulus = d_param.bulkModulus;
   double rho_orig = matl->getInitialDensity();

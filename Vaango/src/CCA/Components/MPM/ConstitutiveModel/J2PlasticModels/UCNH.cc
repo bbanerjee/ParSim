@@ -119,7 +119,7 @@ UCNH::UCNH(ProblemSpecP& ps, MPMFlags* Mflag)
     "p.deformRate+", ParticleVariable<Matrix3>::getTypeDescription());
 }
 
-UCNH::UCNH(ProblemSpecP& ps, MPMFlags* Mflag, bool plas, bool dam)
+UCNH::UCNH(ProblemSpecP& ps, MPMFlags* Mflag, bool plas, [[maybe_unused]] bool dam)
   : ConstitutiveModel(Mflag)
   , ImplicitCM()
 {
@@ -334,7 +334,7 @@ UCNH::addParticleState(std::vector<const VarLabel*>& from,
 void
 UCNH::addInitialComputesAndRequires(Task* task,
                                     const MPMMaterial* matl,
-                                    const PatchSet* patches) const
+                                    [[maybe_unused]] const PatchSet* patches) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   // Plasticity
@@ -802,8 +802,8 @@ UCNH::computeStressTensor(const PatchSubset* patches,
 void
 UCNH::addComputesAndRequires(Task* task,
                              const MPMMaterial* matl,
-                             const PatchSet* patches,
-                             const bool recurse,
+                             [[maybe_unused]] const PatchSet* patches,
+                             [[maybe_unused]] const bool recurse,
                              const bool SchedParent) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -831,7 +831,7 @@ UCNH::addComputesAndRequires(Task* task,
 void
 UCNH::computeStressTensorImplicit(const PatchSubset* patches,
                                   const MPMMaterial* matl,
-                                  DataWarehouse* old_dw,
+                                  [[maybe_unused]] DataWarehouse* old_dw,
                                   DataWarehouse* new_dw,
                                   Solver* solver,
                                   const bool)
@@ -1073,7 +1073,7 @@ UCNH::allocateCMDataAdd(DataWarehouse* new_dw,
                         ParticleSubset* addset,
                         ParticleLabelVariableMap* newState,
                         ParticleSubset* delset,
-                        DataWarehouse* old_dw)
+                        [[maybe_unused]] DataWarehouse* old_dw)
 {
   // Copy the data common to all constitutive models from the particle to be
   // deleted to the particle to be added.
@@ -2150,18 +2150,18 @@ UCNH::BnlTSigBnl(const Matrix3& sig,
  * For copying damage parameter to be used by SerialMPM or ImpMPM
  */
 void
-UCNH::addRequiresDamageParameter(Task* task,
-                                 const MPMMaterial* matl,
-                                 const PatchSet* patches) const
+UCNH::addRequiresDamageParameter([[maybe_unused]] Task* task,
+                                 [[maybe_unused]] const MPMMaterial* matl,
+                                 [[maybe_unused]] const PatchSet* patches) const
 {
 }
 
 void
-UCNH::getDamageParameter(const Patch* patch,
-                         ParticleVariable<int>& damage,
-                         int dwi,
-                         DataWarehouse* old_dw,
-                         DataWarehouse* new_dw)
+UCNH::getDamageParameter([[maybe_unused]] const Patch* patch,
+                         [[maybe_unused]] ParticleVariable<int>& damage,
+                         [[maybe_unused]] int dwi,
+                         [[maybe_unused]] DataWarehouse* old_dw,
+                         [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 
@@ -2175,7 +2175,7 @@ UCNH::computePressEOSCM(const double rho_cur,
                         double& dp_drho,
                         double& cSquared,
                         const MPMMaterial* matl,
-                        double temperature)
+                        [[maybe_unused]] double temperature)
 {
   double bulk     = d_initialData.Bulk;
   double rho_orig = matl->getInitialDensity();
@@ -2211,7 +2211,7 @@ double
 UCNH::computeRhoMicroCM(double pressure,
                         const double p_ref,
                         const MPMMaterial* matl,
-                        double temperature,
+                        [[maybe_unused]] double temperature,
                         double rho_guess)
 {
   /*

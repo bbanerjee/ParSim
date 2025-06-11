@@ -205,7 +205,7 @@ void
 NonLocalDruckerPrager::allocateCMDataAddRequires(Task* task,
                                                  const MPMMaterial* matl,
                                                  const PatchSet* patches,
-                                                 MPMLabel* lb) const
+                                                 [[maybe_unused]] MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -219,10 +219,10 @@ NonLocalDruckerPrager::allocateCMDataAddRequires(Task* task,
 }
 
 void
-NonLocalDruckerPrager::allocateCMDataAdd(DataWarehouse* new_dw,
-                                         ParticleSubset* addset,
-                                         ParticleLabelVariableMap* newState,
-                                         ParticleSubset* delset,
+NonLocalDruckerPrager::allocateCMDataAdd([[maybe_unused]] DataWarehouse* new_dw,
+                                         [[maybe_unused]] ParticleSubset* addset,
+                                         [[maybe_unused]] ParticleLabelVariableMap* newState,
+                                         [[maybe_unused]] ParticleSubset* delset,
                                          DataWarehouse*)
 {
 }
@@ -923,7 +923,7 @@ NonLocalDruckerPrager::YieldFunction(Matrix3& stress,
                                      double& k_o,
                                      double& eta,
                                      double& eta_nl,
-                                     const int& hardening_type)
+                                     [[maybe_unused]] const int& hardening_type)
 {
 
   Matrix3 S;
@@ -938,7 +938,7 @@ NonLocalDruckerPrager::YieldFunction(const Matrix3& stress,
                                      double& k_o,
                                      const double& eta,
                                      const double& eta_nl,
-                                     const int& hardening_type)
+                                     [[maybe_unused]] const int& hardening_type)
 {
 
   Matrix3 S;
@@ -953,7 +953,7 @@ NonLocalDruckerPrager::YieldFunction(Matrix3& stress,
                                      double& k_o,
                                      const double& eta,
                                      const double& eta_nl,
-                                     const int& hardening_type)
+                                     [[maybe_unused]] const int& hardening_type)
 {
 
   Matrix3 S;
@@ -1054,8 +1054,8 @@ double
 NonLocalDruckerPrager::computeRhoMicroCM(double pressure,
                                          const double p_ref,
                                          const MPMMaterial* matl,
-                                         double temperature,
-                                         double rho_guess)
+                                         [[maybe_unused]] double temperature,
+                                         [[maybe_unused]] double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double p_gauge  = pressure - p_ref;
@@ -1080,7 +1080,7 @@ NonLocalDruckerPrager::computePressEOSCM(double rho_cur,
                                          double& dp_drho,
                                          double& tmp,
                                          const MPMMaterial* matl,
-                                         double temperature)
+                                         [[maybe_unused]] double temperature)
 {
 
   double bulk     = d_initialData.bulk_modulus;
