@@ -462,7 +462,8 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
       Darray[3] = D(0, 1);
       Darray[4] = D(1, 2);
       Darray[5] = D(2, 0);
-      double svarg[d_NINSV];
+
+      std::vector<double> svarg(d_NINSV);
       double USM = 9e99;
       double dt = delT;
       int nblk = 1;
@@ -472,7 +473,7 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
         svarg[i] = ISVs[i][idx];
       }
 
-      DIAMM_CALC(nblk, d_NINSV, dt, UI, sigarg, Darray, svarg, USM);
+      DIAMM_CALC(nblk, d_NINSV, dt, UI, sigarg, Darray, svarg.data(), USM);
 
       // Unload ISVs from 1D array into ISVs_new
       for (int i = 0; i < d_NINSV; i++) {

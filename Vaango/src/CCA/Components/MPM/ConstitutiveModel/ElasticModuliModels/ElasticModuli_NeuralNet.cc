@@ -28,6 +28,10 @@
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
+#include <format>
+#include <span>
+#include <ranges>
+
 using namespace Vaango;
 
 // Construct a default elasticity model.
@@ -267,52 +271,95 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
 
     //std::cout << "Read weights and biases from hdf5 \n";
     // Reads the weights and biases (HDF5)
-    group = file.openGroup("/model_weights");
-    attribute = group.openAttribute("layer_names");
-    datatype = attribute.getDataType();
-    auto dataspace = attribute.getSpace();
-    auto size = datatype.getSize();
-    int rank = dataspace.getSimpleExtentNdims();
+    auto mw_group = file.openGroup("/model_weights");
+    auto mw_attribute = mw_group.openAttribute("layer_names");
+    auto mw_datatype = mw_attribute.getDataType();
+    auto mw_dataspace = mw_attribute.getSpace();
+    auto size = mw_datatype.getSize();
+    int rank = mw_dataspace.getSimpleExtentNdims();
     hsize_t dims;
-    dataspace.getSimpleExtentDims(&dims, nullptr);
+    mw_dataspace.getSimpleExtentDims(&dims, nullptr);
 
-    char layer_names[dims][size];
-    attribute.read(datatype, (void *)layer_names);
+    // Create a 2D buffer
+    std::vector<std::vector<char>> layer_names_buffer(dims);
+    for (auto& name_buffer : layer_names_buffer) {
+      name_buffer.resize(size);
+    }
+
+    // Create a flat buffer for HDF5 reading
+    std::vector<char> flat_layers_buffer(dims * size);
+    mw_attribute.read(mw_datatype, flat_layers_buffer.data());
+
+    // Convert flat buffer to individual strings
+    std::vector<std::string> layer_names;
+    layer_names.reserve(dims);
+
+    for (const auto i : std::views::iota(0uz, dims)) {
+      const auto start_pos = i * size;
+      std::span<const char> name_span{ flat_layers_buffer.data() + start_pos,
+                                       size };
+
+      // Find the actual string length (stop at null terminator)
+      const auto actual_length =
+        std::ranges::find(name_span, '\0') - name_span.begin();
+      layer_names.emplace_back(name_span.data(), actual_length);
+    }
 
     //std::cout << "Dims from hdf5 = " << dims << "\n";
-    for (auto ii = 0u; ii < dims; ++ii) {
-      std::string layer_name(layer_names[ii], size);
-      group = file.openGroup("/model_weights/"+layer_name);
-      attribute = group.openAttribute("weight_names");
-      datatype = attribute.getDataType();
-      dataspace = attribute.getSpace();
-      auto size_weights_bias = datatype.getSize();
+    for (const auto& [ii, layer_name]: std::views::enumerate(layer_names)) {
+      auto ln_group = file.openGroup(std::format("/model_weights/{}", layer_name));
+      auto ln_attribute = ln_group.openAttribute("weight_names");
+      auto ln_datatype = ln_attribute.getDataType();
+      auto ln_dataspace = ln_attribute.getSpace();
+      auto size_weights_bias = ln_datatype.getSize();
       hsize_t dims_weights_bias;
-      dataspace.getSimpleExtentDims(&dims_weights_bias, nullptr);
+      ln_dataspace.getSimpleExtentDims(&dims_weights_bias, nullptr);
 
-      char data_labels[dims_weights_bias][size_weights_bias];
-      attribute.read(datatype, (void *)data_labels);
+      std::vector<std::vector<char>> weight_names_buffer(dims_weights_bias);
+      for (auto& name_buffer : weight_names_buffer) {
+        name_buffer.resize(size_weights_bias);
+      }
+
+      // Create a flat buffer for HDF5 reading
+      std::vector<char> flat_buffer(dims_weights_bias * size_weights_bias);
+      ln_attribute.read(ln_datatype, flat_buffer.data());
+
+      // Convert flat buffer to individual strings
+      std::vector<std::string> weight_names;
+      weight_names.reserve(dims_weights_bias);
+
+      for (const auto i : std::views::iota(0uz, dims_weights_bias)) {
+        const auto start_pos = i * size_weights_bias;
+        std::span<const char> name_span{ flat_buffer.data() + start_pos,
+                                         size_weights_bias };
+
+        // Find the actual string length (stop at null terminator)
+        const auto actual_length =
+          std::ranges::find(name_span, '\0') - name_span.begin();
+        weight_names.emplace_back(name_span.data(), actual_length);
+      }
+
       //std::cout << "Read attribute from hdf5 = " << ii << "\n";
-
       //std::cout << "Dims weights/bias from hdf5 = " << dims_weights_bias << "\n";
-      for (auto jj=0u; jj < dims_weights_bias; ++jj) {
-        std::string weights_name(data_labels[jj], size_weights_bias);
-        auto dataset = group.openDataSet(weights_name);
-        datatype = dataset.getDataType();
-        dataspace = dataset.getSpace();
-        rank = dataspace.getSimpleExtentNdims();
-        hsize_t dims_data[rank];
-        dataspace.getSimpleExtentDims(dims_data, nullptr);
+
+      for (const auto& [jj, weights_name]: std::views::enumerate(weight_names)) {
+
+        auto wn_dataset = ln_group.openDataSet(weights_name);
+        auto wn_datatype = wn_dataset.getDataType();
+        auto wn_dataspace = wn_dataset.getSpace();
+        rank = wn_dataspace.getSimpleExtentNdims();
+        std::vector<hsize_t> dims_data(rank);
+        wn_dataspace.getSimpleExtentDims(dims_data.data(), nullptr);
         
         //std::cout << "Read dims/weights from hdf5 = " << jj << "\n";
         if (rank == 2) {
           EigenMatrixRowMajor mat(dims_data[0], dims_data[1]);
-          dataset.read((void *)mat.data(), datatype);
+          wn_dataset.read((void *)mat.data(), wn_datatype);
           d_layers[ii].weights = mat.transpose();
           //std::cout << "weights = \n" << mat << std::endl;
         } else {
           EigenMatrixRowMajor mat(dims_data[0], 1);
-          dataset.read((void *)mat.data(), datatype);
+          wn_dataset.read((void *)mat.data(), wn_datatype);
           d_layers[ii].bias = mat;
           //std::cout << "biases = \n" << mat << std::endl;
         }
@@ -393,7 +440,7 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::predict(double totalVolStrain, d
 
 /*! Compute derivatives of moduli with respect to internal variables */
 std::vector<ElasticModuli> 
-ElasticModuli_NeuralNet::computeDModuliDIntVar(const ModelStateBase* state) const
+ElasticModuli_NeuralNet::computeDModuliDIntVar([[maybe_unused]] const ModelStateBase* state) const
 {
   std::vector<ElasticModuli> derivs;
   return derivs;

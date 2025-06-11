@@ -381,8 +381,8 @@ ViscoElasticFortran::initializeCMData(const Patch* patch,
   computeStableTimestep(patch, matl, new_dw);
 
   // Local state variables
-  double statev[d_nStateV];
-  VISCOINI(&d_nProp, &d_props[0], &d_nStateV, &statev[0]);
+  std::vector<double> statev(d_nStateV);
+  VISCOINI(&d_nProp, &d_props[0], &d_nStateV, statev.data());
 
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
   std::vector<ParticleVariable<double>> stateV(d_nStateV + 1);
@@ -606,7 +606,7 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
       F.push_back(defGrad_new(1, 2));
       F.push_back(defGrad_new(2, 2));
 
-      double statev[d_nStateV];
+      std::vector<double> statev(d_nStateV);
       for (int i = 0; i < d_nStateV; i++) {
         statev[i] = stateV[i][idx];
       }

@@ -55,6 +55,22 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <ranges>
+#include <algorithm>
+
+namespace Vaango {
+namespace Utils {
+auto
+split_string(std::string_view str, char delimiter)
+{
+  return str | std::views::split(delimiter) |
+         std::views::transform([](auto&& range) {
+           return std::string_view(range.begin(), range.end());
+         });
+}
+} // namespace Utils
+} // namespace Vaango
+
 ////////////////////////////////////////////////////////////////////////////////
 // The following functions are found in fortran/*.F
 // SUBROUTINE KAYENTA_CALC( NBLK, NINSV, DT, UI, GC, DC,
@@ -770,12 +786,13 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
       Darray[3] = D(0, 1);
       Darray[4] = D(1, 2);
       Darray[5] = D(2, 0);
-      double svarg[d_NINSV];
+
       double USM = 9e99;
       double dt = delT;
       int nblk = 1;
 
       // Load ISVs into a 1D array for fortran code
+      std::vector<double> svarg(d_NINSV);
       for (int i = 0; i < d_NINSV; i++) {
         svarg[i] = ISVs[i][idx];
       }
@@ -790,10 +807,10 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
         // 'Hijack' PEAKI1I = UI[51] with perturbed value if desired
         // put real value of UI[51] in tmp var just in case
         UI[51] = peakI1IDist[idx];
-        KAYENTA_CALC(nblk, d_NINSV, dt, UI, GC, DC, sigarg, Darray, svarg, USM);
+        KAYENTA_CALC(nblk, d_NINSV, dt, UI, GC, DC, sigarg, Darray, svarg.data(), USM);
         UI[51] = tempVar;
       } else {
-        KAYENTA_CALC(nblk, d_NINSV, dt, UI, GC, DC, sigarg, Darray, svarg, USM);
+        KAYENTA_CALC(nblk, d_NINSV, dt, UI, GC, DC, sigarg, Darray, svarg.data(), USM);
       }
       // Put T1 back for now
       UI[41] = TFAIL_tmp;
@@ -1153,7 +1170,6 @@ Kayenta::initializeLocalMPMLabels()
     "p.localized", ParticleVariable<int>::getTypeDescription());
   pLocalizedLabel_preReloc = VarLabel::create(
     "p.localized+", ParticleVariable<int>::getTypeDescription());
-  std::vector<std::string> ISVNames;
 
   // These lines of code are added by KC to replace the currently hard-coded
   // internal variable allocation with a proper call to KMMRXV routine.
@@ -1168,24 +1184,29 @@ Kayenta::initializeLocalMPMLabels()
 
   KAYENTA_RXV(UI, GC, DC, nx, namea, keya, rinit, rdim, iadvct, itype);
 
-  char* ISV[d_NINSV];
-  ISV[0] = strtok(keya, "|"); // Splits | between words in string
-  ISVNames.push_back(ISV[0]);
-  proc0cout << "ISV[" << 0 << "] is called " << ISVNames[0] << std::endl;
-  for (int i = 1; i < d_NINSV; i++) {
-    // If you specify nullptr, by default it will start again from the previous
-    // stop.
-    ISV[i] = strtok(nullptr, "|");
-    ISVNames.push_back(ISV[i]);
+  // Make a copy since we need to modify it
+  std::string keya_copy{keya}; 
+  auto split_view = Vaango::Utils::split_string(keya_copy, '|');
+
+  // Convert to vector for indexed access
+  std::vector<std::string> ISVNames;
+  ISVNames.reserve(d_NINSV); // Reserve space for efficiency
+
+  // Fill ISVNames with split results
+  for (auto token : split_view | std::views::take(d_NINSV)) {
+      ISVNames.emplace_back(token);
+  }
+
+  // Print internal variable names
+  for (auto [i, name] : ISVNames | std::views::enumerate) {
     proc0cout << "ISV[" << i << "] is called " << ISVNames[i] << std::endl;
   }
-  // Code ends here.KC
 
-  for (int i = 0; i < d_NINSV; i++) {
-    ISVLabels.push_back(VarLabel::create(
-      ISVNames[i], ParticleVariable<double>::getTypeDescription()));
+  for (const auto& name : ISVNames) {
+    ISVLabels.push_back(
+      VarLabel::create(name, ParticleVariable<double>::getTypeDescription()));
     ISVLabels_preReloc.push_back(VarLabel::create(
-      ISVNames[i] + "+", ParticleVariable<double>::getTypeDescription()));
+      name + "+", ParticleVariable<double>::getTypeDescription()));
   }
   peakI1IDistLabel = VarLabel::create(
     "peakI1IDist", ParticleVariable<double>::getTypeDescription());

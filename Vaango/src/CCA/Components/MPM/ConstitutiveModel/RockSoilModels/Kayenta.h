@@ -39,6 +39,7 @@
 #include <vector>
 
 namespace Uintah {
+
 class MPMFlags;
 class Kayenta : public ConstitutiveModel
 {

@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <format>
+#include <ranges>
 
 #include "H5Cpp.h"
 #include <submodules/json/single_include/nlohmann/json.hpp>
@@ -84,30 +86,52 @@ TEST(HDF5Tests, readTest)
       prev_layer = current_layer;
     }
 
-    group = file.openGroup("/model_weights");
-    attribute = group.openAttribute("layer_names");
-    datatype = attribute.getDataType();
-    auto dataspace = attribute.getSpace();
-    auto size = datatype.getSize();
+    auto layer_group = file.openGroup("/model_weights");
+    auto layer_attribute = layer_group.openAttribute("layer_names");
+    auto layer_datatype = layer_attribute.getDataType();
+    auto layer_dataspace = layer_attribute.getSpace();
+    auto size = layer_datatype.getSize();
     //std::cout << "size = " << datatype.getSize() << std::endl;
-    ASSERT_EQ(datatype.getSize(), 7);
+    ASSERT_EQ(layer_datatype.getSize(), 7);
 
-    int rank = dataspace.getSimpleExtentNdims();
+    int rank = layer_dataspace.getSimpleExtentNdims();
     hsize_t dims;
-    int ndims = dataspace.getSimpleExtentDims(&dims, nullptr);
+    int ndims = layer_dataspace.getSimpleExtentDims(&dims, nullptr);
     //std::cout << "rank = " << rank << " ndims = " << ndims << " " << dims << std::endl;
     ASSERT_EQ(rank, 1);
     ASSERT_EQ(ndims, 1);
     ASSERT_EQ(dims, 4);
 
-    char test1[dims][size];
-    attribute.read(datatype, (void *)test1);
-    //for (auto ii=0u; ii < dims; ++ii) {
-    //  std::cout << std::string(test1[ii], size) << std::endl;
+    // Create a 2D buffer
+    std::vector<std::vector<char>> layer_names_buffer(dims);
+    for (auto& name_buffer : layer_names_buffer) {
+      name_buffer.resize(size);
+    }
+
+    // Create a flat buffer for HDF5 reading
+    std::vector<char> flat_layers_buffer(dims * size);
+    layer_attribute.read(layer_datatype, flat_layers_buffer.data());
+
+    // Convert flat buffer to individual strings
+    std::vector<std::string> layer_names;
+    layer_names.reserve(dims);
+
+    for (const auto i : std::views::iota(0uz, dims)) {
+      const auto start_pos = i * size;
+      std::span<const char> name_span{ flat_layers_buffer.data() + start_pos,
+                                       size };
+
+      // Find the actual string length (stop at null terminator)
+      const auto actual_length =
+        std::ranges::find(name_span, '\0') - name_span.begin();
+      layer_names.emplace_back(name_span.data(), actual_length);
+    }
+
+    //for (auto layer_name: layer_names) {
+    //  std::cout << layer_name << std::endl;
     //}
 
-    for (auto ii = 0u; ii < dims; ++ii) {
-      std::string layer_name(test1[ii], size);
+    for (const auto& [ii, layer_name]: std::views::enumerate(layer_names)) {
       //std::cout << "layer_name = " << layer_name << std::endl;
       switch(ii) {
         case 0:  ASSERT_EQ(layer_name, "dense_1"); break;
@@ -116,30 +140,51 @@ TEST(HDF5Tests, readTest)
         case 3:  ASSERT_EQ(layer_name, "dense_4"); break;
       };
 
-      group = file.openGroup("/model_weights/"+layer_name);
-      attribute = group.openAttribute("weight_names");
-      datatype = attribute.getDataType();
-      dataspace = attribute.getSpace();
-      auto size_wn = datatype.getSize();
+      auto weight_group = file.openGroup(std::format("/model_weights/{}", layer_name));
+      auto weight_attribute = weight_group.openAttribute("weight_names");
+      auto weight_datatype = weight_attribute.getDataType();
+      auto weight_dataspace = weight_attribute.getSpace();
+      auto size_wn = weight_datatype.getSize();
       hsize_t dims_wn;
-      dataspace.getSimpleExtentDims(&dims_wn, nullptr);
+      weight_dataspace.getSimpleExtentDims(&dims_wn, nullptr);
 
       //std::cout << "size = " << size_wn << std::endl;
       //std::cout << "dims = " << dims_wn << std::endl;
       ASSERT_EQ(size_wn, 16); 
-      ASSERT_EQ(dims_wn, 2); 
+      ASSERT_EQ(dims_wn, 2);
 
-      char test2[dims_wn][size_wn];
-      attribute.read(datatype, (void *)test2);
-      for (auto jj=0u; jj < dims_wn; ++jj) {
-        std::string weights_name(test2[jj], size_wn);
+      std::vector<std::vector<char>> weight_names_buffer(dims_wn);
+      for (auto& name_buffer : weight_names_buffer) {
+        name_buffer.resize(size_wn);
+      }
 
-        auto dataset = group.openDataSet(weights_name);
-        datatype = dataset.getDataType();
-        dataspace = dataset.getSpace();
-        rank = dataspace.getSimpleExtentNdims();
-        hsize_t dims_data[rank];
-        dataspace.getSimpleExtentDims(dims_data, nullptr);
+      // Create a flat buffer for HDF5 reading
+      std::vector<char> flat_buffer(dims_wn * size_wn);
+      weight_attribute.read(weight_datatype, flat_buffer.data());
+
+      // Convert flat buffer to individual strings
+      std::vector<std::string> weight_names;
+      weight_names.reserve(dims_wn);
+
+      for (const auto i : std::views::iota(0uz, dims_wn)) {
+        const auto start_pos = i * size_wn;
+        std::span<const char> name_span{ flat_buffer.data() + start_pos,
+                                         size_wn };
+
+        // Find the actual string length (stop at null terminator)
+        const auto actual_length =
+          std::ranges::find(name_span, '\0') - name_span.begin();
+        weight_names.emplace_back(name_span.data(), actual_length);
+      }
+
+      for (const auto& [jj, weights_name]: std::views::enumerate(weight_names)) {
+
+        auto wn_dataset = weight_group.openDataSet(weights_name);
+        auto wn_datatype = wn_dataset.getDataType();
+        auto wn_dataspace = wn_dataset.getSpace();
+        rank = wn_dataspace.getSimpleExtentNdims();
+        std::vector<hsize_t> dims_data(rank);
+        wn_dataspace.getSimpleExtentDims(dims_data.data(), nullptr);
 
         //std::cout << "weights_name = " << weights_name << std::endl;
         //std::cout << "rank = " << rank << std::endl;
@@ -205,7 +250,7 @@ TEST(HDF5Tests, readTest)
 
         if (rank == 2) {
           EigenMatrixF weights(dims_data[0], dims_data[1]);
-          dataset.read((void *)weights.data(), datatype);
+          wn_dataset.read((void *)weights.data(), wn_datatype);
           layers[ii].weights = weights.transpose();
 
           //std::cout << "weights = \n" ;
@@ -238,7 +283,7 @@ TEST(HDF5Tests, readTest)
 
         } else {
           EigenMatrixF bias(dims_data[0], 1);
-          dataset.read((void *)bias.data(), datatype);
+          wn_dataset.read((void *)bias.data(), wn_datatype);
           layers[ii].bias = bias;
 
           //std::cout << "bias = \n" ;
