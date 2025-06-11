@@ -255,7 +255,7 @@ HeatFluxBC::fluxPerParticle(double time) const
 // Calculate the flux vector to be applied to a particular
 // material point location
 double
-HeatFluxBC::getFlux(const Point& px, double fluxPerParticle) const
+HeatFluxBC::getFlux([[maybe_unused]] const Point& px, double fluxPerParticle) const
 {
   double flux(0.0);
   if (d_surfaceType == "box") {

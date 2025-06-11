@@ -96,8 +96,8 @@ double KnaussSeaWater::computeRhoMicro(double press, double gamma,
 void KnaussSeaWater::computeTempCC(const Patch* patch,
                              const string& comp_domain,
                              const CCVariable<double>& press, 
-                             const CCVariable<double>& gamma,
-                             const CCVariable<double>& cv,
+                             [[maybe_unused]] const CCVariable<double>& gamma,
+                             [[maybe_unused]] const CCVariable<double>& cv,
                              const CCVariable<double>& rho_micro, 
                              CCVariable<double>& Temp,
                              Patch::FaceType face)
@@ -124,8 +124,8 @@ void KnaussSeaWater::computeTempCC(const Patch* patch,
 }
 
 //__________________________________
-void KnaussSeaWater::computePressEOS(double rhoM, double gamma,
-                            double cv, double Temp,
+void KnaussSeaWater::computePressEOS(double rhoM, [[maybe_unused]] double gamma,
+                            [[maybe_unused]] double cv, double Temp,
                             double& press, double& dp_drho, double& dp_de)
 {
   // Pointwise computation of thermodynamic quantities
@@ -143,14 +143,14 @@ double KnaussSeaWater::getAlpha(double Temp, double , double press, double )
 //______________________________________________________________________
 // Update temperature boundary conditions due to hydrostatic pressure gradient
 // call this after set Dirchlet and Neuman BC
-void KnaussSeaWater::hydrostaticTempAdjustment(Patch::FaceType face, 
-                                         const Patch* patch,
-                                         Iterator& bound_ptr,
-                                         Vector& gravity,
-                                         const CCVariable<double>& gamma,
-                                         const CCVariable<double>& cv,
-                                         const Vector& cell_dx,
-                                         CCVariable<double>& Temp_CC)
+void KnaussSeaWater::hydrostaticTempAdjustment([[maybe_unused]] Patch::FaceType face, 
+                                         [[maybe_unused]] const Patch* patch,
+                                         [[maybe_unused]] Iterator& bound_ptr,
+                                         [[maybe_unused]] Vector& gravity,
+                                         [[maybe_unused]] const CCVariable<double>& gamma,
+                                         [[maybe_unused]] const CCVariable<double>& cv,
+                                         [[maybe_unused]] const Vector& cell_dx,
+                                         [[maybe_unused]] CCVariable<double>& Temp_CC)
 { 
    // needs to be filled in
 //  IntVector axes = patch->getFaceAxes(face);

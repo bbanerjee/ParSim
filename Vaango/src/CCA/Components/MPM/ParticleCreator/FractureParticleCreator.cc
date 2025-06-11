@@ -59,7 +59,7 @@ FractureParticleCreator::registerPermanentParticleState(MPMMaterial* /*matl*/)
 }
 
 void
-FractureParticleCreator::applyForceBC(const Vector& dxpp,
+FractureParticleCreator::applyForceBC([[maybe_unused]] const Vector& dxpp,
                                       const Point& pp,
                                       const double& pMass,
                                       Vector& pExtForce)

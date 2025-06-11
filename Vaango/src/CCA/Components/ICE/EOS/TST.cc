@@ -94,7 +94,7 @@ void TST::outputProblemSpec(ProblemSpecP& ps){
 
 //__________________________________
 double TST::computeRhoMicro(double press, double gamma,
-                            double cv, double Temp,double rho_guess){
+                            double cv, double Temp,[[maybe_unused]] double rho_guess){
   /*
    *       (gamma-1)*cv*Temp           a
    *   P = ------------------  -  ------------
@@ -133,7 +133,7 @@ double TST::computeRhoMicro(double press, double gamma,
 
 //__________________________________
 // Return (1/v)*(dv/dT)  (constant pressure thermal expansivity)
-double TST::getAlpha(double Temp, double sp_v, double P, double cv){
+double TST::getAlpha([[maybe_unused]] double Temp, double sp_v, double P, double cv){
   // Cheating here a bit, computing v*(dT/dv) and returning the inverse of that
   double n1 = 2*P*sp_v + P*bw + P*bu;
   double n2 = sp_v - b;
@@ -152,7 +152,7 @@ double TST::getAlpha(double Temp, double sp_v, double P, double cv){
 void TST::computeTempCC(const Patch* patch,
                         const string& comp_domain,
                         const CCVariable<double>& press, 
-                        const CCVariable<double>& gamma,
+                        [[maybe_unused]] const CCVariable<double>& gamma,
                         const CCVariable<double>& cv,
                         const CCVariable<double>& rhoM, 
                         CCVariable<double>& Temp,
@@ -191,7 +191,7 @@ void TST::computeTempCC(const Patch* patch,
 
 //__________________________________
 //
-void TST::computePressEOS(double rhoM, double gamma,
+void TST::computePressEOS(double rhoM, [[maybe_unused]] double gamma,
                           double cv, double Temp,
                           double& press, double& dp_drho, double& dp_de){
   // Pointwise computation of thermodynamic quantities

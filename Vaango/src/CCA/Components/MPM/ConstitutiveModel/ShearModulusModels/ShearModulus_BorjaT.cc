@@ -176,7 +176,7 @@ ShearModulus_BorjaT::evalDqDepse_v(const double& epse_v,
 //  deviatoric derivative computation
 double
 ShearModulus_BorjaT::evalDqDepse_s(const double& epse_v,
-                                   const double& epse_s) const
+                                   [[maybe_unused]] const double& epse_s) const
 {
   double mu_vol     = evalShearModulus(epse_v);
   double dq_depse_s = 3.0 * (d_mu0 - mu_vol);

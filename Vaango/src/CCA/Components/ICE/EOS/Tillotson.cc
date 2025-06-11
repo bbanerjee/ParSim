@@ -93,7 +93,7 @@ void Tillotson::outputProblemSpec(ProblemSpecP& ps)
 
 //__________________________________
 double Tillotson::computeRhoMicro(double press, double,
-                             double cv, double Temp,double rho_guess)
+                             [[maybe_unused]] double cv, [[maybe_unused]] double Temp,[[maybe_unused]] double rho_guess)
 {
   // Pointwise computation of microscopic density
   // P=P(rho,T) is not invertable to get rho=rho(P,T)

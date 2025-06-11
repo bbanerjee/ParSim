@@ -32,6 +32,6 @@ ModelState_MetalT::ModelState_MetalT()
 }
 
 void 
-ModelState_MetalT::copyLocalState(const ModelState_MetalT* state)
+ModelState_MetalT::copyLocalState([[maybe_unused]] const ModelState_MetalT* state)
 {
 }

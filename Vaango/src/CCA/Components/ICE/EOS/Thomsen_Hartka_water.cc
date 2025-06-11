@@ -85,8 +85,8 @@ void Thomsen_Hartka_water::outputProblemSpec(ProblemSpecP& ps)
 
 //__________________________________
   // Pointwise computation of microscopic density
-double Thomsen_Hartka_water::computeRhoMicro(double press, double gamma,
-                                 double cv, double Temp, double)
+double Thomsen_Hartka_water::computeRhoMicro(double press, [[maybe_unused]] double gamma,
+                                 [[maybe_unused]] double cv, double Temp, double)
 {
   double x = d_a * press + Temp - d_To;
   return  1./(d_vo*(1. - d_ko * press + d_L * x*x ) );
@@ -97,8 +97,8 @@ double Thomsen_Hartka_water::computeRhoMicro(double press, double gamma,
 void Thomsen_Hartka_water::computeTempCC(const Patch* patch,
                                          const string& comp_domain,
                                          const CCVariable<double>& press, 
-                                         const CCVariable<double>& gamma,
-                                         const CCVariable<double>& cv,
+                                         [[maybe_unused]] const CCVariable<double>& gamma,
+                                         [[maybe_unused]] const CCVariable<double>& cv,
                                          const CCVariable<double>& rho_micro, 
                                          CCVariable<double>& Temp,
                                          Patch::FaceType face)
@@ -134,8 +134,8 @@ void Thomsen_Hartka_water::computeTempCC(const Patch* patch,
 
 //__________________________________
 // See "ICE/EOS/Thomsen&Hartka_notebook.pdf"
-void Thomsen_Hartka_water::computePressEOS(double rhoM, double gamma,
-                                           double cv, double Temp,
+void Thomsen_Hartka_water::computePressEOS(double rhoM, [[maybe_unused]] double gamma,
+                                           [[maybe_unused]] double cv, double Temp,
                                            double& press, double& dp_drho, double& dp_de)
 {
  // Pointwise computation of thermodynamic quantities
@@ -190,14 +190,14 @@ double Thomsen_Hartka_water::getAlpha(double Temp, double , double P, double )
 //______________________________________________________________________
 // Update temperature boundary conditions due to hydrostatic pressure gradient
 // call this after set Dirchlet and Neuman BC
-void Thomsen_Hartka_water::hydrostaticTempAdjustment(Patch::FaceType face, 
-                                                     const Patch* patch,
-                                                     Iterator& bound_ptr,
-                                                     Vector& gravity,
-                                                     const CCVariable<double>& gamma,
-                                                     const CCVariable<double>& cv,
-                                                     const Vector& cell_dx,
-                                                     CCVariable<double>& Temp_CC)
+void Thomsen_Hartka_water::hydrostaticTempAdjustment([[maybe_unused]] Patch::FaceType face, 
+                                                     [[maybe_unused]] const Patch* patch,
+                                                     [[maybe_unused]] Iterator& bound_ptr,
+                                                     [[maybe_unused]] Vector& gravity,
+                                                     [[maybe_unused]] const CCVariable<double>& gamma,
+                                                     [[maybe_unused]] const CCVariable<double>& cv,
+                                                     [[maybe_unused]] const Vector& cell_dx,
+                                                     [[maybe_unused]] CCVariable<double>& Temp_CC)
 { 
 // needs to be filled in
 }

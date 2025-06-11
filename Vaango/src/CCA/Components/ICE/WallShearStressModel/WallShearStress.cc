@@ -33,8 +33,8 @@ WallShearStress::WallShearStress()
 {
 }
 
-WallShearStress::WallShearStress( ProblemSpecP& ps,
-                                  MaterialManagerP& materialManager )
+WallShearStress::WallShearStress( [[maybe_unused]] ProblemSpecP& ps,
+                                  [[maybe_unused]] MaterialManagerP& materialManager )
 {
 }
 

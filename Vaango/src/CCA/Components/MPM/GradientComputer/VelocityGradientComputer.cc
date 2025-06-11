@@ -118,10 +118,10 @@ VelocityGradientComputer::computeAxiSymVelocityGradient(
   Matrix3& velGrad,
   std::vector<IntVector>& ni,
   std::vector<Vector>& d_S,
-  std::vector<double>& S,
+  [[maybe_unused]] std::vector<double>& S,
   const double* oodx,
   constNCVariable<Vector>& gVelocity,
-  const Point& px)
+  [[maybe_unused]] const Point& px)
 {
   // x -> r, y -> z, z -> theta
   for (int k = 0; k < flag->d_8or27; k++) {

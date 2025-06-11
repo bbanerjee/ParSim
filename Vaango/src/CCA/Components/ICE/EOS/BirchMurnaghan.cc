@@ -188,7 +188,7 @@ double BirchMurnaghan::computeRhoMicro(double press, double,
 
 //__________________________________
 // Return (1/v)*(dv/dT)  (constant pressure thermal expansivity)
-double BirchMurnaghan::getAlpha(double temp, double sp_v, double press, double cv)
+double BirchMurnaghan::getAlpha(double temp, double sp_v, double press, [[maybe_unused]] double cv)
 {
   // No dependence on temperature w/o specific heat model
   if(!useSpecificHeatModel)
@@ -249,7 +249,7 @@ void BirchMurnaghan::computeTempCC(const Patch* patch,
 }
 
 //__________________________________
-void BirchMurnaghan::computePressEOS(double rhoM, double, double, double temperature,
+void BirchMurnaghan::computePressEOS(double rhoM, double, double, [[maybe_unused]] double temperature,
                           double& press, double& dp_drho, double& dp_de)
 {
   // Pointwise computation of thermodynamic quantities

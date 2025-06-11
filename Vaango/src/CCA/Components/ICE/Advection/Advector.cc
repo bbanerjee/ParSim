@@ -70,7 +70,7 @@ namespace Uintah {
 void
 warning_recomputeTimestep(std::vector<IntVector> badCells,
                         std::vector<fflux> badOutFlux,
-                        const double vol,
+                        [[maybe_unused]] const double vol,
                         const int indx,
                         const Patch* patch)
 {

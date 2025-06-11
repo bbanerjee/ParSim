@@ -70,14 +70,14 @@ ShearModulus_ConstantT::l_computeInitialShearModulus()
 }
 
 double
-ShearModulus_ConstantT::l_computeShearModulus(const ModelState_MetalT* state)
+ShearModulus_ConstantT::l_computeShearModulus([[maybe_unused]] const ModelState_MetalT* state)
 {
   return d_shearModulus;
 }
 
 double
 ShearModulus_ConstantT::l_computeShearModulus(
-  const ModelState_MetalT* state) const
+  [[maybe_unused]] const ModelState_MetalT* state) const
 {
   return d_shearModulus;
 }
@@ -111,7 +111,7 @@ ShearModulus_ConstantT::l_computeQ(const ModelState_MetalT* state) const
 */
 /////////////////////////////////////////////////////////////////////////
 double
-ShearModulus_ConstantT::l_computeDqDepse_s(const ModelState_MetalT* state) const
+ShearModulus_ConstantT::l_computeDqDepse_s([[maybe_unused]] const ModelState_MetalT* state) const
 {
   return 3.0 * d_shearModulus;
 }
@@ -122,7 +122,7 @@ ShearModulus_ConstantT::l_computeDqDepse_s(const ModelState_MetalT* state) const
 */
 /////////////////////////////////////////////////////////////////////////
 double
-ShearModulus_ConstantT::l_computeDqDepse_v(const ModelState_MetalT* state) const
+ShearModulus_ConstantT::l_computeDqDepse_v([[maybe_unused]] const ModelState_MetalT* state) const
 {
   return 0.0;
 }

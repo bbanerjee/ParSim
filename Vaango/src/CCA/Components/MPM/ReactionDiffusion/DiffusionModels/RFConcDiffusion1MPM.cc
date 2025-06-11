@@ -54,7 +54,7 @@ RFConcDiffusion1MPM::~RFConcDiffusion1MPM()
 void RFConcDiffusion1MPM::addInitialComputesAndRequires(
                                                               Task         * task,
                                                         const MPMMaterial  * matl,
-                                                        const PatchSet     * patches
+                                                        [[maybe_unused]] const PatchSet     * patches
                                                        ) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -119,7 +119,7 @@ void RFConcDiffusion1MPM::initializeSDMData(
 void RFConcDiffusion1MPM::scheduleComputeFlux(
                                                     Task        * task,
                                               const MPMMaterial * matl,
-                                              const PatchSet    * patch
+                                              [[maybe_unused]] const PatchSet    * patch
                                              ) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -130,24 +130,24 @@ void RFConcDiffusion1MPM::scheduleComputeFlux(
 }
 
 void RFConcDiffusion1MPM::addSplitParticlesComputesAndRequires(
-                                                                     Task         * task,
-                                                               const MPMMaterial  * matl,
-                                                               const PatchSet     * patches
+                                                               [[maybe_unused]]       Task         * task,
+                                                               [[maybe_unused]] const MPMMaterial  * matl,
+                                                               [[maybe_unused]] const PatchSet     * patches
                                                               ) const
 {
   // Do nothing for now
 }
 
 void RFConcDiffusion1MPM::splitSDMSpecificParticleData(
-                                                       const Patch                  * Patch,
-                                                       const int                      dwi,
-                                                       const int                      nDims,
-                                                             ParticleVariable<int>  & prefOld,
-                                                             ParticleVariable<int>  & pref,
-                                                       const unsigned int             oldNumPar,
-                                                       const int                      numNewPartNeeded,
-                                                             DataWarehouse          * old_dw,
-                                                             DataWarehouse          * new_dw
+                                                       [[maybe_unused]] const Patch                  * Patch,
+                                                       [[maybe_unused]] const int                      dwi,
+                                                       [[maybe_unused]] const int                      nDims,
+                                                       [[maybe_unused]]       ParticleVariable<int>  & prefOld,
+                                                       [[maybe_unused]]       ParticleVariable<int>  & pref,
+                                                       [[maybe_unused]] const unsigned int             oldNumPar,
+                                                       [[maybe_unused]] const int                      numNewPartNeeded,
+                                                       [[maybe_unused]]       DataWarehouse          * old_dw,
+                                                       [[maybe_unused]]       DataWarehouse          * new_dw
                                                       )
 {
   // Do nothing for now

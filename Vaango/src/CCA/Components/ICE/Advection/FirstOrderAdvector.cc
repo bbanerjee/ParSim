@@ -51,9 +51,9 @@ using std::endl;
     "Compatible Fluxes for van Leer Advection" W.B VanderHeyden and
     B.A. Kashiwa, Journal of Computational Physics, 146, 1-28, (1998)
  ---------------------------------------------------------------------  */
-FirstOrderAdvector::FirstOrderAdvector(DataWarehouse* new_dw,
-                                       const Patch* patch,
-                                       const bool isNewGrid)
+FirstOrderAdvector::FirstOrderAdvector([[maybe_unused]] DataWarehouse* new_dw,
+                                       [[maybe_unused]] const Patch* patch,
+                                       [[maybe_unused]] const bool isNewGrid)
 {
 }
 

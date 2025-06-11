@@ -52,7 +52,7 @@ NonLinearDiff2::~NonLinearDiff2() {}
 void
 NonLinearDiff2::addInitialComputesAndRequires(Task* task,
                                               const MPMMaterial* matl,
-                                              const PatchSet* patch) const
+                                              [[maybe_unused]] const PatchSet* patch) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(d_lb->diffusion->pDiffusivity, matlset);
@@ -180,7 +180,7 @@ NonLinearDiff2::computeFlux(const Patch* patch,
 void
 NonLinearDiff2::scheduleComputeDivergence(Task* task,
                                           const MPMMaterial* matl,
-                                          const PatchSet* patch) const
+                                          [[maybe_unused]] const PatchSet* patch) const
 {
   Ghost::GhostType gan          = Ghost::AroundNodes;
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -289,7 +289,7 @@ void
 NonLinearDiff2::addSplitParticlesComputesAndRequires(
   Task* task,
   const MPMMaterial* matl,
-  const PatchSet* patches) const
+  [[maybe_unused]] const PatchSet* patches) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->modifies(d_lb->diffusion->pDiffusivity_preReloc, matlset);
@@ -303,7 +303,7 @@ NonLinearDiff2::splitSDMSpecificParticleData(const Patch* patch,
                                              ParticleVariable<int>& prefOld,
                                              ParticleVariable<int>& prefNew,
                                              const unsigned int oldNumPar,
-                                             const int numNewPartNeeded,
+                                             [[maybe_unused]] const int numNewPartNeeded,
                                              DataWarehouse* old_dw,
                                              DataWarehouse* new_dw)
 {

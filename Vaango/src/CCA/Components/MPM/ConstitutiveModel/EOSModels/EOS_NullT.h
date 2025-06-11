@@ -44,14 +44,14 @@ class EOS_NullT : public EquationOfStateT<EOS_NullT, ModelState_MetalT>
 {
 
 public:
-  EOS_NullT(Uintah::ProblemSpecP& ps) {}
-  EOS_NullT(const EOS_NullT* cm) {}
+  EOS_NullT([[maybe_unused]] Uintah::ProblemSpecP& ps) {}
+  EOS_NullT([[maybe_unused]] const EOS_NullT* cm) {}
   EOS_NullT&
   operator=(const EOS_NullT& cm) = delete;
   ~EOS_NullT()                   = default;
 
   void
-  l_outputProblemSpec(Uintah::ProblemSpecP& ps)
+  l_outputProblemSpec([[maybe_unused]] Uintah::ProblemSpecP& ps)
   {
   }
 
@@ -67,19 +67,19 @@ public:
   /*! Calculate the pressure using a equation of state */
   /////////////////////////////////////////////////////////////////////////
   double
-  l_computePressure(const Uintah::MPMMaterial* matl,
-                    const ModelState_MetalT* state,
-                    const Uintah::Matrix3& deformGrad,
-                    const Uintah::Matrix3& rateOfDeformation,
-                    const double& delT)
+  l_computePressure([[maybe_unused]] const Uintah::MPMMaterial* matl,
+                    [[maybe_unused]] const ModelState_MetalT* state,
+                    [[maybe_unused]] const Uintah::Matrix3& deformGrad,
+                    [[maybe_unused]] const Uintah::Matrix3& rateOfDeformation,
+                    [[maybe_unused]] const double& delT)
   {
     return 0.0;
   }
 
   double
-  l_eval_dp_dJ(const Uintah::MPMMaterial* matl,
-               const double& delF,
-               const ModelState_MetalT* state)
+  l_eval_dp_dJ([[maybe_unused]] const Uintah::MPMMaterial* matl,
+               [[maybe_unused]] const double& delF,
+               [[maybe_unused]] const ModelState_MetalT* state)
   {
     return 0.0;
   }
@@ -90,7 +90,7 @@ public:
             epse = total elastic strain */
   ////////////////////////////////////////////////////////////////////////
   double
-  l_computeDpDepse_v(const ModelState_MetalT* state) const
+  l_computeDpDepse_v([[maybe_unused]] const ModelState_MetalT* state) const
   {
     return 0.0;
   }
@@ -102,35 +102,35 @@ public:
             epse = total elastic strain */
   ////////////////////////////////////////////////////////////////////////
   double
-  l_computeDpDepse_s(const ModelState_MetalT* state) const
+  l_computeDpDepse_s([[maybe_unused]] const ModelState_MetalT* state) const
   {
     return 0.0;
   }
 
   // Calculate rate of temperature change due to compression/expansion
   double
-  l_computeIsentropicTemperatureRate(const double T,
-                                     const double rho_0,
-                                     const double rho_cur,
-                                     const double Dtrace)
+  l_computeIsentropicTemperatureRate([[maybe_unused]] const double T,
+                                     [[maybe_unused]] const double rho_0,
+                                     [[maybe_unused]] const double rho_cur,
+                                     [[maybe_unused]] const double Dtrace)
   {
     return 0.0;
   }
 
   // Compute pressure (option 1)
   double
-  l_computePressure(const double& rho_orig, const double& rho_cur)
+  l_computePressure([[maybe_unused]] const double& rho_orig, [[maybe_unused]] const double& rho_cur)
   {
     return 0.0;
   }
 
   // Compute pressure (option 2)
   void
-  l_computePressure(const double& rho_orig,
-                    const double& rho_cur,
-                    double& pressure,
-                    double& dp_drho,
-                    double& csquared)
+  l_computePressure([[maybe_unused]] const double& rho_orig,
+                    [[maybe_unused]] const double& rho_cur,
+                    [[maybe_unused]] double& pressure,
+                    [[maybe_unused]] double& dp_drho,
+                    [[maybe_unused]] double& csquared)
   {
   }
 
@@ -145,49 +145,49 @@ public:
     return 0.0;
   }
   double
-  l_computeBulkModulus(const ModelState_MetalT* state)
+  l_computeBulkModulus([[maybe_unused]] const ModelState_MetalT* state)
   {
     return 0.0;
   }
   double
-  l_computeBulkModulus(const double& rho_orig, const double& rho_cur)
+  l_computeBulkModulus([[maybe_unused]] const double& rho_orig, [[maybe_unused]] const double& rho_cur)
   {
     return 0.0;
   }
 
   // Compute strain energy
   double
-  l_computeStrainEnergy(const ModelState_MetalT* state)
+  l_computeStrainEnergy([[maybe_unused]] const ModelState_MetalT* state)
   {
     return 0.0;
   }
   double
-  l_computeStrainEnergy(const double& rho_orig, const double& rho_cur)
+  l_computeStrainEnergy([[maybe_unused]] const double& rho_orig, [[maybe_unused]] const double& rho_cur)
   {
     return 0.0;
   }
 
   // Compute density given pressure
   double
-  l_computeDensity(const double& rho_orig, const double& pressure)
+  l_computeDensity([[maybe_unused]] const double& rho_orig, [[maybe_unused]] const double& pressure)
   {
     return 0.0;
   }
 
   double
-  l_computeElasticVolumetricStrain(const double& pp, const double& p0)
+  l_computeElasticVolumetricStrain([[maybe_unused]] const double& pp, [[maybe_unused]] const double& p0)
   {
     return 0.0;
   }
   double
-  l_computeExpElasticVolumetricStrain(const double& pp, const double& p0)
+  l_computeExpElasticVolumetricStrain([[maybe_unused]] const double& pp, [[maybe_unused]] const double& p0)
   {
     return 0.0;
   }
   double
-  l_computeDerivExpElasticVolumetricStrain(const double& pp,
-                                           const double& p0,
-                                           double& exp_eps_e_v)
+  l_computeDerivExpElasticVolumetricStrain([[maybe_unused]] const double& pp,
+                                           [[maybe_unused]] const double& p0,
+                                           [[maybe_unused]] double& exp_eps_e_v)
   {
     return 0.0;
   }

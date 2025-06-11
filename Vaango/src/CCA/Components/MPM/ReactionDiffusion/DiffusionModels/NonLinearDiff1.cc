@@ -106,7 +106,7 @@ NonLinearDiff1::~NonLinearDiff1() {}
 void
 NonLinearDiff1::addInitialComputesAndRequires(Task* task,
                                               const MPMMaterial* matl,
-                                              const PatchSet* patch) const
+                                              [[maybe_unused]] const PatchSet* patch) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(d_lb->diffusion->pDiffusivity, matlset);
@@ -333,7 +333,7 @@ void
 NonLinearDiff1::addSplitParticlesComputesAndRequires(
   Task* task,
   const MPMMaterial* matl,
-  const PatchSet* patches) const
+  [[maybe_unused]] const PatchSet* patches) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->modifies(d_lb->diffusion->pDiffusivity_preReloc, matlset);
@@ -347,7 +347,7 @@ NonLinearDiff1::splitSDMSpecificParticleData(const Patch* patch,
                                              ParticleVariable<int>& prefOld,
                                              ParticleVariable<int>& prefNew,
                                              const unsigned int oldNumPar,
-                                             const int numNewPartNeeded,
+                                             [[maybe_unused]] const int numNewPartNeeded,
                                              DataWarehouse* old_dw,
                                              DataWarehouse* new_dw)
 {

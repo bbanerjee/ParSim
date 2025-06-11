@@ -73,7 +73,7 @@ public:
     return numThis;
   }
 
-  void updateLocalStressInvariants(const Uintah::Matrix3& stress) {}
+  void updateLocalStressInvariants([[maybe_unused]] const Uintah::Matrix3& stress) {}
   void updateLocalStressInvariants() {}
 
   std::pair<Uintah::Matrix3, Uintah::Matrix3> 

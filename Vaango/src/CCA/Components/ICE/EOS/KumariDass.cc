@@ -83,8 +83,8 @@ void KumariDass::outputProblemSpec(ProblemSpecP& ps){
 
 
 //__________________________________
-double KumariDass::computeRhoMicro(double press, double,
-                                   double cv, double Temp,double rho_guess){
+double KumariDass::computeRhoMicro([[maybe_unused]] double press, double,
+                                   [[maybe_unused]] double cv, [[maybe_unused]] double Temp,[[maybe_unused]] double rho_guess){
 
   double lambdaB0 = lambda*B0;
   double rhoM     = rho0*std::exp(-std::log(B0prime/(lambdaB0))
@@ -97,7 +97,7 @@ double KumariDass::computeRhoMicro(double press, double,
 
 //__________________________________
 // Return (1/v)*(dv/dT)  (constant pressure thermal expansivity)
-double KumariDass::getAlpha(double, double sp_v, double P, double cv){
+double KumariDass::getAlpha(double, [[maybe_unused]] double sp_v, [[maybe_unused]] double P, [[maybe_unused]] double cv){
   // no temperature dependence
   return  0.0;
 }
@@ -106,10 +106,10 @@ double KumariDass::getAlpha(double, double sp_v, double P, double cv){
 //__________________________________
 void KumariDass::computeTempCC(const Patch* patch,
                                const string& comp_domain,
-                               const CCVariable<double>& press, 
+                               [[maybe_unused]] const CCVariable<double>& press, 
                                const CCVariable<double>&,
-                               const CCVariable<double>& cv,
-                               const CCVariable<double>& rhoM, 
+                               [[maybe_unused]] const CCVariable<double>& cv,
+                               [[maybe_unused]] const CCVariable<double>& rhoM, 
                                CCVariable<double>& Temp,
                                Patch::FaceType face){
   if(comp_domain == "WholeDomain") {
@@ -135,7 +135,7 @@ void KumariDass::computeTempCC(const Patch* patch,
 //__________________________________
 //
 void KumariDass::computePressEOS(double rhoM, double,
-                                 double cv, double Temp,
+                                 [[maybe_unused]] double cv, [[maybe_unused]] double Temp,
                                  double& press, double& dp_drho, double& dp_de){
   // Pointwise computation of thermodynamic quantities
   double V        = rhoM/rho0;

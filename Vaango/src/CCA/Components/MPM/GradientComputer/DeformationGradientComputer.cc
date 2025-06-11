@@ -218,8 +218,8 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
 }
 
 void
-DeformationGradientComputer::addComputesOnly(Task* task,
-                                             const MPMMaterial* mpm_matl,
+DeformationGradientComputer::addComputesOnly([[maybe_unused]] Task* task,
+                                             [[maybe_unused]] const MPMMaterial* mpm_matl,
                                              const PatchSet*)
 {
   dbg_doing << "Doing DefGrad::addComputesOnly\n";
@@ -387,7 +387,7 @@ DeformationGradientComputer::computeDeformationGradient(
   const PatchSubset* patches,
   DataWarehouse* old_dw,
   DataWarehouse* new_dw,
-  bool recurse)
+  [[maybe_unused]] bool recurse)
 {
   dbg_doing << "Doing DefGrad::computeDeformationGradient implicit recursion\n";
 
@@ -1238,7 +1238,7 @@ DeformationGradientComputer::copyAndDeleteForConvert(
   ParticleSubset* addset,
   std::map<const VarLabel*, ParticleVariableBase*>* newState,
   ParticleSubset* delset,
-  DataWarehouse* old_dw)
+  [[maybe_unused]] DataWarehouse* old_dw)
 {
   // **WARNING and TODO** Will not work for INCREMENTAL models unless we
   // figure out a way of determining the constitutive models for the addset and
@@ -1284,7 +1284,7 @@ DeformationGradientComputer::copyAndDeleteForConvert(
 
 void
 DeformationGradientComputer::computeDeformationGradientFromVelocity(
-  const Matrix3& velGrad_old,
+  [[maybe_unused]] const Matrix3& velGrad_old,
   const Matrix3& velGrad_new,
   const Matrix3& defGrad_old,
   const double& delT,

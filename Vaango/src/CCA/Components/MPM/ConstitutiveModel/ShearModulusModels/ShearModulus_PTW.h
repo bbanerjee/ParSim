@@ -90,7 +90,7 @@ public:
 
   /*! Compute the shear strain energy */
   double
-  computeStrainEnergy(const ModelStateBase* state) override
+  computeStrainEnergy([[maybe_unused]] const ModelStateBase* state) override
   {
     return 0.0;
   }
@@ -106,7 +106,7 @@ public:
   */
   /////////////////////////////////////////////////////////////////////////
   double
-  computeQ(const ModelStateBase* state) const override
+  computeQ([[maybe_unused]] const ModelStateBase* state) const override
   {
     return 0.0;
   }
@@ -117,7 +117,7 @@ public:
   */
   /////////////////////////////////////////////////////////////////////////
   double
-  computeDqDepse_s(const ModelStateBase* state) const override
+  computeDqDepse_s([[maybe_unused]] const ModelStateBase* state) const override
   {
     return 0.0;
   }
@@ -128,7 +128,7 @@ public:
   */
   /////////////////////////////////////////////////////////////////////////
   double
-  computeDqDepse_v(const ModelStateBase* state) const override
+  computeDqDepse_v([[maybe_unused]] const ModelStateBase* state) const override
   {
     return 0.0;
   }
