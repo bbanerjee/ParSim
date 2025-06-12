@@ -119,7 +119,8 @@ MPMEquationOfStateFactory::createCopy(const MPMEquationOfState* eos)
   }
 
   else if (dynamic_cast<const WaterEOS*>(eos)) {
-    return std::make_unique<WaterEOS>(dynamic_cast<const WaterEOS*>(eos));
+    //return std::make_unique<WaterEOS>(dynamic_cast<const WaterEOS*>(eos));
+    return (dynamic_cast<const WaterEOS*>(eos))->clone();
   }
 
   else if (dynamic_cast<const GraniteEOS*>(eos)) {

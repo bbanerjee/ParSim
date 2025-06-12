@@ -49,14 +49,6 @@ WaterEOS::WaterEOS(ProblemSpecP&)
   d_bulkModulus = d_K0;
 }
 
-WaterEOS::WaterEOS(const WaterEOS* cm)
-{
-  d_p0          = cm->d_p0;
-  d_K0          = cm->d_K0;
-  d_n           = cm->d_n;
-  d_bulkModulus = cm->d_bulkModulus;
-}
-
 WaterEOS::~WaterEOS() = default;
 
 void

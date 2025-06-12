@@ -368,9 +368,9 @@ void
 YieldCond_Gurson::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
                                                 const Matrix3& sigma,
                                                 double sigY,
-                                                double dsigYdep,
+                                                [[maybe_unused]] double dsigYdep,
                                                 double porosity,
-                                                double voidNuclFac,
+                                                [[maybe_unused]] double voidNuclFac,
                                                 TangentModulusTensor& Cep)
 {
   ModelStateBase state;

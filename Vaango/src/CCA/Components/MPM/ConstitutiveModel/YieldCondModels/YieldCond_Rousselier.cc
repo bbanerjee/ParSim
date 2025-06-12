@@ -247,49 +247,49 @@ YieldCond_Rousselier::df_dporosity(const ModelStateBase* state) const
 }
 
 double
-YieldCond_Rousselier::d2f_dp_depsVol(const ModelStateBase* state,
-                                     const MPMEquationOfState* eos,
-                                     const ShearModulusModel* shear)
+YieldCond_Rousselier::d2f_dp_depsVol([[maybe_unused]] const ModelStateBase* state,
+                                     [[maybe_unused]] const MPMEquationOfState* eos,
+                                     [[maybe_unused]] const ShearModulusModel* shear)
 {
   return 0.0;
 }
 
 double
-YieldCond_Rousselier::d2f_dp_depsDev(const ModelStateBase* state,
-                                     const MPMEquationOfState* eos,
-                                     const ShearModulusModel* shear)
+YieldCond_Rousselier::d2f_dp_depsDev([[maybe_unused]] const ModelStateBase* state,
+                                     [[maybe_unused]] const MPMEquationOfState* eos,
+                                     [[maybe_unused]] const ShearModulusModel* shear)
 {
   return 0.0;
 }
 
 double
-YieldCond_Rousselier::d2f_dq_depsVol(const ModelStateBase* state,
-                                     const MPMEquationOfState* eos,
-                                     const ShearModulusModel* shear)
+YieldCond_Rousselier::d2f_dq_depsVol([[maybe_unused]] const ModelStateBase* state,
+                                     [[maybe_unused]] const MPMEquationOfState* eos,
+                                     [[maybe_unused]] const ShearModulusModel* shear)
 {
   return 0.0;
 }
 
 double
-YieldCond_Rousselier::d2f_dq_depsDev(const ModelStateBase* state,
-                                     const MPMEquationOfState* eos,
-                                     const ShearModulusModel* shear)
+YieldCond_Rousselier::d2f_dq_depsDev([[maybe_unused]] const ModelStateBase* state,
+                                     [[maybe_unused]] const MPMEquationOfState* eos,
+                                     [[maybe_unused]] const ShearModulusModel* shear)
 {
   return 0.0;
 }
 
 double
-YieldCond_Rousselier::df_depsVol(const ModelStateBase* state,
-                                 const MPMEquationOfState* eos,
-                                 const ShearModulusModel* shear)
+YieldCond_Rousselier::df_depsVol([[maybe_unused]] const ModelStateBase* state,
+                                 [[maybe_unused]] const MPMEquationOfState* eos,
+                                 [[maybe_unused]] const ShearModulusModel* shear)
 {
   return 0.0;
 }
 
 double
-YieldCond_Rousselier::df_depsDev(const ModelStateBase* state,
-                                 const MPMEquationOfState* eos,
-                                 const ShearModulusModel* shear)
+YieldCond_Rousselier::df_depsDev([[maybe_unused]] const ModelStateBase* state,
+                                 [[maybe_unused]] const MPMEquationOfState* eos,
+                                 [[maybe_unused]] const ShearModulusModel* shear)
 {
   return 0.0;
 }
@@ -337,7 +337,7 @@ YieldCond_Rousselier::computeElasPlasTangentModulus(
   const TangentModulusTensor& Ce,
   const Matrix3& sigma,
   double sigY,
-  double dsigYdep,
+  [[maybe_unused]] double dsigYdep,
   double porosity,
   double voidNuclFac,
   Uintah::TangentModulusTensor& Cep)

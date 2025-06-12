@@ -100,16 +100,6 @@ ElasticModuli_Arena::checkInputParameters()
   }
 }
 
-// Construct a copy of a elasticity model.
-ElasticModuli_Arena::ElasticModuli_Arena(const ElasticModuli_Arena* model)
-{
-  d_bulk = model->d_bulk;
-  d_shear = model->d_shear;
-}
-
-// Destructor of elasticity model.
-ElasticModuli_Arena::~ElasticModuli_Arena() = default;
-
 void
 ElasticModuli_Arena::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {

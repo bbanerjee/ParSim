@@ -69,7 +69,7 @@ ParticleNormalForceBC::getType() const
 // particle location
 Uintah::Vector
 ParticleNormalForceBC::getForceVector(const Uintah::Point& px, double force,
-                                      const double time) const
+                                      [[maybe_unused]] const double time) const
 {
   Uintah::Vector normal_force(0.0,0.0,0.0);
   if (d_surfaceType == "box") {

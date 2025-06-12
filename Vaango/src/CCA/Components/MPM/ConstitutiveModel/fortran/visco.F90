@@ -37,9 +37,9 @@ MODULE VISCO
   REAL(KIND=DP), PARAMETER :: P6TH=ONE/SIX
   REAL(KIND=DP), PARAMETER :: P1M3=1.E-3_DP, P1M10=1.E-10_DP, P1M30=1.E-30_DP
   REAL(KIND=DP), PARAMETER :: POINT03=.03_DP, BIGNUM=1.E+30_DP
-  REAL(KIND=DP), PARAMETER :: I3x3(3,3)=RESHAPE((/ ONE, ZERO, ZERO,&
-                                                   ZERO, ONE, ZERO,&
-                                                   ZERO, ZERO, ONE/), (/3,3/))
+  !REAL(KIND=DP), PARAMETER :: I3x3(3,3)=RESHAPE((/ ONE, ZERO, ZERO,&
+  !                                                 ZERO, ONE, ZERO,&
+  !                                                 ZERO, ZERO, ONE/), (/3,3/))
   REAL(KIND=DP), PARAMETER :: I6(6)=(/ONE,ONE,ONE,ZERO,ZERO,ZERO/)
   REAL(KIND=DP), PARAMETER :: MACHINE_EPSILON=EPSILON(ONE)
 
@@ -105,7 +105,7 @@ CONTAINS
     INTEGER :: NPROP, NSTATEV
     REAL(KIND=DP), INTENT(IN) :: DTIME, TIME, PROPS(NPROP), TEMPOLD, DTEMP, F(3,3)
     REAL(KIND=DP), INTENT(INOUT) :: STATEV(NSTATEV)
-    REAL(KIND=DP) :: CTE, WLF_C1, WLF_C2, WLF_TREF, AT, LOGAT, ANAVG, TIMEAVG
+    REAL(KIND=DP) :: WLF_C1, WLF_C2, WLF_TREF, AT, LOGAT, ANAVG, TIMEAVG
     REAL(KIND=DP) :: TEMPDIFF, TEMPAVG, TEMP
     LOGICAL :: TS_FLAG
     ! ----------------------------------------------------------------------- !
@@ -206,14 +206,13 @@ CONTAINS
     REAL(c_double), INTENT(OUT) :: SIG(NTENS)
     REAL(c_double), INTENT(INOUT) :: STATEV(NSTATEV), CFAC(2)
     INTEGER :: J, K, L
-    LOGICAL :: RELAX
     REAL(KIND=DP) :: PK2ODEV(NTENS), PK2O(NTENS), C(NTENS)
-    REAL(KIND=DP) :: RATIO, E, S, PERR, DTRED, PRESSURE
+    REAL(KIND=DP) :: RATIO, E, S, DTRED, PRESSURE
     REAL(KIND=DP) :: SODEV(NTENS), SDEV(NTENS), PK2DEV(NTENS), TR
-    CHARACTER*120 :: JNKSTR
+    CHARACTER(LEN=120) :: JNKSTR
     INTEGER :: INTV(2)
     REAL(KIND=DP) :: REALV(1)
-    CHARACTER*8 :: CHARV(1)
+    CHARACTER(LEN=8) :: CHARV(1)
     ! ----------------------------------------------------------------------- !
 
     CFAC = ZERO
@@ -336,12 +335,12 @@ CONTAINS
     ! ----------------------------------------------------------------------- !
     INTEGER(c_int), INTENT(IN) :: NPROP
     REAL(c_double), INTENT(INOUT) :: PROPS(NPROP)
-    CHARACTER*120 :: STR1, STR2, STR3
+    CHARACTER(LEN=120) :: STR1, STR2, STR3
     REAL(KIND=DP) :: PSUM
     INTEGER :: I, J, IFLG
     INTEGER :: INTV(1)
     REAL(KIND=DP) :: REALV(1)
-    CHARACTER*8 :: CHARV(1)
+    CHARACTER(LEN=8) :: CHARV(1)
     ! ----------------------------------------------------------------------- !
 
     ! CHECK SUM OF PRONY SERIES COEFFICIENTS
@@ -566,11 +565,11 @@ SUBROUTINE VISCOERR(I, MSG, INTV, REALV, CHARV)
   ! BELOW WITH CALL TO STDB_ABQERR WITH SAME ARGUMENTS AS THIS PROCEDURE
   IMPLICIT NONE
   INTEGER :: I
-  CHARACTER*120 :: MSG
+  CHARACTER(LEN=120) :: MSG
   INTEGER :: INTV(1), IDUM
   REAL(8) :: REALV(1), RDUM
-  CHARACTER*8 :: CHARV(1), CDUM(1)
-  CHARACTER*200 JNKSTR
+  CHARACTER(LEN=8) :: CHARV(1), CDUM(1)
+  CHARACTER(LEN=200) :: JNKSTR
   EXTERNAL LOG_MESSAGE
   EXTERNAL LOG_ERROR
   EXTERNAL LOG_WARNING

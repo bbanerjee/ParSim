@@ -215,10 +215,10 @@ MomentBC::forcePerParticle(double time) const
 // Calculate the force vector to be applied to a particular
 // material point location
 Vector
-MomentBC::getForceVector(const Point& px, 
+MomentBC::getForceVector(const Point& px,
                          double forcePerParticle,
-			 const double time,
-                         const Matrix3& defGrad) const
+                         [[maybe_unused]] const double time,
+                         [[maybe_unused]] const Matrix3& defGrad) const
 {
   Vector force(0.0,0.0,0.0);
   // TODO sphere and cylinder
@@ -254,7 +254,7 @@ MomentBC::getForceVector(const Point& px,
 Vector
 MomentBC::getForceVectorCBDI(const Point& px, const Matrix3& pSize,
 			     const Matrix3& pDeformationMeasure,
-			     double forcePerParticle,const double time,
+			     double forcePerParticle, [[maybe_unused]] const double time,
 			     Point& pExternalForceCorner1,
 			     Point& pExternalForceCorner2,
 			     Point& pExternalForceCorner3,

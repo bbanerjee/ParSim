@@ -75,7 +75,7 @@ CrackBC::CrackBC(ProblemSpecP& ps)
 }
 
 void
-CrackBC::outputProblemSpec(ProblemSpecP& ps)
+CrackBC::outputProblemSpec([[maybe_unused]] ProblemSpecP& ps)
 {
 }
 

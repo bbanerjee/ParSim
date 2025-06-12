@@ -61,13 +61,13 @@ NoneCheck::checkStability(const Matrix3&, const Matrix3&,
 }
 
 bool 
-NoneCheck::checkStability(const Matrix3& cauchyStress,
-                          const Matrix3& deformRate,
-                          const Vaango::Tensor::Matrix6Mandel& C_e,
-                          const Vaango::Tensor::Vector6Mandel& P_vec,
-                          const Vaango::Tensor::Vector6Mandel& N_vec,
-                          double H,
-                          Vector& direction)
+NoneCheck::checkStability([[maybe_unused]] const Matrix3& cauchyStress,
+                          [[maybe_unused]] const Matrix3& deformRate,
+                          [[maybe_unused]] const Vaango::Tensor::Matrix6Mandel& C_e,
+                          [[maybe_unused]] const Vaango::Tensor::Vector6Mandel& P_vec,
+                          [[maybe_unused]] const Vaango::Tensor::Vector6Mandel& N_vec,
+                          [[maybe_unused]] double H,
+                          [[maybe_unused]] Vector& direction)
 {
   return false;
 }

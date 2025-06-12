@@ -167,10 +167,10 @@ IntVar_TabularCap::allocateAndPutInternalVariable(
 template <>
 void
 IntVar_TabularCap::evolveInternalVariable<TabularCapIntVar>(
-  particleIndex pidx,
-  const ModelStateBase* state,
-  constParticleVariable<TabularCapIntVar>& var_old,
-  ParticleVariable<TabularCapIntVar>& var)
+  [[maybe_unused]] particleIndex pidx,
+  [[maybe_unused]] const ModelStateBase* state,
+  [[maybe_unused]] constParticleVariable<TabularCapIntVar>& var_old,
+  [[maybe_unused]] ParticleVariable<TabularCapIntVar>& var)
 {
 }
 
@@ -179,7 +179,7 @@ IntVar_TabularCap::evolveInternalVariable<TabularCapIntVar>(
 //--------------------------------------------------------------------------------------
 double
 IntVar_TabularCap::computeInternalVariable(
-  const std::string& label,
+  [[maybe_unused]] const std::string& label,
   const ModelStateBase* /*state_old*/,
   const ModelStateBase* state_cur) const
 {
@@ -234,7 +234,7 @@ IntVar_TabularCap::computeDrainedHydrostaticStrength(
  */
 double
 IntVar_TabularCap::computeVolStrainDerivOfInternalVariable(
-  const std::string& label,
+  [[maybe_unused]] const std::string& label,
   const ModelStateBase* state_input) const
 {
   const ModelState_TabularCap* state =
@@ -282,7 +282,7 @@ IntVar_TabularCap::allocateCMDataAddRequires(Task* task,
 
 /*!-----------------------------------------------------*/
 void
-IntVar_TabularCap::allocateCMDataAdd(DataWarehouse* old_dw,
+IntVar_TabularCap::allocateCMDataAdd([[maybe_unused]] DataWarehouse* old_dw,
                                      ParticleSubset* addset,
                                      ParticleLabelVariableMap* newState,
                                      ParticleSubset* delset,

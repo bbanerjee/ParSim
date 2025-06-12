@@ -59,20 +59,24 @@ private:
   double d_K0;
   double d_n;
 
-  // Prevent copying of this class
-  // copy constructor
-  // WaterEOS(const WaterEOS &cm);
-  WaterEOS&
-  operator=(const WaterEOS& cm);
-
 public:
   // constructors
   WaterEOS();
   WaterEOS(Uintah::ProblemSpecP& ps);
-  WaterEOS(const WaterEOS* cm);
+  WaterEOS(const WaterEOS &cm) = default;
 
   // destructor
   ~WaterEOS() override;
+
+  WaterEOS&
+  operator=(const WaterEOS& cm) = delete;
+
+  // Polymorphic cloning method (preferred over operator=(const T*))
+  [[nodiscard]] std::unique_ptr<MPMEquationOfState>
+  clone() const
+  {
+    return std::make_unique<WaterEOS>(*this);
+  }
 
   void
   outputProblemSpec(Uintah::ProblemSpecP& ps) override;

@@ -109,17 +109,25 @@ private:
     const double& phi, const double& S_w, double& KK,
     double& GG) const override; 
 
-  ElasticModuli_Arena& operator=(const ElasticModuli_Arena& smm);
 
 public:
   /*! Construct a constant elasticity model. */
   ElasticModuli_Arena(Uintah::ProblemSpecP& ps);
 
   /*! Construct a copy of constant elasticity model. */
-  ElasticModuli_Arena(const ElasticModuli_Arena* smm);
+  ElasticModuli_Arena(const ElasticModuli_Arena& smm) = default;
 
   /*! Destructor of constant elasticity model.   */
-  ~ElasticModuli_Arena() override;
+  ~ElasticModuli_Arena() override = default;
+
+  ElasticModuli_Arena& operator=(const ElasticModuli_Arena& smm) = delete;
+
+  // Polymorphic cloning method (preferred over operator=(const T*))
+  [[nodiscard]] std::unique_ptr<ElasticModuliModel>
+  clone() const
+  {
+    return std::make_unique<ElasticModuli_Arena>(*this);
+  }
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 

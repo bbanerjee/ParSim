@@ -1,10 +1,8 @@
-MODULE HYPOELASTIC_INTERFACE
-  USE ISO_C_BINDING
-CONTAINS
 !
 ! The MIT License
 !
 ! Copyright (c) 1997-2012 The University of Utah
+! Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Limited, NZ
 !
 ! Permission is hereby granted, free of charge, to any person obtaining a copy
 ! of this software and associated documentation files (the "Software"), to
@@ -24,6 +22,28 @@ CONTAINS
 ! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 ! IN THE SOFTWARE.
 !
+MODULE HypoMathModule
+  IMPLICIT NONE
+
+  ! Constants related to EXPS
+  INTEGER, PARAMETER :: REAL_DP = KIND(1.0D0)
+  REAL(KIND=REAL_DP), PARAMETER :: PONEA = 1.0D0
+  REAL(KIND=REAL_DP), PARAMETER :: EOVERFLOW = 92.1034037D0*PONEA
+  REAL(KIND=REAL_DP), PARAMETER :: EUNDERFLOW = -34.53877639491D0*PONEA
+
+CONTAINS
+
+  REAL FUNCTION EXPS(ARG)
+    IMPLICIT NONE
+    REAL(KIND=REAL_DP), INTENT(IN) :: ARG
+    EXPS = EXP(MIN(MAX(ARG, EUNDERFLOW), EOVERFLOW))
+  END FUNCTION EXPS
+
+END MODULE HypoMathModule
+
+MODULE HYPOELASTIC_INTERFACE
+  USE ISO_C_BINDING
+CONTAINS
 
 !
 ! 
@@ -79,6 +99,8 @@ CONTAINS
 !
 !***********************************************************************
 !
+    USE HypoMathModule
+!
 #ifdef SIERRA_PARALLEL_MPI
 #include <src/material/Smod_precision.blk>
 #else
@@ -100,14 +122,20 @@ CONTAINS
 !
 !...parameters
 !...parameters (numbers)
+      INTEGER(C_INT), INTENT(IN) :: NBLK
+      INTEGER(C_INT), INTENT(IN) :: NINSV
+      REAL(C_DOUBLE), INTENT(IN) :: DT
 !...passed
-      DIMENSION SVARG(NINSV,NBLK),SIGARG(6,NBLK),USM(NBLK)
-      DIMENSION PROP(*),D(6,NBLK)
+      REAL(C_DOUBLE), DIMENSION(*), INTENT(IN) :: PROP
+      REAL(C_DOUBLE), DIMENSION(6, NBLK), INTENT(INOUT) :: SIGARG
+      REAL(C_DOUBLE), DIMENSION(6, NBLK), INTENT(IN) :: D
+      REAL(C_DOUBLE), DIMENSION(NINSV, NBLK), INTENT(INOUT) :: SVARG
+      REAL(C_DOUBLE), DIMENSION(NBLK), INTENT(OUT) :: USM
 !...local
-      character*18 iam
-      parameter (iam='HOOKE_INCREMENTAL')
-      DIMENSION DE(6),DEDEV(6),DS(6)
-      DIMENSION STRESSP(6),STRESSN(6),S(6),SN(6),SP(6)
+!      character(LEN=18) iam
+!      parameter (iam='HOOKE_INCREMENTAL')
+      DIMENSION DE(6),DEDEV(6)
+      DIMENSION STRESSP(6),STRESSN(6),SN(6),SP(6)
       DIMENSION IDENT(6) 
       SAVE IDENT
       DATA IDENT/PONE,PONE,PONE,PZERO,PZERO,PZERO/
@@ -121,9 +149,10 @@ CONTAINS
 ! underflow replacement of EXP(Z) by zero when Z is an extraordinarily
 ! large negative number. For all practical purposes, EXPS should be
 ! regarded as equivalent to EXP.
-      PARAMETER (EUNDERFLOW=-34.53877639491D0*PONE)
-      PARAMETER (EOVERFLOW=92.1034037D0*PONE)
-      EXPS(ARG) = EXP(MIN(MAX(ARG,EUNDERFLOW),EOVERFLOW))
+!      PARAMETER (EUNDERFLOW=-34.53877639491D0*PONE)
+!      PARAMETER (EOVERFLOW=92.1034037D0*PONE)
+!      EXPS(ARG) = EXP(MIN(MAX(ARG,EUNDERFLOW),EOVERFLOW))
+
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       IBLK=1 
 !
@@ -280,19 +309,22 @@ CONTAINS
 #include "numbers_block.F90"
 #endif
 #include "hookepnt_block.F90"
+!...passed
+      REAL(C_DOUBLE), DIMENSION(*), INTENT(INOUT) :: UI
+      REAL(C_DOUBLE), DIMENSION(*), INTENT(INOUT) :: GC
+      REAL(C_DOUBLE), DIMENSION(*), INTENT(INOUT) :: DC
 ! ...local
-      CHARACTER*6 IAM
+      CHARACTER(LEN=8) IAM
       PARAMETER( IAM = 'HOOKECHK' )
 !CCC  character*60 jnkstr
       LOGICAL DEJAVU
       DATA DEJAVU/.FALSE./
 !
 !
-      DIMENSION UI(*), GC(*), DC(*)
 !....................................................statement functions
-      PARAMETER (EUNDERFLOW=-34.53877639491D0*PONE)
-      PARAMETER (EOVERFLOW=92.1034037D0*PONE)
-      EXPS(ARG) = EXP(MIN(MAX(ARG,EUNDERFLOW),EOVERFLOW))
+!      PARAMETER (EUNDERFLOW=-34.53877639491D0*PONE)
+!      PARAMETER (EOVERFLOW=92.1034037D0*PONE)
+!      EXPS(ARG) = EXP(MIN(MAX(ARG,EUNDERFLOW),EOVERFLOW))
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !      if(dejavu)return
 !
@@ -352,18 +384,22 @@ CONTAINS
 #include "numbers_block.F90"
 #endif
 #include "hookepnt_block.F90"
+!...passed
+      REAL(C_DOUBLE), DIMENSION(*), INTENT(INOUT) :: UI
+      REAL(C_DOUBLE), DIMENSION(*), INTENT(INOUT) :: GC
+      REAL(C_DOUBLE), DIMENSION(*), INTENT(INOUT) :: DC
 !
       INTEGER MMCN,MMCK,MNUNIT,MMCNA,MMCKA
       PARAMETER (MMCN=40,MMCK=10,MNUNIT=7)
       PARAMETER (MMCNA=NHOOKEISV*MMCN,MMCKA=NHOOKEISV*MMCK)
 !
-      CHARACTER*(MMCN) NAME(NHOOKEISV)
-      CHARACTER*(MMCK) KEY(NHOOKEISV)
-      CHARACTER*1 NAMEA(*), KEYA(*)
+      CHARACTER(LEN=MMCN) NAME(NHOOKEISV)
+      CHARACTER(LEN=MMCK) KEY(NHOOKEISV)
+      CHARACTER(LEN=1) NAMEA(*), KEYA(*)
       DIMENSION IADVCT(*),ITYPE(*)
-      DIMENSION UI(*), GC(*), DC(*), RINIT(*), RDIM(7,*)
+      DIMENSION RINIT(*), RDIM(7,*)
 !
-      CHARACTER*6 IAM
+      CHARACTER(LEN=8) IAM
       PARAMETER(IAM='HOOKERXV')
 !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       CALL LOGMES('############# Requesting Hookes Law ISVs')
@@ -896,7 +932,7 @@ CONTAINS
 #include "mpcthl.h"
 #endif
 !
-      CHARACTER*1 UC(*)
+      CHARACTER(LEN=1) UC(*)
       DIMENSION UI(*),GC(*),DC(*),VI(*),A(8)
       PARAMETER (ZERO=0.0D0,HALF=0.5D0,ONE=1.0D0,TWO=2.0D0,FIV=5.0D0,&
      & TEN=10.0D0,PD8=0.8D0,PM4=1.0D-4,PE9=1.0D9,PM6=1.0D-6)
@@ -1128,7 +1164,7 @@ CONTAINS
 #include "eoserr.h"
 #endif
 !
-      CHARACTER*10 DEN
+      CHARACTER(LEN=10) DEN
       PARAMETER (ZERO=0.D0,ONE=1.0D0,TWO=2.0D0,THR=3.0D0,FOR=4.0D0,&
      & FIV=5.0D0,SIX=6.0D0,HALF=0.5D0)
       DIMENSION UI(*),GC(*),DC(*)
@@ -1311,7 +1347,7 @@ CONTAINS
 #include "eoserr.h"
 #endif
 !
-      CHARACTER*10 DEN
+      CHARACTER(LEN=10) DEN
       PARAMETER (ZERO=0.D0,ONE=1.0D0,TWO=2.0D0,THR=3.0D0,FOR=4.0D0,&
      &           FIV=5.0D0,SIX=6.0D0,HALF=0.5D0)
       DIMENSION UI(*),GC(*),DC(*)

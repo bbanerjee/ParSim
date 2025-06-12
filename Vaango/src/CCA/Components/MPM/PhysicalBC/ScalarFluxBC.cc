@@ -42,7 +42,7 @@ using namespace Uintah;
 // Store the geometry object and the load curve
 ScalarFluxBC::ScalarFluxBC(ProblemSpecP& ps,
                            const GridP& grid,
-                           const MPMFlags* flags)
+                           [[maybe_unused]] const MPMFlags* flags)
 {
   // First read the geometry information
   // d_surface is the geometry object containing the surface to be loaded.

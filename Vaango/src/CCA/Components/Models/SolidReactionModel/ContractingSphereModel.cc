@@ -30,7 +30,7 @@
 using namespace Uintah;
 using namespace std;
 
-ContractingSphereModel::ContractingSphereModel(ProblemSpecP &params)
+ContractingSphereModel::ContractingSphereModel([[maybe_unused]] ProblemSpecP &params)
 {
 }
 

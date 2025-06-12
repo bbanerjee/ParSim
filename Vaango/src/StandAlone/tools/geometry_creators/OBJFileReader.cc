@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
     // erase white spaces from the beginning of line
     line.erase(line.begin(), std::find_if(line.begin(), line.end(),
-         std::not1(std::ptr_fun<int, int>(std::isspace))));
+            [](unsigned char c){ return !std::isspace(c); }));
 
     // Ignore empty lines
     if (line.empty()) continue;

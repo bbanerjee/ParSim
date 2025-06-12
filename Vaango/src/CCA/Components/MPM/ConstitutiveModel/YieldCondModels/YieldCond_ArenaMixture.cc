@@ -1277,7 +1277,7 @@ YieldCond_ArenaMixture::getClosestPointAlgebraicBisect(
   double rprime_trial = z_r_pt.y();
 
   // Set up lambda to calculate g(z_eff)
-  auto gfun = [=](double I1eff) {
+  auto gfun = [this, &kappa, &X_eff, &beta_KG_fac, &rprime_trial, &zeff_trial](double I1eff) {
 
     // Compute F_f
     double a3_exp_a2_I1 = d_local.a3 * std::exp(d_local.a2 * I1eff);

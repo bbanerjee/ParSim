@@ -99,8 +99,7 @@ ElasticModuliModelFactory::createCopy(const ElasticModuliModel* model)
     return (std::make_unique<ElasticModuli_Arenisca>(
       dynamic_cast<const ElasticModuli_Arenisca*>(model)));
   else if (dynamic_cast<const ElasticModuli_Arena*>(model))
-    return (std::make_unique<ElasticModuli_Arena>(
-      dynamic_cast<const ElasticModuli_Arena*>(model)));
+    return (dynamic_cast<const ElasticModuli_Arena*>(model))->clone();
   else if (dynamic_cast<const ElasticModuli_ArenaMixture*>(model))
     return (std::make_unique<ElasticModuli_ArenaMixture>(
       dynamic_cast<const ElasticModuli_ArenaMixture*>(model)));

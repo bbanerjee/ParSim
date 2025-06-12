@@ -32,7 +32,7 @@
 using namespace Uintah;
 using namespace Vaango;
 
-YieldCond_vonMises::YieldCond_vonMises(Uintah::ProblemSpecP& ps,
+YieldCond_vonMises::YieldCond_vonMises([[maybe_unused]] Uintah::ProblemSpecP& ps,
                                        IntVar_Metal* intvar,
                                        const FlowStressModel* flow)
 {
@@ -165,7 +165,7 @@ YieldCond_vonMises::computeElasPlasTangentModulus(
   const Matrix3& sigma,
   double sigY,
   double dsigYdep,
-  double porosity,
+  [[maybe_unused]] double porosity,
   double,
   TangentModulusTensor& Cep)
 {

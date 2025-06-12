@@ -424,7 +424,7 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
 }
 
 double
-YieldCond_TabularCap::computeYieldFunction(const ModelStateBase* state) const
+YieldCond_TabularCap::computeYieldFunction([[maybe_unused]] const ModelStateBase* state) const
 {
   std::ostringstream out;
   out << "**ERROR** The yield function for the tabular plasticity models"
@@ -544,7 +544,7 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
 }
 
 double
-YieldCond_TabularCap::computeEllipseHeight(const Polyline& p_q_points,
+YieldCond_TabularCap::computeEllipseHeight([[maybe_unused]] const Polyline& p_q_points,
                                            double p_cap)
 {
   // Find the location of the p_bar_start, p_bar_end on table polyline
@@ -1639,7 +1639,7 @@ YieldCond_TabularCap::convertToZRprime(const double& sqrtKG,
    has already been converted to z-rprime coordinates in the ModelState */
 std::tuple<Point, Vector>
 YieldCond_TabularCap::getClosestPointSplineNewtonZR(
-  const ModelState_TabularCap* state,
+  [[maybe_unused]] const ModelState_TabularCap* state,
   const Polyline& z_r_table, 
   const Util::PolylineKDTree& z_r_index, 
   const Point& z_r_pt)
@@ -1713,8 +1713,8 @@ YieldCond_TabularCap::getClosestPointSplineNewtonZR(
 // Requires:  Equation of state and internal variable
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::d2f_dp_depsVol(const ModelStateBase* state_input,
-                                     const MPMEquationOfState* eos,
+YieldCond_TabularCap::d2f_dp_depsVol([[maybe_unused]] const ModelStateBase* state_input,
+                                     [[maybe_unused]] const MPMEquationOfState* eos,
                                      const ShearModulusModel*)
 {
   std::ostringstream out;
@@ -1733,8 +1733,8 @@ YieldCond_TabularCap::d2f_dp_depsVol(const ModelStateBase* state_input,
 // Requires:  Equation of state
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::d2f_dp_depsDev(const ModelStateBase* state_input,
-                                     const MPMEquationOfState* eos,
+YieldCond_TabularCap::d2f_dp_depsDev([[maybe_unused]] const ModelStateBase* state_input,
+                                     [[maybe_unused]] const MPMEquationOfState* eos,
                                      const ShearModulusModel*)
 {
   std::ostringstream out;
@@ -1753,9 +1753,9 @@ YieldCond_TabularCap::d2f_dp_depsDev(const ModelStateBase* state_input,
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::d2f_dq_depsVol(const ModelStateBase* state_input,
+YieldCond_TabularCap::d2f_dq_depsVol([[maybe_unused]] const ModelStateBase* state_input,
                                      const MPMEquationOfState*,
-                                     const ShearModulusModel* shear)
+                                     [[maybe_unused]] const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dq_depsVol should not be called by "
@@ -1773,9 +1773,9 @@ YieldCond_TabularCap::d2f_dq_depsVol(const ModelStateBase* state_input,
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::d2f_dq_depsDev(const ModelStateBase* state_input,
+YieldCond_TabularCap::d2f_dq_depsDev([[maybe_unused]] const ModelStateBase* state_input,
                                      const MPMEquationOfState*,
-                                     const ShearModulusModel* shear)
+                                     [[maybe_unused]] const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** d2f_dq_depsDev should not be called by "
@@ -1792,9 +1792,9 @@ YieldCond_TabularCap::d2f_dq_depsDev(const ModelStateBase* state_input,
 // Requires:  Equation of state, shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::df_depsDev(const ModelStateBase* state_input,
-                                 const MPMEquationOfState* eos,
-                                 const ShearModulusModel* shear)
+YieldCond_TabularCap::df_depsDev([[maybe_unused]] const ModelStateBase* state_input,
+                                 [[maybe_unused]] const MPMEquationOfState* eos,
+                                 [[maybe_unused]] const ShearModulusModel* shear)
 {
   std::ostringstream out;
   out << "**ERROR** df_depsVol should not be called by "
@@ -1808,7 +1808,7 @@ YieldCond_TabularCap::df_depsDev(const ModelStateBase* state_input,
 //                           p = state->p)
 double
 YieldCond_TabularCap::evalYieldCondition(const Matrix3&,
-                                         const ModelStateBase* state_input)
+                                         [[maybe_unused]] const ModelStateBase* state_input)
 {
   std::ostringstream out;
   out << "**ERROR** evalYieldCondition with a Matrix3 argument should not be "
@@ -1825,7 +1825,7 @@ YieldCond_TabularCap::evalYieldCondition(const Matrix3&,
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */
 Uintah::Matrix3
-YieldCond_TabularCap::df_dxi(const Matrix3& stress,
+YieldCond_TabularCap::df_dxi([[maybe_unused]] const Matrix3& stress,
                              const ModelStateBase*)
 
 {
@@ -1839,7 +1839,7 @@ YieldCond_TabularCap::df_dxi(const Matrix3& stress,
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 std::pair<Uintah::Matrix3, Uintah::Matrix3>
-YieldCond_TabularCap::df_dsigmaDev_dbeta(const Matrix3& stress,
+YieldCond_TabularCap::df_dsigmaDev_dbeta([[maybe_unused]] const Matrix3& stress,
                                          const ModelStateBase*)
 {
   std::ostringstream out;
@@ -1854,13 +1854,13 @@ YieldCond_TabularCap::df_dsigmaDev_dbeta(const Matrix3& stress,
 // Tangent moduli
 void
 YieldCond_TabularCap::computeElasPlasTangentModulus(
-  const TangentModulusTensor& Ce,
-  const Matrix3& sigma,
-  double sigY,
-  double dsigYdep,
-  double porosity,
+  [[maybe_unused]] const TangentModulusTensor& Ce,
+  [[maybe_unused]] const Matrix3& sigma,
+  [[maybe_unused]] double sigY,
+  [[maybe_unused]] double dsigYdep,
+  [[maybe_unused]] double porosity,
   double,
-  TangentModulusTensor& Cep)
+  [[maybe_unused]] TangentModulusTensor& Cep)
 {
   std::ostringstream out;
   out << "**ERROR** computeElasPlasTangentModulus with a Matrix3 argument "
@@ -1871,11 +1871,11 @@ YieldCond_TabularCap::computeElasPlasTangentModulus(
 }
 
 void
-YieldCond_TabularCap::computeTangentModulus(const TangentModulusTensor& Ce,
-                                            const Matrix3& f_sigma,
-                                            double f_q1,
-                                            double h_q1,
-                                            TangentModulusTensor& Cep)
+YieldCond_TabularCap::computeTangentModulus([[maybe_unused]] const TangentModulusTensor& Ce,
+                                            [[maybe_unused]] const Matrix3& f_sigma,
+                                            [[maybe_unused]] double f_q1,
+                                            [[maybe_unused]] double h_q1,
+                                            [[maybe_unused]] TangentModulusTensor& Cep)
 {
   std::ostringstream out;
   out << "**ERROR** coputeTangentModulus with a Matrix3 argument should not be "

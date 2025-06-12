@@ -39,7 +39,7 @@ FixedEquation::~FixedEquation()
 
 }
 
-double FixedEquation::computeConductivity(double concentration)
+double FixedEquation::computeConductivity([[maybe_unused]] double concentration)
 {
   return d_conductivity;
 }

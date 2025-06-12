@@ -30,7 +30,7 @@
 using namespace Uintah;
 using namespace std;
 
-ContractingCylinderModel::ContractingCylinderModel(ProblemSpecP &params)
+ContractingCylinderModel::ContractingCylinderModel([[maybe_unused]] ProblemSpecP &params)
 {
 }
 

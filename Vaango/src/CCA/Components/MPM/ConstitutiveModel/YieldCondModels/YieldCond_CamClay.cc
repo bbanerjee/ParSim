@@ -349,13 +349,13 @@ YieldCond_CamClay::df_dsigmaDev_dbeta(const Matrix3& stress,
 //--------------------------------------------------------------
 // Tangent moduli
 void
-YieldCond_CamClay::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
-                                                 const Matrix3& sigma,
-                                                 double sigY,
-                                                 double dsigYdep,
-                                                 double porosity,
+YieldCond_CamClay::computeElasPlasTangentModulus([[maybe_unused]] const TangentModulusTensor& Ce,
+                                                 [[maybe_unused]] const Matrix3& sigma,
+                                                 [[maybe_unused]] double sigY,
+                                                 [[maybe_unused]] double dsigYdep,
+                                                 [[maybe_unused]] double porosity,
                                                  double,
-                                                 TangentModulusTensor& Cep)
+                                                 [[maybe_unused]] TangentModulusTensor& Cep)
 {
   std::cout
     << "YieldCond_CamClay: computeElasPlasTangentModulus not implemented yet "
@@ -364,11 +364,11 @@ YieldCond_CamClay::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
 }
 
 void
-YieldCond_CamClay::computeTangentModulus(const TangentModulusTensor& Ce,
-                                         const Matrix3& f_sigma,
-                                         double f_q1,
-                                         double h_q1,
-                                         TangentModulusTensor& Cep)
+YieldCond_CamClay::computeTangentModulus([[maybe_unused]] const TangentModulusTensor& Ce,
+                                         [[maybe_unused]] const Matrix3& f_sigma,
+                                         [[maybe_unused]] double f_q1,
+                                         [[maybe_unused]] double h_q1,
+                                         [[maybe_unused]] TangentModulusTensor& Cep)
 {
   std::cout << "YieldCond_CamClay: computeTangentModulus not implemented yet "
             << "\n";

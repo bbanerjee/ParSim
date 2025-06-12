@@ -1159,7 +1159,7 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
   double rprime_trial = z_r_pt.y();
 
   // Set up lambda to calculate g(z_eff)
-  auto gfun = [=](double I1eff) {
+  auto gfun = [this, &kappa, &X_eff, &beta_KG_fac, &rprime_trial, &zeff_trial](double I1eff) {
 
     // Compute F_f
     double a3_exp_a2_I1 = d_local.a3 * std::exp(d_local.a2 * I1eff);
@@ -1559,7 +1559,7 @@ YieldCond_Arena::df_depsDev([[maybe_unused]] const ModelStateBase* state_input,
 // Evaluate yield condition 
 double
 YieldCond_Arena::evalYieldCondition([[maybe_unused]] const Uintah::Matrix3& stress,
-                                    const ModelStateBase* state_input)
+                                    [[maybe_unused]] const ModelStateBase* state_input)
 {
   std::ostringstream out;
   out << "**ERROR** evalYieldCondition with a Matrix3 argument should not be "

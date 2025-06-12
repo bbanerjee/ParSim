@@ -37,7 +37,7 @@ ForceBC::ForceBC(ProblemSpecP& ps)
   ps->require("force_density",d_forceDensity);
 }
 
-void ForceBC::outputProblemSpec(ProblemSpecP& ps)
+void ForceBC::outputProblemSpec([[maybe_unused]] ProblemSpecP& ps)
 {
 
 }

@@ -264,7 +264,7 @@ ElasticModuli_Tabular::getElasticModuliAndDerivatives(const ModelStateBase* stat
 
 /*! Compute derivatives of moduli with respect to internal variables */
 std::vector<ElasticModuli> 
-ElasticModuli_Tabular::computeDModuliDIntVar(const ModelStateBase* state) const
+ElasticModuli_Tabular::computeDModuliDIntVar([[maybe_unused]] const ModelStateBase* state) const
 {
   std::vector<ElasticModuli> derivs;
   return derivs;

@@ -104,8 +104,8 @@ AcousticTensorCheck::checkStability(const Matrix3&,
   return isLocalized(tangentModulus, direction);
 }
 bool
-AcousticTensorCheck::checkStability(const Matrix3& cauchyStress,
-                                    const Matrix3& deformRate,
+AcousticTensorCheck::checkStability([[maybe_unused]] const Matrix3& cauchyStress,
+                                    [[maybe_unused]] const Matrix3& deformRate,
                                     const Vaango::Tensor::Matrix6Mandel& C_e,
                                     const Vaango::Tensor::Vector6Mandel& P_vec,
                                     const Vaango::Tensor::Vector6Mandel& N_vec,

@@ -28,7 +28,7 @@
 
 using namespace Uintah;
 
-ConductivityEquation::ConductivityEquation(ProblemSpecP& ps)
+ConductivityEquation::ConductivityEquation([[maybe_unused]] ProblemSpecP& ps)
 {
 
 }
@@ -43,7 +43,7 @@ double ConductivityEquation::computeConductivity(double concentration)
   return concentration;
 }
 
-void ConductivityEquation::outputProblemSpec(ProblemSpecP& ps)
+void ConductivityEquation::outputProblemSpec([[maybe_unused]] ProblemSpecP& ps)
 {
 
 }

@@ -25,7 +25,8 @@
 
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModel/fortran
 
-set(FORTRAN_CM_FLAGS "${CMAKE_Fortran_FLAGS} -DI1SOFTLIM -DNEWXSV -DDILAT_LIM")
+set(FORTRAN_CM_FLAGS "${CMAKE_Fortran_FLAGS} -DI1SOFTLIM -DNEWXSV -DDILAT_LIM -Wno-unused-dummy-argument -Wno-unused-parameter")
+message(STATUS "Fortran flags: ${FORTRAN_CM_FLAGS}")
 
 set(FORTRAN_CM_SRC 
   ${CMAKE_CURRENT_SOURCE_DIR}/Hooke.F90  
@@ -39,7 +40,7 @@ set(FORTRAN_CM_SRC
 set_source_files_properties(
   ${FORTRAN_CM_SRC}
   PROPERTIES
-    COMPILE_FLAGS ${FORTRAN_CM_FLAGS} 
+    COMPILE_OPTIONS "${FORTRAN_CM_FLAGS}"
 )
 
 SET(MPM_ConstitutiveModel_SRCS

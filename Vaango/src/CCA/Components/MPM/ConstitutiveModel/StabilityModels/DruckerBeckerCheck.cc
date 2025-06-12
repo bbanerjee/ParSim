@@ -130,7 +130,7 @@ DruckerBeckerCheck::checkStability(const Matrix3& cauchyStress,
                                    const Vaango::Tensor::Vector6Mandel& P_vec,
                                    const Vaango::Tensor::Vector6Mandel& N_vec,
                                    double H,
-                                   Vector& direction)
+                                   [[maybe_unused]] Vector& direction)
 {
   // Compute elastic-plastic tangent modulus
   auto CN_vec = C_e * N_vec;

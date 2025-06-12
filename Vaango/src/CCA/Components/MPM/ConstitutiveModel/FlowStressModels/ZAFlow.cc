@@ -161,7 +161,7 @@ ZAFlow::computeEpdot(const ModelStateBase* state, const double&,
 }
 
 void
-ZAFlow::computeTangentModulus(const Matrix3& stress, const ModelStateBase*,
+ZAFlow::computeTangentModulus([[maybe_unused]] const Matrix3& stress, const ModelStateBase*,
                               const double&, const MPMMaterial*,
                               const particleIndex, TangentModulusTensor&,
                               TangentModulusTensor&)

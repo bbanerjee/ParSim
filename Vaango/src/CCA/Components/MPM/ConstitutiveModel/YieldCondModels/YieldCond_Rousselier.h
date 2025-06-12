@@ -208,8 +208,8 @@ public:
                                 Uintah::TangentModulusTensor& Cep) override;
 
   double
-  getInternalPoint(const ModelStateBase* state_old,
-                   const ModelStateBase* state_new) override
+  getInternalPoint([[maybe_unused]] const ModelStateBase* state_old,
+                   [[maybe_unused]] const ModelStateBase* state_new) override
   {
     return 0.0;
   }
