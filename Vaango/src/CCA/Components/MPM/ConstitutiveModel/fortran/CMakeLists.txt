@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Limited, NZ
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -25,27 +26,45 @@
 
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModel/fortran
 
-set(FORTRAN_CM_FLAGS "${CMAKE_Fortran_FLAGS} -DI1SOFTLIM -DNEWXSV -DDILAT_LIM -Wno-unused-dummy-argument -Wno-unused-parameter")
-message(STATUS "Fortran flags: ${FORTRAN_CM_FLAGS}")
+set(FORTRAN_CM_FLAGS "${CMAKE_Fortran_FLAGS}") # Only general compiler flags here
+message(STATUS "Fortran general flags: ${FORTRAN_CM_FLAGS}")
+
+set(FORTRAN_CM_DEFINITIONS I1SOFTLIM NEWXSV DILAT_LIM)
+message(STATUS "Fortran definitions: ${FORTRAN_CM_DEFINITIONS}")
 
 set(FORTRAN_CM_SRC 
   ${CMAKE_CURRENT_SOURCE_DIR}/Hooke.F90  
   ${CMAKE_CURRENT_SOURCE_DIR}/Kayenta_calcs.F  
   ${CMAKE_CURRENT_SOURCE_DIR}/MIGUtilsF.F  
-  ${CMAKE_CURRENT_SOURCE_DIR}/MIGUtils.cc   
   ${CMAKE_CURRENT_SOURCE_DIR}/diamm.F
   ${CMAKE_CURRENT_SOURCE_DIR}/visco.F90
+)
+
+set(FORTRAN_CM_CPP_SRC 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MIGUtils.cc   
 )
 
 set_source_files_properties(
   ${FORTRAN_CM_SRC}
   PROPERTIES
-    COMPILE_OPTIONS "${FORTRAN_CM_FLAGS}"
+    COMPILE_OPTIONS "${FORTRAN_CM_FLAGS};-Wno-unused-dummy-argument;-Wno-unused-parameter"
+)
+
+add_library(MPM_ConstitutiveModel_FORTRAN ${FORTRAN_CM_SRC})
+
+target_compile_definitions(MPM_ConstitutiveModel_FORTRAN PRIVATE
+    ${FORTRAN_CM_DEFINITIONS}
+)
+
+target_link_libraries(MPM_ConstitutiveModel_FORTRAN PRIVATE
+  ${F_LIBRARY}
+  Vaango::Options
+  Vaango::Warnings
 )
 
 SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
-  ${FORTRAN_CM_SRC}
+  ${FORTRAN_CM_CPP_SRC}
   PARENT_SCOPE
 )
 

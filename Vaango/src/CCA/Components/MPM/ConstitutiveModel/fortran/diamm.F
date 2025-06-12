@@ -392,6 +392,7 @@ C     Hardening modulus
          HT= DMMHTFNC(QSTAU,RM,R0,CV)
          DFDY= TMLT
          DFDT= DMMDYLDFNCDT(TOOR3*DMMTRACE(QSTAUN),EQPS,TEMP)
+         ALPH = 0.0D0
          H= -ALPH*(DFDY*HY+DFDT*HT)
 ctim     until hardening is really properly implemented, set h to zero
          h=pzero
@@ -677,9 +678,11 @@ C
       PARAMETER (PZERO=0.D0,PONE=1.D0,PTWO=2.D0,PTHREE=3.D0)
       PARAMETER (HUGE=1.D80)
       PARAMETER (  ROOT3=0.173205080756887729352744634150587236694281D1)
+      INTEGER, PARAMETER :: DP = SELECTED_REAL_KIND(P=15, R=307)
+      REAL(KIND=DP), PARAMETER :: EPS_TOL = 1.0E-16_DP
 C
 C  ...local
-      CHARACTER*6 IAM
+      CHARACTER(LEN=6) IAM
       PARAMETER( IAM = 'DMMCHK' )
       DIMENSION A(8)
       LOGICAL DEJAVU
@@ -713,17 +716,20 @@ C
       IF(UI(IPA4PF).LT.PZERO)CALL FATERR(IAM,'A4PF must be nonnegative')
 
 c     Set defaults
-      IF(UI(IPA4PF).EQ.PZERO)UI(IPA4PF)=UI(IPA4)  !default A4PF = A4
+C     IF(UI(IPA4PF).EQ.PZERO)UI(IPA4PF)=UI(IPA4)  !default A4PF = A4
+      IF(ABS(UI(IPA4PF)).LT.EPS_TOL)UI(IPA4PF)=UI(IPA4)  !default A4PF = A4
 
 c     Convert derivative of G w.r.t. pressure to derivative w.r.t.
 c     elastic volume change
       IF(.NOT.DEJAVU)THEN
-         IF(UI(IPIDK).NE.1)UI(IPB1) = -UI(IPB1)*UI(IPB0)
+C        IF(UI(IPIDK).NE.1)UI(IPB1) = -UI(IPB1)*UI(IPB0)
+         IF(ABS(UI(IPIDK) - 1).GT.EPS_TOL)UI(IPB1) = -UI(IPB1)*UI(IPB0)
          IF(UI(IPG1).LE.PZERO)THEN
             UI(IPG1)=PZERO
             UI(IPAN)=PZERO
          ELSE
-            IF(UI(IPIDG).NE.1)UI(IPG1) = -UI(IPG1)*UI(IPB0)
+C           IF(UI(IPIDG).NE.1)UI(IPG1) = -UI(IPG1)*UI(IPB0)
+            IF(ABS(UI(IPIDG)-1).GT.EPS_TOL)UI(IPG1) = -UI(IPG1)*UI(IPB0)
          ENDIF
       ENDIF
 
@@ -763,7 +769,8 @@ c     UI(IPA1)=PTWO/ROOT3*UI(IPSC)*UI(IPA1)/(UI(IPSC)+UI(IPA1))
       ENDIF
 
       IF(.NOT.DEJAVU)THEN
-         IF(UI(IPA4PF).EQ.UI(IPA4))THEN
+C        IF(UI(IPA4PF).EQ.UI(IPA4))THEN
+         IF(ABS(UI(IPA4PF)-UI(IPA4)).LT.EPS_TOL)THEN
             CALL LOGMES(IAM//': FYI, This material is associative')
          ELSE
             CALL LOGMES(IAM//': FYI, This material is nonassociative')
@@ -1162,20 +1169,23 @@ C
 C
       CHARACTER*(MMCN) NAME(NDMMISV)
       CHARACTER*(MMCK) KEY(NDMMISV)
-      CHARACTER*1 NAMEA(*), KEYA(*)
+      CHARACTER(LEN=1) NAMEA(*), KEYA(*)
       DIMENSION IADVCT(*),ITYPE(*)
       DIMENSION UI(*), GC(*), DC(*), RINIT(*), RDIM(7,*)
       LOGICAL SERIAL
       DATA SERIAL/.FALSE./
 C
-      CHARACTER*6 IAM
+      CHARACTER(LEN=6) IAM
       PARAMETER(IAM='DMMRXV')
+      INTEGER, PARAMETER :: DP = SELECTED_REAL_KIND(P=15, R=307)
+      REAL(KIND=DP), PARAMETER :: EPS_TOL = 1.0E-16_DP
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC DMMRXV
 *     These next lines are only to avoid compiler warnings
       dum=dc(1)
       dum=gc(1)
-      SERIAL= UI(IPTEST).NE.0
+C     SERIAL= UI(IPTEST).NE.0
+      SERIAL= ABS(UI(IPTEST)).GT.EPS_TOL
       VINIT=0.D0
 *
       CALL LOGMES('############# Requesting DMM variables')
@@ -1492,6 +1502,8 @@ C
         IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 C............................................................parameters
       PARAMETER (PZERO=0.D0,PONE=1.D0,PTHREE=3.D0,PTHIRD=PONE/PTHREE)
+      INTEGER, PARAMETER :: DP = SELECTED_REAL_KIND(P=15, R=307)
+      REAL(KIND=DP), PARAMETER :: EPS_TOL = 1.0E-16_DP
 C.................................................................passed
       DIMENSION A(6),B(6)
 C..................................................................local
@@ -1506,7 +1518,8 @@ Ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       ENDDO
 C     Check that deviatoric
       S(1)=(B(1)+B(2)+B(3))*PTHIRD
-      IF(S(1).NE.PZERO)THEN
+c     IF(S(1).NE.PZERO)THEN
+      IF(ABS(S(1)).GT.EPS_TOL)THEN
          B(1)=B(1)-S(1)
          B(2)=B(2)-S(1)
          B(3)=-(B(1)+B(2))
@@ -1674,6 +1687,9 @@ C
       PARAMETER (KEXZ   =KEZX)
       PARAMETER (KEJ2   =KE + 7)
 
+      INTEGER, PARAMETER :: DP = SELECTED_REAL_KIND(P=15, R=307)
+      REAL(KIND=DP), PARAMETER :: EPS_TOL = 1.0E-16_DP
+
 C.................................................................common
 C***********************************************************************
 C     diamm material constants
@@ -1705,7 +1721,8 @@ C.................................................................passed
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC DMMPAR_PUT
 C     Logicals
       ANISO=(NINT(UI(IPAN)).NE.0)
-      RATEDEP=(UI(IPT1).NE.PZERO)
+C     RATEDEP=(UI(IPT1).NE.PZERO)
+      RATEDEP=(ABS(UI(IPT1)).GT.EPS_TOL)
       WANTSELASTIC=(UI(IPA1).GT.1D90)
 C     Properties
       B0= UI(IPB0)
@@ -2012,6 +2029,7 @@ C     Kerley EOS to compute sound speed
          ALPH(1) = 0
          PRES(1) = P
          TTEMP(1) = T
+         CS = 0.0D0
          CCS(1) = CS
          CALL KEREOSMGV(1,1,UIMG,UI,UI(IPDC1),
      $                  RHO,ENRG,ALPH,0, 
@@ -2279,9 +2297,11 @@ C     relationship.
       !RNUM = abs(CHI*KMMDBD(SIG,D(1,NBLK),6))
       !DNOM = KMMDBD(PPPD,D(1,NBLK),6)*KMMDBD(QQQD,D(1,NBLK),6)
       !DUM=RNUM/DNOM
-      IF(T2.EQ.PZERO)THEN
+C     IF(T2.EQ.PZERO)THEN
+      IF(ABS(T2).LT.EPS_TOL)THEN
          TCHAR = T1
-      ELSEIF(T3.EQ.PZERO.OR.EQDOT.LT.T3)THEN
+C     ELSEIF(T3.EQ.PZERO.OR.EQDOT.LT.T3)THEN
+      ELSEIF(ABS(T3).LT.EPS_TOL.OR.EQDOT.LT.T3)THEN
          call bombed('Tim: dum is being used before initialized')
          TCHAR = DUM*(T1+T2*LOG(EQDOT)-PONE)
       ELSE
@@ -2530,8 +2550,11 @@ C     REFZ: a characteristic scale for the Lode z coordinate
       COMMON /DMMPROPR/B0,B1,B2,G0,G1,G2,G3,TWOG1,A1,A2,A4G,A3,A4,PR,
      $T1,T2,T3,T4,R0,T0,TM,C0,S1,GP,CV,XP,A5,A6
       PARAMETER(PZERO=0.D0)
+      INTEGER, PARAMETER :: DP = SELECTED_REAL_KIND(P=15, R=307)
+      REAL(KIND=DP), PARAMETER :: EPS_TOL = 1.0E-16_DP
       TARG= MAX(D3-T0,PZERO)
-      IF(TARG.EQ.PZERO)THEN
+c     IF(TARG.EQ.PZERO)THEN
+      IF(ABS(TARG).LT.EPS_TOL)THEN
          DMMDYLDFNCDT= PZERO
       ELSE
          DMMDYLDFNCDT= (A1-A2*D1+A3*D2**A4)*XP/TARG*(TARG/(TM-T0))**XP
@@ -2843,6 +2866,9 @@ C
       DIMENSION X(*),Y(*),AP(*)
       DIMENSION A(20,21)
       PARAMETER (ZERO=0.0D0,ONE=1.0D0)
+
+      INTEGER, PARAMETER :: DP = SELECTED_REAL_KIND(P=15, R=307)
+      REAL(KIND=DP), PARAMETER :: EPS_TOL = 1.0E-16_DP
 *
 *  Compute arrays.
 *
@@ -2872,7 +2898,8 @@ C
           ENDIF
           IF(J.NE.I) THEN
             IF(J.LT.NP+1) A(J,I)=A(I,J)
-            IF(A(I,I).EQ.ZERO) RETURN
+C            IF(A(I,I).EQ.ZERO) RETURN
+            IF(ABS(A(I,I)).LT.EPS_TOL) RETURN
             A(I,J) = A(I,J)/A(I,I)
           ENDIF
  6      CONTINUE
@@ -2980,7 +3007,7 @@ C loss of technical support.
 C
         IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 C
-      CHARACTER*10 DEN
+      CHARACTER(LEN=10) DEN
       PARAMETER (ZERO=0.D0,ONE=1.0D0,TWO=2.0D0,THR=3.0D0,FOR=4.0D0,
      &           FIV=5.0D0,SIX=6.0D0,HALF=0.5D0)
       DIMENSION UI(*),GC(*),DC(*)
@@ -3133,6 +3160,8 @@ C
         IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 *-
       PARAMETER (ZERO=0.0D0,ONE=1.0D0,TWO=2.0D0,FOR=4.0D0,KP=100)
+      INTEGER, PARAMETER :: DP = SELECTED_REAL_KIND(P=15, R=307)
+      REAL(KIND=DP), PARAMETER :: EPS_TOL = 1.0E-16_DP
       DIMENSION X(0:KP),Y1(0:KP),Y2(0:KP),A1(5),A2(3),CON(7)
       CON(1) = CS
       CON(2) = S1
@@ -3164,7 +3193,8 @@ C
         Y1(K) = Y1(K)*EXP(G0*X(K))/(X(K)*US)**2
         Y2(K) = Y1(K)
  2    CONTINUE
-      IF (B.EQ.ZERO) THEN
+C     IF (B.EQ.ZERO) THEN
+      IF (ABS(B).LT.EPS_TOL) THEN
         PF = ZERO
         XF = ONE
         CF = ZERO

@@ -77,6 +77,7 @@ SET(LIBS
   MPM_Core
   MPM_ParticleCreator
   MPM_GradientComputer
+  MPM_ConstitutiveModel_FORTRAN
   ${VT_LIBRARY}
   ${M_LIBRARY}
   ${HDF5_LIBRARY}
