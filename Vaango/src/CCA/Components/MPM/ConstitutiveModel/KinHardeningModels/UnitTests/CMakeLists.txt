@@ -51,7 +51,7 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_Schedulers           
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
-        ${HDF5_LIBRARY}
+        ${HDF5_TARGET}
 )
 
 #------------------------

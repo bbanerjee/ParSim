@@ -80,13 +80,14 @@ SET(LIBS
   MPM_ConstitutiveModel_FORTRAN
   ${VT_LIBRARY}
   ${M_LIBRARY}
-  ${HDF5_LIBRARY}
+  ${HDF5_TARGET}
 )
 
 #message(STATUS "Sources: ${MPM_ConstitutiveModel_SRCS}")
 
 add_library(MPM_ConstitutiveModel ${MPM_ConstitutiveModel_SRCS})
 
+message(STATUS "HDF5: ${HDF5_TARGET}")
 target_link_libraries(MPM_ConstitutiveModel PRIVATE
   ${LIBS}
   LibXml2::LibXml2

@@ -69,13 +69,13 @@ DruckerCheck::checkStability(const Matrix3&, const Matrix3& deformRate,
 }
 
 bool 
-DruckerCheck::checkStability(const Matrix3& cauchyStress,
+DruckerCheck::checkStability([[maybe_unused]] const Matrix3& cauchyStress,
                              const Matrix3& deformRate,
                              const Vaango::Tensor::Matrix6Mandel& C_e,
                              const Vaango::Tensor::Vector6Mandel& P_vec,
                              const Vaango::Tensor::Vector6Mandel& N_vec,
                              double H,
-                             Vector& direction)
+                             [[maybe_unused]] Vector& direction)
 {
   // Compute elastic-plastic tangent modulus
   auto CN_vec = C_e * N_vec;

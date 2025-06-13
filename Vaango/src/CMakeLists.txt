@@ -85,6 +85,35 @@ if( NOT CMAKE_BUILD_TYPE )
     FORCE )
 endif( NOT CMAKE_BUILD_TYPE )
 
+#--------------------------------------------------
+# Set the local module path and load macros
+#--------------------------------------------------
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules" ${CMAKE_MODULE_PATH})
+message(STATUS "CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
+
+include(${CMAKE_SOURCE_DIR}/cmake/Macros/fortranDependency.cmake)
+
+#----------------------------------------------------------------------------------
+# Configure options
+#----------------------------------------------------------------------------------
+option(MPM             "Build MPM and MPMICE" ON)
+option(ICE             "Build ICE and MPMICE" ON)
+option(FORTRAN         "Build with fortran" ON)
+option(PETSC           "Build with PETSc" OFF)
+option(HYPRE           "Build with HYPRE" OFF)
+option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+option(VISIT             "Build with Visit" OFF) 
+
+# Explicitly setting VISIT ON if VISIT_DIR is defined,
+# but consider making VISIT an option if it's user-configurable.
+if (DEFINED VISIT_DIR AND NOT VISIT)
+    set(VISIT ON CACHE BOOL "Build with Visit" FORCE)
+endif ()
+
+set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE PATH "Single output directory for building all libraries.")
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE PATH "Single output directory for building all executables.") # Use bin for executables
+mark_as_advanced(CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+
 #----------------------------------------------------------------------------
 # C/C++ compiler configuration
 #----------------------------------------------------------------------------
@@ -106,11 +135,6 @@ if(USE_CLANG)
     set(CMAKE_CXX_COMPILER ${CLANG_CXX_COMPILER})
     set(CMAKE_Fortran_COMPILER ${GFORTRAN_COMPILER})
 endif()
-
-#----------------------------------------------------------------------------
-# Load macros and update the module path
-#----------------------------------------------------------------------------
-include(${Vaango_SOURCE_DIR}/cmake/Macros/fortranDependency.cmake)
 
 #----------------------------------------------------------------------------
 # Compile options
@@ -392,37 +416,18 @@ target_include_directories(vaango_options INTERFACE
     ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-#----------------------------------------------------------------------------------
-# Configure options
-#----------------------------------------------------------------------------------
-option(MPM               "Build MPM and MPMICE" ON)
-option(ICE               "Build ICE and MPMICE" ON)
-option(FORTRAN           "Build with fortran" ON)
-option(PETSC             "Build with PETSc" OFF)
-option(HYPRE             "Build with HYPRE" OFF)
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-mark_as_advanced(BUILD_SHARED_LIBS)
-if (DEFINED VISIT_DIR)
-  set(VISIT ON)
-endif ()
+# Call the function to perform all the feature checks.
+# This populates CMake cache variables (e.g., HAVE_SEMAPHORE_H)
+# and sets global compile definitions (e.g., HAVE_C11_HASHMAP).
+include(${CMAKE_SOURCE_DIR}/cmake/CheckCppFeatures.cmake)
+vaango_check_features()
 
-#message(STATUS "After Option: Compiling FORTRAN code? ${FORTRAN}")
-
-#----------------------------------------------------------------------------
-# Cache the source and  library paths
-#----------------------------------------------------------------------------
-set(BUILD_FROM_TOP_LEVEL 0)
-set(PACKAGE_SRC_PATH ${Vaango_SOURCE_DIR} CACHE INTERNAL "Path to Vaango source tree.")
-set(PACKAGE_LIB_PATH ${Vaango_BINARY_DIR}/lib CACHE INTERNAL "Path to Vaango Libraries.")
-set(scirun_src_dir ${Vaango_SOURCE_DIR})
-set(scirun_obj_dir ${Vaango_BINARY_DIR})
-
-#----------------------------------------------------------------------------
-# Output directories.
-#----------------------------------------------------------------------------
-set (LIBRARY_OUTPUT_PATH ${Vaango_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-set (EXECUTABLE_OUTPUT_PATH ${Vaango_BINARY_DIR} CACHE INTERNAL "Single output directory for building all executables.")
-mark_as_advanced(LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
+# Optional: You can access the results of the checks directly here.
+# These messages provide immediate feedback during the CMake configure step.
+message(STATUS "Selected RefCounted implementation: ${VAANGO_REFCOUNT_IMPL}")
+message(STATUS "Selected AtomicCounter implementation: ${VAANGO_ATOMIC_IMPL}")
+message(STATUS "Selected Hashmap Macro: ${VAANGO_HASHMAP_IMPL_MACRO}")
+message(STATUS "Time implementation: ${VAANGO_TIME_IMPL}")
 
 #----------------------------------------------------------------------------
 # Optional variable intialization  
@@ -456,11 +461,6 @@ else()
   set(BUILD_ICE "no")
   set(USE_ICE   "no")
 endif()
-
-#--------------------------------------------------
-# Set the local module path
-#--------------------------------------------------
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${CMAKE_MODULE_PATH})
 
 #----------------------------------------------------------------------------------
 # Find the Perl package to use
@@ -519,351 +519,203 @@ set(TEMPLATE_TAG "")
 set(TEMPLATE_BOX "<>")
 
 #-----------------------------------------------------------------------------
-# Threads library  (for populating sci_defs/threads_def.h)
+# Threads library (for populating sci_defs/threads_def.h)
 #-----------------------------------------------------------------------------
-set(CMAKE_THREAD_PREFER_PTHREAD true)
 find_package(Threads REQUIRED)
-if (${Threads_FOUND})
-  set(DEF_THREAD "#define SCI_PTHREAD 1")
-  set(THREAD_LIB_FLAG "${CMAKE_THREAD_LIBS_INIT}")
-  set(THREAD_LIBRARY "${CMAKE_THREAD_LIBS_INIT}")
-  if (CMAKE_USE_PTHREADS_INIT)
-    set(THREADS_TYPE  "pthreads")
-  elseif (CMAKE_USE_WIN32_THREADS_INIT)
-    set(THREADS_TYPE  "win32")
-  else()
-    set(THREADS_TYPE  "unix")
-  endif()
-  message(STATUS "Threads library ${THREADS_TYPE} found with flag ${CMAKE_THREAD_LIBS_INIT}")
+
+if(TARGET Threads::Threads)
+    set(DEF_THREAD "#define SCI_PTHREAD 1")
+    
+    # Modern way to get thread library properties
+    get_target_property(THREAD_LIBRARY Threads::Threads INTERFACE_LINK_LIBRARIES)
+    if(NOT THREAD_LIBRARY)
+        set(THREAD_LIBRARY "")
+    endif()
+    set(THREAD_LIB_FLAG "${THREAD_LIBRARY}")
+    
+    # Determine thread type based on platform
+    if(CMAKE_USE_PTHREADS_INIT OR UNIX)
+        set(THREADS_TYPE "pthreads")
+    elseif(WIN32)
+        set(THREADS_TYPE "win32")
+    else()
+        set(THREADS_TYPE "unix")
+    endif()
+    
+    message(STATUS "Threads library ${THREADS_TYPE} found")
 else()
-  set(DEF_THREAD "#define SCI_NOTHREAD 1")
-  set(THREAD_LIB_FLAG "")
-  set(THREAD_LIBRARY "")
-  message(STATUS "No threads library found.  Software may work incorrectly.")
+    set(DEF_THREAD "#define SCI_NOTHREAD 1")
+    set(THREAD_LIB_FLAG "")
+    set(THREAD_LIBRARY "")
+    message(WARNING "No threads library found. Software may work incorrectly.")
 endif()
+
 set(THREAD_IMPL "Thread_${THREADS_TYPE}.cc")
-
-#-----------------------------------------------------------------------------
-# Check availability of semaphore.h
-#-----------------------------------------------------------------------------
-check_include_file(semaphore.h HAVE_SEMAPHORE_H)
-
-#-----------------------------------------------------------------------------
-# Check atomic builtins for threads support in gcc
-#-----------------------------------------------------------------------------
-include(CheckCXXSourceCompiles)
-
-CHECK_CXX_SOURCE_COMPILES("
-#ifdef _MSC_VER
-#include <windows.h>
-#endif
-int main() {
-#ifdef _MSC_VER
-        volatile LONG val = 1;
-        MemoryBarrier();
-        InterlockedCompareExchange(&val, 0, 1);
-        InterlockedIncrement(&val);
-        InterlockedDecrement(&val);
-#else
-        volatile unsigned long val = 1;
-        __sync_synchronize();
-        __sync_val_compare_and_swap(&val, 1, 0);
-        __sync_add_and_fetch(&val, 1);
-        __sync_sub_and_fetch(&val, 1);
-#endif
-        return 0;
-      }
-" GCC_HAS_ATOMICS)
-
-if( NOT GCC_HAS_ATOMICS )
-  message(STATUS "Warning: GCC will be built thread-unsafe because atomic builtins are missing")
-  set(REFCOUNT_IMPL "RefCounted_gcc.cc")
-  set(ATOMIC_IMPL "AtomicCounter_gcc.cc")
-else()
-  set(REFCOUNT_IMPL "RefCounted.cc")
-  set(ATOMIC_IMPL "AtomicCounter_default.cc")
-endif()
-
-# time implementation 
-if (WIN32)
-  set(TIME_IMPL "Time_win32.cc")
-else()
-  set(TIME_IMPL "Time_unix.cc")
-endif()
 
 #-----------------------------------------------------------------------------
 # Find dl library (for dlopen())
 #-----------------------------------------------------------------------------
-find_package(DL)
-if (${DL_FOUND})
-  set(DL_LIBRARY "${DL_LIBRARIES}")
-  message(STATUS "DL library found")
+find_library(DL_LIBRARY NAMES dl)
+if(DL_LIBRARY)
+    message(STATUS "DL library found: ${DL_LIBRARY}")
 else()
-  set(DL_LIBRARY "")
-  message(STATUS "DL library not found")
+    set(DL_LIBRARY "")
+    message(STATUS "DL library not found")
 endif()
 
 #------------------------------------------------------------------------------
 # Find the Eigen3 libraries 
 #------------------------------------------------------------------------------
 find_package(Eigen3 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
-message(STATUS "Eigen3 include directory is ${EIGEN3_INCLUDE_DIR}")
-if (USE_CLANG)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem ${EIGEN3_INCLUDE_DIR}")
+
+# Modern target-based approach
+if(TARGET Eigen3::Eigen)
+    message(STATUS "Eigen3 found as imported target")
+    # No need for manual include_directories with modern targets
+    
+    if(USE_CLANG)
+        # Modern way to add system includes to a target
+        target_compile_options(your_target_name PRIVATE 
+            $<$<COMPILE_LANGUAGE:CXX>:-isystem>
+            $<$<COMPILE_LANGUAGE:CXX>:$<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>>
+        )
+    endif()
+else()
+    # Fallback for older Eigen3 installations
+    include_directories(${EIGEN3_INCLUDE_DIR})
+    message(STATUS "Eigen3 include directory is ${EIGEN3_INCLUDE_DIR}")
+    
+    if(USE_CLANG)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem ${EIGEN3_INCLUDE_DIR}")
+    endif()
 endif()
 
 #------------------------------------------------------------------------------
 # Find the HDF5 libraries 
 #------------------------------------------------------------------------------
-find_package(HDF5 REQUIRED COMPONENTS CXX)
-if (HDF5_FOUND)
-  include_directories(${HDF5_INCLUDE_DIRS})
-  message(STATUS "HDF5 include directory is ${HDF5_INCLUDE_DIRS}")
-  set(HDF5_LIBRARY ${HDF5_CXX_LIBRARIES})
+find_package(HDF5 REQUIRED COMPONENTS C CXX)
+
+if(HDF5_FOUND)
+    if(TARGET hdf5::hdf5_cpp OR TARGET HDF5::HDF5)
+        # Modern target-based approach
+        message(STATUS "HDF5 found as imported target")
+        if(TARGET hdf5::hdf5_cpp)
+            set(HDF5_TARGET "hdf5::hdf5_cpp;hdf5::hdf5")
+        else()
+            set(HDF5_TARGET HDF5::HDF5)
+        endif()
+        # Target will handle includes and linking automatically
+    else()
+        # Fallback for older HDF5 installations
+        include_directories(${HDF5_INCLUDE_DIRS})
+        message(STATUS "HDF5 include directory is ${HDF5_INCLUDE_DIRS}")
+        set(HDF5_TARGET ${HDF5_CXX_LIBRARIES})
+    endif()
 else()
-  message(STATUS "No HDF5 found")
-  set(HDF5_LIBRARY "")
+    message(STATUS "No HDF5 found")
+    set(HDF5_TARGET "")
 endif()
 
 #-----------------------------------------------------------------------------
 # Find PETSc library (for implicit linear solvers)
 #-----------------------------------------------------------------------------
-if (PETSC)
-  find_package(PETSc REQUIRED)
-  set(HAVE_PETSC "yes")
-  set(DEF_PETSC "#define HAVE_PETSC 1")
-  add_definitions(${PETSC_DEFINITIONS})
+if(PETSC)
+    find_package(PkgConfig REQUIRED)
+    pkg_search_module(PETSC REQUIRED PETSc petsc)
+    
+    if(PETSC_FOUND)
+        set(HAVE_PETSC TRUE)
+        set(DEF_PETSC "#define HAVE_PETSC 1")
+        
+        # Create imported target for modern usage
+        if(NOT TARGET PETSc::PETSc)
+            add_library(PETSc::PETSc INTERFACE IMPORTED)
+            target_include_directories(PETSc::PETSc INTERFACE ${PETSC_INCLUDE_DIRS})
+            target_link_libraries(PETSc::PETSc INTERFACE ${PETSC_LIBRARIES})
+            target_compile_options(PETSc::PETSc INTERFACE ${PETSC_CFLAGS_OTHER})
+        endif()
+        
+        message(STATUS "PETSc found: ${PETSC_VERSION}")
+    endif()
 endif()
 
 #-----------------------------------------------------------------------------
 # Find HYPRE library (for implicit linear solvers)
 #-----------------------------------------------------------------------------
-if (HYPRE)
-  find_package(HYPRE REQUIRED)
-  set(HAVE_HYPRE "yes")
-  set(DEF_HYPRE "#define HAVE_HYPRE 1")
-  set(DEF_HYPRE_VERSION_MAJOR "#define HYPRE_VERSION_MAJOR ${HYPRE_VERSION_MAJOR}")
-  set(DEF_HYPRE_VERSION_MINOR "#define HYPRE_VERSION_MINOR ${HYPRE_VERSION_MINOR}")
-  set(DEF_HYPRE_VERSION_PATCH "#define HYPRE_VERSION_PATCH ${HYPRE_VERSION_PATCH}")
+if(HYPRE)
+    find_package(HYPRE REQUIRED)
+    
+    if(HYPRE_FOUND)
+        set(HAVE_HYPRE TRUE)
+        set(DEF_HYPRE "#define HAVE_HYPRE 1")
+        
+        # Version information
+        if(HYPRE_VERSION_MAJOR)
+            set(DEF_HYPRE_VERSION_MAJOR "#define HYPRE_VERSION_MAJOR ${HYPRE_VERSION_MAJOR}")
+        endif()
+        if(HYPRE_VERSION_MINOR)
+            set(DEF_HYPRE_VERSION_MINOR "#define HYPRE_VERSION_MINOR ${HYPRE_VERSION_MINOR}")
+        endif()
+        if(HYPRE_VERSION_PATCH)
+            set(DEF_HYPRE_VERSION_PATCH "#define HYPRE_VERSION_PATCH ${HYPRE_VERSION_PATCH}")
+        endif()
+        
+        message(STATUS "HYPRE found: ${HYPRE_VERSION}")
+    endif()
 endif()
 
 #-----------------------------------------------------------------------------
 # Find VisIt and build plugin
 #-----------------------------------------------------------------------------
-if (VISIT)
-  message(STATUS "Checking for VisIt in ${VISIT_DIR}")
-  set(VISIT_SOURCE_DIR "${VISIT_DIR}")
-  message(STATUS "VISIT_SOURCE_DIR =  ${VISIT_SOURCE_DIR}")
-  set(UINTAH_UDA_TO_VIS_LIB "${Vaango_BINARY_DIR}/lib/libStandAlone_tools_uda2vis.so")
-  message(STATUS "-- Setting UDA_TO_VISIT_LIB_PATH = ${UINTAH_UDA_TO_VIS_LIB}")
-  configure_file(${Vaango_SOURCE_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C.in ${Vaango_BINARY_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C)
-  message(STATUS "-- Configuring avtudaReaderMTMDFileFormat.C")
-  add_subdirectory(VisIt)
-endif()
-
-#-----------------------------------------------------------------------------
-# Check included header files and create configuration files (for populating sci_defs/config_defs.h)
-#-----------------------------------------------------------------------------
-include(CheckIncludeFiles)
-#check_include_files("ext/algorithm" HAVE_EXT_ALGORITHM)
-CHECK_CXX_SOURCE_COMPILES("
-#include <ext/algorithm>
-#include <vector>
-int main() {
-        std::vector<int> vec;
-        return 0;
-      }
-" HAVE_EXT_ALGORITHM)
-if (HAVE_EXT_ALGORITHM)
-  message(STATUS "ext/algorithm found.")
-endif()
-check_include_files(inttypes.h HAVE_INTTYPES_H)
-check_include_files(limits.h HAVE_LIMITS_H)
-check_include_files(memory.h HAVE_MEMORY_H)
-check_include_files(stdint.h HAVE_STDINT_H)
-check_include_files(stdlib.h HAVE_STDLIB_H)
-check_include_files(strings.h HAVE_STRINGS_H)
-check_include_files(string.h HAVE_STRING_H)
-check_include_files("sys/select.h" HAVE_SYS_SELECT_H)
-check_include_files("sys/stat.h" HAVE_SYS_STAT_H)
-check_include_files("sys/time.h" HAVE_SYS_TIME_H)
-check_include_files("sys/types.h" HAVE_SYS_TYPES_H)
-check_include_files(unistd.h HAVE_UNISTD_H)
-if (${HAVE_STDLIB_H})
-  set(STDC_HEADERS 1)
-endif()
-message(STATUS "STDC_HEADERS ${STDC_HEADERS}")
-
-#-----------------------------------------------------------------------------
-# Check for location of hash_map for hashmap_defs.h
-#-----------------------------------------------------------------------------
-message(STATUS "Looking for hash_map")
-set(HAVE_HASHMAP "None")
-
-CHECK_CXX_SOURCE_COMPILES("
-#include <unordered_map>
-int main() { std::unordered_map<int, int> xx; return 0; }
-" DEF_HASHMAP)
-if(DEF_HASHMAP)
-  message(STATUS "C11 hash_map found")
-  set(HAVE_HASHMAP "HAVE_C11_HASHMAP")
-  add_definitions(-DHAVE_C11_HASHMAP)
-endif()
-
-if (HAVE_HASHMAP STREQUAL "None")
-  CHECK_CXX_SOURCE_COMPILES("
-  #include <tr1/unordered_map>
-  int main() { std::tr1::unordered_map<int, int> xx; return 0; }
-  " DEF_HASHMAP)
-  if(DEF_HASHMAP)
-    message(STATUS "tr1/unordered_map compiles")
-    set(HAVE_HASHMAP "HAVE_TR1_HASHMAP")
-    add_definitions(-DHAVE_TR1_HASHMAP)
-  endif()
-endif()
-
-## WARNING - the hashmap checks below don't work yet. BB
-if (HAVE_HASHMAP STREQUAL "None")
-  CHECK_CXX_SOURCE_COMPILES("
-  #include <ext/hash_map>
-  int main() { __gnu_cxx::hash_map<int, int> xx; return 0; }
-  " DEF_HASHMAP)
-  if(DEF_HASHMAP)
-    message(STATUS "__gnu_cxx ext/hash_map found")
-    set(HAVE_HASHMAP "HAVE_GNU_HASHMAP")
-    add_definitions(-DHAVE_GNU_HASHMAP)
-  endif()
-endif()
-
-if (HAVE_HASHMAP STREQUAL "None")
-  message(STATUS "Standard hash_map not found. Trying ext/hash_map.")
-  CHECK_CXX_SOURCE_COMPILES("
-  #include <ext/hash_map>
-  int main() { std::hash_map<int, int> xx; return 0; }
-  " DEF_HASHMAP)
-  if(DEF_HASHMAP)
-    message(STATUS "ext/hash_map found")
-    set(HAVE_HASHMAP "HAVE_EXT_HASHMAP")
-    add_definitions(-DHAVE_EXT_HASHMAP)
-  else()
-    message(STATUS "ext/hash_map not found. Trying stdext/hash_map.")
-    CHECK_CXX_SOURCE_COMPILES("
-    #include <hash_map>
-    int main() { stdext::hash_map<int, int> xx; return 0; }
-    " DEF_HASHMAP)
-    if(DEF_HASHMAP)
-      message(STATUS "stdext/hash_map found")
-      set(HAVE_HASHMAP "HAVE_STDEXT_HASHMAP")
-      add_definitions(-DHAVE_STDEXT_HASHMAP)
-    else()
-      message(STATUS "stdext/hash_map not found. Trying tr1/unordered_map.")
+if(VISIT)
+    if(NOT VISIT_DIR)
+        message(FATAL_ERROR "VISIT_DIR must be specified when VISIT=ON")
     endif()
-  endif()
+    
+    if(NOT EXISTS "${VISIT_DIR}")
+        message(FATAL_ERROR "VisIt directory does not exist: ${VISIT_DIR}")
+    endif()
+    
+    message(STATUS "Checking for VisIt in ${VISIT_DIR}")
+    
+    set(VISIT_SOURCE_DIR "${VISIT_DIR}")
+    message(STATUS "VISIT_SOURCE_DIR = ${VISIT_SOURCE_DIR}")
+    
+    # Use generator expressions for more robust path handling
+    set(UINTAH_UDA_TO_VIS_LIB "$<TARGET_FILE_DIR:StandAlone_tools_uda2vis>/libStandAlone_tools_uda2vis.so")
+    message(STATUS "Setting UDA_TO_VISIT_LIB_PATH = ${UINTAH_UDA_TO_VIS_LIB}")
+    
+    # Modern configure_file usage
+    configure_file(
+        "${CMAKE_SOURCE_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C.in"
+        "${CMAKE_BINARY_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C"
+        @ONLY
+    )
+    
+    message(STATUS "Configuring avtudaReaderMTMDFileFormat.C")
+    add_subdirectory(VisIt)
 endif()
 
-if (DEF_HASHMAP)
-  set(DEF_HASHMAP "#define ${HAVE_HASHMAP} 1")
-else()
-  message(STATUS "hash_map not found, will use map instead.")
-  set(DEF_HASHMAP "")
-endif()
-
-#-----------------------------------------------------------------------
-# Check for required standard C/C++ headers
-#-----------------------------------------------------------------------
-check_include_files(unistd.h HAVE_UNISTD_H)
-check_include_files(dirent.h HAVE_DIRENT_H)
-check_include_files(sys/time.h HAVE_SYS_TIME_H)
-check_include_files(sys/param.h HAVE_SYS_PARAM_H)
-check_include_files(values.h HAVE_VALUES_H)
-check_include_files(malloc.h HAVE_MALLOC_H)
-check_include_files(netdb.h HAVE_NETDB_H)
-check_include_files(sys/select.h HAVE_SYS_SELECT_H)
-check_include_files(sys/socket.h HAVE_SYS_SOCKET_H)
-check_include_files(sys/mman.h HAVE_SYS_MMAN_H)
-check_include_files(sys/ioctl.h HAVE_SYS_IOCTL_H)
-check_include_files(sys/resource.h HAVE_SYS_RESOURCE_H)
-check_include_files(sys/wait.h HAVE_SYS_WAIT_H)
-check_include_files(sys/utsname.h HAVE_SYS_UTSNAME_H)
-check_include_files(rpc/types.h HAVE_RPC_TYPES_H)
-check_include_files(netinet/in.h HAVE_NETINET_IN_H)
-
-#-----------------------------------------------------------------------
-# Check for C++ standard template library headers
-#-----------------------------------------------------------------------
-CHECK_CXX_SOURCE_COMPILES("
-#include <algorithm>
-#include <vector>
-#include <map>
-#include <iostream>
-#include <string>
-int main() {
-        std::vector<int> vec;
-        return 0;
-      }
-" HAVE_STL_HEADERS)
-if (HAVE_STL_HEADERS)
-  message(STATUS "Standard template library headers found.")
-endif()
-
+# Example of how to link these libraries to your targets (modern approach)
+#-----------------------------------------------------------------------------
+# When you create your executable or library targets, use:
+#
+# target_link_libraries(your_target_name PRIVATE
+#     Threads::Threads
+#     $<$<BOOL:${DL_LIBRARY}>:${DL_LIBRARY}>
+#     Eigen3::Eigen  # if available as target
+#     ${HDF5_TARGET}  # if available as target, otherwise use ${HDF5_LIBRARY}
+#     $<$<BOOL:${PETSC}>:PETSc::PETSc>
+#     $<$<BOOL:${HYPRE}>:HYPRE::HYPRE>
+# )
 #-----------------------------------------------------------------------
 # Create the cross-platform header files
 #-----------------------------------------------------------------------
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/git_info.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/git_info.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/config_cmakedefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/config_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/audio_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/audio_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/babel_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/babel_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/bits_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/bits_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/blas_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/blas_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/boost_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/boost_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/chromium_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/chromium_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/collab_vis_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/collab_vis_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/compile_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/compile_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/crypto_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/crypto_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/cuda_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/cuda_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/dataflow_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/dataflow_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/dynamic_cast_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/dynamic_cast_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/environment_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/environment_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/error_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/error_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/exe_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/exe_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/framework_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/framework_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/globus_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/globus_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/gperftools_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/gperftools_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/hashmap_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/hashmap_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/hdf5_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/hdf5_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/hypre_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/hypre_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ieeefp_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/ieeefp_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/image_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/image_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/kepler_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/kepler_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/kokkos_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/kokkos_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/lapack_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/lapack_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/loki_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/loki_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/malloc_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/malloc_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/mdsplus_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/mdsplus_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/mpi_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/mpi_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/osx_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/osx_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/papi_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/papi_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/petsc_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/petsc_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/pidx_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/pidx_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ptolemy_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/ptolemy_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ruby_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/ruby_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/scisock_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/scisock_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ssl_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/ssl_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/stat64_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/stat64_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/template_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/template_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/tena_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/tena_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/tena_testdefs.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/tena_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/thread_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/thread_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/uintah_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/uintah_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/vdt_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/vdt_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/vtk_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/vtk_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/visit_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/visit_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/wx_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/wx_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/z_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/z_defs.h)
+include(${CMAKE_SOURCE_DIR}/cmake/ConfigureHeaders.cmake)
+configure_standard_sci_headers()
 
 #-----------------------------------------------------------------------------
 # For reading JSON input files
@@ -886,12 +738,6 @@ include_directories(
   ${Vaango_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
 )
-
-#-------------------------------------------------------------------------
-# Set up other custom configurations
-# BB: TODO* Clean up the mess above and move into setup_* scripts
-#-------------------------------------------------------------------------
-#include(${CMAKE_SOURCE_DIR}/cmake/setup_custom_targets.cmake)
 
 #=========================================================================
 # For compliation, installation, and regression testing

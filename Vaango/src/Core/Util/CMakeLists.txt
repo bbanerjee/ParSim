@@ -38,7 +38,7 @@ set(Vaango_Core_Util_SRCS
   SysUtils.cc
   Util.cc
   XMLUtils.cc
-  ${REFCOUNT_IMPL}
+  ${VAANGO_REFCOUNT_IMPL}
 )
 
 if (HAVE_CUDA)

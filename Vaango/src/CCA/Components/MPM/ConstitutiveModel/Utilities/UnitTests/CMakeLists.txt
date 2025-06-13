@@ -28,7 +28,7 @@ include(GoogleTest)
 #message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 #message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
-#message(STATUS "HDF5 library = ${HDF5_LIBRARY}")
+message(STATUS "HDF5 library = ${HDF5_TARGET}")
 
 #------------------------
 # Copy input files
@@ -41,11 +41,9 @@ configure_file(mlp_regression_keras_total_scaled.h5 mlp_regression_keras_total_s
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-              
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
@@ -60,7 +58,7 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_Schedulers           
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
-        ${HDF5_LIBRARY}
+        ${HDF5_TARGET}
 )
 
 #------------------------
