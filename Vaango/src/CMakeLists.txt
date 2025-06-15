@@ -617,27 +617,81 @@ else()
 endif()
 
 #-----------------------------------------------------------------------------
-# Find PETSc library (for implicit linear solvers)
+# Build PETSc
 #-----------------------------------------------------------------------------
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+#include(${CMAKE_SOURCE_DIR}/cmake/ConfigurePetsc.cmake)
+include(ConfigurePetsc)
+
+# Configure PETSc with custom options
 if(PETSC)
-    find_package(PkgConfig REQUIRED)
-    pkg_search_module(PETSC REQUIRED PETSc petsc)
-    
-    if(PETSC_FOUND)
+  configure_petsc(
+      SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/submodules/petsc
+      INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/petsc-install
+      DEBUGGING OFF                    # Enable/disable debugging
+      SHARED_LIBS ON                   # Build shared libraries
+      WITH_MPI ON                      # Use OpenMPI
+      DOWNLOAD_DEPS ON                 # Download BLAS/LAPACK
+      EXTRA_CONFIGURE_ARGS             # Additional PETSc configure options
+          --with-scalar-type=real
+          --with-precision=double
+          --download-superlu_dist=1
+  )
         set(HAVE_PETSC TRUE)
         set(DEF_PETSC "#define HAVE_PETSC 1")
-        
-        # Create imported target for modern usage
-        if(NOT TARGET PETSc::PETSc)
-            add_library(PETSc::PETSc INTERFACE IMPORTED)
-            target_include_directories(PETSc::PETSc INTERFACE ${PETSC_INCLUDE_DIRS})
-            target_link_libraries(PETSc::PETSc INTERFACE ${PETSC_LIBRARIES})
-            target_compile_options(PETSc::PETSc INTERFACE ${PETSC_CFLAGS_OTHER})
-        endif()
-        
-        message(STATUS "PETSc found: ${PETSC_VERSION}")
-    endif()
 endif()
+
+#-----------------------------------------------------------------------------
+# Find PETSc library (for implicit linear solvers)
+#-----------------------------------------------------------------------------
+#if(PETSC)
+    #find_package(PkgConfig REQUIRED)
+    #pkg_search_module(PETSC REQUIRED PETSc petsc)
+
+    # --- Optional: Set PETSc variables if not found automatically ---
+    # If CMake cannot find PETSc automatically, you might need to provide hints.
+    # You can uncomment and modify these lines if PETSc_DIR or PETSC_ARCH
+    # are not in standard locations or environment variables.
+    # set(PETSC_DIR "/opt/petsc/arch-linux-c-opt" CACHE PATH "Path to PETSc installation")
+    # set(PETSC_ARCH "arch-linux-c-opt" CACHE STRING "PETSc build architecture")
+
+    # Call find_package for PETSc.
+    # 'REQUIRED' means CMake will fail if PETSc is not found.
+    # 'COMPONENTS CXX' requests that the module specifically checks for C++ language bindings.
+    # If you are only using C with PETSc, you could use 'COMPONENTS C' or omit it to let the module decide.
+#    find_package(PETSc REQUIRED CXX)
+
+    # Check if PETSc was found and report its details.
+#    if (PETSc_FOUND)
+#        set(HAVE_PETSC TRUE)
+#        set(DEF_PETSC "#define HAVE_PETSC 1")
+        
+#        message(STATUS "PETSc found successfully!")
+#        message(STATUS "  PETSc Version: ${PETSc_VERSION}")
+#        message(STATUS "  PETSc Include Dirs: ${PETSc_INCLUDE_DIRS}")
+#        message(STATUS "  PETSc Libraries: ${PETSc_LIBRARIES}")
+#        message(STATUS "  PETSc Compiler: ${PETSc_COMPILER}")
+#        message(STATUS "  PETSc MPI Executable: ${PETSc_MPIEXEC}")
+#        message(STATUS "  PETSc Compile Definitions: ${PETSc_DEFINITIONS}")
+
+        # Create imported target for modern usage
+#        if(NOT TARGET PETSc::PETSc)
+#            add_library(PETSc::PETSc INTERFACE IMPORTED)
+#            target_include_directories(PETSc::PETSc INTERFACE ${PETSC_INCLUDE_DIRS})
+#            target_link_libraries(PETSc::PETSc INTERFACE ${PETSC_LIBRARIES})
+#            target_compile_options(PETSc::PETSc INTERFACE ${PETSC_CFLAGS_OTHER})
+#        endif()
+#    else ()
+        # This block will only be reached if 'REQUIRED' was not used and PETSc was not found.
+        # With 'REQUIRED', CMake would have exited earlier.
+#        message(FATAL_ERROR "PETSc was not found. Please ensure PETSC_DIR and PETSC_ARCH are set or PETScConfig.cmake is discoverable.")
+#    endif ()
+#endif()
+
+# Link your executable against the PETSc imported target and MPI.
+# The PETSc::PETSc target automatically brings in all necessary include directories,
+# libraries, and compile definitions.
+# MPI::MPI_CXX (or MPI::MPI_C for C projects) provides the MPI libraries.
 
 #-----------------------------------------------------------------------------
 # Find HYPRE library (for implicit linear solvers)
