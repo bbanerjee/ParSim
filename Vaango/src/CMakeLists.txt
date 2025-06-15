@@ -242,9 +242,13 @@ include(ProcessorCount)
 include(CheckTypeSize)
 
 # Detect number of processors
+# Set build parallel level if not set
 ProcessorCount(NUM_CPUS)
 if(NUM_CPUS EQUAL 0)
     set(NUM_CPUS 1)
+    set(CMAKE_BUILD_PARALLEL_LEVEL 1)
+else()
+    set(CMAKE_BUILD_PARALLEL_LEVEL 4)
 endif()
 
 # Platform-specific settings with modern CMake approach
@@ -642,29 +646,64 @@ if(PETSC)
 endif()
 
 #-----------------------------------------------------------------------------
+# Build HYPRE (for multigrid implicit linear solvers)
+#-----------------------------------------------------------------------------
+include(ConfigureHypre)
+
+if(HYPRE)
+    configure_hypre()
+
+    message("HYPRE: include_dir: ${HYPRE_INCLUDE_DIR}")
+    message("HYPRE: library: ${HYPRE_LIBRARY}")
+    message("HYPRE_FOUND : ${HYPRE_FOUND}")
+
+    if (HYPRE_FOUND) 
+      set(HAVE_HYPRE TRUE)
+      set(DEF_HYPRE "#define HAVE_HYPRE 1")
+      
+      # Version information
+      if(HYPRE_VERSION_MAJOR)
+          set(DEF_HYPRE_VERSION_MAJOR "#define HYPRE_VERSION_MAJOR ${HYPRE_VERSION_MAJOR}")
+      endif()
+      if(HYPRE_VERSION_MINOR)
+          set(DEF_HYPRE_VERSION_MINOR "#define HYPRE_VERSION_MINOR ${HYPRE_VERSION_MINOR}")
+      endif()
+      if(HYPRE_VERSION_PATCH)
+          set(DEF_HYPRE_VERSION_PATCH "#define HYPRE_VERSION_PATCH ${HYPRE_VERSION_PATCH}")
+      endif()
+
+      set(HYPRE_TARGET "hypre::hypre")
+      message(STATUS "HYPRE found: ${HYPRE_VERSION}; Target: ${HYPRE_TARGET}")
+    else()
+      message(STATUS "HYPRE not found")
+    endif()
+    
+endif()
+
+#-----------------------------------------------------------------------------
 # Find HYPRE library (for implicit linear solvers)
 #-----------------------------------------------------------------------------
-if(HYPRE)
-    find_package(HYPRE REQUIRED)
-    
-    if(HYPRE_FOUND)
-        set(HAVE_HYPRE TRUE)
-        set(DEF_HYPRE "#define HAVE_HYPRE 1")
-        
-        # Version information
-        if(HYPRE_VERSION_MAJOR)
-            set(DEF_HYPRE_VERSION_MAJOR "#define HYPRE_VERSION_MAJOR ${HYPRE_VERSION_MAJOR}")
-        endif()
-        if(HYPRE_VERSION_MINOR)
-            set(DEF_HYPRE_VERSION_MINOR "#define HYPRE_VERSION_MINOR ${HYPRE_VERSION_MINOR}")
-        endif()
-        if(HYPRE_VERSION_PATCH)
-            set(DEF_HYPRE_VERSION_PATCH "#define HYPRE_VERSION_PATCH ${HYPRE_VERSION_PATCH}")
-        endif()
-        
-        message(STATUS "HYPRE found: ${HYPRE_VERSION}")
-    endif()
-endif()
+#if(HYPRE)
+#    find_package(HYPRE REQUIRED)
+#    
+#    if(HYPRE_FOUND)
+#        set(HAVE_HYPRE TRUE)
+#        set(DEF_HYPRE "#define HAVE_HYPRE 1")
+#        
+#        # Version information
+#        if(HYPRE_VERSION_MAJOR)
+#            set(DEF_HYPRE_VERSION_MAJOR "#define HYPRE_VERSION_MAJOR ${HYPRE_VERSION_MAJOR}")
+#        endif()
+#        if(HYPRE_VERSION_MINOR)
+#            set(DEF_HYPRE_VERSION_MINOR "#define HYPRE_VERSION_MINOR ${HYPRE_VERSION_MINOR}")
+#        endif()
+#        if(HYPRE_VERSION_PATCH)
+#            set(DEF_HYPRE_VERSION_PATCH "#define HYPRE_VERSION_PATCH ${HYPRE_VERSION_PATCH}")
+#        endif()
+#        
+#        message(STATUS "HYPRE found: ${HYPRE_VERSION}")
+#    endif()
+#endif()
 
 #-----------------------------------------------------------------------------
 # Find VisIt and build plugin

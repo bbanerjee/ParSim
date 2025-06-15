@@ -46,3 +46,9 @@ _clang-format
 .clang-tidy
 .jekyll-cache
 .sass-cache
+tt
+submodules/petsc/config
+submodules/petsc/arch-linux*
+sunmodules/petsc/*.bkp
+sunmodules/petsc/*.mod
+sunmodules/petsc/*.log

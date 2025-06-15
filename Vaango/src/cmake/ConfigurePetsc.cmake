@@ -138,7 +138,7 @@ function(configure_petsc)
     
     # Download dependencies
     if(PETSC_DOWNLOAD_DEPS)
-        list(APPEND PETSC_CONFIGURE_CMD --download-openblas=yes)
+        #list(APPEND PETSC_CONFIGURE_CMD --download-openblas=yes)
         list(APPEND PETSC_CONFIGURE_CMD --download-hypre=yes)
         #list(APPEND PETSC_CONFIGURE_CMD --download-fblaslapack=1)
         #list(APPEND PETSC_CONFIGURE_CMD --download-cmake=1)

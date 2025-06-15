@@ -52,9 +52,9 @@ target_link_libraries(Vaango_CCA_Components_Solvers PRIVATE
 )
 
 IF (HYPRE)
-  target_link_libraries(Vaango_CCA_Components_Solvers 
+  target_link_libraries(Vaango_CCA_Components_Solvers PRIVATE
     Vaango_CCA_Components_Solvers_AMR 
-    ${HYPRE_LIBRARY}
+    ${HYPRE_TARGET}
     Vaango::Options
     Vaango::Warnings
   )
