@@ -134,6 +134,7 @@ function(configure_petsc)
         list(APPEND PETSC_CONFIGURE_CMD --with-mpi=0)
         message(STATUS "PETSc: Disabling MPI support")
     endif()
+
     
     # Download dependencies
     if(PETSC_DOWNLOAD_DEPS)
@@ -187,11 +188,19 @@ function(configure_petsc)
         file(CHMOD ${PETSC_CONFIGURE_SCRIPT} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
     endif()
     
+    # Find the 'make' executable (crucial for Ninja)
+    find_program(MAKE_EXECUTABLE NAMES make REQUIRED)
+    if(NOT MAKE_EXECUTABLE)
+        message(FATAL_ERROR "Could not find 'make' executable. It is required for building PETSc.")
+    endif()
+
     ExternalProject_Add(${PETSC_TARGET_NAME}
         SOURCE_DIR ${PETSC_SOURCE_DIR}
         CONFIGURE_COMMAND ${PETSC_CONFIGURE_SCRIPT}
-        BUILD_COMMAND $(MAKE) -C ${PETSC_SOURCE_DIR} all
-        INSTALL_COMMAND $(MAKE) -C ${PETSC_SOURCE_DIR} install
+        BUILD_COMMAND 
+            ${MAKE_EXECUTABLE} -C ${PETSC_SOURCE_DIR} all
+        INSTALL_COMMAND 
+            ${MAKE_EXECUTABLE} -C ${PETSC_SOURCE_DIR} install
         BUILD_IN_SOURCE 1
         INSTALL_DIR ${PETSC_INSTALL_DIR}
         LOG_CONFIGURE ON
