@@ -14,3 +14,9 @@
 [submodule "GranularSim/src/qhull"]
 	path = GranularSim/src/qhull
 	url = https://github.com/qhull/qhull.git
+[submodule "Vaango/src/submodules/petsc"]
+	path = Vaango/src/submodules/petsc
+	url = https://gitlab.com/petsc/petsc.git
+[submodule "Vaango/src/submodules/hypre"]
+	path = Vaango/src/submodules/hypre
+	url = https://github.com/hypre-space/hypre.git

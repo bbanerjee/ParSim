@@ -32,7 +32,7 @@ SET(Vaango_CCA_Components_Solvers_AMR_SRCS
 add_subdirectory(HypreSolvers) 
 add_subdirectory(HyprePreconds)
 
-# message(STATUS "Hypre library is ${HYPRE_LIBRARY}")
+# message(STATUS "Hypre library is ${HYPRE_TARGET}")
 add_library(Vaango_CCA_Components_Solvers_AMR ${Vaango_CCA_Components_Solvers_AMR_SRCS})
 target_link_libraries(Vaango_CCA_Components_Solvers_AMR PRIVATE
   Vaango_CCA_Ports
@@ -44,7 +44,7 @@ target_link_libraries(Vaango_CCA_Components_Solvers_AMR PRIVATE
   Vaango_Core_Math
   ${LAPACK_LIBRARY}
   ${CBLAS_LIBRARY}
-  ${HYPRE_LIBRARY}
+  ${HYPRE_TARGET}
   LibXml2::LibXml2
   MPI::MPI_CXX
   Vaango::Options

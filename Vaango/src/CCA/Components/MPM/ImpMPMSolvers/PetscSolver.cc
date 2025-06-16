@@ -112,20 +112,20 @@ MPMPetscSolver::initialize()
       argv[i] = args[i];
     }
   }
-  PetscInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
+  PetscInitialize(&argc, &argv, PETSC_NULLPTR, PETSC_NULLPTR);
 #ifdef USE_SPOOLES
   PetscOptionsSetValue("-mat_spooles_ordering", "BestOfNDandMS");
   PetscOptionsSetValue("-mat_spooles_symmetryflag", "0");
 #endif
 #if 0
-  PetscOptionsSetValue("-options_table", PETSC_NULL);
+  PetscOptionsSetValue("-options_table", PETSC_NULLPTR);
   PetscOptionsSetValue("-mat_superlu_dist_iterrefine", "TRUE");
-  PetscOptionsSetValue("-mat_superlu_dist_statprint", PETSC_NULL);
-  PetscOptionsSetValue("-log_summary", PETSC_NULL);
-  PetscOptionsSetValue("-log_info", PETSC_NULL);
-  PetscOptionsSetValue("-trmalloc", PETSC_NULL);
-  PetscOptionsSetValue("-trmalloc_log", PETSC_NULL);
-  PetscOptionsSetValue("-trdump", PETSC_NULL);
+  PetscOptionsSetValue("-mat_superlu_dist_statprint", PETSC_NULLPTR);
+  PetscOptionsSetValue("-log_summary", PETSC_NULLPTR);
+  PetscOptionsSetValue("-log_info", PETSC_NULLPTR);
+  PetscOptionsSetValue("-trmalloc", PETSC_NULLPTR);
+  PetscOptionsSetValue("-trmalloc_log", PETSC_NULLPTR);
+  PetscOptionsSetValue("-trdump", PETSC_NULLPTR);
 #endif
   PetscPopSignalHandler();
 
@@ -397,7 +397,7 @@ MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
     // This one works
     MatCreateMPIAIJ(PETSC_COMM_WORLD, numlrows, numlcolumns, globalrows,
                     globalcolumns, PETSC_DEFAULT, diag, 
-                    PETSC_DEFAULT,PETSC_NULL, &d_A);
+                    PETSC_DEFAULT,PETSC_NULLPTR, &d_A);
 #endif
 
   // This one is much faster
@@ -684,9 +684,9 @@ MPMPetscSolver::removeFixedDOF()
   finalizeMatrix();
 
 #if 0
-  MatTranspose(d_A,PETSC_NULL);
+  MatTranspose(d_A,PETSC_NULLPTR);
   MatZeroRows(d_A,is,&one);
-  MatTranspose(d_A,PETSC_NULL);
+  MatTranspose(d_A,PETSC_NULLPTR);
 #endif
 
   PetscScalar one = 1.0;

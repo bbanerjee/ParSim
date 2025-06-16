@@ -98,6 +98,9 @@ target_link_libraries(Vaango_CCA_Components_MPM
   Vaango::Options
   Vaango::Warnings
 )
+IF (PETSC)
+  target_link_petsc(Vaango_CCA_Components_MPM)
+ENDIF()
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_MPM)

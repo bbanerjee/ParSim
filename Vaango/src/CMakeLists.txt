@@ -89,9 +89,9 @@ endif( NOT CMAKE_BUILD_TYPE )
 # Set the local module path and load macros
 #--------------------------------------------------
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules" ${CMAKE_MODULE_PATH})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Macros)
 message(STATUS "CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
-
-include(${CMAKE_SOURCE_DIR}/cmake/Macros/fortranDependency.cmake)
 
 #----------------------------------------------------------------------------------
 # Configure options
@@ -242,9 +242,13 @@ include(ProcessorCount)
 include(CheckTypeSize)
 
 # Detect number of processors
+# Set build parallel level if not set
 ProcessorCount(NUM_CPUS)
 if(NUM_CPUS EQUAL 0)
     set(NUM_CPUS 1)
+    set(CMAKE_BUILD_PARALLEL_LEVEL 1)
+else()
+    set(CMAKE_BUILD_PARALLEL_LEVEL 4)
 endif()
 
 # Platform-specific settings with modern CMake approach
@@ -287,6 +291,8 @@ endif()
 #----------------------------------------------------------------------------
 # Fortran settings
 #----------------------------------------------------------------------------
+include(fortranDependency)
+
 # NO_FORTRAN and DEF_NO_FORTRAN settings
 # NO_FORTRAN is used in configVars.mk[.in] and 
 # DEF_NO_FORTRAN is used in uintah_testdefs.h.in
@@ -419,7 +425,7 @@ target_include_directories(vaango_options INTERFACE
 # Call the function to perform all the feature checks.
 # This populates CMake cache variables (e.g., HAVE_SEMAPHORE_H)
 # and sets global compile definitions (e.g., HAVE_C11_HASHMAP).
-include(${CMAKE_SOURCE_DIR}/cmake/CheckCppFeatures.cmake)
+include(CheckCppFeatures)
 vaango_check_features()
 
 # Optional: You can access the results of the checks directly here.
@@ -617,51 +623,65 @@ else()
 endif()
 
 #-----------------------------------------------------------------------------
-# Find PETSc library (for implicit linear solvers)
+# Build PETSc
 #-----------------------------------------------------------------------------
+
+# Configure PETSc with custom options
 if(PETSC)
-    find_package(PkgConfig REQUIRED)
-    pkg_search_module(PETSC REQUIRED PETSc petsc)
-    
-    if(PETSC_FOUND)
-        set(HAVE_PETSC TRUE)
-        set(DEF_PETSC "#define HAVE_PETSC 1")
-        
-        # Create imported target for modern usage
-        if(NOT TARGET PETSc::PETSc)
-            add_library(PETSc::PETSc INTERFACE IMPORTED)
-            target_include_directories(PETSc::PETSc INTERFACE ${PETSC_INCLUDE_DIRS})
-            target_link_libraries(PETSc::PETSc INTERFACE ${PETSC_LIBRARIES})
-            target_compile_options(PETSc::PETSc INTERFACE ${PETSC_CFLAGS_OTHER})
-        endif()
-        
-        message(STATUS "PETSc found: ${PETSC_VERSION}")
-    endif()
+  include(ConfigurePetsc)
+  configure_petsc(
+      SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/submodules/petsc
+      INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/petsc-install
+      DEBUGGING OFF                    # Enable/disable debugging
+      SHARED_LIBS ON                   # Build shared libraries
+      WITH_MPI ON                      # Use OpenMPI
+      DOWNLOAD_DEPS ON                 # Download BLAS/LAPACK
+      EXTRA_CONFIGURE_ARGS             # Additional PETSc configure options
+          --with-scalar-type=real
+          --with-precision=double
+          --download-superlu_dist=1
+  )
+  set(HAVE_PETSC TRUE)
+  set(DEF_PETSC "#define HAVE_PETSC 1")
 endif()
 
 #-----------------------------------------------------------------------------
-# Find HYPRE library (for implicit linear solvers)
+# Build HYPRE (for multigrid implicit linear solvers)
 #-----------------------------------------------------------------------------
+
 if(HYPRE)
-    find_package(HYPRE REQUIRED)
-    
-    if(HYPRE_FOUND)
-        set(HAVE_HYPRE TRUE)
-        set(DEF_HYPRE "#define HAVE_HYPRE 1")
-        
-        # Version information
-        if(HYPRE_VERSION_MAJOR)
-            set(DEF_HYPRE_VERSION_MAJOR "#define HYPRE_VERSION_MAJOR ${HYPRE_VERSION_MAJOR}")
-        endif()
-        if(HYPRE_VERSION_MINOR)
-            set(DEF_HYPRE_VERSION_MINOR "#define HYPRE_VERSION_MINOR ${HYPRE_VERSION_MINOR}")
-        endif()
-        if(HYPRE_VERSION_PATCH)
-            set(DEF_HYPRE_VERSION_PATCH "#define HYPRE_VERSION_PATCH ${HYPRE_VERSION_PATCH}")
-        endif()
-        
-        message(STATUS "HYPRE found: ${HYPRE_VERSION}")
+    include(ConfigureHypre)
+    configure_hypre()
+
+    message("-- HYPRE: include_dir: ${HYPRE_INCLUDE_DIR}")
+    message("-- HYPRE: library: ${HYPRE_LIBRARY}")
+    message("-- HYPRE_FOUND : ${HYPRE_FOUND}")
+
+    if (HYPRE_FOUND) 
+      set(HAVE_HYPRE TRUE)
+      set(DEF_HYPRE "#define HAVE_HYPRE 1")
+      
+      message(STATUS "HYPRE_VERSION_MAJOR: ${HYPRE_VERSION_MAJOR}")
+      message(STATUS "HYPRE_VERSION_MINOR: ${HYPRE_VERSION_MINOR}")
+      message(STATUS "HYPRE_VERSION_PATCH: ${HYPRE_VERSION_PATCH}")
+
+      # Version information
+      if(HYPRE_VERSION_MAJOR)
+          set(DEF_HYPRE_VERSION_MAJOR "#define HYPRE_VERSION_MAJOR ${HYPRE_VERSION_MAJOR}")
+      endif()
+      if(HYPRE_VERSION_MINOR)
+          set(DEF_HYPRE_VERSION_MINOR "#define HYPRE_VERSION_MINOR ${HYPRE_VERSION_MINOR}")
+      endif()
+      if(HYPRE_VERSION_PATCH)
+          set(DEF_HYPRE_VERSION_PATCH "#define HYPRE_VERSION_PATCH ${HYPRE_VERSION_PATCH}")
+      endif()
+
+      set(HYPRE_TARGET "hypre::hypre")
+      message(STATUS "HYPRE found: ${HYPRE_VERSION_MAJOR}.${HYPRE_VERSION_MINOR}; Target: ${HYPRE_TARGET}")
+    else()
+      message(STATUS "HYPRE not found")
     endif()
+    
 endif()
 
 #-----------------------------------------------------------------------------
@@ -714,7 +734,8 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs)
-include(${CMAKE_SOURCE_DIR}/cmake/ConfigureHeaders.cmake)
+
+include(ConfigureHeaders)
 configure_standard_sci_headers()
 
 #-----------------------------------------------------------------------------

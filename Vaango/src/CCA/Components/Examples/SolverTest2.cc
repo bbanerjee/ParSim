@@ -72,8 +72,8 @@ SolverTest2::~SolverTest2()
 //__________________________________
 //
 void SolverTest2::problemSetup(const ProblemSpecP& prob_spec,
-                               const ProblemSpecP& restart_prob_spec, 
-                               GridP&)
+                               [[maybe_unused]] const ProblemSpecP& restart_prob_spec, 
+                               GridP&, const std::string&)
 {
   //solver = dynamic_cast<SolverInterface*>(getPort("solver"));
   //if(!solver) {
@@ -108,15 +108,15 @@ void SolverTest2::problemSetup(const ProblemSpecP& prob_spec,
 }
 //__________________________________
 // 
-void SolverTest2::scheduleInitialize(const LevelP& level,
-                               SchedulerP& sched)
+void SolverTest2::scheduleInitialize([[maybe_unused]] const LevelP& level,
+                               [[maybe_unused]] SchedulerP& sched)
 {
 //  solver->scheduleInitialize(level,sched,d_materialManager->allMaterials());
 }
 //__________________________________
 //
-void SolverTest2::scheduleRestartInitialize(const LevelP& level,
-                                            SchedulerP& sched)
+void SolverTest2::scheduleRestartInitialize([[maybe_unused]] const LevelP& level,
+                                            [[maybe_unused]] SchedulerP& sched)
 {
 //  solver->scheduleRestartInitialize(level,sched,d_materialManager->allMaterials())
 }
@@ -161,18 +161,18 @@ void SolverTest2::computeStableTimestep(const ProcessorGroup*,
 //__________________________________
 //
 void SolverTest2::initialize(const ProcessorGroup*,
-                       const PatchSubset* patches,
-                       const MaterialSubset* matls,
-                       DataWarehouse*, DataWarehouse* new_dw)
+                       [[maybe_unused]] const PatchSubset* patches,
+                       [[maybe_unused]] const MaterialSubset* matls,
+                       DataWarehouse*, [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 //______________________________________________________________________
 //
-void SolverTest2::timeAdvance(const ProcessorGroup* pg,
+void SolverTest2::timeAdvance([[maybe_unused]] const ProcessorGroup* pg,
                            const PatchSubset* patches,
                            const MaterialSubset* matls,
-                           DataWarehouse* old_dw, DataWarehouse* new_dw,
-                           LevelP level, Scheduler* sched)
+                           [[maybe_unused]] DataWarehouse* old_dw, DataWarehouse* new_dw,
+                           [[maybe_unused]] LevelP level, [[maybe_unused]] Scheduler* sched)
 {
   int center = 0;
   int n=0, s=0, e=0, w=0, t=0, b=0;

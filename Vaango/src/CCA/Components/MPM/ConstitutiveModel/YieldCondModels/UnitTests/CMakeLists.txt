@@ -59,6 +59,12 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_Solvers
         ${HDF5_TARGET}
 )
+if (HAVE_HYPRE)
+   set(VAANGO_LIBS
+      ${VAANGO_LIBS}
+      ${HYPRE_TARGET}
+   )
+endif()
 
 #------------------------
 # Google tests
