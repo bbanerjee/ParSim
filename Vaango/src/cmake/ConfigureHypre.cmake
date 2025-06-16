@@ -25,7 +25,8 @@ function(configure_hypre)
     endif()
 
     # Set hypre configure options
-    set(HYPRE_CONFIGURE_OPTIONS
+    set(HYPRE_CONFIGURE_CMD
+        ${HYPRE_SOURCE_DIR}/configure
         --prefix=${HYPRE_INSTALL_DIR}
         --enable-shared
         --enable-bigint=no
@@ -34,7 +35,16 @@ function(configure_hypre)
     )
 
     # Convert list to space-separated string for shell script
-    string(REPLACE ";" " " HYPRE_CONFIGURE_ARGS "${HYPRE_CONFIGURE_OPTIONS}")
+    string(REPLACE ";" " " HYPRE_CONFIGURE_ARGS "${HYPRE_CONFIGURE_CMD}")
+
+    # Set up configure script
+    set(HYPRE_CONFIGURE_SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/configure_hypre.sh)
+    file(WRITE ${HYPRE_CONFIGURE_SCRIPT}
+        "#!/bin/bash\n"
+        "cd ${HYPRE_SOURCE_DIR}\n"
+        "${HYPRE_CONFIGURE_ARGS}\n"
+    )
+    file(CHMOD ${HYPRE_CONFIGURE_SCRIPT} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
     
     # Configure hypre as external project
     message(STATUS "HYPRE_TARGET_NAME: ${HYPRE_TARGET_NAME}")
@@ -45,12 +55,9 @@ function(configure_hypre)
     message(STATUS "CMAKE_BUILD_PARALLEL_LEVEL: ${CMAKE_BUILD_PARALLEL_LEVEL}")
     ExternalProject_Add(${HYPRE_TARGET_NAME}
         SOURCE_DIR ${HYPRE_SOURCE_DIR}
-        CONFIGURE_COMMAND 
-            ${HYPRE_SOURCE_DIR}/configure ${HYPRE_CONFIGURE_ARGS}
-        BUILD_COMMAND 
-            ${MAKE_EXECUTABLE} -j${CMAKE_BUILD_PARALLEL_LEVEL}
-        INSTALL_COMMAND 
-            ${MAKE_EXECUTABLE} install
+        CONFIGURE_COMMAND ${HYPRE_CONFIGURE_SCRIPT}
+        BUILD_COMMAND ${MAKE_EXECUTABLE} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        INSTALL_COMMAND ${MAKE_EXECUTABLE} install
         BUILD_IN_SOURCE 1
         INSTALL_DIR ${HYPRE_INSTALL_DIR}
         LOG_CONFIGURE ON
@@ -74,4 +81,20 @@ function(configure_hypre)
     set(HYPRE_LIBRARY ${HYPRE_INSTALL_DIR}/lib/libHYPRE.so PARENT_SCOPE)
     set(HYPRE_LIBRARIES ${HYPRE_INSTALL_DIR}/lib/libHYPRE.so PARENT_SCOPE)
     set(HYPRE_FOUND TRUE PARENT_SCOPE)
+
+    execute_process(COMMAND git -C ${HYPRE_SOURCE_DIR} describe --match v* --abbrev=0
+                    OUTPUT_VARIABLE HYPRE_VERSION
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                    RESULT_VARIABLE git_result)
+    message(STATUS "Hyper git tag: ${HYPRE_VERSION}")
+    string(REGEX MATCH "^v?([0-9]+)\\.([0-9]+)\\.([0-9]+)$" _ "${HYPRE_VERSION}")
+    set(HYPRE_VERSION_MAJOR "${CMAKE_MATCH_1}" PARENT_SCOPE)
+    set(HYPRE_VERSION_MINOR "${CMAKE_MATCH_2}" PARENT_SCOPE)
+    set(HYPRE_VERSION_PATCH "${CMAKE_MATCH_3}" PARENT_SCOPE)
+
+    # Print the variables to verify
+    #message(STATUS "Original String: ${develop_string}")
+    #message(STATUS "Inside fn: HYPRE_MAJOR_VERSION: ${HYPRE_VERSION_MAJOR}")
+    #message(STATUS "Inside fn: HYPRE_MINOR_VERSION: ${HYPRE_VERSION_MINOR}")
+    #message(STATUS "Inside fn: HYPRE_VERSION_PATCH: ${HYPRE_VERSION_PATCH}")
 endfunction()

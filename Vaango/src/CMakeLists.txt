@@ -625,10 +625,10 @@ endif()
 #-----------------------------------------------------------------------------
 # Build PETSc
 #-----------------------------------------------------------------------------
-include(ConfigurePetsc)
 
 # Configure PETSc with custom options
 if(PETSC)
+  include(ConfigurePetsc)
   configure_petsc(
       SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/submodules/petsc
       INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/petsc-install
@@ -648,19 +648,23 @@ endif()
 #-----------------------------------------------------------------------------
 # Build HYPRE (for multigrid implicit linear solvers)
 #-----------------------------------------------------------------------------
-include(ConfigureHypre)
 
 if(HYPRE)
+    include(ConfigureHypre)
     configure_hypre()
 
-    message("HYPRE: include_dir: ${HYPRE_INCLUDE_DIR}")
-    message("HYPRE: library: ${HYPRE_LIBRARY}")
-    message("HYPRE_FOUND : ${HYPRE_FOUND}")
+    message("-- HYPRE: include_dir: ${HYPRE_INCLUDE_DIR}")
+    message("-- HYPRE: library: ${HYPRE_LIBRARY}")
+    message("-- HYPRE_FOUND : ${HYPRE_FOUND}")
 
     if (HYPRE_FOUND) 
       set(HAVE_HYPRE TRUE)
       set(DEF_HYPRE "#define HAVE_HYPRE 1")
       
+      message(STATUS "HYPRE_VERSION_MAJOR: ${HYPRE_VERSION_MAJOR}")
+      message(STATUS "HYPRE_VERSION_MINOR: ${HYPRE_VERSION_MINOR}")
+      message(STATUS "HYPRE_VERSION_PATCH: ${HYPRE_VERSION_PATCH}")
+
       # Version information
       if(HYPRE_VERSION_MAJOR)
           set(DEF_HYPRE_VERSION_MAJOR "#define HYPRE_VERSION_MAJOR ${HYPRE_VERSION_MAJOR}")
@@ -673,37 +677,12 @@ if(HYPRE)
       endif()
 
       set(HYPRE_TARGET "hypre::hypre")
-      message(STATUS "HYPRE found: ${HYPRE_VERSION}; Target: ${HYPRE_TARGET}")
+      message(STATUS "HYPRE found: ${HYPRE_VERSION_MAJOR}.${HYPRE_VERSION_MINOR}; Target: ${HYPRE_TARGET}")
     else()
       message(STATUS "HYPRE not found")
     endif()
     
 endif()
-
-#-----------------------------------------------------------------------------
-# Find HYPRE library (for implicit linear solvers)
-#-----------------------------------------------------------------------------
-#if(HYPRE)
-#    find_package(HYPRE REQUIRED)
-#    
-#    if(HYPRE_FOUND)
-#        set(HAVE_HYPRE TRUE)
-#        set(DEF_HYPRE "#define HAVE_HYPRE 1")
-#        
-#        # Version information
-#        if(HYPRE_VERSION_MAJOR)
-#            set(DEF_HYPRE_VERSION_MAJOR "#define HYPRE_VERSION_MAJOR ${HYPRE_VERSION_MAJOR}")
-#        endif()
-#        if(HYPRE_VERSION_MINOR)
-#            set(DEF_HYPRE_VERSION_MINOR "#define HYPRE_VERSION_MINOR ${HYPRE_VERSION_MINOR}")
-#        endif()
-#        if(HYPRE_VERSION_PATCH)
-#            set(DEF_HYPRE_VERSION_PATCH "#define HYPRE_VERSION_PATCH ${HYPRE_VERSION_PATCH}")
-#        endif()
-#        
-#        message(STATUS "HYPRE found: ${HYPRE_VERSION}")
-#    endif()
-#endif()
 
 #-----------------------------------------------------------------------------
 # Find VisIt and build plugin

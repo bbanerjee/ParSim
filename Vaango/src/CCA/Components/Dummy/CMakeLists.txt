@@ -60,13 +60,18 @@ SET(Vaango_CCA_Components_Dummy_SRCS
 
 add_library(Vaango_CCA_Components_Dummy ${Vaango_CCA_Components_Dummy_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_Dummy
+target_link_libraries(Vaango_CCA_Components_Dummy PRIVATE
   Vaango_Core_Parallel
   Vaango_CCA_Ports
   Vaango_CCA_Components_Solvers
   Vaango::Options
   Vaango::Warnings
 )
+if (HAVE_HYPRE)
+   target_link_libraries(Vaango_CCA_Components_Dummy PRIVATE
+      ${HYPRE_TARGET}
+   )
+endif()
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_Dummy)

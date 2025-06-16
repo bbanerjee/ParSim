@@ -52,6 +52,12 @@ set(VAANGO_LIBS
   Vaango::Options
   Vaango::Warnings
 )
+if (HAVE_HYPRE)
+   set(VAANGO_LIBS
+      ${VAANGO_LIBS}
+      ${HYPRE_TARGET}
+   )
+endif()
 
 #add_library(ut_lib ${UT_SRCS})
 #target_link_libraries(ut_lib 

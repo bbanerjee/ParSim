@@ -14,7 +14,7 @@
 #   )
 #
 # Creates targets:
-#   - petsc_external: ExternalProject target
+#   - petsc: ExternalProject target
 #   - PETSc::petsc: Imported library target
 #
 # Creates function:
@@ -27,6 +27,43 @@ set(PETSC_DEFAULT_DEBUGGING OFF)
 set(PETSC_DEFAULT_SHARED_LIBS ON)
 set(PETSC_DEFAULT_WITH_MPI ON)
 set(PETSC_DEFAULT_DOWNLOAD_DEPS ON)
+
+function(set_petsc_arch)
+    # Default fallback
+    set(PETSC_ARCH_DEFAULT "arch-unknown")
+    
+    # Get OS name
+    string(TOLOWER ${CMAKE_SYSTEM_NAME} OS_NAME)
+    
+    # Get architecture
+    string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} ARCH_NAME)
+    if(ARCH_NAME MATCHES "x86_64|amd64")
+        set(ARCH_NAME "x86_64")
+    elseif(ARCH_NAME MATCHES "aarch64|arm64")
+        set(ARCH_NAME "arm64")
+    endif()
+    
+    # Get compiler
+    string(TOLOWER ${CMAKE_CXX_COMPILER_ID} COMPILER_NAME)
+    if(COMPILER_NAME STREQUAL "gnu")
+        set(COMPILER_NAME "gcc")
+    elseif(COMPILER_NAME STREQUAL "appleclang")
+        set(COMPILER_NAME "clang")
+    endif()
+    
+    # Get build type
+    string(TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
+    #if(BUILD_TYPE STREQUAL "debug")
+    if(PETSC_DEBUGGING)
+        set(BUILD_SUFFIX "debug")
+    else()
+        set(BUILD_SUFFIX "opt")
+    endif()
+    
+    # Construct PETSC_ARCH
+    set(PETSC_ARCH "${OS_NAME}-${COMPILER_NAME}-${BUILD_SUFFIX}" PARENT_SCOPE)
+endfunction()
+
 
 # Function to configure PETSc
 function(configure_petsc)
@@ -64,9 +101,9 @@ function(configure_petsc)
     endif()
     
     if(NOT PETSC_TARGET_NAME)
-        set(PETSC_TARGET_NAME "petsc_external")
+        set(PETSC_TARGET_NAME "petsc")
     endif()
-    
+
     # Check if source directory exists
     if(NOT EXISTS ${PETSC_SOURCE_DIR})
         message(FATAL_ERROR "PETSc source directory does not exist: ${PETSC_SOURCE_DIR}")
@@ -169,6 +206,13 @@ function(configure_petsc)
 
     # Convert list to space-separated string for shell script
     string(REPLACE ";" " " PETSC_CONFIGURE_ARGS "${PETSC_CONFIGURE_CMD}")
+
+    # Set PETSC_ARCH
+    set_petsc_arch()
+    message(STATUS "PETSC_ARCH set to: ${PETSC_ARCH}")
+
+    # Set PETSC_DIR
+    set(PETSC_DIR "${PETSC_SOURCE_DIR}")
     
     # For cross-platform compatibility, create configure wrapper
     if(WIN32)
@@ -183,7 +227,7 @@ function(configure_petsc)
         file(WRITE ${PETSC_CONFIGURE_SCRIPT}
             "#!/bin/bash\n"
             "cd ${PETSC_SOURCE_DIR}\n"
-            "./configure ${PETSC_CONFIGURE_ARGS}\n"
+            "./configure PETSC_DIR=${PETSC_DIR} PETSC_ARCH=${PETSC_ARCH} ${PETSC_CONFIGURE_ARGS}\n"
         )
         file(CHMOD ${PETSC_CONFIGURE_SCRIPT} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
     endif()
@@ -196,11 +240,13 @@ function(configure_petsc)
 
     ExternalProject_Add(${PETSC_TARGET_NAME}
         SOURCE_DIR ${PETSC_SOURCE_DIR}
+        DOWNLOAD_COMMAND ""
+        UPDATE_COMMAND ""
         CONFIGURE_COMMAND ${PETSC_CONFIGURE_SCRIPT}
         BUILD_COMMAND 
-            ${MAKE_EXECUTABLE} -C ${PETSC_SOURCE_DIR} all
+            ${MAKE_EXECUTABLE} PETSC_DIR=${PETSC_DIR} PETSC_ARCH=${PETSC_ARCH} all
         INSTALL_COMMAND 
-            ${MAKE_EXECUTABLE} -C ${PETSC_SOURCE_DIR} install
+            ${MAKE_EXECUTABLE} PETSC_DIR=${PETSC_DIR} PETSC_ARCH=${PETSC_ARCH} install
         BUILD_IN_SOURCE 1
         INSTALL_DIR ${PETSC_INSTALL_DIR}
         LOG_CONFIGURE ON
@@ -266,7 +312,7 @@ function(target_link_petsc target_name)
         message(FATAL_ERROR "target_link_petsc: PETSc has not been configured. Call configure_petsc() first.")
     endif()
     
-    add_dependencies(${target_name} petsc_external)
+    add_dependencies(${target_name} petsc)
     target_link_libraries(${target_name} PETSc::petsc)
     
     message(STATUS "PETSc: Linked to target ${target_name}")
