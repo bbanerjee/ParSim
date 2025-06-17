@@ -23,24 +23,39 @@
 # IN THE SOFTWARE.
 #
 
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-from os import environ,unsetenv,rmdir,mkdir,path,system,chdir,stat,getcwd,pathsep,symlink,makedirs, walk, remove, rmdir
-from time import strftime,time,gmtime,asctime,localtime
-from sys import argv,exit,stdout
-from string import upper,rstrip,rsplit
-from modUPS import modUPS
-from commands import getoutput
+from os import (
+    environ,
+    unsetenv,
+    rmdir,
+    mkdir,
+    path,
+    system,
+    chdir,
+    stat,
+    getcwd,
+    pathsep,
+    symlink,
+    makedirs,
+    walk,
+    remove,
+    rmdir,
+)
+from time import strftime, time, gmtime, asctime, localtime
+from sys import argv, exit, stdout
+from helpers.modUPS import modUPS
+from subprocess import getoutput
 import socket
 import resource
 import errno
 
-#______________________________________________________________________
+# ______________________________________________________________________
 # Assuming that running python with the '-u' arg doesn't fix the i/o buffering problem, this line
 # can be added after print statements:
 #
 # stdout.flush() # Make sure that output (via 'tee' command (from calling script)) is actually printed...
-#______________________________________________________________________
+# ______________________________________________________________________
 
 def nameoftest (test):
     return test[0]
@@ -59,7 +74,7 @@ def userFlags (test):
 def nullCallback (test, vaangodir, inputsdir, compare_root, dbg_opt, max_parallelism):
     pass
 
-#______________________________________________________________________
+# ______________________________________________________________________
 # Used by toplevel/generateGoldStandards.py
 
 inputs_dir = ""
@@ -71,16 +86,16 @@ def setGeneratingGoldStandards( inputs ) :
 def generatingGoldStandards() :
     global inputs_dir
     return inputs_dir
-    
-#______________________________________________________________________
+
+# ______________________________________________________________________
 # if a callback is given, it is executed before running each test and given
 # all of the parameters given to runVaangoTest
 def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
  
   if len(argv) < 6 or len(argv) > 7 or not argv[4] in ["dbg", "opt", "unknown"] :
-    print "usage: %s <vaangodir> <inputsdir> <testdata_goldstandard> <dbg_opt> " \
-             "<max_parallelsim> <test>" % argv[0]
-    print "    where <test> is optional"
+    print(f"usage: {argv[0]} <vaangodir> <inputsdir> <testdata_goldstandard> <dbg_opt> " \
+           "<max_parallelsim> <test>")
+    print("    where <test> is optional")
     exit(1)
   #__________________________________
   # setup variables and paths
@@ -91,20 +106,20 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
   toolspath     = path.normpath(path.join(getcwd(), "tools"))
   inputpath     = path.normpath(path.join(getcwd(), inputs_root()))
 
-  #print "vaangodir = ", vaangodir
-  #print "gold_standard = ", gold_standard
-  #print "helperspath = ", helperspath
-  #print "toolspath = ", toolspath
-  #print "inputpath = ", inputpath
+  #print("vaangodir = ", vaangodir)
+  #print("gold_standard = ", gold_standard)
+  #print("helperspath = ", helperspath)
+  #print("toolspath = ", toolspath)
+  #print("inputpath = ", inputpath)
   
   
   global startpath
   startpath       = getcwd()
-  #print "startpath = ", startpath
+  #print("startpath = ", startpath)
   
   dbg_opt         = argv[4]
   max_parallelism = float(argv[5])
-  svn_revision    = getoutput("svn info ../src |grep Revision")
+  git_revision    = getoutput("svn info ../src |grep Revision")
   
   
                     # 1 for GPU RT machine (albion), 0 otherwise.
@@ -124,7 +139,7 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
     solotest = argv[6]
   
   
-  print 'LocalRT_DIR = ' + environ['LOCALRT_DIR']
+  print(f"LocalRT_DIR = {environ['LOCALRT_DIR']}")
   outputpath = environ['LOCALRT_DIR']
   weboutputpath = outputpath
   #outputpath = startpath
@@ -157,23 +172,23 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
   try:
     chdir(helperspath)
   except Exception:
-    print "%s does not exist" % (helperspath)
-    print "'helpers' directory could not be found"
+    print(f"{helperspath} does not exist")
+    print("'helpers' directory could not be found")
     exit(1)
 
   try:
     chdir(vaangodir)
     stat("vaango")
   except Exception:
-    print "%s/vaango does not exist" % (vaangodir)
-    print "Please give a valid <vaangodir> argument"
+    print(f"{vaangodir}/vaango does not exist")
+    print("Please give a valid <vaangodir> argument")
     exit(1)
 
   try:
     chdir(gold_standard)
   except Exception:
-    print "%s does not exist" % (gold_standard)
-    print "Please give a valid <testdata_goldstandard> argument"
+    print(f"{gold_standard} does not exist")
+    print("Please give a valid <testdata_goldstandard> argument")
     exit(1)
   compare_root = "%s/%s" % (gold_standard, ALGO)
   
@@ -190,32 +205,32 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
   resultsdir = "%s/%s-results" % (outputpath, ALGO)
   chdir(outputpath)
   
-  print ""
+  print("")
   if solotest == "":
-    print "Performing %s-%s tests." % (ALGO, dbg_opt)
+    print(f"Performing {ALGO}-{dbg_opt} tests.")
   else:
-    print "Performing %s-%s test %s." % (ALGO, dbg_opt, solotest)
-  print "===================================="
-  print ""
+    print(f"Performing {ALGO}-{dbg_opt} test {solotest}.")
+  print("====================================")
+  print("")
 
   try:
     makedirs(resultsdir)
   except OSError as exception:
     if exception.errno == errno.EEXIST:
       if solotest == "":
-        #print "Removing existing files in %s before running this test\n" % resultsdir
+        #print("Removing existing files in %s before running this test\n" % resultsdir)
         for root, dirs, files in walk(resultsdir, topdown = False):
           for name in files:
-            #print "removing file = " + path.join(root, name)
+            #print("removing file = " + path.join(root, name))
             remove(path.join(root, name))
           for name in dirs:
-            #print "removing dir = " + path.join(root, name)
+            #print("removing dir = " + path.join(root, name))
             if path.islink(path.join(root, name)):
               remove(path.join(root, name))
             else:
               rmdir(path.join(root, name))
     else:
-      print "Unable to create %s before running this test\n" % resultsdir
+      print(f"Unable to create {resultsdir} before running this test\n")
       exit(1)
 
   #raw_input("Press Enter to continue...")
@@ -223,7 +238,7 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
   #  mkdir(resultsdir)
   #except Exception:
   #  if solotest == "":
-  #    print "Remove %s before running this test\n" % resultsdir
+  #    print("Remove %s before running this test\n" % resultsdir)
   #    exit(1)
 
   chdir(resultsdir)
@@ -252,7 +267,7 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
     if testOS(test) != upper(environ['OS']) and testOS(test) != "ALL":
       continue
       
-    print "__________________"
+    print("__________________")
     test_time0 = time() 
     solotest_found = 1
     #__________________________________
@@ -273,11 +288,11 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
     # override defaults if the flags has been specified
     if len(test) == 5:
       flags = userFlags(test)
-      print "User Flags:"
+      print("User Flags:")
       
       #  parse the user flags
       for i in range(len(flags)):
-        print i,flags[i]
+        print(f"i = {i}, flag = {flags[i]}")
         
         if flags[i] == "no_uda_comparison":
           do_uda_comparisons = 0
@@ -321,19 +336,19 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
     
     #Warnings
     if dbg_opt == "dbg" and do_performance == 1:
-      print "\nERROR: performance tests cannot be run with a debug build, skipping this test\n"
+      print("\nERROR: performance tests cannot be run with a debug build, skipping this test\n")
       continue
            
     if do_debug == 0 and dbg_opt == "dbg":
-      print "\nWARNING: skipping this test (do_debug: %s, dbg_opt: %s)\n" % (do_debug, dbg_opt)
+      print(f"\nWARNING: skipping this test (do_debug: {do_debug}, dbg_opt: {dbg_opt})\n")
       continue
     
     if do_opt == 0 and dbg_opt == "opt":
-      print "\nWARNING: skipping this test (do_opt: %s, dbg_opt: %s)\n" % (do_opt, dbg_opt)
+      print(f"\nWARNING: skipping this test (do_opt: {do_opt}, dbg_opt: {dbg_opt})\n")
       continue
       
     if do_gpu == 1 and has_gpu == 0:
-      print "\nWARNING: skipping this test.  This machine is not configured to run gpu tests\n"
+      print("\nWARNING: skipping this test.  This machine is not configured to run gpu tests\n")
       continue      
       
     
@@ -358,12 +373,12 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
       chdir(testname)
     except Exception:
       if environ['LOCAL_OR_NIGHTLY_TEST'] == "local" :
-        print "ERROR: The gold standard for the (%s) test does not exist." % testname
-        print "To generate it run: \n   make gold_standards"
+        print(f"ERROR: The gold standard for the ({testname}) test does not exist.")
+        print("To generate it run: \n   make gold_standards")
         exit(1) 
         
       if environ['LOCAL_OR_NIGHTLY_TEST'] == "nightly" :     
-        print "gold Standard being created for  (%s)" % testname
+        print(f"gold Standard being created for  ({testname})")
         chdir(compare_root)
         mkdir(testname)
     
@@ -372,8 +387,8 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
         here = "%s/CheckPoints/%s/%s/%s.uda.000/" %(startpath,ALGO,testname,testname)
         chdir(here)
       except Exception:
-        print "checkpoint uda %s does not exist" % here
-        print "This file must exist when using 'startFromCheckpoint' option"
+        print(f"checkpoint uda {here} does not exist")
+        print("This file must exist when using 'startFromCheckpoint' option")
         exit(1)
       
 
@@ -383,8 +398,8 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
     try:
       chdir(inputsdir)
     except Exception:
-      print "%s does not exist" % (inputsdir)
-      print "Please give a valid <inputsdir> argument"
+      print(f"{inputsdir} does not exist")
+      print("Please give a valid <inputsdir> argument")
       exit(1)
 
     chdir(resultsdir)
@@ -392,7 +407,7 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
     try:
       mkdir(testname)
     except Exception:
-      print "Remove %s/%s before running this test" % (resultsdir, testname)
+      print(f"Remove {resultsdir}/{testname} before running this test")
       exit(1)
 
     system("echo '%s/replace_gold_standard %s %s/localRTData/%s-results %s' > %s/replace_gold_standard" % (helperspath, compare_root, startpath, ALGO, testname, testname))
@@ -418,7 +433,7 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
     if outputpath != weboutputpath:
       if path.exists("%s/%s-results/%s" % (outputpath, ALGO, testname)) != 1:
         mkdir("%s/%s-results/%s" % (outputpath, ALGO, testname))
-      print "Copying files to web server"
+      print("Copying files to web server")
       system("cp `ls -1 | grep -v uda` %s/%s-results/%s/" % (outputpath, ALGO, testname))
     
     # Return Code (rc) of 2 means it failed comparison or memory test, so try to run restart
@@ -458,19 +473,19 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
     
     # timer
     test_timer = time() - test_time0
-    print "Test Timer:",strftime("%H:%M:%S",gmtime(test_timer))
+    print(f"Test Timer: {strftime("%H:%M:%S",gmtime(test_timer))}")
     
     # If the test passed put an svn revision stamp in the goldstandard
     # user root is running the cronjob
     user = getoutput("whoami");
     
     if rc > 0:
-      print "Failed %i user %s" %(failcode,user)
+      print(f"Failed {failcode} user {user}")
     
     if failcode == 0 and (user == "csafe-tester" or user == "root"):
-      print "Updating the svn revision file %s" %svn_revision
-      svn_file = "%s/%s/%s/svn_revision" % (gold_standard,ALGO,testname)
-      system( "echo 'This test last passed with %s'> %s" %(svn_revision, svn_file))  
+      print(f"Updating the git revision file {git_revision}")
+      git_file = "%s/%s/%s/git_revision" % (gold_standard,ALGO,testname)
+      system( "echo 'This test last passed with %s'> %s" %(git_revision, git_file))  
     #__________________________________
     # end of test loop
 
@@ -489,13 +504,13 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
     system("chmod -R gu+rwX,a+rX %s/%s-results > /dev/null 2>&1" % (outputpath, ALGO))
 
   if solotest != "" and solotest_found == 0:
-    print "unknown test: %s" % solotest
+    print(f"unknown test: {solotest}")
     system("rm -rf %s" % (resultsdir))
     exit(1)
 
   # no tests ran
   if ran_any_tests == 0:
-    print "Didn't run any tests!"
+    print("Didn't run any tests!")
     return 0
     #exit(3)
   
@@ -504,25 +519,25 @@ def runVaangoTests(argv, TESTS, ALGO, callback = nullCallback):
   
   if failcode == 0:
     if solotest != "":
-      print ""
-      print "%s-%s test %s passed successfully!" % (ALGO, dbg_opt, solotest)
+      print("")
+      print(f"{ALGO}-{dbg_opt} test {solotest} passed successfully!")
     else:
-      print ""
-      print "All %s-%s tests passed successfully!" % (ALGO, dbg_opt)
+      print("")
+      print(f"All {ALGO}-{dbg_opt} tests passed successfully!")
   else:
-    print ""
-    print "Some tests failed"
+    print("")
+    print("Some tests failed")
     
   comp_timer = time() - comp_time0
-  print "Component Timer:",strftime("%H:%M:%S",gmtime(comp_timer))
+  print(f"Component Timer: {strftime("%H:%M:%S",gmtime(comp_timer))}")
 
   # Never return failcode = 1
   failcode = 0
 
   return failcode
 
-#______________________________________________________________________
-# runVaangoTest() 
+# ______________________________________________________________________
+# runVaangoTest()
 # parameters are basically strings, except for tests_to_do which is a list of
 # 3 ints stating whether to do comparison, memory, and performance tests
 # in that order
@@ -536,7 +551,7 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
   np = float(num_processes(test))
   if (np > max_parallelism):
     if np == 1.1:
-      print "Skipping test %s because it requires mpi and max_parallism < 1.1" % testname;
+      print(f"Skipping test {testname} because it requires mpi and max_parallism < 1.1")
       return -1; 
 
   vaango_options             = varBucket[0]
@@ -581,9 +596,9 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
     rc = system("which mpirun > /dev/null 2>&1")
 
     if rc == 256:
-      print "ERROR:runVaangoTests.py "
-      print "      mpirun command was not found and the environmental variable MPIRUN was not set."
-      print "      You must either put mpirun in your path or set the environmental variable"
+      print("ERROR:runVaangoTests.py ")
+      print("      mpirun command was not found and the environmental variable MPIRUN was not set.")
+      print("      You must either put mpirun in your path or set the environmental variable")
       exit (1)
 
   if not do_memory_test :
@@ -628,16 +643,16 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
     inputxml = path.basename(inputxml)
 
 
-  #SVN_OPTIONS = "-svnStat -svnDiff"
-  SVN_OPTIONS = "" # When debugging, if you don't want to spend time waiting for SVN, uncomment this line.
+  #GIT_OPTIONS = "-svnStat -svnDiff"
+  GIT_OPTIONS = "" # When debugging, if you don't want to spend time waiting for SVN, uncomment this line.
 
   # set the command for vaango, based on # of processors
   # the /usr/bin/time is to tell how long it took
   if np == 1:
-    command = "/usr/bin/time -p %s/vaango %s %s" % (vaangodir, vaango_options, SVN_OPTIONS)
+    command = "/usr/bin/time -p %s/vaango %s %s" % (vaangodir, vaango_options, GIT_OPTIONS)
     mpimsg = ""
   else:
-    command = "/usr/bin/time -p %s %s %s/vaango %s %s " % (MPIHEAD, int(np), vaangodir, vaango_options, SVN_OPTIONS)
+    command = "/usr/bin/time -p %s %s %s/vaango %s %s " % (MPIHEAD, int(np), vaangodir, vaango_options, GIT_OPTIONS)
     mpimsg = " (mpi %s proc)" % (int(np))
 
   time0 =time()  #timer
@@ -645,17 +660,17 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
   #__________________________________ 
   # setup input for vaango
   if startFrom == "restart":
-    print "Running restart test  ---%s--- %s at %s" % (testname, mpimsg, strftime( "%I:%M:%S"))
+    print(f"Running restart test  ---{testname}--- {mpimsg} at {strftime("%I:%M:%S")}")
     vaangoinput     = "-restart ../*.uda.000 -t 0 -copy"
     restart_text = " (restart)"
     
   if startFrom == "inputFile":
-    print "Running test  ---%s--- %s at %s" % (testname, mpimsg, strftime( "%I:%M:%S"))
+    print(f"Running test  ---{testname}--- {mpimsg} at {strftime( "%I:%M:%S")}")
     vaangoinput     = "%s" % (inputxml)
     restart_text = " "
  
   if startFrom == "checkpoint":
-    print "Running test from checkpoint ---%s--- %s at %s" % (testname, mpimsg, strftime( "%I:%M:%S"))
+    print(f"Running test from checkpoint ---{testname}--- {mpimsg} at {strftime( "%I:%M:%S")}")
     vaangoinput     = "-restart %s/CheckPoints/%s/%s/*.uda.000" %  (startpath,ALGO,testname)
     restart_text = " "
   #________________________________
@@ -690,13 +705,13 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
   # actually run the test!
   short_cmd = command.replace(vaangodir+'/','')
 
-  print "Command Line: %s %s" % (short_cmd, vaangoinput)
+  print(f"Command Line: {short_cmd}, {vaangoinput}")
   rc = system("env > vaango.log.txt; %s %s >> vaango.log.txt 2>&1" % (command, vaangoinput))
   
   # was an exception thrown
   exception = system("grep -q 'Caught exception' vaango.log.txt");
   if exception == 0:
-    print "\t*** An exception was thrown ***";
+    print("\t*** An exception was thrown ***")
     rc = -9
     
   # determine path of replace_msg in 2 places to not have 2 different msgs.
@@ -713,19 +728,19 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
   
   return_code = 0
   if rc == 35072 or rc == 36608 :
-    print "\t*** Test %s exceeded maximum allowable run time" % (testname)
-    print 
+    print(f"\t*** Test {testname} exceeded maximum allowable run time")
+    print()
     system("echo '  :%s: %s test exceeded maximum allowable run time' >> %s/%s-short.log" % (testname,restart_text,startpath,ALGO))
     return_code = 1
   
   elif rc != 0:
-    print "\t*** Test %s failed with code %d" % (testname, rc)
+    print(f"\t*** Test {testname} failed with code {rc}")
     
     if startFrom == "restart":
-      print "\t\tMake sure the problem makes checkpoints before finishing"
+      print("\t\tMake sure the problem makes checkpoints before finishing")
     
-    print vaango_log_msg
-    print 
+    print(vaango_log_msg)
+    print()
     system("echo '  :%s: %s test did not run to completion' >> %s/%s-short.log" % (testname,restart_text,startpath,ALGO))
     return_code = 1
 
@@ -737,7 +752,7 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
     # it is the third line from the bottom
 
     # save this file independent of performance tests being done
-    print "\tSuccessfully ran to completion"
+    print("\tSuccessfully ran to completion")
 
     if startFrom == "restart":
       ts_file = "restart_timestamp"
@@ -748,7 +763,7 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
     #__________________________________
     # performance test
     if do_performance_test == 1:
-      print "\tPerforming performance test on %s" % (date())
+      print(f"\tPerforming performance test on {date()}")
       
       performance_RC = system("performance_check %s %s %s %s %s > performance_check.log.txt 2>&1" % 
                              (testname, do_plots, ts_file, compare_root, helperspath))
@@ -759,25 +774,25 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
         short_message = ""
         
       if performance_RC == 0:
-        print "\tPerformance tests passed."
+        print("\tPerformance tests passed.")
         if short_message != "":
-          print "\t%s" % (short_message)    
+          print(f"\t{short_message}")    
       elif performance_RC == 5 * 256:
-        print "\t* Warning, no timestamp file created.  No performance test performed."
+        print("\t* Warning, no timestamp file created.  No performance test performed.")
       elif performance_RC == 2*256:
-        print "\t*** Warning, test %s failed performance test." % (testname)
+        print(f"\t*** Warning, test {testname} failed performance test.")
         if short_message != "":
-          print "\t%s" % (short_message)
+          print(f"\t{short_message}")
           
-        print perf_msg
-        print "%s" % replace_msg
+        print(perf_msg)
+        print(f"{replace_msg}")
       else:
-        print "\tPerformance tests passed. (Note: no previous performace stats)."
+        print("\tPerformance tests passed. (Note: no previous performace stats).")
 
     #__________________________________
     # uda comparison
     if do_uda_comparison_test == 1:
-      print "\tComparing udas"
+      print("\tComparing udas")
 
       if dbg_opt == "dbg":
         environ['MALLOC_STATS'] = "compare_uda_malloc_stats"
@@ -788,27 +803,27 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
       compUda_RC = system("sh %s %s %s %s %s %s %s %s> compare_vaango_runs.log.txt 2>&1" % (compare_vaango_runs_exe, testname, getcwd(), compare_root, vaangodir,abs_tol, rel_tol, helperspath))
       if compUda_RC != 0:
         if compUda_RC == 10 * 256:
-          print "\t*** Input file(s) differs from the goldstandard"
-          print "%s" % replace_msg
+          print("\t*** Input file(s) differs from the goldstandard")
+          print(f"{replace_msg}")
           
         elif compUda_RC == 1 * 256 or compUda_RC == 5*256:
-          print "\t*** Warning, test %s failed uda comparison with error code %s" % (testname, compUda_RC)
-          print compare_msg
+          print(f"\t*** Warning, test {testname} failed uda comparison with error code {compUda_RC}")
+          print(f"{compare_msg}")
           
           if startFrom != "restart":
-           print "%s" % replace_msg
+           print(f"{replace_msg}")
         
         elif compUda_RC == 65280: # (-1 return code)
-          print "\tComparison tests passed.  (Note: No dat files to compare.)"
+          print("\tComparison tests passed.  (Note: No dat files to compare.)")
         
         else:
-          print "\tComparison tests passed.  (Note: No previous gold standard.)"
+          print("\tComparison tests passed.  (Note: No previous gold standard.)")
       
       else:
-        print "\tComparison tests passed."
+        print("\tComparison tests passed.")
     #__________________________________
     # Memory leak test
-    #print "Do memory tests: ?", do_memory_test
+    #print("Do memory tests: ?", do_memory_test)
     if do_memory_test == 1:
     
       memory_RC = system("mem_leak_check %s %d %s %s %s %s> mem_leak_check.log.txt 2>&1" % 
@@ -820,26 +835,26 @@ def runVaangoTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_pa
         short_message = ""
 
       if memory_RC == 0:
-          print "\tMemory leak tests passed."
+          print("\tMemory leak tests passed.")
           if short_message != "":
-            print "\t%s" % (short_message)    
+            print(f"\t{short_message}")    
       elif memory_RC == 5 * 256:
-          print "\t* Warning, no malloc_stats file created.  No memory leak test performed."
+          print("\t* Warning, no malloc_stats file created.  No memory leak test performed.")
       elif memory_RC == 256:
-          print "\t*** Warning, test %s failed memory leak test." % (testname)
-          print memory_msg
+          print(f"\t*** Warning, test {testname} failed memory leak test.")
+          print(f"{memory_msg}")
           # check that all VarLabels were deleted
           rc = system("mem_leak_checkVarLabels vaango.log.txt >> mem_leak_check.log.txt 2>&1")  
       elif memory_RC == 2*256:
-          print "\t*** Warning, test %s failed memory highwater test." % (testname)
+          print(f"\t*** Warning, test {testname} failed memory highwater test.")
           if short_message != "":
-            print "\t%s" % (short_message)
-          print memory_msg
-          print "%s" % replace_msg
+            print(f"\t{short_message}")
+          print(f"{memory_msg}")
+          print(f"{replace_msg}")
       else:
-          print "\tMemory leak tests passed. (Note: no previous memory usage stats)."
+          print("\tMemory leak tests passed. (Note: no previous memory usage stats).")
     #__________________________________
-    # print error codes
+    # print(error codes)
     # if comparison, memory, performance tests fail, return here, so mem_leak tests can run
     if compUda_RC == 5*256 or compUda_RC == 1*256:
       system("echo '  :%s: \t%s test failed comparison tests' >> %s/%s-short.log" % (testname,restart_text,startpath,ALGO))

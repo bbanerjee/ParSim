@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Ltd, NZ
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -22,7 +23,7 @@
 # IN THE SOFTWARE.
 #
 
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 from os import stat, system, mkdir, path, getcwd, chdir
 from sys import exit
@@ -43,13 +44,13 @@ def modUPS(directory, filename, changes):
     try:
       stat(realdir)
     except Exception:
-      print "%s does not exist" % realdir
+      print(f"{realdir} does not exist")
       exit(1)
   
     try:
       stat(origfilename)
     except Exception:
-      print "%s does not exist" % origfilename
+      print(f"{origfilename} does not exist")
       exit(1)
     try:
       stat("%s/tmp" % realdir)
@@ -62,8 +63,8 @@ def modUPS(directory, filename, changes):
     try:
       while 1:
         appendedFilename = "%s.%d" % (newfilename,append)
-	stat(appendedFilename)
-	append = append + 1
+        stat(appendedFilename)
+        append = append + 1
     except Exception:
       newfilename = "%s.%d" % (newfilename, append)
       filename = "%s.%d" % (filename, append)
@@ -82,7 +83,7 @@ def modUPS(directory, filename, changes):
         if addToScript == 1:
           sedscript = sedscript + ch
         if ch == '/':
-          sedreplacestring = sedreplacestring + "\/"
+          sedreplacestring = sedreplacestring + r"\/"
         else:
           sedreplacestring = sedreplacestring + ch
       sedscript = sedscript + ".*>/" + sedreplacestring + "/"
