@@ -59,14 +59,14 @@ static DebugStream cout_dbg("HYPRE_DBG", false);
 
 
 void
-HypreDriver::makeLinearSystem_CC(const int matl)
+HypreDriver::makeLinearSystem_CC([[maybe_unused]] const int matl)
 {
   throw InternalError("makeLinearSystem is not implemented for CC variables",
                       __FILE__, __LINE__);
 }
 
 void
-HypreDriver::getSolution_CC(const int matl)
+HypreDriver::getSolution_CC([[maybe_unused]] const int matl)
 {
   throw InternalError("getSolution is not implemented for CC variables",
                       __FILE__, __LINE__);

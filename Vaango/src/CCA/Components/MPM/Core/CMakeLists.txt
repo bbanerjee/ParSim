@@ -40,12 +40,15 @@ SET(Vaango_MPM_Core_SRCS
 
 add_library(MPM_Core ${Vaango_MPM_Core_SRCS})
 
-target_link_libraries(MPM_Core 
+target_link_libraries(MPM_Core PRIVATE
   ${LIBS}
   MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )
+if (PETSC)
+  target_link_petsc(MPM_Core PRIVATE)
+endif()
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_Core)

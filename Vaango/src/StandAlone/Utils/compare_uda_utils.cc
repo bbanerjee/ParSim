@@ -197,7 +197,9 @@ compare(Uintah::Point a,
         double abs_tolerance,
         double rel_tolerance)
 {
-  return compare(a.asVector(), b.asVector(), abs_tolerance, rel_tolerance);
+  auto vec_a = a.asVector();
+  auto vec_b = b.asVector();
+  return compare(vec_a, vec_b, abs_tolerance, rel_tolerance);
 }
 
 bool

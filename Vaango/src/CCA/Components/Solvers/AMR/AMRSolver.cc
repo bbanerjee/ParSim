@@ -137,7 +137,7 @@ AMRSolver::scheduleSolve(const LevelP& level,
                          Task::WhichDW which_b_dw,
                          const VarLabel* guess,
                          Task::WhichDW which_guess_dw,
-                         bool isFirstSolve)
+                         [[maybe_unused]] bool isFirstSolve)
 
 {
   cout_doing << "AMRSolver::scheduleSolve() BEGIN"

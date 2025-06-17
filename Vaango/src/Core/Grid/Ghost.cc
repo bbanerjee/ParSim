@@ -25,14 +25,13 @@
 #include <Core/Grid/Ghost.h>
 
 using namespace Uintah;
-using namespace Uintah;
 
 
-std::string Ghost::names[numGhostTypes] =
-{ "None", "nodes", "cells", "x faces", "y faces", "z faces", "all faces" };
+std::string Ghost::names[numGhostTypes+1] =
+{ "None", "nodes", "cells", "x faces", "y faces", "z faces", "all faces", "numGhostTypes" };
   
 
-IntVector Ghost::directions[numGhostTypes] =
+IntVector Ghost::directions[numGhostTypes+1] =
 { IntVector(0,0,0), IntVector(1,1,1), IntVector(1,1,1),
   IntVector(1,0,0), IntVector(0,1,0), IntVector(0,0,1),
-  IntVector(1,1,1) };
+  IntVector(1,1,1), IntVector(-1, -1, -1) };

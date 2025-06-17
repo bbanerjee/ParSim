@@ -138,7 +138,7 @@ FrictionContactBard::exchangeMomentum(const ProcessorGroup* pg,
 void
 FrictionContactBard::exMomInterpolated(const ProcessorGroup*,
                                        const PatchSubset* patches,
-                                       const MaterialSubset* matls,
+                                       [[maybe_unused]] const MaterialSubset* matls,
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw)
 {

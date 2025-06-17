@@ -356,13 +356,13 @@ private:
     // Use a lookup table to find the element in A(lc(v)) or A(rc(v))
     // (left or right versions) that is the first one greater than or
     // equal to the ith one in A(v).
-    inline int getLeftSubGreaterEq(int i, BaseLevelSet* sub)
+    inline int getLeftSubGreaterEq(int i, [[maybe_unused]] BaseLevelSet* sub)
     {
       ASSERT(leftSubset_ == sub);
       CHECKARRAYBOUNDS(i, 0, size_+1);
       return leftSubLinks_[i];
     }
-    inline int getRightSubGreaterEq(int i, BaseLevelSet* sub)
+    inline int getRightSubGreaterEq(int i, [[maybe_unused]] BaseLevelSet* sub)
     {
       ASSERT(rightSubset_ == sub);
       CHECKARRAYBOUNDS(i, 0, size_+1);

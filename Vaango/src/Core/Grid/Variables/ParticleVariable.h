@@ -490,7 +490,7 @@ void
 ParticleVariable<T>::gather(ParticleSubset* pset,
                             const std::vector<ParticleSubset*>& subsets,
                             const std::vector<ParticleVariableBase*>& srcs,
-                            particleIndex extra)
+                            [[maybe_unused]] particleIndex extra)
 {
   if (d_pdata && d_pdata->removeReference()) {
     delete d_pdata;

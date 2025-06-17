@@ -1536,8 +1536,8 @@ OnDemandDataWarehouse::insertPSetRecord(psetDBType& subsetDB,
 void
 OnDemandDataWarehouse::deletePSetRecord(psetDBType& subsetDB,
                                         const Patch* patch,
-                                        IntVector low,
-                                        IntVector high,
+                                        [[maybe_unused]] IntVector low,
+                                        [[maybe_unused]] IntVector high,
                                         int matlIndex,
                                         ParticleSubset* psubset)
 {

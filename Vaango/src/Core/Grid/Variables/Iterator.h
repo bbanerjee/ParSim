@@ -83,7 +83,11 @@ namespace Uintah {
       Iterator(const Iterator& copy)
       {
         //clone the new iterator (deep copy)
-        iter_=copy.iter_->clone();
+        if (copy.iter_ != nullptr) {
+          iter_ = copy.iter_->clone();
+        } else {
+          iter_ = nullptr;
+        }
       }
 
       /**

@@ -556,14 +556,14 @@ public:
     return a.d_node != d_node;
   }
   inline bool
-  operator==(int a) const
+  operator==([[maybe_unused]] int a) const
   {
     ASSERT(a == 0);
     // a=a;     // This quiets the MIPS compilers
     return d_node == 0;
   }
   inline bool
-  operator!=(int a) const
+  operator!=([[maybe_unused]] int a) const
   {
     ASSERT(a == 0);
     // a=a;     // This quiets the MIPS compilers

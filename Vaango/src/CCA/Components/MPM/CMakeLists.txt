@@ -93,13 +93,13 @@ SET(LIBS
 
 add_library(Vaango_CCA_Components_MPM ${Vaango_CCA_Components_MPM_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_MPM 
+target_link_libraries(Vaango_CCA_Components_MPM PRIVATE
   ${LIBS}
   Vaango::Options
   Vaango::Warnings
 )
 IF (PETSC)
-  target_link_petsc(Vaango_CCA_Components_MPM)
+  target_link_petsc(Vaango_CCA_Components_MPM PRIVATE)
 ENDIF()
 
 IF(BUILD_SHARED_LIBS)

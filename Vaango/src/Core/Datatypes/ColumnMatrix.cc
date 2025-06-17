@@ -250,7 +250,7 @@ ColumnMatrix::print()
 }
 
 double
-ColumnMatrix::get(int r, int c) const
+ColumnMatrix::get(int r, [[maybe_unused]] int c) const
 {
   ASSERTRANGE(r, 0, nrows_);
   ASSERTEQ(c, 0);
@@ -258,7 +258,7 @@ ColumnMatrix::get(int r, int c) const
 }
 
 void
-ColumnMatrix::put(int r, int c, double d)
+ColumnMatrix::put(int r, [[maybe_unused]] int c, [[maybe_unused]] double d)
 {
   ASSERTRANGE(r, 0, nrows_);
   ASSERTEQ(c, 0);
@@ -266,7 +266,7 @@ ColumnMatrix::put(int r, int c, double d)
 }
 
 void
-ColumnMatrix::add(int r, int c, double d)
+ColumnMatrix::add(int r, [[maybe_unused]] int c, double d)
 {
   ASSERTRANGE(r, 0, nrows_);
   ASSERTEQ(c, 0);
@@ -274,7 +274,7 @@ ColumnMatrix::add(int r, int c, double d)
 }
 
 double
-ColumnMatrix::sumOfCol(int c)
+ColumnMatrix::sumOfCol([[maybe_unused]] int c)
 {
   ASSERTEQ(c, 0);
   double sum = 0;
@@ -568,7 +568,7 @@ ColumnMatrix::scalar_multiply(double s)
 }
 
 MatrixHandle
-ColumnMatrix::submatrix(int r1, int c1, int r2, int c2)
+ColumnMatrix::submatrix(int r1, [[maybe_unused]] int c1, int r2, [[maybe_unused]] int c2)
 {
   ASSERTRANGE(r1, 0, r2 + 1);
   ASSERTRANGE(r2, r1, nrows_);

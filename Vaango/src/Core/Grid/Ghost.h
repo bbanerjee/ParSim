@@ -91,8 +91,8 @@ namespace Uintah {
       Ghost(const Ghost&);
       Ghost& operator=(const Ghost&);
 
-     static Uintah::IntVector directions[numGhostTypes];
-     static std::string names[numGhostTypes];
+     static Uintah::IntVector directions[numGhostTypes+1];
+     static std::string names[numGhostTypes+1];
 #ifdef __GNUG__
    public:
       // Keep gcc quiet, to avoid:

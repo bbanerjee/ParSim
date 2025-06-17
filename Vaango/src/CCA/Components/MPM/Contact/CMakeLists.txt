@@ -45,6 +45,7 @@ set(LIBS
     ${LIBS}
     Vaango_Core_OS
     MPM_Core
+    MPI::MPI_CXX
    )
 
 add_library(MPM_Contact 

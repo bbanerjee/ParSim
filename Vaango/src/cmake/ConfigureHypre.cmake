@@ -5,11 +5,14 @@ include(ExternalProject)
 function(configure_hypre)
     # Set hypre configuration
     set(HYPRE_VERSION "2.33.0")
-    set(HYPRE_TARGET_NAME "hypre")
+    set(HYPRE_TARGET_NAME "hypre_external")
+    set(HYPRE_INTERFACE_TARGET_NAME "hypre_lib") 
 
     # Define directories
     set(HYPRE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/submodules/hypre/src)
     set(HYPRE_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/hypre-install)
+
+    file(MAKE_DIRECTORY "${HYPRE_INSTALL_DIR}")
 
     # Check if hypre submodule exists
     if(NOT EXISTS ${HYPRE_SOURCE_DIR}/CMakeLists.txt AND NOT EXISTS ${HYPRE_SOURCE_DIR}/configure)
@@ -64,23 +67,26 @@ function(configure_hypre)
         LOG_BUILD ON
         LOG_INSTALL ON
         LOG_OUTPUT_ON_FAILURE ON
+        BUILD_BYPRODUCTS
+            "${HYPRE_INSTALL_DIR}/lib/libHYPRE.so"
+            "${HYPRE_INSTALL_DIR}/include/HYPRE.h"
     )
 
     # Create imported target for hypre
-    add_library(hypre::hypre STATIC IMPORTED)
-    set_target_properties(hypre::hypre PROPERTIES
-        IMPORTED_LOCATION ${HYPRE_INSTALL_DIR}/lib/libHYPRE.so
-        INTERFACE_INCLUDE_DIRECTORIES ${HYPRE_INSTALL_DIR}/include
-    )
+    add_library(${HYPRE_INTERFACE_TARGET_NAME} INTERFACE)
+    target_include_directories(${HYPRE_INTERFACE_TARGET_NAME} INTERFACE ${HYPRE_INSTALL_DIR}/include)
+    target_link_directories(${HYPRE_INTERFACE_TARGET_NAME} INTERFACE ${HYPRE_INSTALL_DIR}/lib) # Add link directories
+    target_link_libraries(${HYPRE_INTERFACE_TARGET_NAME} INTERFACE HYPRE) # Link against the library name
 
     # Make sure the imported target depends on the external project
-    add_dependencies(hypre::hypre ${HYPRE_TARGET_NAME})
+    add_dependencies(${HYPRE_INTERFACE_TARGET_NAME} ${HYPRE_TARGET_NAME})
 
     # Export hypre variables to parent scope
     set(HYPRE_INCLUDE_DIR ${HYPRE_INSTALL_DIR}/include PARENT_SCOPE)
     set(HYPRE_LIBRARY ${HYPRE_INSTALL_DIR}/lib/libHYPRE.so PARENT_SCOPE)
     set(HYPRE_LIBRARIES ${HYPRE_INSTALL_DIR}/lib/libHYPRE.so PARENT_SCOPE)
     set(HYPRE_FOUND TRUE PARENT_SCOPE)
+    set(HYPRE_TARGET ${HYPRE_INTERFACE_TARGET_NAME} PARENT_SCOPE)
 
     execute_process(COMMAND git -C ${HYPRE_SOURCE_DIR} describe --match v* --abbrev=0
                     OUTPUT_VARIABLE HYPRE_VERSION

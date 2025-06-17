@@ -123,12 +123,12 @@ WARNING
     inline bool operator != (const T* a) const {
       return a != d_rep;
     }
-    inline bool operator == (int a) const {
+    inline bool operator == ([[maybe_unused]] int a) const {
       ASSERT(a == 0);
       //a=a;     // This quiets the MIPS compilers
       return d_rep == 0;
     }
-    inline bool operator != (int a) const {
+    inline bool operator != ([[maybe_unused]] int a) const {
       ASSERT(a == 0);
       //a=a;     // This quiets the MIPS compilers
       return d_rep != 0;

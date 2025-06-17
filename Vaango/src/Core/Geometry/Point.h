@@ -59,8 +59,8 @@ public:
   {
   }
   Point(double, double, double, double);
-  inline Point(const Point&);
   inline Point();
+  inline Point(const Point&);
   int
   operator==(const Point&) const;
   int
@@ -113,7 +113,11 @@ public:
   z() const;
   inline const Vector&
   vector() const;
+  /*
   inline Vector&
+  asVector() const;
+  */
+  inline Vector
   asVector() const;
   inline Vector
   toVector() const;
@@ -402,10 +406,17 @@ Point::vector() const
   return (const Vector&)(*this);
 }
 
+/*
 inline Vector&
 Point::asVector() const
 {
   return (Vector&)(*this);
+}
+*/
+inline Vector
+Point::asVector() const
+{
+  return Vector(x_, y_, z_);
 }
 
 inline Point

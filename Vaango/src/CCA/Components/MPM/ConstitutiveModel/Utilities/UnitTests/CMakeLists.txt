@@ -110,6 +110,7 @@ target_link_libraries(testYieldCondUtils
   ${VAANGO_LIBS}
   Vaango_CCA_Components_MPM
   MPM_ConstitutiveModel
+  MPM_Diffusion
   Vaango::Options
   Vaango::Warnings
 )

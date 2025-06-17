@@ -715,8 +715,8 @@ HypreDriverSStruct::HyprePatch_CC::makeInteriorVector(HYPRE_SStructVector& HV,
 //___________________________________________________________________
 void
 HypreDriverSStruct::HyprePatch_CC::makeInteriorVectorZero(HYPRE_SStructVector& HV,
-                                                          DataWarehouse* V_dw,
-                                                          const VarLabel* V_label)
+                                                          [[maybe_unused]] DataWarehouse* V_dw,
+                                                          [[maybe_unused]] const VarLabel* V_label)
 {
   // Make a vector of zeros
   CCVariable<double> V;

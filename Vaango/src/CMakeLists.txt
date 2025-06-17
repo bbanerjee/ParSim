@@ -676,7 +676,6 @@ if(HYPRE)
           set(DEF_HYPRE_VERSION_PATCH "#define HYPRE_VERSION_PATCH ${HYPRE_VERSION_PATCH}")
       endif()
 
-      set(HYPRE_TARGET "hypre::hypre")
       message(STATUS "HYPRE found: ${HYPRE_VERSION_MAJOR}.${HYPRE_VERSION_MINOR}; Target: ${HYPRE_TARGET}")
     else()
       message(STATUS "HYPRE not found")

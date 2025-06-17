@@ -481,8 +481,22 @@ getColor(float percent /* max incl path / critical path */,
     int red = static_cast<int>(adj_percent * 255);
     int green = static_cast<int>((1 - adj_percent) * 255);
     int blue = 0;
-    sprintf(col_str, "%02x%02x%02x", red, green, blue);
-    col_str[6] = '\0';
+
+    // Use snprintf for safe formatting into the static buffer.
+    // snprintf returns the number of characters that *would* have been written
+    // (excluding null terminator) if the buffer was large enough.
+    // If return value >= sizeof(col_str), it means truncation occurred.
+    int chars_written = snprintf(col_str, sizeof(col_str), "%02x%02x%02x", red, green, blue);
+
+    // Add a check for truncation
+    if (chars_written < 0 || chars_written >= static_cast<int>(sizeof(col_str))) {
+        // This indicates an encoding error or buffer too small.
+        // In a real application, you might log an error, return a default string,
+        // or throw an exception (if you could change the signature).
+        // For this scenario, we just ensure null termination even if truncated.
+        col_str[sizeof(col_str) - 1] = '\0'; // Ensure null termination
+        fprintf(stderr, "Warning: Color string formatting truncated or failed for (%d, %d, %d)\n", red, green, blue);
+    }
   } else {
     strcpy(col_str, "0000FF"); // blue if out of range
   }

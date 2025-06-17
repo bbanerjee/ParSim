@@ -169,7 +169,7 @@ Array3Data<T>::initialize(const T& val,
 template<class T>
 void
 Array3Data<T>::copy(const IntVector& to_lowIndex,
-                    const IntVector& to_highIndex,
+                    [[maybe_unused]] const IntVector& to_highIndex,
                     const Array3Data<T>* from,
                     const IntVector& from_lowIndex,
                     const IntVector& from_highIndex)

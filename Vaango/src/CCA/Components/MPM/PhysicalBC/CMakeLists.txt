@@ -48,6 +48,9 @@ target_link_libraries(MPM_PhysicalBC PRIVATE
   Vaango::Options
   Vaango::Warnings
 )
+if (PETSC)
+  target_link_petsc(MPM_PhysicalBC PRIVATE)
+endif()
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_PhysicalBC)

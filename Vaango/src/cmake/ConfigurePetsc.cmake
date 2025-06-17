@@ -101,12 +101,12 @@ function(configure_petsc)
     endif()
     
     if(NOT PETSC_TARGET_NAME)
-        set(PETSC_TARGET_NAME "petsc")
+        set(PETSC_TARGET_NAME "petsc_external")
     endif()
 
     # Check if source directory exists
     if(NOT EXISTS ${PETSC_SOURCE_DIR})
-        message(FATAL_ERROR "PETSc source directory does not exist: ${PETSC_SOURCE_DIR}")
+         message(FATAL_ERROR "PETSc source directory does not exist: ${PETSC_SOURCE_DIR}")
     endif()
     
     # Check PETSc version if possible
@@ -123,7 +123,7 @@ function(configure_petsc)
     
     # Build configure command
     set(PETSC_CONFIGURE_CMD "")
-    list(APPEND PETSC_CONFIGURE_CMD --prefix=${PETSC_INSTALL_DIR})
+    #list(APPEND PETSC_CONFIGURE_CMD --prefix=${PETSC_INSTALL_DIR})
     
     # Debugging options
     if(PETSC_DEBUGGING)
@@ -213,7 +213,7 @@ function(configure_petsc)
 
     # Set PETSC_DIR
     set(PETSC_DIR "${PETSC_SOURCE_DIR}")
-    
+
     # For cross-platform compatibility, create configure wrapper
     if(WIN32)
         set(PETSC_CONFIGURE_SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/configure_petsc.bat)
@@ -238,11 +238,13 @@ function(configure_petsc)
         message(FATAL_ERROR "Could not find 'make' executable. It is required for building PETSc.")
     endif()
 
+    message(STATUS "PETSC_CONFIGURE_ARGS = ${PETSC_CONFIGURE_ARGS}")
     ExternalProject_Add(${PETSC_TARGET_NAME}
         SOURCE_DIR ${PETSC_SOURCE_DIR}
-        DOWNLOAD_COMMAND ""
-        UPDATE_COMMAND ""
-        CONFIGURE_COMMAND ${PETSC_CONFIGURE_SCRIPT}
+        CONFIGURE_COMMAND 
+            ${PETSC_SOURCE_DIR}/configure PETSC_DIR=${PETSC_DIR} PETSC_ARCH=${PETSC_ARCH} 
+            --prefix=${PETSC_INSTALL_DIR}
+            "${PETSC_CONFIGURE_ARGS}"
         BUILD_COMMAND 
             ${MAKE_EXECUTABLE} PETSC_DIR=${PETSC_DIR} PETSC_ARCH=${PETSC_ARCH} all
         INSTALL_COMMAND 
@@ -252,6 +254,10 @@ function(configure_petsc)
         LOG_CONFIGURE ON
         LOG_BUILD ON
         LOG_INSTALL ON
+        BUILD_BYPRODUCTS
+            "${PETSC_INSTALL_DIR}/lib/libpetsc.so" # Linux/Unix shared library
+            "${PETSC_INSTALL_DIR}/include/petscsys.h"
+            "${PETSC_INSTALL_DIR}/lib/pkgconfig/PETSc.pc"
     )
     
     # Determine library extension
@@ -264,27 +270,26 @@ function(configure_petsc)
     endif()
     
     # Create imported target
-    set(PETSC_IMPORTED_TARGET "PETSc::petsc")
-    if(NOT TARGET ${PETSC_IMPORTED_TARGET})
-        add_library(${PETSC_IMPORTED_TARGET} ${PETSC_LIB_TYPE} IMPORTED GLOBAL)
-        add_dependencies(${PETSC_IMPORTED_TARGET} ${PETSC_TARGET_NAME})
-        
-        # Set target properties
-        set_target_properties(${PETSC_IMPORTED_TARGET} PROPERTIES
-            IMPORTED_LOCATION ${PETSC_INSTALL_DIR}/lib/libpetsc${PETSC_LIB_EXT}
-            INTERFACE_INCLUDE_DIRECTORIES ${PETSC_INSTALL_DIR}/include
-            INTERFACE_COMPILE_DEFINITIONS "PETSC_DIR=\"${PETSC_INSTALL_DIR}\";PETSC_ARCH=\"\""
-        )
-        
-        message(STATUS "PETSc: Created imported target ${PETSC_IMPORTED_TARGET}")
-    endif()
+    set(PETSC_INTERFACE_TARGET "PETSc_lib")
+    # Create an INTERFACE library
+    add_library(${PETSC_INTERFACE_TARGET} INTERFACE)
+
+    # Set properties for the INTERFACE library
+    target_include_directories(${PETSC_INTERFACE_TARGET} INTERFACE ${PETSC_INSTALL_DIR}/include)
+    target_link_directories(${PETSC_INTERFACE_TARGET} INTERFACE ${PETSC_INSTALL_DIR}/lib)
+    target_link_libraries(${PETSC_INTERFACE_TARGET} INTERFACE petsc) # Link against the actual library name, not the target name
+
+    add_dependencies(${PETSC_INTERFACE_TARGET} ${PETSC_TARGET_NAME})
+    
+    message(STATUS "PETSc: Created interface target ${PETSC_INTERFACE_TARGET}")
     
     # Export variables to parent scope
     set(PETSC_FOUND TRUE PARENT_SCOPE)
     set(PETSC_INCLUDE_DIRS ${PETSC_INSTALL_DIR}/include PARENT_SCOPE)
     set(PETSC_LIBRARIES ${PETSC_INSTALL_DIR}/lib/libpetsc${PETSC_LIB_EXT} PARENT_SCOPE)
-    set(PETSC_DIR ${PETSC_INSTALL_DIR} PARENT_SCOPE)
-    set(PETSC_ARCH "" PARENT_SCOPE)
+    set(PETSC_DIR ${PETSC_SOURCE_DIR} PARENT_SCOPE)
+    set(PETSC_ARCH ${PETSC_ARCH} PARENT_SCOPE)
+    set(PETSC_TARGET ${PETSC_INTERFACE_TARGET} PARENT_SCOPE)
     
     # Create utility targets
     add_custom_target(clean-petsc
@@ -303,26 +308,26 @@ function(configure_petsc)
 endfunction()
 
 # Convenience function to link PETSc to a target
-function(target_link_petsc target_name)
+function(target_link_petsc target_name access_type)
     if(NOT TARGET ${target_name})
         message(FATAL_ERROR "target_link_petsc: Target ${target_name} does not exist")
     endif()
     
-    if(NOT TARGET PETSc::petsc)
+    if(NOT TARGET PETSc_lib)
         message(FATAL_ERROR "target_link_petsc: PETSc has not been configured. Call configure_petsc() first.")
     endif()
     
-    add_dependencies(${target_name} petsc)
-    target_link_libraries(${target_name} PETSc::petsc)
+    add_dependencies(${target_name} petsc_external)
+    target_link_libraries(${target_name} ${access_type} PETSc_lib)
     
     message(STATUS "PETSc: Linked to target ${target_name}")
 endfunction()
 
 # Function to get PETSc configuration info
 function(petsc_get_info)
-    if(TARGET PETSc::petsc)
-        get_target_property(PETSC_LOCATION PETSc::petsc IMPORTED_LOCATION)
-        get_target_property(PETSC_INCLUDES PETSc::petsc INTERFACE_INCLUDE_DIRECTORIES)
+    if(TARGET PETSc_lib)
+        get_target_property(PETSC_LOCATION PETSc_lib IMPORTED_LOCATION)
+        get_target_property(PETSC_INCLUDES PETSc_lib INTERFACE_INCLUDE_DIRECTORIES)
         
         message(STATUS "PETSc Library: ${PETSC_LOCATION}")
         message(STATUS "PETSc Includes: ${PETSC_INCLUDES}")

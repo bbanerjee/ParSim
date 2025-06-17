@@ -37,6 +37,9 @@ target_link_libraries(MPM_MMS PRIVATE
   Vaango::Options
   Vaango::Warnings
 )
+if (PETSC)
+  target_link_petsc(MPM_MMS PRIVATE)
+endif()
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_MMS)

@@ -441,16 +441,16 @@ Grid::readLevelsFromFileBinary( FILE * fp, std::vector< std::vector<int> > & pro
   double anchor[3], cell_spacing[3];
   int    l_id;
   
-  fread( & num_levels,    sizeof(int),    1, fp );
+  [[maybe_unused]] auto err = fread( & num_levels,    sizeof(int),    1, fp );
 
   for( int lev = 0; lev < num_levels; lev++ ) {
-    fread( & num_patches,  sizeof(int),    1, fp );    // Number of Patches -  100
-    fread( & num_cells,    sizeof(long),   1, fp );    // Number of Cells   - 8000
-    fread(   extra_cells,  sizeof(int),    3, fp );    // Extra Cell Info   - [1,1,1]
-    fread(   anchor,       sizeof(double), 3, fp );    // Anchor Info       - [0,0,0]
-    fread(   period,       sizeof(int),    3, fp );    // 
-    fread( & l_id,         sizeof(int),    1, fp );    // ID of Level       -    0
-    fread(   cell_spacing, sizeof(double), 3, fp );    // Cell Spacing      - [0.1,0.1,0.1]
+    err = fread( & num_patches,  sizeof(int),    1, fp );    // Number of Patches -  100
+    err = fread( & num_cells,    sizeof(long),   1, fp );    // Number of Cells   - 8000
+    err = fread(   extra_cells,  sizeof(int),    3, fp );    // Extra Cell Info   - [1,1,1]
+    err = fread(   anchor,       sizeof(double), 3, fp );    // Anchor Info       - [0,0,0]
+    err = fread(   period,       sizeof(int),    3, fp );    // 
+    err = fread( & l_id,         sizeof(int),    1, fp );    // ID of Level       -    0
+    err = fread(   cell_spacing, sizeof(double), 3, fp );    // Cell Spacing      - [0.1,0.1,0.1]
 
     bool foundPeriodicBoundaries = false;
     if( period[0] != 0 || period[1] != 0 || period[2] != 0 ) {
@@ -473,16 +473,16 @@ Grid::readLevelsFromFileBinary( FILE * fp, std::vector< std::vector<int> > & pro
       int    low_index[3], high_index[3], i_low_index[3], i_high_index[3];
       double lower[3], upper[3];
      
-      fread( & p_id,         sizeof(int),    1, fp );
-      fread( & rank,         sizeof(int),    1, fp );
-      fread(   low_index,    sizeof(int),    3, fp );    // <lowIndex>[-1,-1,-1]</lowIndex>
-      fread(   high_index,   sizeof(int),    3, fp );    // <highIndex>[20,20,4]</highIndex>
-      fread(   i_low_index,  sizeof(int),    3, fp );    // <interiorLowIndex></interiorLowIndex>
-      fread(   i_high_index, sizeof(int),    3, fp );    // <interiorHighIndex>[20,20,3]</interiorHighIndex>
-      fread( & nnodes,       sizeof(int),    1, fp );    // <nnodes>2646</nnodes>
-      fread(   lower,        sizeof(double), 3, fp );    // <lower>[-0.025000000000000001,-0.025000000000000001,-0.049999999999999996]</lower>
-      fread(   upper,        sizeof(double), 3, fp );    // <upper>[0.5,0.5,0.19999999999999998]</upper>
-      fread( & total_cells,  sizeof(int),    1, fp );    // <totalCells>2205</totalCells>
+      [[maybe_unused]] auto err = fread( & p_id,         sizeof(int),    1, fp );
+      err = fread( & rank,         sizeof(int),    1, fp );
+      err = fread(   low_index,    sizeof(int),    3, fp );    // <lowIndex>[-1,-1,-1]</lowIndex>
+      err = fread(   high_index,   sizeof(int),    3, fp );    // <highIndex>[20,20,4]</highIndex>
+      err = fread(   i_low_index,  sizeof(int),    3, fp );    // <interiorLowIndex></interiorLowIndex>
+      err = fread(   i_high_index, sizeof(int),    3, fp );    // <interiorHighIndex>[20,20,3]</interiorHighIndex>
+      err = fread( & nnodes,       sizeof(int),    1, fp );    // <nnodes>2646</nnodes>
+      err = fread(   lower,        sizeof(double), 3, fp );    // <lower>[-0.025000000000000001,-0.025000000000000001,-0.049999999999999996]</lower>
+      err = fread(   upper,        sizeof(double), 3, fp );    // <upper>[0.5,0.5,0.19999999999999998]</upper>
+      err = fread( & total_cells,  sizeof(int),    1, fp );    // <totalCells>2205</totalCells>
 
       const IntVector lowIndex(   low_index[0],  low_index[1],  low_index[2] );
       const IntVector highIndex( high_index[0], high_index[1], high_index[2] );

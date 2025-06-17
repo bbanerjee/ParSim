@@ -69,7 +69,7 @@ ParticleVariable<Point>::gather(ParticleSubset* pset,
                                 const std::vector<ParticleSubset*>& subsets,
                                 const std::vector<ParticleVariableBase*>& srcs,
                                 const std::vector<const Patch*>& srcPatches,
-                                particleIndex extra)
+                                [[maybe_unused]] particleIndex extra)
 {
   if (d_pdata && d_pdata->removeReference()) {
     delete d_pdata;

@@ -518,7 +518,7 @@ void MPIScatterProcessorRecord::sortPatches()
 //______________________________________________________________________
 //
 void MPIScatterRecords::addNeighbor( LoadBalancer     * lb,
-                                     const ProcessorGroup * pg,
+                                     [[maybe_unused]] const ProcessorGroup * pg,
                                      const Patch          * neighbor )
 {
   neighbor = neighbor->getRealPatch();

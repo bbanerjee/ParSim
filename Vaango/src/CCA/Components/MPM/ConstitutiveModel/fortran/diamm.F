@@ -2020,6 +2020,7 @@ C     avoid compiler warnings of unused dummy arguments
       dum=beta2-eqps
 
 C     Compute bulk modulus
+      CS = 0.0D0
       IF(IDK.EQ.0)THEN
 C     Kerley EOS to compute sound speed
          P= -PTHIRD*RI1
@@ -2029,7 +2030,6 @@ C     Kerley EOS to compute sound speed
          ALPH(1) = 0
          PRES(1) = P
          TTEMP(1) = T
-         CS = 0.0D0
          CCS(1) = CS
          CALL KEREOSMGV(1,1,UIMG,UI,UI(IPDC1),
      $                  RHO,ENRG,ALPH,0, 
