@@ -25,12 +25,17 @@
 #include <StandAlone/Utils/vaango_utils.h>
 
 #include <CCA/Components/Schedulers/UnifiedScheduler.h>
+#include <Core/Exceptions/InternalError.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Util/DOUT.hpp>
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/Environment.h>
 
+#include <expected>
 #include <filesystem>
+#include <memory>
+#include "vaango_utils.h"
+#include <submodules/json/single_include/nlohmann/json.hpp>
 
 namespace fs = std::filesystem;
 namespace Vaango {
@@ -63,7 +68,13 @@ stop_mpi_and_exit(int flag, const std::string& msg)
   if (msg != "") {
     std::cerr << msg << "\n";
   }
-  Uintah::Parallel::finalizeManager();
+  try {
+    Uintah::Parallel::finalizeManager();
+  } catch (const Uintah::InternalError& e) {
+    std::cout << std::string(e.message()) << std::endl;
+  } catch (const std::exception& e) {
+    std::cout << std::string(e.what()) << std::endl;
+  }
   Uintah::Parallel::exitAll(flag);
 }
 
@@ -117,47 +128,86 @@ check_gpus()
   std::cout << "This doesn't run" << std::endl;
 }
 
+std::expected<std::string, std::string>
+executeCommand(const std::string& command)
+{
+  std::array<char, 128> buffer;
+  std::string result;
+
+  // Use popen to execute command and capture output
+  auto pipe_deleter = [](FILE* f) {
+    if (f) {
+      pclose(f);
+    }
+  };
+  auto pipe = std::unique_ptr<FILE, decltype(pipe_deleter)>(
+    popen(command.c_str(), "r"), pipe_deleter);
+
+  if (!pipe) {
+    return std::unexpected("Failed to execute command: " + command);
+  }
+
+  while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    result += buffer.data();
+  }
+
+  // Remove trailing newline if present
+  if (!result.empty() && result.back() == '\n') {
+    result.pop_back();
+  }
+
+  return result;
+}
+
+struct LiveGitInfo
+{
+  std::string diff;
+  std::string status;
+  std::string error;
+};
+
+LiveGitInfo
+getLiveGitInfo()
+{
+  LiveGitInfo info;
+
+  // Get git diff
+  if (auto diff_result = executeCommand(
+        "git --no-pager diff --no-color --minimal 2>/dev/null")) {
+    info.diff = diff_result.value();
+  } else {
+    info.error = "Failed to get git diff: " + diff_result.error();
+    return info;
+  }
+
+  // Get git status
+  if (auto status_result =
+        executeCommand("git status --branch --short 2>/dev/null")) {
+    info.status = status_result.value();
+  } else {
+    info.error = "Failed to get git status: " + status_result.error();
+    return info;
+  }
+
+  return info;
+}
+
 void
 display_git_info(bool show_git_diff, bool show_git_status)
 {
   // Run git commands Uintah
-  std::cout << "git branch:" << GIT_BRANCH << "\n";
+  //std::cout << "CMAKE_SRC_DIR:" << CMAKE_SRC_DIR << "\n";
+  std::cout << "git branch: " << GIT_BRANCH << "\n";
   std::cout << "git date:   " << GIT_DATE << "\n";
   std::cout << "git hash:   " << GIT_HASH << "\n";
 
+  std::cout << std::boolalpha << " show diff: " << show_git_diff << ", " << show_git_status << "\n";
   if (show_git_diff || show_git_status) {
+    auto info = getLiveGitInfo();
     std::cout << "GIT::\n";
-    std::string sdir = std::string(Uintah::sci_getenv("SCIRUN_SRCDIR"));
-
-    if (show_git_diff) {
-      std::string cmd =
-        "cd " + sdir + "; git --no-pager diff  --no-color --minimal";
-      std::cout << "\n git diff::\n";
-      [[maybe_unused]] auto stat = std::system(cmd.c_str());
-    }
-
-    if (show_git_status) {
-      std::string cmd = "cd " + sdir + "; git status  --branch --short";
-      std::cout << "\n git status --branch --short::\n";
-      [[maybe_unused]] auto stat = std::system(cmd.c_str());
-
-      cmd = "cd " + sdir + "; git log -1  --format=\"%ad %an %H\" | cat";
-      std::cout << "\n git log -1::\n";
-      stat = std::system(cmd.c_str());
-    }
-    std::cout << "::GIT\n";
-  }
-}
-
-void
-display_config_info(bool show_config_cmd)
-{
-  if (show_config_cmd) {
-    std::string odir = std::string(Uintah::sci_getenv("SCIRUN_OBJDIR"));
-    std::string cmd  = "cd " + odir + "; sed -n '7'p config.log ";
-    std::cout << "Configure Command::\n";
-    [[maybe_unused]] auto status = std::system(cmd.c_str());
-    std::cout << "\n\n";
+    std::cout << "git diff:   " << info.diff << "\n";
+    std::cout << "git status:   " << info.status << "\n";
+    std::cout << "GIT::\n";
   }
 }
 
@@ -187,6 +237,54 @@ check_malloc()
     Uintah::Parallel::exitAll(1);
   }
 #endif
+}
+
+std::string
+get_vaango_compile_command(const std::string& vaango_filename)
+{
+  #ifndef COMPILE_COMMANDS_PATH
+  #define COMPILE_COMMANDS_PATH "None"
+  #endif
+
+  std::string compile_commands_path = COMPILE_COMMANDS_PATH;
+
+  // Check if the file exists
+  if (!std::filesystem::exists(compile_commands_path)) {
+      return "Error: compile_commands.json not found at: " + compile_commands_path;
+  }
+
+  //std::cout << "COMPILE_COMMANDS_PATH: " << COMPILE_COMMANDS_PATH << "\n";
+
+  try {
+
+    // Read and parse the JSON file
+    std::ifstream file(compile_commands_path);
+    if (!file.is_open()) {
+      return "Error: Could not open compile_commands.json";
+    }
+
+    nlohmann::json compile_commands;
+    file >> compile_commands;
+
+    // Search for the file in the compile commands
+    for (const auto& entry : compile_commands) {
+      if (entry.contains("file") && entry.contains("command")) {
+        std::string file_path = entry["file"];
+
+        // Check if the filename appears in the file path
+        if (file_path.find(vaango_filename) != std::string::npos) {
+          return entry["command"];
+        }
+      }
+    }
+
+    return "Error: No compile command found for file: " + vaango_filename;
+
+  } catch (const nlohmann::json::exception& e) {
+    return "Error parsing JSON: " + std::string(e.what());
+  } catch (const std::exception& e) {
+    return "Error: " + std::string(e.what());
+  }
 }
 
 } // namespace Utils

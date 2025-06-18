@@ -69,13 +69,8 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_Solvers
         Vaango_CCA_Components_Models
         ${HDF5_TARGET}
+        $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
 )
-if (HAVE_HYPRE)
-   set(VAANGO_LIBS
-      ${VAANGO_LIBS}
-      ${HYPRE_TARGET}
-   )
-endif()
 
 #------------------------
 # Google tests
@@ -125,11 +120,6 @@ target_link_libraries(testTabularPlasticity PRIVATE
   Vaango::Options
   Vaango::Warnings
 )
-if (HAVE_HYPRE)
-   target_link_libraries(testTabularPlasticity PRIVATE
-     ${HYPRE_TARGET}
-   )
-endif()
 
 #set(UNIT_TEST testTabularPlasticity)
 #add_custom_command(
@@ -147,11 +137,6 @@ target_link_libraries(testNeuralNetTabularPlasticity PRIVATE
   Vaango::Options
   Vaango::Warnings
 )
-if (HAVE_HYPRE)
-   target_link_libraries(testNeuralNetTabularPlasticity PRIVATE
-     ${HYPRE_TARGET}
-   )
-endif()
 
 #set(UNIT_TEST testNeuralNetTabularPlasticity)
 #add_custom_command(

@@ -318,16 +318,16 @@ function(target_link_petsc target_name access_type)
     endif()
     
     add_dependencies(${target_name} petsc_external)
-    target_link_libraries(${target_name} ${access_type} PETSc_lib)
+    target_link_libraries(${target_name} ${access_type} ${PETSC_TARGET})
     
     message(STATUS "PETSc: Linked to target ${target_name}")
 endfunction()
 
 # Function to get PETSc configuration info
 function(petsc_get_info)
-    if(TARGET PETSc_lib)
-        get_target_property(PETSC_LOCATION PETSc_lib IMPORTED_LOCATION)
-        get_target_property(PETSC_INCLUDES PETSc_lib INTERFACE_INCLUDE_DIRECTORIES)
+    if(TARGET ${PETSC_TARGET})
+        get_target_property(PETSC_LOCATION ${PETSC_TARGET} IMPORTED_LOCATION)
+        get_target_property(PETSC_INCLUDES ${PETSC_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
         
         message(STATUS "PETSc Library: ${PETSC_LOCATION}")
         message(STATUS "PETSc Includes: ${PETSC_INCLUDES}")

@@ -61,13 +61,8 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
         ${HDF5_TARGET}
+        $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
 )
-if (HAVE_HYPRE)
-   set(VAANGO_LIBS
-      ${VAANGO_LIBS}
-      ${HYPRE_TARGET}
-   )
-endif()
 
 #------------------------
 # Google tests

@@ -63,9 +63,6 @@ bool
 restart_remove_old_dir();
 
 bool
-show_config_cmd();
-
-bool
 show_git_diff();
 
 bool

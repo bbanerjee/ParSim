@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <vector>
 
+
 namespace {
 
 static bool s_emit_graphs{ false };
@@ -44,7 +45,6 @@ static bool s_postprocess_uda{ false };
 static bool s_restart{ false };
 static bool s_restart_from_scratch{ true };
 static bool s_restart_remove_old_dir{ false };
-static bool s_show_config_cmd{ false };
 static bool s_show_git_diff{ false };
 static bool s_show_git_status{ false };
 static bool s_show_version{ false };
@@ -187,8 +187,6 @@ parse(int argc, char** argv)
           "Error parsing -layout", argv[i], argv[0]);
       }
       s_layout = Uintah::IntVector(ii, jj, kk);
-    } else if (arg == "-config_cmd") {
-      s_show_config_cmd = true;
     } else if (arg == "-git_diff") {
       s_show_git_diff = true;
     } else if (arg == "-git_status") {
@@ -200,7 +198,6 @@ parse(int argc, char** argv)
     } else if (arg == "-postprocess_uda") {
       s_postprocess_uda = true;
     } else if (arg == "-version" || arg == "-v") {
-      s_show_config_cmd = true;
       s_show_git_diff   = true;
       s_show_git_status = true;
       s_show_version    = true;
@@ -267,14 +264,18 @@ parse(int argc, char** argv)
   char name[256];
   gethostname(name, 256);
 
+  std::cout << "--------------------------------------------------------\n";
   std::cout << "Date:    " << time_string; // has its own newline
   std::cout << "Machine: " << name << "\n";
   std::cout << "Assertion level: " << SCI_ASSERTION_LEVEL << "\n";
-  std::cout << "CFLAGS: " << CFLAGS << "\n";
-  std::cout << "CXXFLAGS: " << CXXFLAGS << "\n";
+  std::cout << "--------------------------------------------------------\n";
 
   Vaango::Utils::display_git_info(s_show_git_diff, s_show_git_status);
-  Vaango::Utils::display_config_info(s_show_config_cmd);
+  std::cout << "--------------------------------------------------------\n";
+
+  auto compile_cmd = Vaango::Utils::get_vaango_compile_command("vaango.cc");
+  std::cout << "Compile cmd: " << compile_cmd << "\n";
+  std::cout << "--------------------------------------------------------\n";
 
   if (s_show_version) {
     stop_mpi_and_exit(2);
@@ -400,12 +401,6 @@ bool
 restart_remove_old_dir()
 {
   return s_restart_remove_old_dir;
-}
-
-bool
-show_config_cmd()
-{
-  return s_show_config_cmd;
 }
 
 bool

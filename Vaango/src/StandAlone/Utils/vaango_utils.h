@@ -59,10 +59,10 @@ void
 display_git_info(bool show_git_diff, bool show_git_status);
 
 void
-display_config_info(bool show_config_cmd);
-
-void
 check_malloc();
+
+std::string
+get_vaango_compile_command(const std::string& vaango_filename);
 
 } // namespace Utils
 } // namespace Vaango

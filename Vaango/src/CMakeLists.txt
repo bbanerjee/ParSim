@@ -641,8 +641,10 @@ if(PETSC)
           --with-precision=double
           --download-superlu_dist=1
   )
-  set(HAVE_PETSC TRUE)
-  set(DEF_PETSC "#define HAVE_PETSC 1")
+  if(PETSC_FOUND)
+    set(HAVE_PETSC TRUE)
+    set(DEF_PETSC "#define HAVE_PETSC 1")
+  endif()
 endif()
 
 #-----------------------------------------------------------------------------
@@ -724,9 +726,81 @@ endif()
 #     $<$<BOOL:${DL_LIBRARY}>:${DL_LIBRARY}>
 #     Eigen3::Eigen  # if available as target
 #     ${HDF5_TARGET}  # if available as target, otherwise use ${HDF5_LIBRARY}
-#     $<$<BOOL:${PETSC}>:PETSc::PETSc>
-#     $<$<BOOL:${HYPRE}>:HYPRE::HYPRE>
+#     $<$<BOOL:${HAVE_PETSC}>:PETSc_lib>
+#     $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
 # )
+
+# Find Git executable
+find_package(Git QUIET)
+
+if(GIT_FOUND)
+    # Get the current Git branch
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_BRANCH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    
+    # Get the latest commit hash
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    
+    # Get the commit date
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} log -1 --format=%cd --date=iso
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_DATE
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    
+    # Optional: Get short hash (7 characters)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_HASH_SHORT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} --no-pager diff --no-color --minimal
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_DIFF
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    
+    # Get git status output
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} status --branch --short
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_STATUS
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+else()
+    set(GIT_BRANCH "unknown_git_branch")
+    set(GIT_HASH "unknown_git_hash")
+    set(GIT_DATE "unknown_git_date")
+    set(GIT_HASH_SHORT "unknown_git_hash_short")
+    set(GIT_DIFF "unknown_git_diff")
+    set(GIT_STATUS "unknown_git_status")
+endif()
+
+# Print the values (optional, for debugging)
+#message(STATUS "Git Branch: ${GIT_BRANCH}")
+#message(STATUS "Git Hash: ${GIT_HASH}")
+#message(STATUS "Git Date: ${GIT_DATE}")
+#message(STATUS "Git Hash Short: ${GIT_HASH_SHORT}")
+
 #-----------------------------------------------------------------------
 # Create the cross-platform header files
 #-----------------------------------------------------------------------

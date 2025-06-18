@@ -51,13 +51,8 @@ set(VAANGO_LIBS
   Peridynamics_MaterialModels
   Vaango::Options
   Vaango::Warnings
+  $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
 )
-if (HAVE_HYPRE)
-   set(VAANGO_LIBS
-      ${VAANGO_LIBS}
-      ${HYPRE_TARGET}
-   )
-endif()
 
 #add_library(ut_lib ${UT_SRCS})
 #target_link_libraries(ut_lib 

@@ -66,29 +66,25 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_Schedulers           
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
+        $<$<BOOL:${ICE}>:Vaango_CCA_Components_Models>
+        $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
+        $<$<BOOL:${HAVE_PETSC}>:${PETSC_TARGET}>
+        MPI::MPI_CXX
+        Vaango::Options
+        Vaango::Warnings
 )
-
-IF(ICE)
-  SET(VAANGO_LIBS ${VAANGO_LIBS} Vaango_CCA_Components_Models)
-ENDIF(ICE)
-IF(HYPRE)
-  SET(VAANGO_LIBS ${VAANGO_LIBS} ${HYPRE_TARGET})
-ENDIF()
-IF(PETSC)
-  SET(VAANGO_LIBS ${VAANGO_LIBS} ${PETSC_LIBRARY})
-ENDIF()
 
 target_link_libraries(vaango PRIVATE
   ${VAANGO_LIBS}
-  Vaango::Options
-  Vaango::Warnings
 )
-
+target_compile_definitions(vaango PRIVATE
+  COMPILE_COMMANDS_PATH="${CMAKE_BINARY_DIR}/compile_commands.json"
+  CMAKE_SRC_DIR="${CMAKE_SOURCE_DIR}"
+)
 target_link_libraries(compare_uda PRIVATE
   ${VAANGO_LIBS}
-  Vaango::Options
-  Vaango::Warnings
 )
+
 
 set(RESTART_LIBS
   Vaango_Core_DataArchive
@@ -98,15 +94,13 @@ set(RESTART_LIBS
   Vaango_CCA_Components_DataArchiver
   Vaango_CCA_Components_ProblemSpecification 
   MPM_ParticleCreator
-)
-IF(HYPRE)
-  SET(RESTART_LIBS ${RESTART_LIBS} ${HYPRE_TARGET})
-ENDIF()
-target_link_libraries(restart_merger PRIVATE
-  ${RESTART_LIBS}
+  $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
   MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
+)
+target_link_libraries(restart_merger PRIVATE
+  ${RESTART_LIBS}
 )
   
 target_link_libraries(slb PRIVATE

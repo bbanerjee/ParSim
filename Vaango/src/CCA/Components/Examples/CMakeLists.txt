@@ -82,13 +82,8 @@ target_link_libraries(Vaango_CCA_Components_Examples PRIVATE
   LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
+  $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
 )
-
-if (HAVE_HYPRE)
-  target_link_libraries(Vaango_CCA_Components_Examples PRIVATE
-    ${HYPRE_TARGET}
-  )
-endif()
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_Examples)
