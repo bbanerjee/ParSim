@@ -201,7 +201,7 @@ display_git_info(bool show_git_diff, bool show_git_status)
   std::cout << "git date:   " << GIT_DATE << "\n";
   std::cout << "git hash:   " << GIT_HASH << "\n";
 
-  std::cout << std::boolalpha << " show diff: " << show_git_diff << ", " << show_git_status << "\n";
+  //std::cout << std::boolalpha << " show diff: " << show_git_diff << ", " << show_git_status << "\n";
   if (show_git_diff || show_git_status) {
     auto info = getLiveGitInfo();
     std::cout << "GIT::\n";
