@@ -39,7 +39,6 @@ target_link_libraries(ICE_Core PRIVATE
   Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions
   Vaango_Core_Math
-  ${M_LIBRARY}
   LibXml2::LibXml2
   MPI::MPI_CXX
   Vaango::Options
@@ -49,3 +48,7 @@ target_link_libraries(ICE_Core PRIVATE
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_ICE_Core)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  ICE_Core
+)

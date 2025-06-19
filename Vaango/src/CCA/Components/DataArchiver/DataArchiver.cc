@@ -4386,7 +4386,7 @@ DataArchiver::saveSVNinfo()
 {
 #if 0
   string svn_diff_file =
-    string( sci_getenv("SCIRUN_OBJDIR") ) + "/svn_diff.txt";
+    string( sci_getenv("VAANGO_OBJDIR") ) + "/svn_diff.txt";
 
   if( !validFile( svn_diff_file ) ) {
     cout << "\n"
@@ -4396,7 +4396,7 @@ DataArchiver::saveSVNinfo()
   }
   else {
     string svn_diff_out = d_outputDir.getName() + "/svn_diff.txt";
-    string svn_diff_on = string( sci_getenv("SCIRUN_OBJDIR") ) + "/.do_svn_diff";
+    string svn_diff_on = string( sci_getenv("VAANGO_OBJDIR") ) + "/.do_svn_diff";
     if( !validFile( svn_diff_on ) ) {
       cout << "\n"
            << "WARNING: Adding 'svn diff' file to UDA, "

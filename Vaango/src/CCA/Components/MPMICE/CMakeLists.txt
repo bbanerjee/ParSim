@@ -42,7 +42,6 @@ target_link_libraries(Vaango_CCA_Components_MPMICE
   Vaango_CCA_Components_MPM
   Vaango_CCA_Components_ICE
   LibXml2::LibXml2
-  ${M_LIBRARY}
   MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
@@ -51,3 +50,9 @@ target_link_libraries(Vaango_CCA_Components_MPMICE
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_MPMICE)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  Vaango_CCA_Components_MPM
+  Vaango_CCA_Components_ICE
+  Vaango_CCA_Components_MPMICE
+)

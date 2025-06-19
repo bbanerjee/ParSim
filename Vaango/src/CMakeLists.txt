@@ -730,9 +730,10 @@ endif()
 #     $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
 # )
 
+#-----------------------------------------------------------------------
 # Find Git executable
+#-----------------------------------------------------------------------
 find_package(Git QUIET)
-
 if(GIT_FOUND)
     # Get the current Git branch
     execute_process(
@@ -742,7 +743,6 @@ if(GIT_FOUND)
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET
     )
-    
     # Get the latest commit hash
     execute_process(
         COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
@@ -751,7 +751,6 @@ if(GIT_FOUND)
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET
     )
-    
     # Get the commit date
     execute_process(
         COMMAND ${GIT_EXECUTABLE} log -1 --format=%cd --date=iso
@@ -760,46 +759,22 @@ if(GIT_FOUND)
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET
     )
-    
-    # Optional: Get short hash (7 characters)
-    execute_process(
-        COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_HASH_SHORT
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-    )
-
-    execute_process(
-        COMMAND ${GIT_EXECUTABLE} --no-pager diff --no-color --minimal
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_DIFF
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-    )
-    
-    # Get git status output
-    execute_process(
-        COMMAND ${GIT_EXECUTABLE} status --branch --short
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_STATUS
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-    )
 else()
     set(GIT_BRANCH "unknown_git_branch")
     set(GIT_HASH "unknown_git_hash")
     set(GIT_DATE "unknown_git_date")
-    set(GIT_HASH_SHORT "unknown_git_hash_short")
-    set(GIT_DIFF "unknown_git_diff")
-    set(GIT_STATUS "unknown_git_status")
 endif()
-
-# Print the values (optional, for debugging)
+# Print the values (for debugging)
 #message(STATUS "Git Branch: ${GIT_BRANCH}")
 #message(STATUS "Git Hash: ${GIT_HASH}")
 #message(STATUS "Git Date: ${GIT_DATE}")
-#message(STATUS "Git Hash Short: ${GIT_HASH_SHORT}")
+
+#------------------------------------------------------------------------
+# Set up vaango paths for files
+#------------------------------------------------------------------------
+set(VAANGO_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
+set(VAANGO_BINARY_DIR "${CMAKE_BINARY_DIR}")
+set(VAANGO_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
 
 #-----------------------------------------------------------------------
 # Create the cross-platform header files
@@ -838,6 +813,29 @@ include_directories(
 #=========================================================================
 MESSAGE(STATUS "")
 MESSAGE(STATUS "Configuring done. Adding subdirectories.")
+
+#------------------------------------------------------------------------
+# Set up RPATH
+#------------------------------------------------------------------------
+# Enable RPATH on macOS for installed targets
+if(APPLE)
+    set(CMAKE_MACOSX_RPATH TRUE)
+endif()
+
+# Set the install RPATH to look for libraries relative to the executable's location
+# This is crucial for relocatable installations.
+if(UNIX) # Linux, macOS
+    set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib") # For Linux
+    if(APPLE)
+        set(CMAKE_INSTALL_RPATH "@loader_path/../lib") # For macOS
+    endif()
+elseif(WIN32)
+    # On Windows, DLLs are typically placed alongside EXEs, or in system PATH.
+    # RPATH isn't directly applicable in the same way.
+endif()
+
+# Make build targets use the install RPATH for easier testing
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
 #------------------------------------------------------------------------
 # Add main sources
@@ -888,4 +886,3 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 #FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(submodules)
-

@@ -78,8 +78,6 @@ SET(LIBS
   MPM_ParticleCreator
   MPM_GradientComputer
   MPM_ConstitutiveModel_FORTRAN
-  ${VT_LIBRARY}
-  ${M_LIBRARY}
   ${HDF5_TARGET}
 )
 
@@ -104,4 +102,7 @@ ENDIF(BUILD_SHARED_LIBS)
   add_subdirectory(UnitTests)
 #ENDIF()
 
+install(TARGETS
+  MPM_ConstitutiveModel
+)
 

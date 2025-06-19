@@ -30,15 +30,12 @@ SET(LIBS
   Vaango_CCA_Ports
   Vaango_Core_Grid
   Vaango_Core_Util
-  
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
   LibXml2::LibXml2
-  ${VT_LIBRARY}
-  ${M_LIBRARY}
   MPI::MPI_CXX
 )
 
@@ -53,3 +50,7 @@ target_link_libraries(Vaango_CCA_Components_SimulationCommon
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_SimulationCommon)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  Vaango_CCA_Components_SimulationCommon
+)

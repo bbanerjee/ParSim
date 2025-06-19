@@ -114,12 +114,13 @@ create_sci_environment(char** env,
     }
   }
 
-  string objdir = SCIRUN_OBJDIR;
-  string srcdir = SCIRUN_SRCDIR;
+  string objdir = VAANGO_OBJDIR;
+  string srcdir = VAANGO_SRCDIR;
+  std::string installdir = VAANGO_INSTALLDIR;
 
-  if (!sci_getenv("SCIRUN_OBJDIR")) {
+  if (!sci_getenv("VAANGO_OBJDIR")) {
     if (!execname) {
-      sci_putenv("SCIRUN_OBJDIR", objdir);
+      sci_putenv("VAANGO_OBJDIR", objdir);
     } else {
       string objdir(execname);
       if (execname[0] != '/') {
@@ -133,12 +134,16 @@ create_sci_environment(char** env,
       }
       ASSERT(pos >= 0);
       objdir.erase(objdir.begin() + pos + 1, objdir.end());
-      sci_putenv("SCIRUN_OBJDIR", objdir);
+      sci_putenv("VAANGO_OBJDIR", objdir);
     }
   }
 
-  if (!sci_getenv("SCIRUN_SRCDIR")) {
-    sci_putenv("SCIRUN_SRCDIR", srcdir);
+  if (!sci_getenv("VAANGO_SRCDIR")) {
+    sci_putenv("VAANGO_SRCDIR", srcdir);
+  }
+
+  if (!sci_getenv("VAANGO_INSTALLDIR")) {
+    sci_putenv("VAANGO_INSTALLDIR", installdir);
   }
 
 } // end create_sci_environment()

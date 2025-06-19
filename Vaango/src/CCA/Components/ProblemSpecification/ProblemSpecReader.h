@@ -34,10 +34,91 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace Uintah {
 
 struct Tag;
+
+class UPSFilenameManager
+{
+  std::vector<std::unique_ptr<std::string>> filenames_;
+
+public:
+  std::string*
+  store(const std::string& filename)
+  {
+    filenames_.emplace_back(std::make_unique<std::string>(filename));
+    return filenames_.back().get();
+  }
+
+  std::string
+  getMainXMLFilename() const
+  {
+    return *(filenames_[0]);
+  }
+
+  // Find a filename in the stored collection
+  const std::string&
+  findFileName(const std::string& filename) const
+  {
+    for (const auto& stored : filenames_) {
+      if (*stored == filename) {
+        return *stored;
+      }
+    }
+    static const std::string none = "None";
+    return none;
+  }
+
+  // Non-const version that returns a pointer (for _private assignment)
+  std::string*
+  findFileNamePtr(const std::string& filename)
+  {
+    for (const auto& stored : filenames_) {
+      if (*stored == filename) {
+        return stored.get();
+      }
+    }
+    return nullptr;
+  }
+
+  // Store if not found, otherwise return existing
+  std::string*
+  storeOrFind(const std::string& filename)
+  {
+    if (auto* existing = findFileNamePtr(filename)) {
+      return existing;
+    }
+    return store(filename);
+  }
+
+  // Get the number of stored filenames
+  size_t
+  size() const
+  {
+    return filenames_.size();
+  }
+
+  // Check if empty
+  bool
+  empty() const
+  {
+    return filenames_.empty();
+  }
+
+  // Clear all stored filenames
+  void
+  clear()
+  {
+    filenames_.clear();
+  }
+
+  // Automatic cleanup when FilenameManager is destroyed
+  ~UPSFilenameManager() = default;
+
+  // Automatic cleanup when UPSFilenameManager is destroyed
+};
 
 class ProblemSpecReader : public ProblemSpecInterface
 {
@@ -51,7 +132,7 @@ public:
                              bool validate = false) override;
 
   // Returns the main xml file name.
-  std::string getInputFile() override { return *d_upsFilename[0]; }
+  std::string getInputFile() override { return d_upsFilename.getMainXMLFilename(); }
 
   // Set the xml data and file name
   // ** WARNING ** Only for testing purposes
@@ -68,7 +149,7 @@ private:
 
   // d_upsFilename[0] is the main file... but each subsequent string
   // is the name of an <include>d file.
-  std::vector<std::string*> d_upsFilename;
+  UPSFilenameManager d_upsFilename;
 
   ProblemSpecP d_xmlData;
 

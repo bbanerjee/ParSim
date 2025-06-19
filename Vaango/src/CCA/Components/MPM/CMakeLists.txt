@@ -86,8 +86,6 @@ SET(LIBS
   MPM_MMS
   MPM_Diffusion
   LibXml2::LibXml2
-  ${VT_LIBRARY}
-  ${M_LIBRARY}
   MPI::MPI_CXX
 )
 

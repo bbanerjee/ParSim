@@ -38,3 +38,7 @@ target_link_libraries(MPMICE_Core
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPMICE_Core)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  MPMICE_Core
+)

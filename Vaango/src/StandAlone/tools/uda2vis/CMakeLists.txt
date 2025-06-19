@@ -75,7 +75,6 @@ add_library(StandAlone_tools_uda2vis ${UDA2VIS_SRC})
 target_link_libraries(StandAlone_tools_uda2vis PRIVATE 
   ${UDA2VIS_LIBS}
   ${Z_LIBRARY}
-  ${M_LIBRARY}
   ${F_LIBRARY}
   LibXml2::LibXml2
   MPI::MPI_CXX

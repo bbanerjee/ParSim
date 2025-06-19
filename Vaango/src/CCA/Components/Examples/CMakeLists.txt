@@ -77,7 +77,6 @@ add_library(Vaango_CCA_Components_Examples ${Vaango_CCA_Components_Examples_SRCS
 
 target_link_libraries(Vaango_CCA_Components_Examples PRIVATE
   ${Examples_LIBS}
-  ${M_LIBRARY}
   ${CUDA_LIBRARY}
   LibXml2::LibXml2
   Vaango::Options
@@ -88,3 +87,7 @@ target_link_libraries(Vaango_CCA_Components_Examples PRIVATE
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_Examples)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  Vaango_CCA_Components_Examples
+)

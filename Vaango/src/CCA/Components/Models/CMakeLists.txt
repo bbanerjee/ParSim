@@ -39,7 +39,6 @@ SET(LIBS
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_IO
-  ${M_LIBRARY}
 )
 
 IF(ICE)
@@ -70,3 +69,7 @@ target_link_libraries(Vaango_CCA_Components_Models PRIVATE
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_Models)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  Vaango_CCA_Components_Models
+)

@@ -42,8 +42,6 @@ SET(LIBS
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
-  ${VT_LIBRARY}
-  ${M_LIBRARY}
 )
 
 add_library(Peridynamics_MaterialModels ${Peridynamics_MaterialModel_SRCS})
@@ -59,6 +57,10 @@ target_link_libraries(Peridynamics_MaterialModels PRIVATE
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Peridynamics_MaterialModels)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  Peridynamics_MaterialModels
+)
 
 
 

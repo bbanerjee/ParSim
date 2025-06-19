@@ -41,7 +41,6 @@ include_directories(${BLAS_INCLUDE})
 add_library(Vaango_Core_Datatypes ${Vaango_Core_Datatypes_SRCS})
 
 set(LIBS  
-  ${M_LIBRARY} 
   ${BLAS_LIBRARY} 
   ${F_LIBRARY}           
   ${PNG_LIBRARY} 

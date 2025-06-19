@@ -48,3 +48,6 @@ IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_GradientComputer)
 ENDIF(BUILD_SHARED_LIBS)
 
+install(TARGETS
+  MPM_GradientComputer
+)

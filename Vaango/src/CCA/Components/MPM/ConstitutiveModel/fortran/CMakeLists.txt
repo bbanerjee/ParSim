@@ -68,3 +68,6 @@ SET(MPM_ConstitutiveModel_SRCS
   PARENT_SCOPE
 )
 
+install(TARGETS
+  MPM_ConstitutiveModel_FORTRAN
+)

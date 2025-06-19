@@ -72,3 +72,7 @@ endif()
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_OnTheFlyAnalysis)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  Vaango_CCA_Components_OnTheFlyAnalysis
+)

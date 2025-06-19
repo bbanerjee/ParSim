@@ -48,30 +48,33 @@ add_executable(compare_uda compare_uda.cc ${COMPARE_UDA_UTILS_SRC})
 add_executable(slb slb.cc)
 add_executable(restart_merger restart_merger.cc)
 
+SET(VAANGO_LIBS_BASE
+  Vaango_Core_DataArchive 
+  Vaango_Core_Grid        
+  Vaango_Core_Parallel    
+  Vaango_Core_Util        
+  Vaango_Core_Math        
+  Vaango_Core_Exceptions  
+  Vaango_Core_OS  
+  Vaango_CCA_Ports        
+  Vaango_CCA_Components_Parent 
+  Vaango_CCA_Components_DataArchiver  
+  Vaango_CCA_Components_LoadBalancers 
+  Vaango_CCA_Components_Regridder     
+  Vaango_Core_ProblemSpec             
+  Vaango_CCA_Components_SimulationController 
+  Vaango_CCA_Components_Schedulers           
+  Vaango_CCA_Components_ProblemSpecification 
+  Vaango_CCA_Components_Solvers
+)
 SET(VAANGO_LIBS 
-        Vaango_Core_DataArchive 
-        Vaango_Core_Grid        
-        Vaango_Core_Parallel    
-        Vaango_Core_Util        
-        Vaango_Core_Math        
-        Vaango_Core_Exceptions  
-        Vaango_Core_OS  
-        Vaango_CCA_Ports        
-        Vaango_CCA_Components_Parent 
-        Vaango_CCA_Components_DataArchiver  
-        Vaango_CCA_Components_LoadBalancers 
-        Vaango_CCA_Components_Regridder     
-        Vaango_Core_ProblemSpec             
-        Vaango_CCA_Components_SimulationController 
-        Vaango_CCA_Components_Schedulers           
-        Vaango_CCA_Components_ProblemSpecification 
-        Vaango_CCA_Components_Solvers
-        $<$<BOOL:${ICE}>:Vaango_CCA_Components_Models>
-        $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
-        $<$<BOOL:${HAVE_PETSC}>:${PETSC_TARGET}>
-        MPI::MPI_CXX
-        Vaango::Options
-        Vaango::Warnings
+  ${VAANGO_LIBS_BASE}
+  $<$<BOOL:${ICE}>:Vaango_CCA_Components_Models>
+  $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
+  $<$<BOOL:${HAVE_PETSC}>:${PETSC_TARGET}>
+  MPI::MPI_CXX
+  Vaango::Options
+  Vaango::Warnings
 )
 
 target_link_libraries(vaango PRIVATE
@@ -115,3 +118,15 @@ target_link_libraries(slb PRIVATE
 # Go to subdirectories
 add_subdirectory(tools)
 add_subdirectory(Benchmarks)
+
+#--------------------------------------------
+# Install artifacts
+#--------------------------------------------
+install(DIRECTORY inputs DESTINATION share)
+
+install(TARGETS
+        vaango
+        compare_uda
+        restart_merger
+        ${VAANGO_LIBS_BASE}
+        )

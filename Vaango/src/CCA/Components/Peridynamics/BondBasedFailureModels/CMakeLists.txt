@@ -41,8 +41,6 @@ SET(LIBS
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
-  ${VT_LIBRARY}
-  ${M_LIBRARY}
 )
 
 add_library(Peridynamics_FailureModels ${Peridynamics_FailureModel_SRCS})

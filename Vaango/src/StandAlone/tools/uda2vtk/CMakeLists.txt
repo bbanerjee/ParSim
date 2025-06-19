@@ -44,7 +44,6 @@ set(UDA2VTK_LIBS
   Vaango_Core_Datatypes    
   LibXml2::LibXml2
   ${Z_LIBRARY}
-  ${M_LIBRARY}
   MPI::MPI_CXX
   ${F_LIBRARY}
   Vaango::Options

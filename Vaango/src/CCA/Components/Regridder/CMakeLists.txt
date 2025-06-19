@@ -40,7 +40,6 @@ target_link_libraries(Vaango_CCA_Components_Regridder PRIVATE
   Vaango_Core_Grid
   Vaango_Core_Util
   Vaango_Core_Exceptions
-  ${M_LIBRARY}
   LibXml2::LibXml2
   MPI::MPI_CXX
   Vaango::Options

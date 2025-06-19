@@ -64,8 +64,6 @@ target_link_libraries(Vaango_Core_GeometryPiece
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_Util
-  ${M_LIBRARY}
-  ${Boost_LIBRARIES}
   Vaango::Options
   Vaango::Warnings
 )
@@ -73,3 +71,7 @@ target_link_libraries(Vaango_Core_GeometryPiece
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_Core_GeometryPiece)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  Vaango_Core_GeometryPiece
+)

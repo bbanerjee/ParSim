@@ -43,3 +43,6 @@ IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_Core_IO)
 ENDIF(BUILD_SHARED_LIBS)
 
+install(TARGETS
+  Vaango_Core_IO
+)

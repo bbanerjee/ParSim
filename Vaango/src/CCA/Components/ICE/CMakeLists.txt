@@ -54,7 +54,6 @@ SET(LIBS
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  ${M_LIBRARY}
 )
 
 IF(APPLE)
@@ -76,3 +75,7 @@ target_link_libraries(Vaango_CCA_Components_ICE PRIVATE
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_ICE)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  Vaango_CCA_Components_ICE
+)

@@ -44,9 +44,9 @@ GetLibrarySymbolAddress(const char* libname, const char* symbolname)
   LibraryHandle = LoadLibrary(libname);
   // #elif defined(__APPLE__)
 #else
-  ASSERT(Uintah::sci_getenv("SCIRUN_OBJDIR"));
+  ASSERT(Uintah::sci_getenv("VAANGO_OBJDIR"));
   std::string name =
-    std::string(Uintah::sci_getenv("SCIRUN_OBJDIR")) + "/lib/" + std::string(libname);
+    std::string(Uintah::sci_getenv("VAANGO_OBJDIR")) + "/lib/" + std::string(libname);
   LibraryHandle = dlopen(name.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 
   if (LibraryHandle == 0) {
@@ -174,9 +174,9 @@ GetLibraryHandle(const char* libname)
   if (libname[0] == '/') {
     name = libname;
   } else {
-    ASSERT(Uintah::sci_getenv("SCIRUN_OBJDIR"));
+    ASSERT(Uintah::sci_getenv("VAANGO_OBJDIR"));
     name =
-      std::string(Uintah::sci_getenv("SCIRUN_OBJDIR")) + "/lib/" + std::string(libname);
+      std::string(Uintah::sci_getenv("VAANGO_OBJDIR")) + "/lib/" + std::string(libname);
   }
 
   LIBRARY_HANDLE lh;

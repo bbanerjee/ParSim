@@ -42,8 +42,6 @@ SET(LIBS
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
   LibXml2::LibXml2
-  ${VT_LIBRARY}
-  ${M_LIBRARY}
   MPI::MPI_CXX
 )
 
@@ -59,6 +57,9 @@ IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Peridynamics_DamageModels)
 ENDIF(BUILD_SHARED_LIBS)
 
+install(TARGETS
+  Peridynamics_DamageModels
+)
 
 
 

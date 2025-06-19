@@ -41,7 +41,6 @@ target_link_libraries(Vaango_CCA_Components_DataArchiver PRIVATE
   Vaango_CCA_Components_ProblemSpecification
   Vaango_Core_OS
   LibXml2::LibXml2
-  ${M_LIBRARY}
   ${SOCKET_LIBRARY}
   MPI::MPI_CXX
   Vaango::Options

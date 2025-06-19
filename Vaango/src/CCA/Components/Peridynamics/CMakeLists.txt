@@ -56,8 +56,6 @@ SET(LIBS
   Peridynamics_MaterialModels
   Peridynamics_DamageModels
   LibXml2::LibXml2
-  ${VT_LIBRARY}
-  ${M_LIBRARY}
   MPI::MPI_CXX
 )
 
@@ -72,3 +70,7 @@ target_link_libraries(Vaango_CCA_Components_Peridynamics
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_Peridynamics)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  Vaango_CCA_Components_Peridynamics
+)

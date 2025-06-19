@@ -43,7 +43,6 @@ target_link_libraries(Vaango_CCA_Components_SimulationController PRIVATE
   Vaango_CCA_Components_DataArchiver
   Vaango_CCA_Components_Regridder
   Vaango_CCA_Components_PostProcessUda
-  ${M_LIBRARY}
   LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings

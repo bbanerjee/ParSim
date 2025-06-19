@@ -55,3 +55,7 @@ endif()
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_PhysicalBC)
 ENDIF(BUILD_SHARED_LIBS)
+
+install(TARGETS
+  MPM_PhysicalBC
+)

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2023 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,7 +37,7 @@
 #include <Core/Util/FileUtils.h>
 #include <Core/Util/StringUtil.h>
 
-#include <Core/Util/Environment.h> // for SCIRUN_SRCDIR
+#include <Core/Util/Environment.h> // for VAANGO_SRCDIR
 
 #include <algorithm>
 #include <iomanip>
@@ -45,6 +45,7 @@
 #include <list>
 #include <sstream>
 #include <vector>
+#include <filesystem>
 
 #include <cstdio>
 #include <cstring>
@@ -69,6 +70,7 @@ typedef Handle<ChildRequirement> ChildRequirementP;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
+// To activate set: export SCI_DEBUG="ProblemSpecReader:+, ProblemSpecReaderIncludes:+"
 static DebugStream dbg("ProblemSpecReader", false);
 static DebugStream inc_dbg("ProblemSpecReaderIncludes", false);
 
@@ -1397,18 +1399,50 @@ ProblemSpecReader::parseValidationFile()
   dbg << "- Parsing ups_spec.xml\n";
   dbg << "- \n";
 
+  const char* vaango_srcdir_cstr = sci_getenv("VAANGO_SRCDIR");
+  const char* vaango_installdir_cstr = sci_getenv("VAANGO_INSTALLDIR");
+
+  if (vaango_srcdir_cstr == nullptr) {
+    std::cerr << "Error: Environment variable VAANGO_SRCDIR is not set!"
+              << std::endl;
+    if (vaango_installdir_cstr == nullptr) {
+      std::cerr << "Error: Environment variable VAANGO_INSTALLDIR is not set!"
+                << std::endl;
+      throw ProblemSetupException("Error: Environment variables VAANGO_SRCDIR "
+                                  "and VAANGO_INSTALLDIR are not set!",
+                                  __FILE__,
+                                  __LINE__);
+    }
+  }
+  
+  std::filesystem::path src_dir_path{vaango_srcdir_cstr};
+  std::filesystem::path src_spec_path = src_dir_path / "StandAlone/inputs/UPS_SPEC/ups_spec.xml";
+
+  std::filesystem::path install_dir_path{vaango_installdir_cstr};
+  std::filesystem::path install_spec_path = install_dir_path / "share/inputs/UPS_SPEC/ups_spec.xml";
+
+  //std::cout << "src_spec_path = " << src_spec_path.string() << std::endl;
+  //std::cout << "install_spec_path = " << install_spec_path.string() << std::endl;
+
+  std::string ups_spec_str = install_spec_path.string();
+  if (!std::filesystem::exists(install_spec_path)) {
+    ups_spec_str = src_spec_path.string();
+    if (!std::filesystem::exists(src_spec_path)) {
+      std::stringstream ss;
+      ss << "Error: The UPS validation file is not available in "
+         << src_spec_path.string() << " or " << install_spec_path.string() << "!";
+      throw ProblemSetupException(ss.str(), __FILE__, __LINE__);
+    }
+  }
+
+  d_upsFilename.store(ups_spec_str);
+
   xmlDocPtr doc; /* the resulting document tree */
-
-  string* valFile = scinew string(string(sci_getenv("SCIRUN_SRCDIR")) +
-                                  "/StandAlone/inputs/UPS_SPEC/ups_spec.xml");
-
-  d_upsFilename.push_back(valFile);
-
-  doc = xmlReadFile(valFile->c_str(), nullptr, XML_PARSE_PEDANTIC);
+  doc = xmlReadFile(ups_spec_str.c_str(), nullptr, XML_PARSE_PEDANTIC);
 
   if (doc == nullptr) {
     throw ProblemSetupException(
-      "Error opening .ups validation specification file: " + *valFile,
+      "Error opening .ups validation specification file: " + ups_spec_str,
       __FILE__,
       __LINE__);
   }
@@ -1418,7 +1452,7 @@ ProblemSpecReader::parseValidationFile()
   // FYI, We are hijacking the '_private' to be used as application data...
   // specifically the name of the file
   // that this node came from.
-  root->_private = (void*)valFile;
+  root->_private = (void*)(&ups_spec_str);
   resolveIncludes(root->children, root);
 
   uintahSpec_g =
@@ -1430,7 +1464,7 @@ ProblemSpecReader::parseValidationFile()
 
   if (tagName != "Uintah_specification") {
     throw ProblemSetupException(
-      *valFile + " does not appear to be valid... First tag should be\n" +
+      ups_spec_str + " does not appear to be valid... First tag should be\n" +
         +"<Uintah_specification>, but found: " + tagName,
       __FILE__,
       __LINE__);
@@ -2095,7 +2129,12 @@ ProblemSpecReader::validateProblemSpec(ProblemSpecP& prob_spec)
 
   if (!uintahSpec_g) {
 
-    parseValidationFile();
+    try {
+      parseValidationFile();
+    } catch (const ProblemSetupException& err) {
+      std::cerr << "ERROR: " << err.message() << std::endl;
+      throw;
+    }
 
     if (dbg.active()) {
       dbg << "-----------------------------------------------------------------"
@@ -2141,10 +2180,6 @@ ProblemSpecReader::validateProblemSpec(ProblemSpecP& prob_spec)
 ProblemSpecReader::~ProblemSpecReader()
 {
   d_xmlData = nullptr;
-
-  for (auto& pos : d_upsFilename) {
-    delete pos;
-  }
 }
 
 string
@@ -2160,6 +2195,7 @@ validateFilename(const string& filename, const xmlNode* parent)
   string errorMsg;
   bool filenameIsBad = false;
 
+  std::cout << "In validateFilename: Current filename = " << filename << std::endl;
   if (filename[0] != '/') { // If not absolute path, make it one...
 
     if (parent) {
@@ -2276,10 +2312,8 @@ ProblemSpecReader::readInputFile(const string& filename,
 
   ProblemSpecP prob_spec = scinew ProblemSpec(xmlDocGetRootElement(doc), true);
 
-  auto strPtr = new string(full_filename);
-
-  d_upsFilename.push_back(strPtr);
-  prob_spec->getNode()->_private = (void*)strPtr;
+  d_upsFilename.store(full_filename);
+  prob_spec->getNode()->_private = (void*)(&full_filename);
 
   resolveIncludes(prob_spec->getNode()->children, prob_spec->getNode());
 
@@ -2288,7 +2322,11 @@ ProblemSpecReader::readInputFile(const string& filename,
   //   "------------------------------------------------------------------\n";
   //   printDoc( prob_spec->getNode(), 0 );
   if (validate) {
-    validateProblemSpec(prob_spec);
+    try {
+      validateProblemSpec(prob_spec);
+    } catch (const ProblemSetupException& err) {
+       std::cerr << "ERROR: " << err.message() << std::endl;
+    }
   }
 
   d_xmlData = prob_spec;
@@ -2307,19 +2345,13 @@ void
 ProblemSpecReader::setFilename(const std::string& filename)
 {
   string full_filename = validateFilename(filename, nullptr);
-  auto strPtr          = new string(full_filename);
-  d_upsFilename.push_back(strPtr);
+  d_upsFilename.store(full_filename);
 }
 
-string*
+std::string*
 ProblemSpecReader::findFileNamePtr(const string& filename)
 {
-  for (auto& pos : d_upsFilename) {
-    if (*pos == filename) {
-      return pos;
-    }
-  }
-  return nullptr;
+  return d_upsFilename.findFileNamePtr(filename);
 }
 
 void
@@ -2349,8 +2381,7 @@ ProblemSpecReader::resolveIncludes(xmlNode* child,
         xmlDocPtr doc =
           xmlReadFile(filename.c_str(), nullptr, XML_PARSE_PEDANTIC);
         xmlNode* include = xmlDocGetRootElement(doc);
-        auto strPtr      = new string(filename);
-        d_upsFilename.push_back(strPtr);
+        d_upsFilename.store(filename);
 
         // nodes to be substituted must be enclosed in a
         // "Uintah_Include" node
@@ -2403,7 +2434,7 @@ ProblemSpecReader::resolveIncludes(xmlNode* child,
             }
 
             // Record the newnode's real file info...
-            newnode->_private = strPtr;
+            newnode->_private = &filename;
             xmlAddPrevSibling(child, newnode);
             incChild = incChild->next;
           }
