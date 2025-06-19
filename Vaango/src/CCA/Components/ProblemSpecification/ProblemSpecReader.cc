@@ -1421,9 +1421,6 @@ ProblemSpecReader::parseValidationFile()
   std::filesystem::path install_dir_path{vaango_installdir_cstr};
   std::filesystem::path install_spec_path = install_dir_path / "share/inputs/UPS_SPEC/ups_spec.xml";
 
-  //std::cout << "src_spec_path = " << src_spec_path.string() << std::endl;
-  //std::cout << "install_spec_path = " << install_spec_path.string() << std::endl;
-
   std::string ups_spec_str = install_spec_path.string();
   if (!std::filesystem::exists(install_spec_path)) {
     ups_spec_str = src_spec_path.string();
@@ -1452,7 +1449,7 @@ ProblemSpecReader::parseValidationFile()
   // FYI, We are hijacking the '_private' to be used as application data...
   // specifically the name of the file
   // that this node came from.
-  root->_private = (void*)(&ups_spec_str);
+  root->_private = (void*)(findFileNamePtr(ups_spec_str));
   resolveIncludes(root->children, root);
 
   uintahSpec_g =
@@ -2195,7 +2192,6 @@ validateFilename(const string& filename, const xmlNode* parent)
   string errorMsg;
   bool filenameIsBad = false;
 
-  std::cout << "In validateFilename: Current filename = " << filename << std::endl;
   if (filename[0] != '/') { // If not absolute path, make it one...
 
     if (parent) {
@@ -2313,7 +2309,7 @@ ProblemSpecReader::readInputFile(const string& filename,
   ProblemSpecP prob_spec = scinew ProblemSpec(xmlDocGetRootElement(doc), true);
 
   d_upsFilename.store(full_filename);
-  prob_spec->getNode()->_private = (void*)(&full_filename);
+  prob_spec->getNode()->_private = (void*)(findFileNamePtr(full_filename));
 
   resolveIncludes(prob_spec->getNode()->children, prob_spec->getNode());
 
@@ -2390,8 +2386,8 @@ ProblemSpecReader::resolveIncludes(xmlNode* child,
         if (name == "Uintah_Include" || name == "Uintah_specification") {
           xmlNode* incChild = include->children;
 
-          if (section !=
-              "") { // Find the right section of the included file (to include).
+          // Find the right section of the included file (to include).
+          if (section != "") { 
 
             std::vector<std::string> sections;
             std::vector<char> separators;
@@ -2434,7 +2430,7 @@ ProblemSpecReader::resolveIncludes(xmlNode* child,
             }
 
             // Record the newnode's real file info...
-            newnode->_private = &filename;
+            newnode->_private = (void *)(findFileNamePtr(filename));
             xmlAddPrevSibling(child, newnode);
             incChild = incChild->next;
           }

@@ -1,5 +1,5 @@
 opt
-dbg
+dbg*
 dbg_gcc
 opt_gcc
 opt_clang_amr
