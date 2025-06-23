@@ -85,33 +85,33 @@ Crack::CrackPointSubset(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
     int pid, patch_size;
-    MPI_Comm_rank(mpi_crack_comm, &pid);
-    MPI_Comm_size(mpi_crack_comm, &patch_size);
+    MPI_Comm_rank(d_mpi_crack_comm, &pid);
+    MPI_Comm_size(d_mpi_crack_comm, &patch_size);
 
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     for (int m = 0; m < numMPMMatls; m++) {
-      cnset[m][pid].clear();
+      d_cnset[m][pid].clear();
 
       // Collect crack nodes in each patch
-      for (int i = 0; i < (int)cx[m].size(); i++) {
-        if (patch->containsPointInExtraCells(cx[m][i])) {
-          cnset[m][pid].push_back(i);
+      for (int i = 0; i < (int)d_cx[m].size(); i++) {
+        if (patch->containsPointInExtraCells(d_cx[m][i])) {
+          d_cnset[m][pid].push_back(i);
         }
       }
 
-      MPI_Barrier(mpi_crack_comm);
+      MPI_Barrier(d_mpi_crack_comm);
 
       // Broadcast cnset to all the ranks
       for (int i = 0; i < patch_size; i++) {
         int num; // number of crack nodes in patch i
         if (i == pid) {
-          num = cnset[m][i].size();
+          num = d_cnset[m][i].size();
         }
-        MPI_Bcast(&num, 1, MPI_INT, i, mpi_crack_comm);
+        MPI_Bcast(&num, 1, MPI_INT, i, d_mpi_crack_comm);
         if (pid != i) {
-          cnset[m][i].resize(num);
+          d_cnset[m][i].resize(num);
         }
-        MPI_Bcast(&cnset[m][i][0], num, MPI_INT, i, mpi_crack_comm);
+        MPI_Bcast(&d_cnset[m][i][0], num, MPI_INT, i, d_mpi_crack_comm);
       }
 
     } // End of loop over matls
@@ -126,7 +126,7 @@ Crack::addComputesAndRequiresMoveCracks(Task* t,
   t->needs(Task::OldDW, lb->delTLabel);
 
   Ghost::GhostType gac = Ghost::AroundCells;
-  int NGC              = 2 * NGN;
+  int NGC              = 2 * d_NGN;
   t->needs(Task::NewDW, lb->gMassLabel, gac, NGC);
   t->needs(Task::NewDW, lb->gNumPatlsLabel, gac, NGC);
   t->needs(Task::NewDW, lb->gVelocityStarLabel, gac, NGC);
@@ -148,13 +148,13 @@ Crack::MoveCracks(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    auto interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = d_flag->d_interpolator->clone(patch);
     std::vector<IntVector> ni(interpolator->size());
     std::vector<double> S(interpolator->size());
 
     int pid, patch_size;
-    MPI_Comm_rank(mpi_crack_comm, &pid);
-    MPI_Comm_size(mpi_crack_comm, &patch_size);
+    MPI_Comm_rank(d_mpi_crack_comm, &pid);
+    MPI_Comm_size(d_mpi_crack_comm, &patch_size);
     MPI_Datatype MPI_POINT = fun_getTypeDescription((Point*)0)->getMPIType();
 
     Vector dx     = patch->dCell();
@@ -165,7 +165,7 @@ Crack::MoveCracks(const ProcessorGroup*,
 
     int numMPMMatls = d_mat_manager->getNumMaterials("MPM");
     for (int m = 0; m < numMPMMatls; m++) {
-      if ((int)ce[m].size() == 0) { // for materials with no cracks
+      if ((int)d_ce[m].size() == 0) { // for materials with no cracks
         continue;
       }
 
@@ -186,7 +186,7 @@ Crack::MoveCracks(const ProcessorGroup*,
       constNCVariable<double> gMass, Gmass;
       constNCVariable<int> gnum, Gnum;
       constNCVariable<Vector> gVelocity_star, Gvelocity_star;
-      int NGC = 2 * NGN;
+      int NGC = 2 * d_NGN;
       new_dw->get(gMass, lb->gMassLabel, dwi, patch, gac, NGC);
       new_dw->get(gnum, lb->gNumPatlsLabel, dwi, patch, gac, NGC);
       new_dw->get(gVelocity_star, lb->gVelocityStarLabel, dwi, patch, gac, NGC);
@@ -195,13 +195,13 @@ Crack::MoveCracks(const ProcessorGroup*,
       new_dw->get(Gvelocity_star, lb->GVelocityStarLabel, dwi, patch, gac, NGC);
 
       for (int i = 0; i < patch_size; i++) {
-        int numNodes = cnset[m][i].size();
+        int numNodes = d_cnset[m][i].size();
         if (numNodes > 0) {
           Point* cptmp = new Point[numNodes];
           if (pid == i) { // Rank i updates the nodes in patch i
             for (int j = 0; j < numNodes; j++) {
-              int idx  = cnset[m][i][j];
-              Point pt = cx[m][idx];
+              int idx  = d_cnset[m][i][j];
+              Point pt = d_cx[m][idx];
 
               double mg, mG;
               Vector vg, vG;
@@ -214,7 +214,7 @@ Crack::MoveCracks(const ProcessorGroup*,
               // Sum of shape functions from nodes with particle(s) around them
               // This part is necessary for crack nodes outside the material
               double sumS = 0.0;
-              for (int k = 0; k < n8or27; k++) {
+              for (int k = 0; k < d_n8or27; k++) {
                 Point pi = patch->nodePosition(ni[k]);
                 if (PhysicalGlobalGridContainsPoint(dx_min,
                                                     pi) && // ni[k] in real grid
@@ -223,7 +223,7 @@ Crack::MoveCracks(const ProcessorGroup*,
                 }
               }
               if (sumS > 1.e-6) {
-                for (int k = 0; k < n8or27; k++) {
+                for (int k = 0; k < d_n8or27; k++) {
                   Point pi = patch->nodePosition(ni[k]);
                   if (PhysicalGlobalGridContainsPoint(dx_min, pi) &&
                       (gnum[ni[k]] + Gnum[ni[k]] != 0)) {
@@ -245,7 +245,7 @@ Crack::MoveCracks(const ProcessorGroup*,
               // Check if the node is still inside the grid
               if (!PhysicalGlobalGridContainsPoint(dx_min, cptmp[j])) {
                 std::cout << "Error: cx[" << m << "," << idx
-                          << "]=" << cx[m][idx] << " has moved to " << cptmp[j]
+                          << "]=" << d_cx[m][idx] << " has moved to " << cptmp[j]
                           << ", outside the global grid."
                           << " Center-of-mass velocity, vcm=" << vcm
                           << ". Program terminated." << std::endl;
@@ -256,12 +256,12 @@ Crack::MoveCracks(const ProcessorGroup*,
           }   // End if(pid==i)
 
           // Broadcast the updated position to all ranks
-          MPI_Bcast(cptmp, numNodes, MPI_POINT, i, mpi_crack_comm);
+          MPI_Bcast(cptmp, numNodes, MPI_POINT, i, d_mpi_crack_comm);
 
           // Update cx
           for (int j = 0; j < numNodes; j++) {
-            int idx    = cnset[m][i][j];
-            cx[m][idx] = cptmp[j];
+            int idx    = d_cnset[m][i][j];
+            d_cx[m][idx] = cptmp[j];
           }
 
           delete[] cptmp;
@@ -269,15 +269,15 @@ Crack::MoveCracks(const ProcessorGroup*,
         } // End of if(numNodes>0)
       }   // End of loop over patch_size
 
-      MPI_Barrier(mpi_crack_comm);
+      MPI_Barrier(d_mpi_crack_comm);
 
       // Task 2: Update crack extent
 
-      cmin[m] = Point(9.e16, 9.e16, 9.e16);
-      cmax[m] = Point(-9.e16, -9.e16, -9.e16);
-      for (int i = 0; i < (int)cx[m].size(); i++) {
-        cmin[m] = Min(cmin[m], cx[m][i]);
-        cmax[m] = Max(cmax[m], cx[m][i]);
+      d_cmin[m] = Point(9.e16, 9.e16, 9.e16);
+      d_cmax[m] = Point(-9.e16, -9.e16, -9.e16);
+      for (int i = 0; i < (int)d_cx[m].size(); i++) {
+        d_cmin[m] = Min(d_cmin[m], d_cx[m][i]);
+        d_cmax[m] = Max(d_cmax[m], d_cx[m][i]);
       }
 
     } // End of loop over matls
@@ -293,8 +293,8 @@ Crack::PhysicalGlobalGridContainsPoint(const double& dx, const Point& pt)
   // around it (within 1% of cell-size)
 
   double px = pt.x(), py = pt.y(), pz = pt.z();
-  double lx = GLP.x(), ly = GLP.y(), lz = GLP.z();
-  double hx = GHP.x(), hy = GHP.y(), hz = GHP.z();
+  double lx = d_GLP.x(), ly = d_GLP.y(), lz = d_GLP.z();
+  double hx = d_GHP.x(), hy = d_GHP.y(), hz = d_GHP.z();
 
   return ((px > lx || fabs(px - lx) / dx < 0.01) &&
           (px < hx || fabs(px - hx) / dx < 0.01) &&
@@ -313,27 +313,27 @@ Crack::ApplySymmetricBCsToCrackPoints(const Vector& cs,
   // cs -- cell size
   for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
        face                 = Patch::nextFace(face)) {
-    if (GridBCType[face] == "symmetry") {
+    if (d_GridBCType[face] == "symmetry") {
       if (face == Patch::xminus &&
-          fabs(old_pt.x() - GLP.x()) / cs.x() < 1.e-2) {
-        new_pt(0) = GLP.x(); // On symmetric face x-
+          fabs(old_pt.x() - d_GLP.x()) / cs.x() < 1.e-2) {
+        new_pt(0) = d_GLP.x(); // On symmetric face x-
       }
-      if (face == Patch::xplus && fabs(old_pt.x() - GHP.x()) / cs.x() < 1.e-2) {
-        new_pt(0) = GHP.x(); // On symmetric face x+
+      if (face == Patch::xplus && fabs(old_pt.x() - d_GHP.x()) / cs.x() < 1.e-2) {
+        new_pt(0) = d_GHP.x(); // On symmetric face x+
       }
       if (face == Patch::yminus &&
-          fabs(old_pt.y() - GLP.y()) / cs.y() < 1.e-2) {
-        new_pt(1) = GLP.y(); // On symmetric face y-
+          fabs(old_pt.y() - d_GLP.y()) / cs.y() < 1.e-2) {
+        new_pt(1) = d_GLP.y(); // On symmetric face y-
       }
-      if (face == Patch::yplus && fabs(old_pt.y() - GHP.y()) / cs.y() < 1.e-2) {
-        new_pt(1) = GHP.y(); // On symmetric face y+
+      if (face == Patch::yplus && fabs(old_pt.y() - d_GHP.y()) / cs.y() < 1.e-2) {
+        new_pt(1) = d_GHP.y(); // On symmetric face y+
       }
       if (face == Patch::zminus &&
-          fabs(old_pt.z() - GLP.z()) / cs.z() < 1.e-2) {
-        new_pt(2) = GLP.z(); // On symmetric face z-
+          fabs(old_pt.z() - d_GLP.z()) / cs.z() < 1.e-2) {
+        new_pt(2) = d_GLP.z(); // On symmetric face z-
       }
-      if (face == Patch::zplus && fabs(old_pt.z() - GHP.z()) / cs.z() < 1.e-2) {
-        new_pt(2) = GHP.z(); // On symmetric face z+
+      if (face == Patch::zplus && fabs(old_pt.z() - d_GHP.z()) / cs.z() < 1.e-2) {
+        new_pt(2) = d_GHP.z(); // On symmetric face z+
       }
     }
   }

@@ -70,11 +70,11 @@ Crack::addComputesAndRequiresPropagateCrackFrontPoints(
   const MaterialSet* /*matls*/) const
 {
   Ghost::GhostType gac = Ghost::AroundCells;
-  int NGC              = 2 * NGN;
+  int NGC              = 2 * d_NGN;
   t->needs(Task::NewDW, lb->gMassLabel, gac, NGC);
   t->needs(Task::NewDW, lb->GMassLabel, gac, NGC);
 
-  if (n8or27 == 27)
+  if (d_n8or27 == 27)
     t->needs(Task::OldDW, lb->pSizeLabel, Ghost::None);
 }
 
@@ -91,8 +91,8 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
     double dx_bar      = (dx.x() + dx.y() + dx.z()) / 3.;
 
     int pid, patch_size;
-    MPI_Comm_rank(mpi_crack_comm, &pid);
-    MPI_Comm_size(mpi_crack_comm, &patch_size);
+    MPI_Comm_rank(d_mpi_crack_comm, &pid);
+    MPI_Comm_size(d_mpi_crack_comm, &patch_size);
 
     MPI_Datatype MPI_POINT = fun_getTypeDescription((Point*)0)->getMPIType();
 
@@ -111,34 +111,34 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
 
       Ghost::GhostType gac = Ghost::AroundCells;
       constNCVariable<double> gMass, Gmass;
-      int NGC = 2 * NGN;
+      int NGC = 2 * d_NGN;
       new_dw->get(gMass, lb->gMassLabel, dwi, patch, gac, NGC);
       new_dw->get(Gmass, lb->GMassLabel, dwi, patch, gac, NGC);
 
       constParticleVariable<Matrix3> pSize;
-      if (n8or27 == 27)
+      if (d_n8or27 == 27)
         old_dw->get(pSize, lb->pSizeLabel, pset);
 
-      if (doCrackPropagation) {
+      if (d_doCrackPropagationStep) {
 
         // Step 1: Detect if crack front nodes propagate (cp)
         //         and propagate them virtually (da) for the active nodes
 
-        // Clear up cfSegPtsT, which stores temporarily the coordinates
+        // Clear up d_cfSegPtsT, which stores temporarily the coordinates
         // of crack-front nodes after propagation
-        cfSegPtsT[m].clear();
+        d_cfSegPtsT[m].clear();
 
-        int cfNodeSize = (int)cfSegNodes[m].size();
+        int cfNodeSize = (int)d_cfSegNodes[m].size();
         short* cp      = new short[cfNodeSize];
         Vector* da     = new Vector[cfNodeSize];
 
         for (int i = 0; i < cfNodeSize; i++) {
-          int preIdx = cfSegPreIdx[m][i];
+          int preIdx = d_cfSegPreIdx[m][i];
           if (preIdx < 0) { // a duplicate node, not operated
             // Direction cosines at the node
-            Vector v1 = cfSegV1[m][i];
-            Vector v2 = cfSegV2[m][i];
-            Vector v3 = cfSegV3[m][i];
+            Vector v1 = d_cfSegV1[m][i];
+            Vector v2 = d_cfSegV2[m][i];
+            Vector v3 = d_cfSegV3[m][i];
 
             // Coordinate transformation matrix from local to global coordinates
             Matrix3 T = Matrix3(v1.x(),
@@ -152,9 +152,9 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
                                 v3.z());
 
             // Get fracture parameters at crack-front nodes
-            double KI  = cfSegK[m][i].x();
-            double KII = cfSegK[m][i].y();
-            double Vc  = cfSegVel[m][i];
+            double KI  = d_cfSegK[m][i].x();
+            double KII = d_cfSegK[m][i].y();
+            double Vc  = d_cfSegVel[m][i];
             // If KI less than zero, set it to zero.
             // if(KI<0.) KI=0.;
 
@@ -165,7 +165,7 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
               cp[i] = YES;
 
             // Propagate the node virtually
-            double dl       = rdadx * dx_bar;
+            double dl       = d_rdadx * dx_bar;
             Vector da_local = Vector(dl * cos(theta), dl * sin(theta), 0.);
             da[i]           = T * da_local;
           }      // End of if(!operated)
@@ -178,14 +178,14 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
         // Step 2: Propagate crack-front nodes
 
         for (int i = 0; i < cfNodeSize; i++) {
-          int node = cfSegNodes[m][i];
-          Point pt = cx[m][node];
+          int node = d_cfSegNodes[m][i];
+          Point pt = d_cx[m][node];
 
           // Maximum and minimum indexes of the sub-crack which the node resides
-          int maxIdx = cfSegMaxIdx[m][i];
-          int minIdx = cfSegMinIdx[m][i];
+          int maxIdx = d_cfSegMaxIdx[m][i];
+          int minIdx = d_cfSegMinIdx[m][i];
 
-          int preIdx = cfSegPreIdx[m][i];
+          int preIdx = d_cfSegPreIdx[m][i];
           if (preIdx < 0) { // a duplicate node, not operated
             // Count the nodes which propagate among (2ns+1) nodes around pt
             int nsegs = (maxIdx - minIdx + 1) / 2;
@@ -205,11 +205,11 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
             // New position of the node after virtual propagation
             double fraction = (double)np / (2 * ns + 1);
             Point new_pt    = pt + fraction * da[i];
-            cfSegPtsT[m].push_back(new_pt);
+            d_cfSegPtsT[m].push_back(new_pt);
           } // End if(!operated)
           else {
-            Point prePt = cfSegPtsT[m][preIdx];
-            cfSegPtsT[m].push_back(prePt);
+            Point prePt = d_cfSegPtsT[m][preIdx];
+            d_cfSegPtsT[m].push_back(prePt);
           }
         } // End of loop cfSegNodes
 
@@ -221,9 +221,9 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
         //         extending new_pt out to material boundary
 
         for (int i = 0; i < cfNodeSize; i++) {
-          int node     = cfSegNodes[m][i];
-          Point pt     = cx[m][node];
-          Point new_pt = cfSegPtsT[m][i];
+          int node     = d_cfSegNodes[m][i];
+          Point pt     = d_cx[m][node];
+          Point new_pt = d_cfSegPtsT[m][i];
 
           // segments connected by the node
           int segs[2];
@@ -233,12 +233,12 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
               (new_pt - pt).length() / dx_bar > 0.01) { // It propagates
 
             // Find the direction of the edge crack-front segment
-            Point ptp = cfSegPtsT[m][i];
+            Point ptp = d_cfSegPtsT[m][i];
             Point pt2p;
             if (segs[R] < 0) { // right edge nodes
-              pt2p = cfSegPtsT[m][i + 1];
+              pt2p = d_cfSegPtsT[m][i + 1];
             } else if (segs[L] < 0) { // left edge nodes
-              pt2p = cfSegPtsT[m][i - 1];
+              pt2p = d_cfSegPtsT[m][i - 1];
             }
             Vector v = TwoPtsDirCos(pt2p, ptp);
 
@@ -254,17 +254,17 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
               if (patch->containsPointInExtraCells(new_pt))
                 newPtInPatch[pid] = YES;
 
-              MPI_Barrier(mpi_crack_comm);
+              MPI_Barrier(d_mpi_crack_comm);
 
               // Detect if new_pt is inside material
               for (int k = 0; k < patch_size; k++) {
                 if (newPtInPatch[k]) {
-                  if (n8or27 == 8)
+                  if (d_n8or27 == 8)
                     patch->findCellNodes(new_pt, ni);
-                  else if (n8or27 == 27)
+                  else if (d_n8or27 == 27)
                     patch->findCellNodes27(new_pt, ni);
 
-                  for (int j = 0; j < n8or27; j++) {
+                  for (int j = 0; j < d_n8or27; j++) {
                     double totalMass = gMass[ni[j]] + Gmass[ni[j]];
                     if (totalMass < d_cell_mass / 64.) {
                       newPtInMat = NO;
@@ -273,7 +273,7 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
                   } // End of loop over j
                 }   // End if(newPtInPatch[k])
 
-                MPI_Bcast(&newPtInMat, 1, MPI_SHORT, k, mpi_crack_comm);
+                MPI_Bcast(&newPtInMat, 1, MPI_SHORT, k, d_mpi_crack_comm);
               } // End of loop over k
 
               delete[] newPtInPatch;
@@ -285,7 +285,7 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
             } // End of while(newPtInMat)
 
             // If new_pt is outside the global grid, trim it
-            TrimLineSegmentWithBox(pt2p, new_pt, GLP, GHP);
+            TrimLineSegmentWithBox(pt2p, new_pt, d_GLP, d_GHP);
 
             // Task 3b: If new_pt is outside, trim it back to MPM material
             // boundary
@@ -296,19 +296,19 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
               if (patch->containsPointInExtraCells(new_pt))
                 newPtInPatch[pid] = YES;
 
-              MPI_Barrier(mpi_crack_comm);
+              MPI_Barrier(d_mpi_crack_comm);
 
               for (int k = 0; k < patch_size; k++) {
                 if (newPtInPatch[k]) {
                   // Get cell nodes where new_pt resides
-                  if (n8or27 == 8)
+                  if (d_n8or27 == 8)
                     patch->findCellNodes(new_pt, ni);
-                  else if (n8or27 == 27)
+                  else if (d_n8or27 == 27)
                     patch->findCellNodes27(new_pt, ni);
                   // Get the lowest and highest points of the cell
                   Point LLP = Point(9e99, 9e99, 9e99);
                   Point LHP = Point(-9e99, -9e99, -9e99);
-                  for (int j = 0; j < n8or27; j++) {
+                  for (int j = 0; j < d_n8or27; j++) {
                     Point pj = patch->nodePosition(ni[j]);
                     LLP      = Min(LLP, pj);
                     LHP      = Max(LHP, pj);
@@ -323,29 +323,29 @@ Crack::PropagateCrackFrontPoints(const ProcessorGroup*,
                   new_pt = cross_pt + v * (dx_bar * 0.1);
                 } // End of if(newPtInPatch[k])
 
-                MPI_Bcast(&new_pt, 1, MPI_POINT, k, mpi_crack_comm);
+                MPI_Bcast(&new_pt, 1, MPI_POINT, k, d_mpi_crack_comm);
 
               } // End of loop over k
               delete[] newPtInPatch;
             } // End of if(!newPtInMat)
 
             // Save the eventual position of the edge node after propagation
-            cfSegPtsT[m][i] = new_pt;
+            d_cfSegPtsT[m][i] = new_pt;
           }
-        } // End of loop cfSegNodes
+        } // End of loop d_cfSegNodes
 
         // Step 4: Prune crack-front points if the angle of any two adjacent
         //         segments is larger than a critical angle (ca),
         //         moving it to the mass-center of the three points
 
-        double ca = 2 * csa[m] + 15.;
+        double ca = 2 * d_csa[m] + 15.;
         PruneCrackFrontAfterPropagation(m, ca);
 
         // Step 5: Apply symmetric BCs to new crack-front points
 
-        for (int i = 0; i < (int)cfSegNodes[m].size(); i++) {
-          Point pt = cx[m][cfSegNodes[m][i]];
-          ApplySymmetricBCsToCrackPoints(dx, pt, cfSegPtsT[m][i]);
+        for (int i = 0; i < (int)d_cfSegNodes[m].size(); i++) {
+          Point pt = d_cx[m][d_cfSegNodes[m][i]];
+          ApplySymmetricBCsToCrackPoints(dx, pt, d_cfSegPtsT[m][i]);
         }
 
       } // End of if(doCrackPropagation)
@@ -377,55 +377,55 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
     int numMPMMatls    = d_mat_manager->getNumMaterials("MPM");
 
     for (int m = 0; m < numMPMMatls; m++) {
-      if (doCrackPropagation) {
+      if (d_doCrackPropagation) {
         /*
         // Step 1: Combine crack front nodes if they propagates
         // a little (<10%) or in self-similar way (angle<10 degree)
-        for(int i=0; i<(int)cfSegNodes[m].size(); i++) {
+        for(int i=0; i<(int)d_cfSegNodes[m].size(); i++) {
            // Crack-front node and normal
-           int node=cfSegNodes[m][i];
-           Vector v2=cfSegV2[m][i];
+           int node=d_cfSegNodes[m][i];
+           Vector v2=d_cfSegV2[m][i];
 
            // Crack propagation increment(dis) and direction(vp)
-           double dis=(cfSegPtsT[m][i]-cx[m][node]).length();
-           Vector vp=TwoPtsDirCos(cx[m][node],cfSegPtsT[m][i]);
+           double dis=(d_cfSegPtsT[m][i]-d_cx[m][node]).length();
+           Vector vp=TwoPtsDirCos(d_cx[m][node],d_cfSegPtsT[m][i]);
            // Crack propa angle(in degree) measured from crack plane
            double angle=90-acos(Dot(vp,v2))*180/3.141592654;
            if(dis<0.1*(rdadx*dx_bar) || fabs(angle)<5)
-             cx[m][node]=cfSegPtsT[m][i];
+             d_cx[m][node]=d_cfSegPtsT[m][i];
         }
         */
 
         // Temporary crack-front segment nodes and velocity
         std::vector<int> cfSegNodesT;
         cfSegNodesT.clear();
-        cfSegVel[m].clear();
+        d_cfSegVel[m].clear();
 
-        int ncfSegs     = (int)cfSegNodes[m].size() / 2;
+        int ncfSegs     = (int)d_cfSegNodes[m].size() / 2;
         int preIdxAtMin = -1;
         for (int i = 0; i < ncfSegs; i++) {
           // Relations of this seg with the left and right segs
-          int preIdx1 = cfSegPreIdx[m][2 * i];
-          int preIdx2 = cfSegPreIdx[m][2 * i + 1];
+          int preIdx1 = d_cfSegPreIdx[m][2 * i];
+          int preIdx2 = d_cfSegPreIdx[m][2 * i + 1];
 
           // crack-front nodes and coordinates before propagation
           int n1, n2, n1p, n2p, nc, nmc;
           Point p1, p2, p1p, p2p, pc, pmc;
-          n1 = cfSegNodes[m][2 * i];
-          n2 = cfSegNodes[m][2 * i + 1];
-          p1 = cx[m][n1];
-          p2 = cx[m][n2];
+          n1 = d_cfSegNodes[m][2 * i];
+          n2 = d_cfSegNodes[m][2 * i + 1];
+          p1 = d_cx[m][n1];
+          p2 = d_cx[m][n2];
 
           // crack-front node coordinates after propagaion
-          p1p = cfSegPtsT[m][2 * i];
-          p2p = cfSegPtsT[m][2 * i + 1];
+          p1p = d_cfSegPtsT[m][2 * i];
+          p2p = d_cfSegPtsT[m][2 * i + 1];
           pc  = p1p + (p2p - p1p) / 2.;
 
           // Detect if it is the first segment of an enclosed crack-front
           short firstSegOfEnclosedCrack = NO;
-          int minIdx                    = cfSegMinIdx[m][2 * i];
-          int maxIdx                    = cfSegMaxIdx[m][2 * i + 1];
-          if (cfSegNodes[m][minIdx] == cfSegNodes[m][maxIdx] &&
+          int minIdx                    = d_cfSegMinIdx[m][2 * i];
+          int maxIdx                    = d_cfSegMaxIdx[m][2 * i + 1];
+          if (d_cfSegNodes[m][minIdx] == d_cfSegNodes[m][maxIdx] &&
               minIdx == (2 * i))
             firstSegOfEnclosedCrack = YES;
 
@@ -469,9 +469,9 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
           }
           */
           short CASE = 0; // No propagation
-          if (l12 / css[m] < 0.25) {
+          if (l12 / d_css[m] < 0.25) {
             CASE = 1;                     // Too short segment, drop it
-          } else if (l12 / css[m] > 2.) { // Too long segment, break it into two
+          } else if (l12 / d_css[m] > 2.) { // Too long segment, break it into two
             if (sp && !ep)
               CASE = 5; // p1 propagates, p2 doesn't
             if (!sp && ep)
@@ -498,42 +498,42 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
               cfSegNodesT.push_back(n2);
 
               // Velocity of crack-front nodes
-              cfSegVel[m].push_back(vc1);
-              cfSegVel[m].push_back(vc2);
+              d_cfSegVel[m].push_back(vc1);
+              d_cfSegVel[m].push_back(vc2);
 
               break;
 
             case 1: // The segment becomes too short (<25%) after propagation
               // Set the new position of both ends after propagation to pc
               if (preIdx1 < 0) { // Not generated
-                n1p = (int)cx[m].size();
-                cx[m].push_back(pc);
+                n1p = (int)d_cx[m].size();
+                d_cx[m].push_back(pc);
               } else { // Change p1p to pc
-                n1p        = (int)cx[m].size() - 1;
-                cx[m][n1p] = pc;
+                n1p        = (int)d_cx[m].size() - 1;
+                d_cx[m][n1p] = pc;
               }
 
               // Accordingly, chnage p1p of the next seg to pc if it is not
               // the last segment of a crack
               if (!lastSegment)
-                cfSegPtsT[m][2 * (i + 1)] = pc;
+                d_cfSegPtsT[m][2 * (i + 1)] = pc;
 
               // A new crack elem generated, but no new crack-front segment
-              ce[m].push_back(IntVector(n1, n1p, n2));
+              d_ce[m].push_back(IntVector(n1, n1p, n2));
 
               break;
 
             case 2: // The first end propagates, but the second does not
               // The first end after propagation
               if (preIdx1 < 0) { // Not generated
-                n1p = (int)cx[m].size();
-                cx[m].push_back(p1p);
+                n1p = (int)d_cx[m].size();
+                d_cx[m].push_back(p1p);
               } else { // Just generated
-                n1p = (int)cx[m].size() - 1;
+                n1p = (int)d_cx[m].size() - 1;
               }
 
               // The new crack element
-              ce[m].push_back(IntVector(n1, n1p, n2));
+              d_ce[m].push_back(IntVector(n1, n1p, n2));
 
               // The new crack-front segment
               if (firstSegOfEnclosedCrack)
@@ -542,23 +542,23 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
               cfSegNodesT.push_back(n2);
 
               // Velocity of crack-front nodes
-              cfSegVel[m].push_back(vc1);
-              cfSegVel[m].push_back(vc2);
+              d_cfSegVel[m].push_back(vc1);
+              d_cfSegVel[m].push_back(vc2);
 
               break;
 
             case 3: // The second end propagates, but the first does not
               // The second end after propagation
               if (preIdx2 < 0) { // Not generated
-                n2p = (int)cx[m].size();
-                cx[m].push_back(p2p);
+                n2p = (int)d_cx[m].size();
+                d_cx[m].push_back(p2p);
               } else { // The last segment of an enclosed crack, p2p has been
                        // generated
                 n2p = cfSegNodesT[preIdxAtMin];
               }
 
               // The new crack element
-              ce[m].push_back(IntVector(n1, n2p, n2));
+              d_ce[m].push_back(IntVector(n1, n2p, n2));
 
               // The new crack-front segment
               if (firstSegOfEnclosedCrack)
@@ -567,8 +567,8 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
               cfSegNodesT.push_back(n2p);
 
               // Velocity of crack-front nodes
-              cfSegVel[m].push_back(vc1);
-              cfSegVel[m].push_back(vc2);
+              d_cfSegVel[m].push_back(vc1);
+              d_cfSegVel[m].push_back(vc2);
 
               break;
 
@@ -576,31 +576,31 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
               // Three new crack points
               // 1. The first end of the segment
               if (preIdx1 < 0) { // Not generated
-                n1p = (int)cx[m].size();
-                cx[m].push_back(p1p);
+                n1p = (int)d_cx[m].size();
+                d_cx[m].push_back(p1p);
               } else { // Just generated
-                n1p = (int)cx[m].size() - 1;
+                n1p = (int)d_cx[m].size() - 1;
               }
 
               // 2. The mass center of the quad
               nmc = n1p + 1;
               pmc = p1 + (p1p - p1) / 4. + (p2 - p1) / 4. + (p2p - p1) / 4.;
-              cx[m].push_back(pmc);
+              d_cx[m].push_back(pmc);
 
               // 3. The second end of the segment
               if (preIdx2 < 0) { // Not generated
                 n2p = n1p + 2;
-                cx[m].push_back(p2p);
+                d_cx[m].push_back(p2p);
               } else { // The last segment of an enclosed crack, p2p has been
                        // generated
                 n2p = cfSegNodesT[preIdxAtMin];
               }
 
               // Four new crack elements
-              ce[m].push_back(IntVector(nmc, n2, n1));
-              ce[m].push_back(IntVector(nmc, n2p, n2));
-              ce[m].push_back(IntVector(nmc, n1, n1p));
-              ce[m].push_back(IntVector(nmc, n1p, n2p));
+              d_ce[m].push_back(IntVector(nmc, n2, n1));
+              d_ce[m].push_back(IntVector(nmc, n2p, n2));
+              d_ce[m].push_back(IntVector(nmc, n1, n1p));
+              d_ce[m].push_back(IntVector(nmc, n1p, n2p));
 
               // The new crack-front segment
               if (firstSegOfEnclosedCrack)
@@ -609,8 +609,8 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
               cfSegNodesT.push_back(n2p);
 
               // Velocity of crack-front nodes
-              cfSegVel[m].push_back(vc1);
-              cfSegVel[m].push_back(vc2);
+              d_cfSegVel[m].push_back(vc1);
+              d_cfSegVel[m].push_back(vc2);
 
               break;
 
@@ -618,19 +618,19 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
               // New crack points
               // 1. The first end after propagation
               if (preIdx1 < 0) { // Not generated
-                n1p = (int)cx[m].size();
-                cx[m].push_back(p1p);
+                n1p = (int)d_cx[m].size();
+                d_cx[m].push_back(p1p);
               } else { // Just generated
-                n1p = (int)cx[m].size() - 1;
+                n1p = (int)d_cx[m].size() - 1;
               }
 
               // 2. The center of the segment after propagation
               nc = n1p + 1;
-              cx[m].push_back(pc);
+              d_cx[m].push_back(pc);
 
               // Two new crack elements
-              ce[m].push_back(IntVector(n1, n1p, nc));
-              ce[m].push_back(IntVector(n1, nc, n2));
+              d_ce[m].push_back(IntVector(n1, n1p, nc));
+              d_ce[m].push_back(IntVector(n1, nc, n2));
 
               // Two new crack-front segment
               if (firstSegOfEnclosedCrack)
@@ -641,31 +641,31 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
               cfSegNodesT.push_back(n2);
 
               // Velocity of crack-front nodes
-              cfSegVel[m].push_back(vc1);
-              cfSegVel[m].push_back(vcc);
-              cfSegVel[m].push_back(vcc);
-              cfSegVel[m].push_back(vc2);
+              d_cfSegVel[m].push_back(vc1);
+              d_cfSegVel[m].push_back(vcc);
+              d_cfSegVel[m].push_back(vcc);
+              d_cfSegVel[m].push_back(vc2);
 
               break;
 
             case 6: // Too long segment with only the second end propagating
               // Two new crack points
               // 1. The center of the sgement after propagation
-              nc = (int)cx[m].size();
-              cx[m].push_back(pc);
+              nc = (int)d_cx[m].size();
+              d_cx[m].push_back(pc);
 
               // 2. The second end after propagation
               if (preIdx2 < 0) { // Not generated
                 n2p = nc + 1;
-                cx[m].push_back(p2p);
+                d_cx[m].push_back(p2p);
               } else { // The last seg of an enclosed crack, p2p has been
                        // generated
                 n2p = cfSegNodesT[preIdxAtMin];
               }
 
               // Two new crack elements
-              ce[m].push_back(IntVector(n1, nc, n2));
-              ce[m].push_back(IntVector(n2, nc, n2p));
+              d_ce[m].push_back(IntVector(n1, nc, n2));
+              d_ce[m].push_back(IntVector(n2, nc, n2p));
 
               // Two new crack-front segments
               if (firstSegOfEnclosedCrack)
@@ -676,10 +676,10 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
               cfSegNodesT.push_back(n2p);
 
               // Velocity of crack-front nodes
-              cfSegVel[m].push_back(vc1);
-              cfSegVel[m].push_back(vcc);
-              cfSegVel[m].push_back(vcc);
-              cfSegVel[m].push_back(vc2);
+              d_cfSegVel[m].push_back(vc1);
+              d_cfSegVel[m].push_back(vcc);
+              d_cfSegVel[m].push_back(vcc);
+              d_cfSegVel[m].push_back(vc2);
 
               break;
 
@@ -687,36 +687,36 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
               // Four new crack points
               // 1. The first end of the segment after propagation
               if (preIdx1 < 0) { // Not generated
-                n1p = (int)cx[m].size();
-                cx[m].push_back(p1p);
+                n1p = (int)d_cx[m].size();
+                d_cx[m].push_back(p1p);
               } else { // Just generated
-                n1p = (int)cx[m].size() - 1;
+                n1p = (int)d_cx[m].size() - 1;
               }
 
               // 2. The center of segment after propagation
               nc = n1p + 1;
-              cx[m].push_back(pc);
+              d_cx[m].push_back(pc);
 
               // 3. The mass center of the quad
               nmc = n1p + 2;
               pmc = p1 + (p1p - p1) / 4. + (p2 - p1) / 4. + (p2p - p1) / 4.;
-              cx[m].push_back(pmc);
+              d_cx[m].push_back(pmc);
 
               // 4. The second end of the segment after propagation
               if (preIdx2 < 0) { // Not generated
                 n2p = n1p + 3;
-                cx[m].push_back(p2p);
+                d_cx[m].push_back(p2p);
               } else { // The last segment of an enclosed crack, p2p has been
                        // generated
                 n2p = cfSegNodesT[preIdxAtMin];
               }
 
               // Five new crack elements
-              ce[m].push_back(IntVector(nmc, n2, n1));
-              ce[m].push_back(IntVector(nmc, n2p, n2));
-              ce[m].push_back(IntVector(nmc, n1, n1p));
-              ce[m].push_back(IntVector(nmc, nc, n2p));
-              ce[m].push_back(IntVector(nmc, n1p, nc));
+              d_ce[m].push_back(IntVector(nmc, n2, n1));
+              d_ce[m].push_back(IntVector(nmc, n2p, n2));
+              d_ce[m].push_back(IntVector(nmc, n1, n1p));
+              d_ce[m].push_back(IntVector(nmc, nc, n2p));
+              d_ce[m].push_back(IntVector(nmc, n1p, nc));
 
               // Two new crack-front segments
               if (firstSegOfEnclosedCrack)
@@ -727,21 +727,21 @@ Crack::ConstructNewCrackFrontElems(const ProcessorGroup*,
               cfSegNodesT.push_back(n2p);
 
               // Velocity of crack-front nodes
-              cfSegVel[m].push_back(vc1);
-              cfSegVel[m].push_back(vcc);
-              cfSegVel[m].push_back(vcc);
-              cfSegVel[m].push_back(vc2);
+              d_cfSegVel[m].push_back(vc1);
+              d_cfSegVel[m].push_back(vcc);
+              d_cfSegVel[m].push_back(vcc);
+              d_cfSegVel[m].push_back(vc2);
 
               break;
           }
         } // End of loop over crack-front segs
 
-        MPI_Barrier(mpi_crack_comm);
+        MPI_Barrier(d_mpi_crack_comm);
 
         // Reset crack-front segment nodes after crack propagation
-        cfSegNodes[m].clear();
+        d_cfSegNodes[m].clear();
         for (int i = 0; i < (int)cfSegNodesT.size(); i++) {
-          cfSegNodes[m].push_back(cfSegNodesT[i]);
+          d_cfSegNodes[m].push_back(cfSegNodesT[i]);
         }
         cfSegNodesT.clear();
 
@@ -852,21 +852,21 @@ Crack::PruneCrackFrontAfterPropagation(const int& m, const double& ca)
   // a point is larger than a certain value (ca), move the point to
   // the mass center of the triangle
 
-  int num = (int)cfSegNodes[m].size();
+  int num = (int)d_cfSegNodes[m].size();
   std::vector<Point> cfSegPtsPruned;
   cfSegPtsPruned.resize(num);
 
   for (int i = 0; i < num; i++) {
-    cfSegPtsPruned[i] = cfSegPtsT[m][i];
+    cfSegPtsPruned[i] = d_cfSegPtsT[m][i];
   }
 
-  for (int i = 0; i < (int)cfSegNodes[m].size(); i++) {
-    int preIdx = cfSegPreIdx[m][i];
+  for (int i = 0; i < (int)d_cfSegNodes[m].size(); i++) {
+    int preIdx = d_cfSegPreIdx[m][i];
     if (preIdx < 0) { // not operated
-      if (i > cfSegMinIdx[m][i] && i < cfSegMaxIdx[m][i]) {
-        Point p      = cfSegPtsT[m][i];
-        Point p1     = cfSegPtsT[m][i - 1];
-        Point p2     = cfSegPtsT[m][i + 2];
+      if (i > d_cfSegMinIdx[m][i] && i < d_cfSegMaxIdx[m][i]) {
+        Point p      = d_cfSegPtsT[m][i];
+        Point p1     = d_cfSegPtsT[m][i - 1];
+        Point p2     = d_cfSegPtsT[m][i + 2];
         Vector v1    = TwoPtsDirCos(p1, p);
         Vector v2    = TwoPtsDirCos(p, p2);
         double theta = acos(Dot(v1, v2)) * 180 / 3.141592654;
@@ -880,7 +880,7 @@ Crack::PruneCrackFrontAfterPropagation(const int& m, const double& ca)
   } // End of loop over i
 
   for (int i = 0; i < num; i++) {
-    cfSegPtsT[m][i] = cfSegPtsPruned[i];
+    d_cfSegPtsT[m][i] = cfSegPtsPruned[i];
   }
   cfSegPtsPruned.clear();
 }

@@ -67,7 +67,7 @@ Crack::addComputesAndRequiresParticleVelocityField(
   const PatchSet* /*patches*/,
   const MaterialSet* /*matls*/) const
 {
-  t->needs(Task::OldDW, lb->pXLabel, Ghost::AroundCells, NGN);
+  t->needs(Task::OldDW, lb->pXLabel, Ghost::AroundCells, d_NGN);
   t->computes(lb->gNumPatlsLabel);
   t->computes(lb->GNumPatlsLabel);
   t->computes(lb->GCrackNormLabel);
@@ -114,17 +114,17 @@ Crack::ParticleVelocityField(const ProcessorGroup*,
       GCrackNorm.initialize(Vector(0, 0, 0));
 
       ParticleSubset* psetWGCs = old_dw->getParticleSubset(
-        dwi, patch, Ghost::AroundCells, NGN, lb->pXLabel);
+        dwi, patch, Ghost::AroundCells, d_NGN, lb->pXLabel);
       constParticleVariable<Point> pxWGCs;
       old_dw->get(pxWGCs, lb->pXLabel, psetWGCs);
 
       IntVector ni[MAX_BASIS];
 
-      if ((int)ce[m].size() == 0) { // For materials without crack
+      if ((int)d_ce[m].size() == 0) { // For materials without crack
         // set pgCode[idx][k]=1
         for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
              iter++) {
-          for (int k = 0; k < n8or27; k++) {
+          for (int k = 0; k < d_n8or27; k++) {
             pgCode[*iter][k] = 1;
           }
         }
@@ -132,12 +132,12 @@ Crack::ParticleVelocityField(const ProcessorGroup*,
         for (ParticleSubset::iterator itr = psetWGCs->begin();
              itr != psetWGCs->end();
              itr++) {
-          if (n8or27 == 8) {
+          if (d_n8or27 == 8) {
             patch->findCellNodes(pxWGCs[*itr], ni);
-          } else if (n8or27 == 27) {
+          } else if (d_n8or27 == 27) {
             patch->findCellNodes27(pxWGCs[*itr], ni);
           }
-          for (int k = 0; k < n8or27; k++) {
+          for (int k = 0; k < d_n8or27; k++) {
             if (patch->containsNode(ni[k])) {
               gNumPatls[ni[k]]++;
             }
@@ -151,19 +151,19 @@ Crack::ParticleVelocityField(const ProcessorGroup*,
         Ghost::GhostType gac = Ghost::AroundCells;
         IntVector g_cmin, g_cmax, cell_idx;
         NCVariable<short> singlevfld;
-        new_dw->allocateTemporary(singlevfld, patch, gac, 2 * NGN);
+        new_dw->allocateTemporary(singlevfld, patch, gac, 2 * d_NGN);
         singlevfld.initialize(0);
 
         // Determine crack extent on grid (g_cmin->g_cmax)
-        patch->findCell(cmin[m], cell_idx);
+        patch->findCell(d_cmin[m], cell_idx);
         Point ptmp       = patch->nodePosition(cell_idx + IntVector(1, 1, 1));
-        IntVector offset = CellOffset(cmin[m], ptmp, dx);
+        IntVector offset = CellOffset(d_cmin[m], ptmp, dx);
         g_cmin =
           cell_idx + IntVector(1 - offset.x(), 1 - offset.y(), 1 - offset.z());
 
-        patch->findCell(cmax[m], cell_idx);
+        patch->findCell(d_cmax[m], cell_idx);
         ptmp   = patch->nodePosition(cell_idx);
-        g_cmax = cell_idx + CellOffset(cmax[m], ptmp, dx);
+        g_cmax = cell_idx + CellOffset(d_cmax[m], ptmp, dx);
 
         for (NodeIterator iter = patch->getNodeIterator(); !iter.done();
              iter++) {
@@ -181,9 +181,9 @@ Crack::ParticleVelocityField(const ProcessorGroup*,
         //         and count the particles around nodes.
 
         NCVariable<int> num0, num1, num2;
-        new_dw->allocateTemporary(num0, patch, gac, 2 * NGN);
-        new_dw->allocateTemporary(num1, patch, gac, 2 * NGN);
-        new_dw->allocateTemporary(num2, patch, gac, 2 * NGN);
+        new_dw->allocateTemporary(num0, patch, gac, 2 * d_NGN);
+        new_dw->allocateTemporary(num1, patch, gac, 2 * d_NGN);
+        new_dw->allocateTemporary(num2, patch, gac, 2 * d_NGN);
         num0.initialize(0);
         num1.initialize(0);
         num2.initialize(0);
@@ -192,13 +192,13 @@ Crack::ParticleVelocityField(const ProcessorGroup*,
         for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
              iter++) {
           particleIndex idx = *iter;
-          if (n8or27 == 8) {
+          if (d_n8or27 == 8) {
             patch->findCellNodes(px[idx], ni);
-          } else if (n8or27 == 27) {
+          } else if (d_n8or27 == 27) {
             patch->findCellNodes27(px[idx], ni);
           }
 
-          for (int k = 0; k < n8or27; k++) {
+          for (int k = 0; k < d_n8or27; k++) {
             if (singlevfld[ni[k]]) { // for nodes in non-crack zone
               pgCode[idx][k] = 0;
               num0[ni[k]]++;
@@ -210,12 +210,12 @@ Crack::ParticleVelocityField(const ProcessorGroup*,
               // Get node position even if ni[k] beyond this patch
               Point gx = patch->nodePosition(ni[k]);
 
-              for (int i = 0; i < (int)ce[m].size(); i++) {
+              for (int i = 0; i < (int)d_ce[m].size(); i++) {
                 // Three vertices of the element
                 Point n3, n4, n5;
-                n3 = cx[m][ce[m][i].x()];
-                n4 = cx[m][ce[m][i].y()];
-                n5 = cx[m][ce[m][i].z()];
+                n3 = d_cx[m][d_ce[m][i].x()];
+                n4 = d_cx[m][d_ce[m][i].y()];
+                n5 = d_cx[m][d_ce[m][i].z()];
 
                 // If particle and node are in same side, continue
                 short pgc =
@@ -297,25 +297,25 @@ Crack::ParticleVelocityField(const ProcessorGroup*,
           }
 
           if (!operated) { // Particles are in GhostCells
-            if (n8or27 == 8) {
+            if (d_n8or27 == 8) {
               patch->findCellNodes(pxWGCs[idx], ni);
-            } else if (n8or27 == 27) {
+            } else if (d_n8or27 == 27) {
               patch->findCellNodes(pxWGCs[idx], ni);
             }
 
-            for (int k = 0; k < n8or27; k++) {
+            for (int k = 0; k < d_n8or27; k++) {
               Point gx = patch->nodePosition(ni[k]);
               if (singlevfld[ni[k]]) { // for nodes in non-crack zone
                 num0[ni[k]]++;
               } else {
                 short cross = SAMESIDE;
                 Vector norm = Vector(0., 0., 0.);
-                for (int i = 0; i < (int)ce[m].size(); i++) {
+                for (int i = 0; i < (int)d_ce[m].size(); i++) {
                   // Three vertices of each element
                   Point n3, n4, n5;
-                  n3 = cx[m][ce[m][i].x()];
-                  n4 = cx[m][ce[m][i].y()];
-                  n5 = cx[m][ce[m][i].z()];
+                  n3 = d_cx[m][d_ce[m][i].x()];
+                  n4 = d_cx[m][d_ce[m][i].y()];
+                  n5 = d_cx[m][d_ce[m][i].z()];
 
                   // If particle and node in same side, continue
                   short pgc =
@@ -385,13 +385,13 @@ Crack::ParticleVelocityField(const ProcessorGroup*,
         for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
              iter++) {
           particleIndex idx = *iter;
-          if (n8or27 == 8) {
+          if (d_n8or27 == 8) {
             patch->findCellNodes(px[idx], ni);
-          } else if (n8or27 == 27) {
+          } else if (d_n8or27 == 27) {
             patch->findCellNodes27(px[idx], ni);
           }
 
-          for (int k = 0; k < n8or27; k++) {
+          for (int k = 0; k < d_n8or27; k++) {
             if (pgCode[idx][k] == 0) {
               if ((num1[ni[k]] + num2[ni[k]] == 0) || num2[ni[k]] != 0) {
                 pgCode[idx][k] = 1;
@@ -443,7 +443,7 @@ Crack::ParticleVelocityField(const ProcessorGroup*,
                         iter!=pset->end();iter++) {
         particleIndex idx=*iter;
         std::cout << "p["<< idx << "]: " << px[idx]<< std::endl;
-        for(int k=0; k<n8or27; k++) {
+        for(int k=0; k<d_n8or27; k++) {
           if(pgCode[idx][k]==1)
              std::cout << setw(10) << "Node: " << k
                   << ",\tvfld: " << pgCode[idx][k] << std::endl;
@@ -477,19 +477,19 @@ Crack::CellOffset(const Point& p1, const Point& p2, Vector dx)
 {
   int nx, ny, nz;
   if (fabs(p1.x() - p2.x()) / dx.x() < 1e-6) { // p1.x()=p2.x()
-    nx = NGN - 1;
+    nx = d_NGN - 1;
   } else {
-    nx = NGN;
+    nx = d_NGN;
   }
   if (fabs(p1.y() - p2.y()) / dx.y() < 1e-6) { // p1.y()=p2.y()
-    ny = NGN - 1;
+    ny = d_NGN - 1;
   } else {
-    ny = NGN;
+    ny = d_NGN;
   }
   if (fabs(p1.z() - p2.z()) / dx.z() < 1e-6) { // p1.z()=p2.z()
-    nz = NGN - 1;
+    nz = d_NGN - 1;
   } else {
-    nz = NGN;
+    nz = d_NGN;
   }
 
   return IntVector(nx, ny, nz);

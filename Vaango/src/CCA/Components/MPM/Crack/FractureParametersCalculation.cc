@@ -71,16 +71,16 @@ Crack::addComputesAndRequiresGetNodalSolutions(
   Ghost::GhostType gnone = Ghost::None;
 
   t->needs(Task::OldDW, lb->simulationTimeLabel);
-  t->needs(Task::NewDW, lb->pMassLabel_preReloc, gan, NGP);
-  t->needs(Task::NewDW, lb->pStressLabel_preReloc, gan, NGP);
-  t->needs(Task::NewDW, lb->pDispGradsLabel_preReloc, gan, NGP);
-  t->needs(Task::NewDW, lb->pStrainEnergyDensityLabel_preReloc, gan, NGP);
-  t->needs(Task::NewDW, lb->pgCodeLabel, gan, NGP);
-  t->needs(Task::NewDW, lb->pKineticEnergyDensityLabel, gan, NGP);
-  t->needs(Task::NewDW, lb->pVelGradsLabel, gan, NGP);
-  t->needs(Task::OldDW, lb->pXLabel, gan, NGP);
-  t->needs(Task::OldDW, lb->pSizeLabel, gan, NGP);
-  t->needs(Task::OldDW, lb->pDefGradLabel, gan, NGP);
+  t->needs(Task::NewDW, lb->pMassLabel_preReloc, gan, d_NGP);
+  t->needs(Task::NewDW, lb->pStressLabel_preReloc, gan, d_NGP);
+  t->needs(Task::NewDW, lb->pDispGradsLabel_preReloc, gan, d_NGP);
+  t->needs(Task::NewDW, lb->pStrainEnergyDensityLabel_preReloc, gan, d_NGP);
+  t->needs(Task::NewDW, lb->pgCodeLabel, gan, d_NGP);
+  t->needs(Task::NewDW, lb->pKineticEnergyDensityLabel, gan, d_NGP);
+  t->needs(Task::NewDW, lb->pVelGradsLabel, gan, d_NGP);
+  t->needs(Task::OldDW, lb->pXLabel, gan, d_NGP);
+  t->needs(Task::OldDW, lb->pSizeLabel, gan, d_NGP);
+  t->needs(Task::OldDW, lb->pDefGradLabel, gan, d_NGP);
   t->needs(Task::NewDW, lb->gMassLabel, gnone);
   t->needs(Task::NewDW, lb->GMassLabel, gnone);
 
@@ -115,7 +115,7 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    auto interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = d_flag->d_interpolator->clone(patch);
     std::vector<IntVector> ni(interpolator->size());
     std::vector<double> S(interpolator->size());
 
@@ -140,7 +140,7 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
         pDefGrad;
 
       ParticleSubset* pset = old_dw->getParticleSubset(
-        dwi, patch, Ghost::AroundNodes, NGP, lb->pXLabel);
+        dwi, patch, Ghost::AroundNodes, d_NGP, lb->pXLabel);
 
       new_dw->get(pMass, lb->pMassLabel_preReloc, pset);
       new_dw->get(pstress, lb->pStressLabel_preReloc, pset);
@@ -194,14 +194,14 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
       gkineticenergydensity.initialize(0.);
       Gkineticenergydensity.initialize(0.);
 
-      if (calFractParameters || doCrackPropagation) {
+      if (d_calFractParametersStep || d_doCrackPropagationStep) {
         for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
              iter++) {
           particleIndex idx = *iter;
           interpolator->findCellAndWeights(
             px[idx], ni, S, pSize[idx], pDefGrad[idx]);
 
-          for (int k = 0; k < n8or27; k++) {
+          for (int k = 0; k < d_n8or27; k++) {
             if (patch->containsNode(ni[k])) {
               double pMassTimesS = pMass[idx] * S[k];
               if (pgCode[idx][k] == 1) {
@@ -223,7 +223,7 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
               }
             }
           } // End of loop over k
-        }   // End of loop over particles
+        } // End of loop over particles
 
         for (NodeIterator iter = patch->getNodeIterator(); !iter.done();
              iter++) {
@@ -241,7 +241,7 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
           Gstrainenergydensity[c] /= Gmass[c];
           Gkineticenergydensity[c] /= Gmass[c];
         }
-      } // End if(calFractParameters || doCrackPropagation)
+      } // End if(calFractParametersStep || doCrackPropagationStep)
     }
     // delete interpolator;
   }
@@ -254,7 +254,7 @@ Crack::addComputesAndRequiresCalculateFractureParameters(
   const MaterialSet* /*matls*/) const
 {
   // Required for contour integral
-  int NGC              = NJ + NGN + 1;
+  int NGC              = d_NJ + d_NGN + 1;
   Ghost::GhostType gac = Ghost::AroundCells;
 
   t->needs(Task::OldDW, lb->delTLabel);
@@ -303,13 +303,13 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
     Vector dx          = patch->dCell();
     double dx_max      = Max(dx.x(), dx.y(), dx.z());
 
-    auto interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = d_flag->d_interpolator->clone(patch);
     std::vector<IntVector> ni(interpolator->size());
     std::vector<double> S(interpolator->size());
 
     int pid, patch_size;
-    MPI_Comm_size(mpi_crack_comm, &patch_size);
-    MPI_Comm_rank(mpi_crack_comm, &pid);
+    MPI_Comm_size(d_mpi_crack_comm, &patch_size);
+    MPI_Comm_rank(d_mpi_crack_comm, &pid);
     MPI_Datatype MPI_VECTOR = fun_getTypeDescription((Vector*)0)->getMPIType();
 
     int numMatls = d_mat_manager->getNumMaterials("MPM");
@@ -333,7 +333,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
       constNCVariable<Matrix3> gvelGrads, GvelGrads;
 
       // Get nodal solutions
-      int NGC              = NJ + NGN + 1;
+      int NGC              = d_NJ + d_NGN + 1;
       Ghost::GhostType gac = Ghost::AroundCells;
       new_dw->get(gMass, lb->gMassLabel, dwi, patch, gac, NGC);
       new_dw->get(Gmass, lb->GMassLabel, dwi, patch, gac, NGC);
@@ -361,25 +361,25 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
       old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
       // Allocate memories for cfSegJ and cfSegK
-      int cfNodeSize = (int)cfSegNodes[m].size();
-      cfSegJ[m].resize(cfNodeSize);
-      cfSegK[m].resize(cfNodeSize);
-      if (calFractParameters || doCrackPropagation) {
+      int cfNodeSize = (int)d_cfSegNodes[m].size();
+      d_cfSegJ[m].resize(cfNodeSize);
+      d_cfSegK[m].resize(cfNodeSize);
+      if (d_calFractParametersStep || d_doCrackPropagationStep) {
         for (int i = 0; i < patch_size; i++) { // Loop over all patches
           // number of crack-front nodes in patch i
-          int num = (int)cfnset[m][i].size();
+          int num = (int)d_cfnset[m][i].size();
           if (num > 0) { // If there is crack-front node(s) in patch i
             Vector* cfJ = new Vector[num];
             Vector* cfK = new Vector[num];
 
             if (pid == i) { // Calculte J & K by processor i
               for (int l = 0; l < num; l++) {
-                int idx  = cfnset[m][i][l];    // index of this node
-                int node = cfSegNodes[m][idx]; // node number
+                int idx  = d_cfnset[m][i][l];    // index of this node
+                int node = d_cfSegNodes[m][idx]; // node number
 
-                int preIdx = cfSegPreIdx[m][idx];
+                int preIdx = d_cfSegPreIdx[m][idx];
                 for (int ij = l - 1; ij >= 0; ij--) {
-                  if (preIdx == cfnset[m][i][ij]) {
+                  if (preIdx == d_cfnset[m][i][ij]) {
                     preIdx = ij;
                     break;
                   }
@@ -399,14 +399,14 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   short singleSeg = NO;
                   int neighbor = -1, segsNeighbor[2] = { -1, -1 };
                   if (segs[R] < 0) {
-                    neighbor = cfSegNodes[m][2 * segs[L] + 1];
+                    neighbor = d_cfSegNodes[m][2 * segs[L] + 1];
                     FindSegsFromNode(m, neighbor, segsNeighbor);
                     if (segsNeighbor[L] < 0) {
                       singleSeg = YES;
                     }
                   }
                   if (segs[L] < 0) {
-                    neighbor = cfSegNodes[m][2 * segs[R]];
+                    neighbor = d_cfSegNodes[m][2 * segs[R]];
                     FindSegsFromNode(m, neighbor, segsNeighbor);
                     if (segsNeighbor[R] < 0) {
                       singleSeg = YES;
@@ -417,20 +417,20 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   Point origin;
                   double x0, y0, z0;
                   if (singleSeg) { // single segment
-                    Point pt1 = cx[m][node];
-                    Point pt2 = cx[m][neighbor];
+                    Point pt1 = d_cx[m][node];
+                    Point pt2 = d_cx[m][neighbor];
                     origin    = pt1 + (pt2 - pt1) / 2.;
                   } else { // multiple segments
                     if (segs[R] < 0) {
                       // For the right edge node, shift the position to the
                       // neighbor
-                      origin = cx[m][neighbor];
+                      origin = d_cx[m][neighbor];
                     } else if (segs[L] < 0) {
                       // For the left edge node, shift the position to the
                       // neighbor
-                      origin = cx[m][neighbor];
+                      origin = d_cx[m][neighbor];
                     } else { // middle nodes
-                      origin = cx[m][node];
+                      origin = d_cx[m][node];
                     }
                   }
                   // Coordinates of origin
@@ -439,9 +439,9 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   z0 = origin.z();
 
                   // Direction cosines of local coordinates at the node
-                  Vector v1 = cfSegV1[m][idx];
-                  Vector v2 = cfSegV2[m][idx];
-                  Vector v3 = cfSegV3[m][idx];
+                  Vector v1 = d_cfSegV1[m][idx];
+                  Vector v2 = d_cfSegV2[m][idx];
+                  Vector v3 = d_cfSegV3[m][idx];
                   double l1, m1, n1, l2, m2, n2, l3, m3, n3;
                   l1 = v1.x();
                   m1 = v1.y();
@@ -470,13 +470,13 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   // contour
                   //   and crack plane
 
-                  double d_rJ = rJ; // Radius of J-contour
+                  double rJ = d_rJ; // Radius of J-contour
                   Point crossPt;
                   while (
-                    !FindIntersectionJPathAndCrackPlane(m, d_rJ, A, crossPt)) {
-                    d_rJ *= 0.7;
-                    if (d_rJ / rJ < 0.01) {
-                      std::cout << "Error: J-integral radius (d_rJ) has been "
+                    !FindIntersectionJPathAndCrackPlane(m, rJ, A, crossPt)) {
+                    rJ *= 0.7;
+                    if (rJ / d_rJ < 0.01) {
+                      std::cout << "Error: J-integral radius (rJ) has been "
                                    "decreassed 100 times "
                                 << " before finding the intersection between "
                                    "J-contour and crack plane."
@@ -548,7 +548,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   for (int j = 0; j <= nSegs; j++) {
                     interpolator->findCellAndWeights(
                       X[j], ni, S, pSize[j], pDefGrad[j]);
-                    for (int k = 0; k < n8or27; k++) {
+                    for (int k = 0; k < d_n8or27; k++) {
                       // Calculate the values of the variables used in
                       // J-integral
                       if (GnumPatls[ni[k]] != 0 &&
@@ -571,7 +571,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                     // interpolation.
                     if (j == 0) {
                       double sumS = 0.;
-                      for (int k = 0; k < n8or27; k++) {
+                      for (int k = 0; k < d_n8or27; k++) {
                         if (GnumPatls[ni[k]] != 0) {
                           Sca += ggridStress[ni[k]] * S[k];
                           Scb += GgridStress[ni[k]] * S[k];
@@ -683,7 +683,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   //   automatically.
 
                   double Jx2 = 0., Jy2 = 0.;
-                  if (useVolumeIntegral || Jx1 < 0.) {
+                  if (d_useVolumeIntegral || Jx1 < 0.) {
                     // Define integral points in the area enclosed by J-integral
                     // contour
                     int nc = (int)(d_rJ / dx_max);
@@ -730,7 +730,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                       interpolator->findCellAndWeights(
                         X[j], ni, S, pSize[j], pDefGrad[j]);
 
-                      for (int k = 0; k < n8or27; k++) {
+                      for (int k = 0; k < d_n8or27; k++) {
                         if (GnumPatls[ni[k]] != 0 &&
                             x[j].y() < 0.) { // below crack
                           // Valid only for stright crack within J-path, usually
@@ -817,7 +817,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
 
                   // Contribution of frictional work on energy release rate
                   double fricWork = 0.;
-                  if (cmu[m] != 0.) {
+                  if (d_cmu[m] != 0.) {
                     fricWork =
                       fabs(tc(1, 0) * uc.x()) + fabs(tc(1, 2) * uc.z());
                     if (tc(1, 1) < 0. && uc.y() < 0.) {
@@ -838,23 +838,23 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
 
                   // Task 12a: Find COD at crossPt or near crack tip
                   Point p_d;
-                  if (CODOption == 0 || CODOption == 1) {
+                  if (d_CODOption == 0 || d_CODOption == 1) {
                     double d;
-                    if (d_doCrackPropagation) { // For crack propagation
-                      d = (rdadx < 1. ? 1. : rdadx) * dx_max;
+                    if (d_doCrackPropagationStep) { // For crack propagation
+                      d = (d_rdadx < 1. ? 1. : d_rdadx) * dx_max;
                     } else { // For calculation of pure fracture parameters
                       d = d_rJ / 2.;
                     }
 
                     // If point (-d,0,0) is not on crack plane, adjust 'd',
                     // i.e. find the maximum d on the crack
-                    if (CODOption == 1) {
+                    if (d_CODOption == 1) {
                       GetPositionToComputeCOD(m, origin, T, d);
                     }
 
                     // Global coordinates of the point (-d,0,0)
                     p_d = Point(-d * l1 + x0, -d * m1 + y0, -d * n1 + z0);
-                  } else if (CODOption == 2) { // Choose the intersection
+                  } else if (d_CODOption == 2) { // Choose the intersection
                     p_d = crossPt;
                   }
 
@@ -863,7 +863,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   Vector disp_b = Vector(0.);
                   interpolator->findCellAndWeights(
                     p_d, ni, S, pSize[0], pDefGrad[0]);
-                  for (int k = 0; k < n8or27; k++) {
+                  for (int k = 0; k < d_n8or27; k++) {
                     disp_a += gdisp[ni[k]] * S[k];
                     disp_b += Gdisp[ni[k]] * S[k];
                   }
@@ -872,44 +872,45 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   Vector D = T * (disp_a - disp_b);
 
                   // Task 12b: Get crack propagating velocity
-                  double C = cfSegVel[m][idx];
+                  double C = d_cfSegVel[m][idx];
 
                   // Task 12c: Convert J-integral into stress intensity factors
                   // cfJ is the components of J-integral in the crack-axis
                   // coordinates,
                   // and its first component is the total energy release rate.
                   Vector SIF;
-                  cm->convertJToK(mpm_matl, stressState[m], cfJ[l], C, D, SIF);
+                  cm->convertJToK(
+                    mpm_matl, d_stressState[m], cfJ[l], C, D, SIF);
                   cfK[l] = SIF;
-                }      // End if not operated
+                } // End if not operated
                 else { // if operated
                   cfJ[l] = cfJ[preIdx];
                   cfK[l] = cfK[preIdx];
                 }
               } // End of loop over nodes (l)
-            }   // End if(pid==i)
+            } // End if(pid==i)
 
             // Broadcast the results calculated by rank i to all the ranks
-            MPI_Bcast(cfJ, num, MPI_VECTOR, i, mpi_crack_comm);
-            MPI_Bcast(cfK, num, MPI_VECTOR, i, mpi_crack_comm);
+            MPI_Bcast(cfJ, num, MPI_VECTOR, i, d_mpi_crack_comm);
+            MPI_Bcast(cfK, num, MPI_VECTOR, i, d_mpi_crack_comm);
 
             // Save data in cfsegJ and cfSegK
             for (int l = 0; l < num; l++) {
-              int idx        = cfnset[m][i][l];
-              cfSegJ[m][idx] = cfJ[l];
-              cfSegK[m][idx] = cfK[l];
+              int idx        = d_cfnset[m][i][l];
+              d_cfSegJ[m][idx] = cfJ[l];
+              d_cfSegK[m][idx] = cfK[l];
             }
 
             // Release dynamic arries
             delete[] cfJ;
             delete[] cfK;
           } // End if(num>0)
-        }   // End of loop over ranks (i)
+        } // End of loop over ranks (i)
         if (pid == 0) {
           OutputCrackFrontResults(m, time, delT);
         }
-      } // End if(calFractParameters || doCrackPropagation)
-    }   // End of loop over matls
+      } // End if(calFractParametersStep || doCrackPropagationStep)
+    } // End of loop over matls
     // delete interpolator;
   }
 }
@@ -923,25 +924,25 @@ Crack::DetectIfDoingFractureAnalysisAtThisTimestep(double time)
   // For fracture parameters calculation
   if (d_calFractParameters) {
     if (time >= timeforcalculateJK) {
-      calFractParameters = YES;
-      timeforcalculateJK = time + computeJKInterval;
+      d_calFractParametersStep = YES;
+      timeforcalculateJK       = time + d_computeJKInterval;
     } else {
-      calFractParameters = NO;
+      d_calFractParametersStep = NO;
     }
   } else {
-    calFractParameters = NO;
+    d_calFractParametersStep = NO;
   }
 
   // For crack propagation
   if (d_doCrackPropagation) {
     if (time >= timeforpropagation) {
-      doCrackPropagation = YES;
-      timeforpropagation = time + growCrackInterval;
+      d_doCrackPropagationStep = YES;
+      timeforpropagation       = time + d_growCrackInterval;
     } else {
-      doCrackPropagation = NO;
+      d_doCrackPropagationStep = NO;
     }
   } else {
-    doCrackPropagation = NO;
+    d_doCrackPropagationStep = NO;
   }
 }
 
@@ -1028,13 +1029,13 @@ Crack::FindIntersectionJPathAndCrackPlane(const int& m,
 
   int numCross = 0;
   crossPt      = Point(-9e32, -9e32, -9e32);
-  for (int i = 0; i < (int)ce[m].size(); i++) {
+  for (int i = 0; i < (int)d_ce[m].size(); i++) {
     // Find the equation of the plane of the crack elem: a2x+b2y+c2z+d2=0
     double a2, b2, c2, d2;
     Point pt1, pt2, pt3;
-    pt1 = cx[m][ce[m][i].x()];
-    pt2 = cx[m][ce[m][i].y()];
-    pt3 = cx[m][ce[m][i].z()];
+    pt1 = d_cx[m][d_ce[m][i].x()];
+    pt2 = d_cx[m][d_ce[m][i].y()];
+    pt3 = d_cx[m][d_ce[m][i].z()];
     FindPlaneEquation(pt1, pt2, pt3, a2, b2, c2, d2);
 
     // Define crack-front local coordinates (X',Y',Z')
@@ -1254,10 +1255,10 @@ Crack::PointInTriangle(const Point& p,
 void
 Crack::OutputCrackFrontResults(const int& m, double time, double timestep)
 {
-  if (cfSegNodes[m].size() > 0) {
+  if (d_cfSegNodes[m].size() > 0) {
     // Create output file name in format: CrackFrontResults.matXXX
     char outFileName[200] = "";
-    strcat(outFileName, (udaDir + "/CrackFrontResults.mat").c_str());
+    strcat(outFileName, (d_udaDir + "/CrackFrontResults.mat").c_str());
 
     char* matbuf = new char[10];
     sprintf(matbuf, "%d", m);
@@ -1284,17 +1285,17 @@ Crack::OutputCrackFrontResults(const int& m, double time, double timestep)
     std::ofstream outCrkFrt1(outFileName1, std::ios::app);
     std::ofstream outCrkFrt2(outFileName2, std::ios::app);
 
-    int num          = (int)cfSegNodes[m].size();
+    int num          = (int)d_cfSegNodes[m].size();
     int numSubCracks = 0;
     for (int i = 0; i < num; i++) {
-      if (i == 0 || i == num - 1 || cfSegPreIdx[m][i] < 0) {
-        if (i == cfSegMinIdx[m][i]) {
+      if (i == 0 || i == num - 1 || d_cfSegPreIdx[m][i] < 0) {
+        if (i == d_cfSegMinIdx[m][i]) {
           numSubCracks++;
         }
-        int node   = cfSegNodes[m][i];
-        Point cp   = cx[m][node];
-        Vector cfJ = cfSegJ[m][i];
-        Vector cfK = cfSegK[m][i];
+        int node   = d_cfSegNodes[m][i];
+        Point cp   = d_cx[m][node];
+        Vector cfJ = d_cfSegJ[m][i];
+        Vector cfK = d_cfSegK[m][i];
         outCrkFrt << std::setw(5) << timestep << std::setw(15) << time
                   << std::setw(5) << (i - 1 + 2 * numSubCracks) / 2
                   << std::setw(10) << node << std::setw(15) << cp.x()
@@ -1308,7 +1309,7 @@ Crack::OutputCrackFrontResults(const int& m, double time, double timestep)
                     << "\n";
         }
 
-        if (i == cfSegMaxIdx[m][i] && num > 2) {
+        if (i == d_cfSegMaxIdx[m][i] && num > 2) {
           outCrkFrt << "\n";
         }
 
@@ -1377,10 +1378,10 @@ Crack::GetPositionToComputeCOD(const int& m,
   double l1, l2, l, d0;
   Point ps, pe, p;
 
-  for (int i = 0; i < (int)ce[m].size(); i++) { // Loop over crack elements
-    n1 = ce[m][i].x();
-    n2 = ce[m][i].y();
-    n3 = ce[m][i].z();
+  for (int i = 0; i < (int)d_ce[m].size(); i++) { // Loop over crack elements
+    n1 = d_ce[m][i].x();
+    n2 = d_ce[m][i].y();
+    n3 = d_ce[m][i].z();
 
     for (int j = 0; j < 3; j++) { // Loop over three edges of a triangle
       if (j == 0) {
@@ -1397,8 +1398,8 @@ Crack::GetPositionToComputeCOD(const int& m,
       }
 
       // Global coordinates of the two ends of the egde, as well as its length
-      ps = cx[m][ns];
-      pe = cx[m][ne];
+      ps = d_cx[m][ns];
+      pe = d_cx[m][ne];
       l  = (ps - pe).length();
 
       // Transfer global coordinates to local coordinates

@@ -52,6 +52,20 @@
 using std::string;
 using std::vector;
 namespace Uintah {
+
+using CrackElements = std::vector<Uintah::IntVector>;
+using CrackPolygon = std::vector<Uintah::Point>;
+using CrackOffsets = std::vector<Uintah::Vector>;
+using CrackEdgeIndices = std::vector<short>;
+using CrackCellIndices = std::vector<int>;
+using CrackNodeIndices = std::vector<int>;
+using CrackSegmentIndices = std::vector<int>;
+using CrackScalarArray = std::vector<double>;
+
+using CrackCoordsVec = std::vector<CrackPolygon>;
+using CrackEdgeIndicesVec = std::vector<CrackEdgeIndices>;
+using CrackNodeIndicesVec = std::vector<CrackNodeIndices>;
+
 class DataWarehouse;
 class MPMLabel;
 class MPMFlags;
@@ -76,7 +90,7 @@ public:
   void
   outputProblemSpec(ProblemSpecP& mpm_ps, ProblemSpecP& uda_ps);
 
-  // Public methods in ReadAndDiscretizeCracks.cc
+  // Public methods in Crack.cc
   void
   addComputesAndRequiresCrackDiscretization(Task* task,
                                             const PatchSet* patches,
@@ -217,111 +231,9 @@ public:
                               DataWarehouse* new_dw);
 
 private:
-  // PRIVATE DATA MEMBERS
-  MPI_Comm mpi_crack_comm;
-  MaterialManagerP d_mat_manager;
-  MPMFlags* flag;
-  int n8or27;
-  int NGP;
-  int NGN;
-  enum
-  {
-    NO = 0,
-    YES
-  }; // No (NO=0) or Yes (YES=1)
-  enum
-  {
-    R = 0,
-    L
-  };                                  // Right (R=0) or left (L=1)
-  Output* dataArchiver;               // Data archiving information
-  string udaDir;                      // Base file directory
-  string GridBCType[Patch::numFaces]; // BC types of global grid
-  Point GLP, GHP;            // Lowest and highest pt of real global grid
-  int NJ;                    // rJ = NJ*min_dCell
-  double rJ;                 // NJ = rJ/min_dCell
-  double rdadx;              // Ratio of crack incremental to cell-size
-  double computeJKInterval;  // Interval of calculating fracture parameters
-                             // zero by default (every time step)
-  double growCrackInterval;  // Interval of crack propagation
-                             // zero by default (every time step)
-  bool useVolumeIntegral;    // Use volume integral in J, "no" by default
-  bool saveCrackGeometry;    // Save crack geometry, "yes" by default
-  bool smoothCrackFront;     // Smoothe crack-front, "no" by default
-  bool d_calFractParameters; // Calculate J or K, "no" by default
-  bool d_doCrackPropagation; // Do crack propagation, "no" by default
-  bool calFractParameters;   // Calculate J or K at this step
-  bool doCrackPropagation;   // Do crack propagation at this step
-  int CODOption;             // CODOption=0 (by default):
-                             //   calculate COD at a fixed location;
-                 // CODOption=1: calculate COD at the farthest position
-                 //   on the crack element at crack-front;
-                 // CODOption=2: calculate COD at the intersection
-                 //   between J-integral contour and crack plane;
-
-  // Physical parameters of cracks
-  std::vector<std::string> stressState; // Crack front stress state
-  std::vector<std::string> crackType;   // Crack contact type
-  std::vector<double> cmu;              // Crack surface friction coefficient
-
-  std::vector<CrackGeometry*> d_crackGeometry;
-
-  // Geometrical parameters of crack segments
-  std::vector<vector<vector<Point>>> quads;
-  std::vector<vector<int>> quadN12, quadN23;
-  std::vector<vector<vector<short>>> quadCrackSidesAtFront;
-  std::vector<vector<int>> quadRepetition;
-  std::vector<vector<Vector>> quadOffset;
-  std::vector<vector<vector<Point>>> cquads;
-  std::vector<vector<int>> cquadNStraightSides;
-  std::vector<vector<vector<Point>>> cquadPtsSide2;
-  std::vector<vector<vector<Point>>> cquadPtsSide4;
-  std::vector<vector<vector<short>>> cquadCrackSidesAtFront;
-  std::vector<vector<int>> cquadRepetition;
-  std::vector<vector<Vector>> cquadOffset;
-  std::vector<vector<vector<Point>>> triangles;
-  std::vector<vector<int>> triNCells;
-  std::vector<vector<vector<short>>> triCrackSidesAtFront;
-  std::vector<vector<int>> triRepetition;
-  std::vector<vector<Vector>> triOffset;
-  std::vector<vector<vector<Point>>> arcs;
-  std::vector<vector<int>> arcNCells;
-  std::vector<vector<int>> arcCrkFrtSegID;
-  std::vector<vector<vector<Point>>> ellipses;
-  std::vector<vector<int>> ellipseNCells;
-  std::vector<vector<int>> ellipseCrkFrtSegID;
-  std::vector<vector<vector<Point>>> pellipses;
-  std::vector<vector<int>> pellipseNCells;
-  std::vector<vector<int>> pellipseCrkFrtSegID;
-  std::vector<vector<double>> pellipseExtent;
-  std::vector<Point> cmin, cmax;
-
-  // Crack data after mesh
-  std::vector<double> css;             // Average length of crack-front segments
-  std::vector<double> csa;             // Average angle of crack-front segments
-  std::vector<vector<Point>> cx;       // Coordinates of crack nodes
-  std::vector<vector<IntVector>> ce;   // Crack elements
-  std::vector<vector<int>> cfSegNodes; // Crack-front nodes
-  std::vector<vector<double>> cfSegVel;  // Velocity of crack-front nodes
-  std::vector<vector<double>> cfSegTime; // Time instant of crack propagation
-  std::vector<vector<double>> cfSegDis;  // Crack incremental
-  std::vector<vector<int>> cfSegPreIdx;  // node[i]=node[preIdx]
-  std::vector<vector<int>> cfSegMinIdx;  // Minimum node-index of the sub-crack
-  std::vector<vector<int>> cfSegMaxIdx;  // Maximum node-index of the sub-crack
-  std::vector<vector<Point>> cfSegPtsT;  // Crack-front points after propagation
-  std::vector<vector<Vector>> cfSegV1;   // Bi-normals at crack-front nodes
-  std::vector<vector<Vector>> cfSegV2;   // Outer normals at crack-front nodes
-  std::vector<vector<Vector>>
-    cfSegV3;                          // Tangential normals at crack-front nodes
-  std::vector<vector<Vector>> cfSegJ; // J-integral at crack-front nodes
-  std::vector<vector<Vector>> cfSegK; // SIF at crack-front nodes
-  std::vector<vector<vector<int>>> cnset;  // Crack-node subset in each patch
-  std::vector<vector<vector<int>>> cfnset; // Crack-front-node index subset
-  std::vector<vector<vector<int>>>
-    cfsset; // Crack-front-seg subset in each patch
 
   // PRIVATE METHODS
-  // Private methods in ReadAndDiscretizeCracks.cc
+  // Private methods in Crack.cc
   void
   ReadQuadCracks(const int&, const ProblemSpecP&);
   void
@@ -460,6 +372,109 @@ private:
 
 protected:
   MPMLabel* lb;
+
+private:
+
+  // PRIVATE DATA MEMBERS
+  MPI_Comm d_mpi_crack_comm;
+  MaterialManagerP d_mat_manager;
+  MPMFlags* d_flag;
+  int d_n8or27;
+  int d_NGP;
+  int d_NGN;
+  enum
+  {
+    NO = 0,
+    YES
+  }; // No (NO=0) or Yes (YES=1)
+  enum
+  {
+    R = 0,
+    L
+  };                                  // Right (R=0) or left (L=1)
+  Output* d_dataArchiver;               // Data archiving information
+  string d_udaDir;                      // Base file directory
+  string d_GridBCType[Patch::numFaces]; // BC types of global grid
+  Point d_GLP, d_GHP;            // Lowest and highest pt of real global grid
+  int d_NJ;                    // rJ = NJ*min_dCell
+  double d_rJ;                 // NJ = rJ/min_dCell
+  double d_rdadx;              // Ratio of crack incremental to cell-size
+  double d_computeJKInterval;  // Interval of calculating fracture parameters
+                             // zero by default (every time step)
+  double d_growCrackInterval;  // Interval of crack propagation
+                             // zero by default (every time step)
+  bool d_useVolumeIntegral;    // Use volume integral in J, "no" by default
+  bool d_saveCrackGeometry;    // Save crack geometry, "yes" by default
+  bool d_smoothCrackFront;     // Smoothe crack-front, "no" by default
+  bool d_calFractParameters; // Calculate J or K, "no" by default
+  bool d_doCrackPropagation; // Do crack propagation, "no" by default
+  bool d_calFractParametersStep;   // Calculate J or K at this step
+  bool d_doCrackPropagationStep;   // Do crack propagation at this step
+  int d_CODOption;             // CODOption=0 (by default):
+                             //   calculate COD at a fixed location;
+                 // CODOption=1: calculate COD at the farthest position
+                 //   on the crack element at crack-front;
+                 // CODOption=2: calculate COD at the intersection
+                 //   between J-integral contour and crack plane;
+
+  // Physical parameters of cracks
+  std::vector<std::string> d_stressState; // Crack front stress state
+  std::vector<std::string> d_crackType;   // Crack contact type
+  std::vector<double> d_cmu;              // Crack surface friction coefficient
+
+  std::vector<CrackGeometry*> d_crackGeometry;
+
+  // Geometrical parameters of crack segments
+  std::vector<CrackCoordsVec> d_quads;
+  std::vector<CrackCellIndices> d_quadN12, d_quadN23;
+  std::vector<CrackEdgeIndicesVec> d_quadCrackSidesAtFront;
+  std::vector<CrackSegmentIndices> d_quadRepetition;
+  std::vector<CrackOffsets> d_quadOffset;
+  std::vector<CrackCoordsVec> d_cquads;
+  std::vector<CrackCellIndices> d_cquadNStraightSides;
+  std::vector<CrackCoordsVec> d_cquadPtsSide2;
+  std::vector<CrackCoordsVec> d_cquadPtsSide4;
+  std::vector<CrackEdgeIndicesVec> d_cquadCrackSidesAtFront;
+  std::vector<CrackSegmentIndices> d_cquadRepetition;
+  std::vector<CrackOffsets> d_cquadOffset;
+  std::vector<CrackCoordsVec> d_triangles;
+  std::vector<CrackCellIndices> d_triNCells;
+  std::vector<CrackEdgeIndicesVec> d_triCrackSidesAtFront;
+  std::vector<CrackSegmentIndices> d_triRepetition;
+  std::vector<CrackOffsets> d_triOffset;
+  std::vector<CrackCoordsVec> d_arcs;
+  std::vector<CrackCellIndices> d_arcNCells;
+  std::vector<CrackSegmentIndices> d_arcCrkFrtSegID;
+  std::vector<CrackCoordsVec> d_ellipses;
+  std::vector<CrackCellIndices> d_ellipseNCells;
+  std::vector<CrackSegmentIndices> d_ellipseCrkFrtSegID;
+  std::vector<CrackCoordsVec> d_pellipses;
+  std::vector<CrackCellIndices> d_pellipseNCells;
+  std::vector<CrackSegmentIndices> d_pellipseCrkFrtSegID;
+  std::vector<CrackScalarArray> d_pellipseExtent;
+  CrackPolygon d_cmin, d_cmax;
+
+  // Crack data after mesh
+  CrackScalarArray d_css;             // Average length of crack-front segments
+  CrackScalarArray d_csa;             // Average angle of crack-front segments
+  std::vector<CrackPolygon> d_cx;       // Coordinates of crack nodes
+  std::vector<CrackElements> d_ce;   // Crack elements
+  std::vector<CrackNodeIndices> d_cfSegNodes; // Crack-front nodes
+  std::vector<CrackScalarArray> d_cfSegVel;  // Velocity of crack-front nodes
+  std::vector<CrackScalarArray> d_cfSegTime; // Time instant of crack propagation
+  std::vector<CrackScalarArray> d_cfSegDis;  // Crack incremental
+  std::vector<CrackNodeIndices> d_cfSegPreIdx;  // node[i]=node[preIdx]
+  std::vector<CrackNodeIndices> d_cfSegMinIdx;  // Minimum node-index of the sub-crack
+  std::vector<CrackNodeIndices> d_cfSegMaxIdx;  // Maximum node-index of the sub-crack
+  std::vector<CrackPolygon> d_cfSegPtsT;  // Crack-front points after propagation
+  std::vector<CrackOffsets> d_cfSegV1;   // Bi-normals at crack-front nodes
+  std::vector<CrackOffsets> d_cfSegV2;   // Outer normals at crack-front nodes
+  std::vector<CrackOffsets> d_cfSegV3;   // Tangential normals at crack-front nodes
+  std::vector<CrackOffsets> d_cfSegJ; // J-integral at crack-front nodes
+  std::vector<CrackOffsets> d_cfSegK; // SIF at crack-front nodes
+  std::vector<CrackNodeIndicesVec> d_cnset;  // Crack-node subset in each patch
+  std::vector<CrackNodeIndicesVec> d_cfnset; // Crack-front-node index subset
+  std::vector<CrackNodeIndicesVec> d_cfsset; // Crack-front-seg subset in each patch
 };
 
 } // namespace Uintah

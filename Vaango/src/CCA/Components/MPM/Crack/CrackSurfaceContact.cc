@@ -163,7 +163,7 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
       new_dw->allocateAndPut(frictionWork[m],lb->frictionalWorkLabel,dwi,patch);
       frictionWork[m].initialize(0.);
 
-      if(crackType[m]=="NO_CRACK") continue;  // no crack in this material
+      if(d_crackType[m]=="NO_CRACK") continue;  // no crack in this material
 
       // Check if there is contact. If yes, adjust velocity field
       for(NodeIterator iter=patch->getNodeIterator();!iter.done();iter++) {
@@ -195,19 +195,19 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
           frictionWork[m][c] += 0.;
         }
         else { // There is contact, apply contact law
-          if(crackType[m]=="null") { // Do nothing 
+          if(d_crackType[m]=="null") { // Do nothing 
             gVelocity[m][c]=gVelocity[m][c];
             Gvelocity[m][c]=Gvelocity[m][c];
             frictionWork[m][c] += 0.;
           }
 
-          else if(crackType[m]=="stick") { // Assign centerofmass velocity
+          else if(d_crackType[m]=="stick") { // Assign centerofmass velocity
             gVelocity[m][c]=vc;
             Gvelocity[m][c]=vc;
             frictionWork[m][c] += 0.;
           }
 
-          else if(crackType[m]=="friction") { // Apply friction law
+          else if(d_crackType[m]=="friction") { // Apply friction law
             // For velocity field above crack
             Vector deltva(0.,0.,0.);
             dva=va-vc;
@@ -219,12 +219,12 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
                ta=Vector(0.,0.,0.);
             dvat=Dot(dva,ta);
             ratioa=dvat/dvan;
-            if( fabs(ratioa)>cmu[m] ) { // slide
-               if(ratioa>0.) mua=cmu[m];
-               if(ratioa<0.) mua=-cmu[m];
+            if( fabs(ratioa)>d_cmu[m] ) { // slide
+               if(ratioa>0.) mua=d_cmu[m];
+               if(ratioa<0.) mua=-d_cmu[m];
                deltva=-(na+ta*mua)*dvan;
                gVelocity[m][c]=va+deltva;
-               frictionWork[m][c]+=ma*cmu[m]*dvan*dvan*(fabs(ratioa)-cmu[m]);
+               frictionWork[m][c]+=ma*d_cmu[m]*dvan*dvan*(fabs(ratioa)-d_cmu[m]);
             }
             else { // stick
                gVelocity[m][c]=vc;
@@ -242,12 +242,12 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
                tb=Vector(0.,0.,0.);
             dvbt=Dot(dvb,tb);
             ratiob=dvbt/dvbn;
-            if(fabs(ratiob)>cmu[m]) { // slide
-               if(ratiob>0.) mub=cmu[m];
-               if(ratiob<0.) mub=-cmu[m];
+            if(fabs(ratiob)>d_cmu[m]) { // slide
+               if(ratiob>0.) mub=d_cmu[m];
+               if(ratiob<0.) mub=-d_cmu[m];
                deltvb=-(nb+tb*mub)*dvbn;
                Gvelocity[m][c]=vb+deltvb;
-               frictionWork[m][c]+=mb*cmu[m]*dvbn*dvbn*(fabs(ratiob)-cmu[m]);
+               frictionWork[m][c]+=mb*d_cmu[m]*dvbn*dvbn*(fabs(ratiob)-d_cmu[m]);
             }
             else { // stick
                Gvelocity[m][c]=vc;
@@ -358,7 +358,7 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
       delt_vartype delT;
       old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
-      if(crackType[m]=="NO_CRACK") continue; // No crack(s) in this material
+      if(d_crackType[m]=="NO_CRACK") continue; // No crack(s) in this material
 
       for(NodeIterator iter=patch->getNodeIterator();!iter.done();iter++) {
         IntVector c = *iter;
@@ -394,7 +394,7 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
           frictionWork[m][c]+=0.0;
         }
         else { // There is contact, apply contact law
-          if(crackType[m]=="null") { // Do nothing
+          if(d_crackType[m]=="null") { // Do nothing
             gVelocity_star[m][c]=gVelocity_star[m][c];
             gacceleration[m][c]=gacceleration[m][c];
             Gvelocity_star[m][c]=Gvelocity_star[m][c];
@@ -402,7 +402,7 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
             frictionWork[m][c]+=0.0;
           }
 
-          else if(crackType[m]=="stick") { // Assign centerofmass velocity
+          else if(d_crackType[m]=="stick") { // Assign centerofmass velocity
             gVelocity_star[m][c]=vc;
             gacceleration[m][c]=aa+(vb-va)*mb/(ma+mb)/delT;
             Gvelocity_star[m][c]=vc;
@@ -410,7 +410,7 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
             frictionWork[m][c]+=0.0;
           }
 
-          else if(crackType[m]=="friction") { // Apply friction law
+          else if(d_crackType[m]=="friction") { // Apply friction law
             // for velocity field above crack
             Vector deltva(0.,0.,0.);
             dva=va-vc;
@@ -422,13 +422,13 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
                ta=Vector(0.,0.,0.);
             dvat=Dot(dva,ta);
             ratioa=dvat/dvan;
-            if( fabs(ratioa)>cmu[m] ) { // slide
-               if(ratioa>0.) mua= cmu[m];
-               if(ratioa<0.) mua=-cmu[m];
+            if( fabs(ratioa)>d_cmu[m] ) { // slide
+               if(ratioa>0.) mua= d_cmu[m];
+               if(ratioa<0.) mua=-d_cmu[m];
                deltva=-(na+ta*mua)*dvan;
                gVelocity_star[m][c]=va+deltva;
                gacceleration[m][c]=aa+deltva/delT;
-               frictionWork[m][c]+=ma*cmu[m]*dvan*dvan*(fabs(ratioa)-cmu[m]);
+               frictionWork[m][c]+=ma*d_cmu[m]*dvan*dvan*(fabs(ratioa)-d_cmu[m]);
             }
             else { // stick
                gVelocity_star[m][c]=vc;
@@ -447,13 +447,13 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
                tb=Vector(0.,0.,0.);
             dvbt=Dot(dvb,tb);
             ratiob=dvbt/dvbn;
-            if(fabs(ratiob)>cmu[m]) { // slide
-               if(ratiob>0.) mub= cmu[m];
-               if(ratiob<0.) mub=-cmu[m];
+            if(fabs(ratiob)>d_cmu[m]) { // slide
+               if(ratiob>0.) mub= d_cmu[m];
+               if(ratiob<0.) mub=-d_cmu[m];
                deltvb=-(nb+tb*mub)*dvbn;
                Gvelocity_star[m][c]=vb+deltvb;
                Gacceleration[m][c]=ab+deltvb/delT;
-               frictionWork[m][c]+=mb*cmu[m]*dvbn*dvbn*(fabs(ratiob)-cmu[m]);
+               frictionWork[m][c]+=mb*d_cmu[m]*dvbn*dvbn*(fabs(ratiob)-d_cmu[m]);
             }
             else {  // stick
                Gvelocity_star[m][c]=vc;
