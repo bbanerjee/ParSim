@@ -262,6 +262,53 @@ Crack::Crack(const ProblemSpecP& ps,
 }
 
 void
+Crack::outputProblemSpec(ProblemSpecP& mpm_ps, ProblemSpecP& uda_ps)
+{
+  if (mpm_ps) {
+    mpm_ps->appendElement("calculate_fracture_parameters", d_calFractParameters);
+    mpm_ps->appendElement("do_crack_propagation", d_doCrackPropagation);
+    mpm_ps->appendElement("use_volume_integral", useVolumeIntegral);
+    mpm_ps->appendElement("smooth_crack_front", smoothCrackFront);
+    mpm_ps->appendElement("J_radius", rJ);
+    mpm_ps->appendElement("dadx", rdadx);
+    mpm_ps->appendElement("outputJ", outputJ);
+  }
+
+  if (uda_ps) {
+    uda_ps->appendElement("save_crack_geometry", saveCrackGeometry);
+    uda_ps->appendElement("computeJKInterval", computeJKInterval);
+    uda_ps->appendElement("growCrackInterval", growCrackInterval);
+  }
+
+  int mat = 0;
+  for (ProblemSpecP mat_ps = mpm_ps->findBlock("material"); mat_ps != nullptr;
+       mat_ps              = mat_ps->findNextBlock("material")) {
+    ProblemSpecP crk_ps = mat_ps->appendChild("crack");
+    if (crk_ps) {
+      crk_ps->appendElement("type", crackType[mat]);
+      if (crackType[mat] == "friction") {
+        crk_ps->appendElement("mu", cmu[mat]);
+      }
+    }
+
+    crk_ps->appendElement("stress_state", stressState[mat]);
+    ProblemSpecP geom_ps = crk_ps->appendChild("crack_segments");
+
+    // *TODO* Output crack geometry inputs
+    //outputQuadCrackProblemSpec(m, geom_ps);
+    //outputReadCurvedQuadCrackProblemSpec(m, geom_ps);
+    //outputReadTriangularCrackProblemSpec(m, geom_ps);
+    //outputReadArcCrackProblemSpec(m, geom_ps);
+    //outputReadEllipticCrackProblemSpec(m, geom_ps);
+    //outputReadPartialEllipticCrackProblemSpec(m, geom_ps);
+
+    mat++;
+  }
+
+}
+
+
+void
 Crack::ReadCurvedQuadCracks(const int& m, const ProblemSpecP& geom_ps)
 {
   for (ProblemSpecP cquad_ps = geom_ps->findBlock("curved_quad"); cquad_ps != 0;
@@ -2570,8 +2617,4 @@ Crack::OutputInitialCrackMesh(const int& m)
     std::cout << "  Crack extent: " << cmin[m] << "-->" << cmax[m] << "\n"
               << "\n";
   }
-}
-
-Crack::~Crack()
-{
 }

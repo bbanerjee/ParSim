@@ -498,7 +498,7 @@ SerialMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
-    // For velocity gradinet and deformation gradient
+    // For velocity gradient and deformation gradient
     d_defGradComputer->addInitialComputesAndRequires(t, mpm_matl, patches);
 
     // Add constitutive model computes

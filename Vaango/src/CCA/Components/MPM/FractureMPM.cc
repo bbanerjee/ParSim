@@ -107,27 +107,56 @@ FractureMPM::FractureMPM(const ProcessorGroup* myworld,
                          const MaterialManagerP& mat_manager)
   : SerialMPM(myworld, mat_manager)
 {
-  crackModel = nullptr;
-}
-
-FractureMPM::~FractureMPM()
-{
-  delete crackModel;
 }
 
 void
 FractureMPM::problemSetup(const ProblemSpecP& prob_spec,
                           const ProblemSpecP& restart_prob_spec,
-                          GridP& grid)
+                          GridP& grid,
+                          const std::string& input_ups_dir)
 {
-  SerialMPM::problemSetup(prob_spec, restart_prob_spec, grid);
+  SerialMPM::problemSetup(prob_spec, restart_prob_spec, grid, input_ups_dir);
 
   // for FractureMPM
-  crackModel     = scinew Crack(prob_spec,
-                            d_materialManager,
-                            d_output,
-                            d_mpm_labels.get(),
-                            d_mpm_flags.get());
+  crackModel = std::make_unique<Crack>(prob_spec,
+                                       d_materialManager,
+                                       d_output,
+                                       d_mpm_labels.get(),
+                                       d_mpm_flags.get());
+}
+
+void
+FractureMPM::outputProblemSpec(ProblemSpecP& root_ps)
+{
+  ProblemSpecP root = root_ps->getRootNode();
+
+  ProblemSpecP flags_ps = root->appendChild("MPM");
+  d_mpm_flags->outputProblemSpec(flags_ps);
+
+  ProblemSpecP mat_ps = root->findBlockWithOutAttribute("MaterialProperties");
+
+  if (mat_ps == nullptr) {
+    mat_ps = root->appendChild("MaterialProperties");
+  }
+
+  ProblemSpecP mpm_ps = mat_ps->appendChild("MPM");
+  for (size_t i = 0; i < d_materialManager->getNumMaterials("MPM"); i++) {
+    MPMMaterial* mat =
+      static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", i));
+    ProblemSpecP cm_ps = mat->outputProblemSpec(mpm_ps);
+  }
+
+  contactModel->outputProblemSpec(mpm_ps);
+
+  ProblemSpecP physical_bc_ps = root->appendChild("PhysicalBC");
+  ProblemSpecP mpm_ph_bc_ps   = physical_bc_ps->appendChild("MPM");
+  for (auto& bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+    bc->outputProblemSpec(mpm_ph_bc_ps);
+  }
+
+  // **TODO** Add crack information
+  ProblemSpecP uda_ps = root_ps->findBlock("DataArchiver");
+  crackModel->outputProblemSpec(mpm_ps, uda_ps);
 }
 
 void
@@ -143,17 +172,17 @@ FractureMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 
   t->computes(d_mpm_labels->partCountLabel);
   t->computes(d_mpm_labels->pXLabel);
-  t->computes(d_mpm_labels->pDispLabel);
-  t->computes(d_mpm_labels->pMassLabel);
   t->computes(d_mpm_labels->pFiberDirLabel);
+  t->computes(d_mpm_labels->pMassLabel);
   t->computes(d_mpm_labels->pVolumeLabel);
   t->computes(d_mpm_labels->pTemperatureLabel);
   t->computes(d_mpm_labels->pTempPreviousLabel); // for thermal stress
   t->computes(d_mpm_labels->pdTdtLabel);
+  t->computes(d_mpm_labels->pDispLabel);
   t->computes(d_mpm_labels->pVelocityLabel);
+  t->computes(d_mpm_labels->pAccelerationLabel);
   t->computes(d_mpm_labels->pExternalForceLabel);
   t->computes(d_mpm_labels->pParticleIDLabel);
-  t->computes(d_mpm_labels->pDefGradLabel);
   t->computes(d_mpm_labels->pStressLabel);
   t->computes(d_mpm_labels->pSizeLabel);
   t->computes(d_mpm_labels->pDispGradsLabel);
@@ -183,33 +212,33 @@ FractureMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
                << " 8 or 27 = " << d_mpm_flags->d_8or27 << std::endl;
   }
 
-  int numMPM              = d_materialManager->getNumMaterials("MPM");
   const PatchSet* patches = level->eachPatch();
+  int numMPM = d_materialManager->getNumMaterials("MPM");
   for (int m = 0; m < numMPM; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+
+    // For velocity gradient and deformation gradient
+    d_defGradComputer->addInitialComputesAndRequires(t, mpm_matl, patches);
+
+    // Constitutive model computes and requires
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
   }
 
-  sched->addTask(t, level->eachPatch(), d_materialManager->allMaterials("MPM"));
+  sched->addTask(t, patches, d_materialManager->allMaterials("MPM"));
 
   schedulePrintParticleCount(level, sched);
 
-  // for FractureMPM: Descritize crack plane into triangular elements
+  // for FractureMPM: Discretize crack plane into triangular elements
   t = scinew Task("Crack:CrackDiscretization",
-                  crackModel,
+                  crackModel.get(),
                   &Crack::CrackDiscretization);
   crackModel->addComputesAndRequiresCrackDiscretization(
     t,
     level->eachPatch(),
     d_materialManager->allMaterials("MPM"));
   sched->addTask(t, level->eachPatch(), d_materialManager->allMaterials("MPM"));
-
-  // The task will have a reference to zeroth_matl
-  if (zeroth_matl->removeReference()) {
-    delete zeroth_matl; // shouln't happen, but...
-  }
 
   if (d_mpm_flags->d_useLoadCurves) {
     // Schedule the initialization of pressure BCs per particle
@@ -218,107 +247,58 @@ FractureMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 }
 
 void
-FractureMPM::scheduleInitializeAddedMaterial(const LevelP& level,
-                                             SchedulerP& sched)
+FractureMPM::actuallyInitialize(const ProcessorGroup*,
+                                const PatchSubset* patches,
+                                const MaterialSubset* matls,
+                                DataWarehouse*,
+                                DataWarehouse* new_dw)
 {
-  if (cout_doing.active()) {
-    cout_doing << "Doing FractureMPM::scheduleInitializeAddedMaterial "
-               << std::endl;
-  }
+  particleIndex totalParticles = 0;
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
 
-  Task* t = scinew Task("FractureMPM::actuallyInitializeAddedMaterial",
-                        this,
-                        &FractureMPM::actuallyInitializeAddedMaterial);
+    printTask(patches, patch, cout_doing, "FractureMPM::Doing actuallyInitialize");
 
-  int numALLMatls          = d_materialManager->getNumMaterials();
-  int numMPMMatls          = d_materialManager->getNumMaterials("MPM");
-  MaterialSubset* add_matl = scinew MaterialSubset();
-  std::cout << "Added Material = " << numALLMatls - 1 << std::endl;
-  add_matl->add(numALLMatls - 1);
-  add_matl->addReference();
+    CCVariable<short int> cellNAPID;
+    new_dw->allocateAndPut(cellNAPID, d_mpm_labels->pCellNAPIDLabel, 0, patch);
+    cellNAPID.initialize(0);
 
-  t->computes(d_mpm_labels->partCountLabel, add_matl);
-  t->computes(d_mpm_labels->pXLabel, add_matl);
-  t->computes(d_mpm_labels->pDispLabel, add_matl);
-  t->computes(d_mpm_labels->pMassLabel, add_matl);
-  t->computes(d_mpm_labels->pVolumeLabel, add_matl);
-  t->computes(d_mpm_labels->pTemperatureLabel, add_matl);
-  t->computes(d_mpm_labels->pTempPreviousLabel, add_matl); // for thermal stress
-  t->computes(d_mpm_labels->pdTdtLabel, add_matl);
-  t->computes(d_mpm_labels->pVelocityLabel, add_matl);
-  t->computes(d_mpm_labels->pExternalForceLabel, add_matl);
-  t->computes(d_mpm_labels->pParticleIDLabel, add_matl);
-  t->computes(d_mpm_labels->pDefGradLabel, add_matl);
-  t->computes(d_mpm_labels->pStressLabel, add_matl);
-  t->computes(d_mpm_labels->pSizeLabel, add_matl);
+    for (int m = 0; m < matls->size(); m++) {
+      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m)));
+      particleIndex numParticles =
+        mpm_matl->createParticles(cellNAPID, patch, new_dw);
+      totalParticles += numParticles;
 
-  if (d_mpm_flags->d_reductionVars->accStrainEnergy) {
-    // Computes accumulated strain energy
-    t->computes(d_mpm_labels->AccStrainEnergyLabel);
-  }
+      // Initialize deformation gradient
+      d_defGradComputer->initializeGradient(patch, mpm_matl, new_dw);
 
-  const PatchSet* patches = level->eachPatch();
-
-  MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(
-    d_materialManager->getMaterial("MPM", numMPMMatls - 1));
-  ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
-  cm->addInitialComputesAndRequires(t, mpm_matl, patches);
-
-  sched->addTask(t, level->eachPatch(), d_materialManager->allMaterials("MPM"));
-
-  // The task will have a reference to add_matl
-  if (add_matl->removeReference()) {
-    delete add_matl; // shouln't happen, but...
-  }
-}
-
-void
-FractureMPM::scheduleInitializePressureBCs(const LevelP& level,
-                                           SchedulerP& sched)
-{
-  MaterialSubset* loadCurveIndex = scinew MaterialSubset();
-  int nofPressureBCs             = 0;
-  for (int ii = 0; ii < (int)MPMPhysicalBCFactory::mpmPhysicalBCs.size();
-       ii++) {
-    string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-    if (bcs_type == "Pressure") {
-      loadCurveIndex->add(nofPressureBCs++);
+      // Initialize constitutive models
+      mpm_matl->getConstitutiveModel()->initializeCMData(patch,
+                                                         mpm_matl,
+                                                         new_dw);
+      // scalar used for debugging
+      if (d_mpm_flags->d_withColor) {
+        ParticleVariable<double> pcolor;
+        int index            = mpm_matl->getDWIndex();
+        ParticleSubset* pset = new_dw->getParticleSubset(index, patch);
+        setParticleDefault<double>(pcolor,
+                                   d_mpm_labels->pColorLabel,
+                                   pset,
+                                   new_dw,
+                                   0.0);
+      }
     }
   }
-  if (nofPressureBCs > 0) {
 
-    // Create a task that calculates the total number of particles
-    // associated with each load curve.
-    Task* t = scinew Task("FractureMPM::countMaterialPointsPerLoadCurve",
-                          this,
-                          &FractureMPM::countMaterialPointsPerLoadCurve);
-    t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
-    t->computes(d_mpm_labels->materialPointsPerLoadCurveLabel,
-                loadCurveIndex,
-                Task::OutOfDomain);
-    sched->addTask(t,
-                   level->eachPatch(),
-                   d_materialManager->allMaterials("MPM"));
-
-    // Create a task that calculates the force to be associated with
-    // each particle based on the pressure BCs
-    t = scinew Task("FractureMPM::initializePressureBC",
-                    this,
-                    &FractureMPM::initializePressureBC);
-    t->needs(Task::OldDW, d_mpm_labels->simulationTimeLabel);
-    t->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
-    t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
-    t->needs(Task::NewDW,
-                d_mpm_labels->materialPointsPerLoadCurveLabel,
-                loadCurveIndex,
-                Task::OutOfDomain,
-                Ghost::None);
-    t->modifies(d_mpm_labels->pExternalForceLabel);
-    sched->addTask(t,
-                   level->eachPatch(),
-                   d_materialManager->allMaterials("MPM"));
+  if (d_mpm_flags->d_reductionVars->accStrainEnergy) {
+    // Initialize the accumulated strain energy
+    new_dw->put(max_vartype(0.0), d_mpm_labels->AccStrainEnergyLabel);
   }
+
+  new_dw->put(sumlong_vartype(totalParticles), d_mpm_labels->partCountLabel);
 }
+
 
 void
 FractureMPM::scheduleComputeStableTimestep(const LevelP&, SchedulerP&)
@@ -405,7 +385,7 @@ FractureMPM::scheduleParticleVelocityField(SchedulerP& sched,
                                            const MaterialSet* matls)
 {
   Task* t = scinew Task("Crack::ParticleVelocityField",
-                        crackModel,
+                        crackModel.get(),
                         &Crack::ParticleVelocityField);
 
   crackModel->addComputesAndRequiresParticleVelocityField(t, patches, matls);
@@ -516,7 +496,7 @@ FractureMPM::scheduleAdjustCrackContactInterpolated(SchedulerP& sched,
                                                     const MaterialSet* matls)
 {
   Task* t = scinew Task("Crack::AdjustCrackContactInterpolated",
-                        crackModel,
+                        crackModel.get(),
                         &Crack::AdjustCrackContactInterpolated);
 
   crackModel->addComputesAndRequiresAdjustCrackContactInterpolated(t,
@@ -817,7 +797,7 @@ FractureMPM::scheduleAdjustCrackContactIntegrated(SchedulerP& sched,
                                                   const MaterialSet* matls)
 {
   Task* t = scinew Task("Crack::AdjustCrackContactIntegrated",
-                        crackModel,
+                        crackModel.get(),
                         &Crack::AdjustCrackContactIntegrated);
 
   crackModel->addComputesAndRequiresAdjustCrackContactIntegrated(t,
@@ -983,21 +963,21 @@ FractureMPM::scheduleCalculateFractureParameters(SchedulerP& sched,
 {
   // Get nodal solutions
   Task* t = scinew Task("Crack::GetNodalSolutions",
-                        crackModel,
+                        crackModel.get(),
                         &Crack::GetNodalSolutions);
   crackModel->addComputesAndRequiresGetNodalSolutions(t, patches, matls);
   sched->addTask(t, patches, matls);
 
   // cfnset & cfsset
   t = scinew Task("Crack::CrackFrontNodeSubset",
-                  crackModel,
+                  crackModel.get(),
                   &Crack::CrackFrontNodeSubset);
   crackModel->addComputesAndRequiresCrackFrontNodeSubset(t, patches, matls);
   sched->addTask(t, patches, matls);
 
   // Compute fracture parameters (J, K,...)
   t = scinew Task("Crack::CalculateFractureParameters",
-                  crackModel,
+                  crackModel.get(),
                   &Crack::CalculateFractureParameters);
   crackModel->addComputesAndRequiresCalculateFractureParameters(t,
                                                                 patches,
@@ -1013,7 +993,7 @@ FractureMPM::scheduleDoCrackPropagation(SchedulerP& sched,
 {
   // Propagate crack-front points
   Task* t = scinew Task("Crack::PropagateCrackFrontPoints",
-                        crackModel,
+                        crackModel.get(),
                         &Crack::PropagateCrackFrontPoints);
   crackModel->addComputesAndRequiresPropagateCrackFrontPoints(t,
                                                               patches,
@@ -1023,7 +1003,7 @@ FractureMPM::scheduleDoCrackPropagation(SchedulerP& sched,
   // Construct the new crack-front elems and new crack-front segments.
   // The new crack-front is temporary, and will be updated after moving cracks
   t = scinew Task("Crack::ConstructNewCrackFrontElems",
-                  crackModel,
+                  crackModel.get(),
                   &Crack::ConstructNewCrackFrontElems);
   crackModel->addComputesAndRequiresConstructNewCrackFrontElems(t,
                                                                 patches,
@@ -1038,13 +1018,13 @@ FractureMPM::scheduleMoveCracks(SchedulerP& sched,
 {
   // Set up cpset -- crack node subset in each patch
   Task* t = scinew Task("Crack::CrackPointSubset",
-                        crackModel,
+                        crackModel.get(),
                         &Crack::CrackPointSubset);
   crackModel->addComputesAndRequiresCrackPointSubset(t, patches, matls);
   sched->addTask(t, patches, matls);
 
   // Move crack points
-  t = scinew Task("Crack::MoveCracks", crackModel, &Crack::MoveCracks);
+  t = scinew Task("Crack::MoveCracks", crackModel.get(), &Crack::MoveCracks);
   crackModel->addComputesAndRequiresMoveCracks(t, patches, matls);
   sched->addTask(t, patches, matls);
 }
@@ -1057,7 +1037,7 @@ FractureMPM::scheduleUpdateCrackFront(SchedulerP& sched,
   // Set up cfnset & cfsset -- subset for the temporary crack-front
   // and crack-front segment subset for each patch
   Task* t = scinew Task("Crack::CrackFrontNodeSubset",
-                        crackModel,
+                        crackModel.get(),
                         &Crack::CrackFrontNodeSubset);
   crackModel->addComputesAndRequiresCrackFrontNodeSubset(t, patches, matls);
   sched->addTask(t, patches, matls);
@@ -1065,101 +1045,12 @@ FractureMPM::scheduleUpdateCrackFront(SchedulerP& sched,
   // Recollect crack-front segments, discarding the dead segments,
   // calculating normals, indexes and so on
   t = scinew Task("Crack::RecollectCrackFrontSegments",
-                  crackModel,
+                  crackModel.get(),
                   &Crack::RecollectCrackFrontSegments);
   crackModel->addComputesAndRequiresRecollectCrackFrontSegments(t,
                                                                 patches,
                                                                 matls);
   sched->addTask(t, patches, matls);
-}
-
-void
-FractureMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
-{
-  Task* task = scinew Task("FractureMPM::refine", this, &FractureMPM::refine);
-  sched->addTask(task, patches, d_materialManager->allMaterials("MPM"));
-  // do nothing for now
-}
-
-void
-FractureMPM::scheduleRefineInterface(const LevelP& /*fineLevel*/,
-                                     SchedulerP& /*scheduler*/,
-                                     bool,
-                                     bool)
-{
-  // do nothing for now
-}
-
-void
-FractureMPM::scheduleCoarsen(const LevelP& /*coarseLevel*/,
-                             SchedulerP& /*sched*/)
-{
-  // do nothing for now
-}
-
-/// Schedule to mark flags for AMR regridding
-void
-FractureMPM::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
-{
-  // main way is to count particles, but for now we only want particles on
-  // the finest level.  Thus to schedule cells for regridding during the
-  // execution, we'll coarsen the flagged cells (see coarsen).
-
-  if (cout_doing.active()) {
-    cout_doing << "FractureMPM::scheduleErrorEstimate on level "
-               << coarseLevel->getIndex() << '\n';
-  }
-
-  // Estimate error - this should probably be in it's own schedule,
-  // and the simulation controller should not schedule it every time step
-  Task* task = scinew Task("errorEstimate", this, &FractureMPM::errorEstimate);
-
-  // if the finest level, compute flagged cells
-  if (coarseLevel->getIndex() == coarseLevel->getGrid()->numLevels() - 1) {
-    task->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::AroundCells, 0);
-  } else {
-    task->needs(Task::NewDW,
-                   d_regridder->getRefineFlagLabel(),
-                   0,
-                   Task::FineLevel,
-                   d_regridder->refineFlagMaterials(),
-                   Task::NormalDomain,
-                   Ghost::None,
-                   0);
-  }
-  task->modifies(d_regridder->getRefineFlagLabel(),
-                 d_regridder->refineFlagMaterials());
-  task->modifies(d_regridder->getRefinePatchFlagLabel(),
-                 d_regridder->refineFlagMaterials());
-  sched->addTask(task,
-                 coarseLevel->eachPatch(),
-                 d_materialManager->allMaterials("MPM"));
-}
-
-/// Schedule to mark initial flags for AMR regridding
-void
-FractureMPM::scheduleInitialErrorEstimate(const LevelP& coarseLevel,
-                                          SchedulerP& sched)
-{
-
-  if (cout_doing.active()) {
-    cout_doing << "FractureMPM::scheduleErrorEstimate on level "
-               << coarseLevel->getIndex() << '\n';
-  }
-
-  // Estimate error - this should probably be in it's own schedule,
-  // and the simulation controller should not schedule it every time step
-  Task* task =
-    scinew Task("errorEstimate", this, &FractureMPM::initialErrorEstimate);
-  task->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::AroundCells, 0);
-
-  task->modifies(d_regridder->getRefineFlagLabel(),
-                 d_regridder->refineFlagMaterials());
-  task->modifies(d_regridder->getRefinePatchFlagLabel(),
-                 d_regridder->refineFlagMaterials());
-  sched->addTask(task,
-                 coarseLevel->eachPatch(),
-                 d_materialManager->allMaterials("MPM"));
 }
 
 void
@@ -1181,225 +1072,6 @@ FractureMPM::computeAccStrainEnergy(const ProcessorGroup*,
   double totalStrainEnergy = (double)accStrainEnergy + (double)incStrainEnergy;
   new_dw->put(max_vartype(totalStrainEnergy),
               d_mpm_labels->AccStrainEnergyLabel);
-}
-
-// Calculate the number of material points per load curve
-void
-FractureMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
-                                             const PatchSubset* patches,
-                                             const MaterialSubset*,
-                                             DataWarehouse*,
-                                             DataWarehouse* new_dw)
-{
-  // Find the number of pressure BCs in the problem
-  int nofPressureBCs = 0;
-  for (int ii = 0; ii < (int)MPMPhysicalBCFactory::mpmPhysicalBCs.size();
-       ii++) {
-    string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-    if (bcs_type == "Pressure") {
-      nofPressureBCs++;
-
-      // Loop through the patches and count
-      for (int p = 0; p < patches->size(); p++) {
-        const Patch* patch = patches->get(p);
-        int numMPMMatls    = d_materialManager->getNumMaterials("MPM");
-        int numPts         = 0;
-        for (int m = 0; m < numMPMMatls; m++) {
-          MPMMaterial* mpm_matl =
-            static_cast<MPMMaterial*>(static_cast<MPMMaterial*>(
-              d_materialManager->getMaterial("MPM", m)));
-          int dwi = mpm_matl->getDWIndex();
-
-          ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-          constParticleVariable<int> pLoadCurveID;
-          new_dw->get(pLoadCurveID, d_mpm_labels->pLoadCurveIDLabel, pset);
-
-          ParticleSubset::iterator iter = pset->begin();
-          for (; iter != pset->end(); iter++) {
-            particleIndex idx = *iter;
-            if (pLoadCurveID[idx] == (nofPressureBCs)) {
-              ++numPts;
-            }
-          }
-        } // matl loop
-        new_dw->put(sumlong_vartype(numPts),
-                    d_mpm_labels->materialPointsPerLoadCurveLabel,
-                    0,
-                    nofPressureBCs - 1);
-      } // patch loop
-    }
-  }
-}
-
-// Calculate the number of material points per load curve
-void
-FractureMPM::initializePressureBC(const ProcessorGroup*,
-                                  const PatchSubset* patches,
-                                  const MaterialSubset*,
-                                  DataWarehouse* old_dw,
-                                  DataWarehouse* new_dw)
-{
-  // Get the current time
-  simTime_vartype simTimeVar;
-  old_dw->get(simTimeVar, d_mpm_labels->simulationTimeLabel);
-  double time = simTimeVar;
-
-  if (cout_dbg.active()) {
-    cout_dbg << "Current Time (Initialize Pressure BC) = " << time << std::endl;
-  }
-
-  // Calculate the force vector at each particle
-  int nofPressureBCs = 0;
-  for (int ii = 0; ii < (int)MPMPhysicalBCFactory::mpmPhysicalBCs.size();
-       ii++) {
-    string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-    if (bcs_type == "Pressure") {
-
-      // Get the material points per load curve
-      sumlong_vartype numPart = 0;
-      new_dw->get(numPart,
-                  d_mpm_labels->materialPointsPerLoadCurveLabel,
-                  0,
-                  nofPressureBCs++);
-
-      // Save the material points per load curve in the PressureBC object
-      PressureBC* pbc = dynamic_cast<PressureBC*>(
-        MPMPhysicalBCFactory::mpmPhysicalBCs[ii].get());
-      pbc->numMaterialPoints(numPart);
-
-      if (cout_dbg.active()) {
-        cout_dbg << "    Load Curve = " << nofPressureBCs
-                 << " Num Particles = " << numPart << std::endl;
-      }
-
-      // Calculate the force per particle at t = 0.0
-      double forcePerPart = pbc->forcePerParticle(time);
-
-      // Loop through the patches and calculate the force vector
-      // at each particle
-      for (int p = 0; p < patches->size(); p++) {
-        const Patch* patch = patches->get(p);
-        int numMPMMatls    = d_materialManager->getNumMaterials("MPM");
-        for (int m = 0; m < numMPMMatls; m++) {
-          MPMMaterial* mpm_matl =
-            static_cast<MPMMaterial*>(static_cast<MPMMaterial*>(
-              d_materialManager->getMaterial("MPM", m)));
-          int dwi = mpm_matl->getDWIndex();
-
-          ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-          constParticleVariable<Point> px;
-          constParticleVariable<int> pLoadCurveID;
-          constParticleVariable<Matrix3> pDefGrad;
-          new_dw->get(px, d_mpm_labels->pXLabel, pset);
-          new_dw->get(pLoadCurveID, d_mpm_labels->pLoadCurveIDLabel, pset);
-          new_dw->get(pDefGrad, d_mpm_labels->pDefGradLabel, pset);
-
-          constParticleVariable<Vector> pDisp;
-          new_dw->get(pDisp, d_mpm_labels->pDispLabel, pset);
-          ParticleVariable<Vector> pExternalForce;
-          new_dw->getModifiable(pExternalForce,
-                                d_mpm_labels->pExternalForceLabel,
-                                pset);
-
-          ParticleSubset::iterator iter = pset->begin();
-          for (; iter != pset->end(); iter++) {
-            particleIndex idx = *iter;
-            if (pLoadCurveID[idx] == nofPressureBCs) {
-              pExternalForce[idx] = pbc->getForceVector(px[idx],
-                                                        pDisp[idx],
-                                                        forcePerPart,
-                                                        time,
-                                                        pDefGrad[idx]);
-            }
-          }
-        } // matl loop
-      }   // patch loop
-    }
-  }
-}
-
-void
-FractureMPM::actuallyInitialize(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset* matls,
-                                DataWarehouse*,
-                                DataWarehouse* new_dw)
-{
-  particleIndex totalParticles = 0;
-  for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-
-    if (cout_doing.active()) {
-      cout_doing << "Doing actuallyInitialize on patch " << patch->getID()
-                 << "\t\t\t MPM" << std::endl;
-    }
-
-    CCVariable<short int> cellNAPID;
-    new_dw->allocateAndPut(cellNAPID, d_mpm_labels->pCellNAPIDLabel, 0, patch);
-    cellNAPID.initialize(0);
-
-    for (int m = 0; m < matls->size(); m++) {
-      // cerrLock.lock();
-      // NOT_FINISHED("not quite right - mapping of matls, use matls->get()");
-      // cerrLock.unlock();
-      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(
-        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m)));
-      particleIndex numParticles =
-        mpm_matl->createParticles(cellNAPID, patch, new_dw);
-      totalParticles += numParticles;
-
-      mpm_matl->getConstitutiveModel()->initializeCMData(patch,
-                                                         mpm_matl,
-                                                         new_dw);
-      // scalar used for debugging
-      if (d_mpm_flags->d_withColor) {
-        ParticleVariable<double> pcolor;
-        int index            = mpm_matl->getDWIndex();
-        ParticleSubset* pset = new_dw->getParticleSubset(index, patch);
-        setParticleDefault<double>(pcolor,
-                                   d_mpm_labels->pColorLabel,
-                                   pset,
-                                   new_dw,
-                                   0.0);
-      }
-    }
-  }
-
-  if (d_mpm_flags->d_reductionVars->accStrainEnergy) {
-    // Initialize the accumulated strain energy
-    new_dw->put(max_vartype(0.0), d_mpm_labels->AccStrainEnergyLabel);
-  }
-
-  new_dw->put(sumlong_vartype(totalParticles), d_mpm_labels->partCountLabel);
-}
-
-void
-FractureMPM::actuallyInitializeAddedMaterial(const ProcessorGroup*,
-                                             const PatchSubset* patches,
-                                             [[maybe_unused]] const MaterialSubset* matls,
-                                             DataWarehouse*,
-                                             DataWarehouse* new_dw)
-{
-  for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-
-    if (cout_doing.active()) {
-      cout_doing << "Doing actuallyInitializeAddedMaterial on patch "
-                 << patch->getID() << "\t\t\t MPM" << std::endl;
-    }
-
-    int numMPMMatls = d_materialManager->getNumMaterials("MPM");
-    std::cout << "num MPM Matls = " << numMPMMatls << std::endl;
-    CCVariable<short int> cellNAPID;
-    int m                 = numMPMMatls - 1;
-    MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(
-      static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m)));
-    new_dw->unfinalize();
-    mpm_matl->createParticles(cellNAPID, patch, new_dw);
-
-    mpm_matl->getConstitutiveModel()->initializeCMData(patch, mpm_matl, new_dw);
-    new_dw->refinalize();
-  }
 }
 
 void
@@ -3015,192 +2687,3 @@ FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
   }
 }
 
-void
-FractureMPM::initialErrorEstimate(const ProcessorGroup*,
-                                  const PatchSubset* patches,
-                                  const MaterialSubset* /*matls*/,
-                                  DataWarehouse*,
-                                  DataWarehouse* new_dw)
-{
-  for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-
-    if (amr_doing.active()) {
-      amr_doing << "Doing FractureMPM::initialErrorEstimate on patch "
-                << patch->getID() << std::endl;
-    }
-
-    CCVariable<int> refineFlag;
-    PerPatch<PatchFlagP> refinePatchFlag;
-    new_dw->getModifiable(refineFlag,
-                          d_regridder->getRefineFlagLabel(),
-                          0,
-                          patch);
-    new_dw->get(refinePatchFlag,
-                d_regridder->getRefinePatchFlagLabel(),
-                0,
-                patch);
-
-    PatchFlag* refinePatch = refinePatchFlag.get().get_rep();
-
-    for (size_t m = 0; m < d_materialManager->getNumMaterials("MPM"); m++) {
-      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(
-        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m)));
-      int dwi = mpm_matl->getDWIndex();
-      // Loop over particles
-      ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-      constParticleVariable<Point> px;
-      new_dw->get(px, d_mpm_labels->pXLabel, pset);
-
-      for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
-           iter++) {
-        refineFlag[patch->getLevel()->getCellIndex(px[*iter])] = true;
-        refinePatch->set();
-      }
-    }
-  }
-}
-
-void
-FractureMPM::errorEstimate(const ProcessorGroup* group,
-                           const PatchSubset* patches,
-                           const MaterialSubset* matls,
-                           DataWarehouse* old_dw,
-                           DataWarehouse* new_dw)
-{
-  // coarsen the errorflag.
-
-  if (cout_doing.active()) {
-    cout_doing << "Doing FractureMPM::errorEstimate" << '\n';
-  }
-
-  const Level* level = getLevel(patches);
-  if (level->getIndex() == level->getGrid()->numLevels() - 1) {
-    // on finest level, we do the same thing as initialErrorEstimate, so call it
-    initialErrorEstimate(group, patches, matls, old_dw, new_dw);
-  } else {
-    const Level* fineLevel = level->getFinerLevel().get_rep();
-
-    for (int p = 0; p < patches->size(); p++) {
-      const Patch* coarsePatch = patches->get(p);
-
-      if (amr_doing.active()) {
-        amr_doing << "Doing FractureMPM::errorEstimate on patch "
-                  << coarsePatch->getID() << std::endl;
-      }
-
-      // Find the overlapping regions...
-
-      CCVariable<int> refineFlag;
-      PerPatch<PatchFlagP> refinePatchFlag;
-
-      new_dw->getModifiable(refineFlag,
-                            d_regridder->getRefineFlagLabel(),
-                            0,
-                            coarsePatch);
-      new_dw->get(refinePatchFlag,
-                  d_regridder->getRefinePatchFlagLabel(),
-                  0,
-                  coarsePatch);
-
-      PatchFlag* refinePatch = refinePatchFlag.get().get_rep();
-
-      Level::selectType finePatches;
-      coarsePatch->getFineLevelPatches(finePatches);
-
-      for (size_t i = 0; i < finePatches.size(); i++) {
-        const Patch* finePatch = finePatches[i];
-
-        // Get the particle data
-        constCCVariable<int> fineErrorFlag;
-        new_dw->get(fineErrorFlag,
-                    d_regridder->getRefineFlagLabel(),
-                    0,
-                    finePatch,
-                    Ghost::None,
-                    0);
-
-        IntVector fl(finePatch->getExtraCellLowIndex());
-        IntVector fh(finePatch->getExtraCellHighIndex());
-        IntVector l(fineLevel->mapCellToCoarser(fl));
-        IntVector h(fineLevel->mapCellToCoarser(fh));
-        l = Max(l, coarsePatch->getExtraCellLowIndex());
-        h = Min(h, coarsePatch->getExtraCellHighIndex());
-
-        for (CellIterator iter(l, h); !iter.done(); iter++) {
-          IntVector fineStart(level->mapCellToFiner(*iter));
-
-          for (CellIterator inside(IntVector(0, 0, 0),
-                                   fineLevel->getRefinementRatio());
-               !inside.done();
-               inside++) {
-            if (fineErrorFlag[fineStart + *inside]) {
-              refineFlag[*iter] = 1;
-              refinePatch->set();
-            }
-          }
-        }
-      } // fine patch loop
-    }   // coarse patch loop
-  }
-}
-
-void
-FractureMPM::refine(const ProcessorGroup*,
-                    const PatchSubset* patches,
-                    const MaterialSubset* /*matls*/,
-                    DataWarehouse*,
-                    DataWarehouse* new_dw)
-{
-  // just create a particle subset if one doesn't exist
-  for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-
-    int numMPMMatls = d_materialManager->getNumMaterials("MPM");
-    for (int m = 0; m < numMPMMatls; m++) {
-      MPMMaterial* mpm_matl = static_cast<MPMMaterial*>(
-        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m)));
-      int dwi = mpm_matl->getDWIndex();
-
-      if (cout_doing.active()) {
-        cout_doing << "Doing refine on patch " << patch->getID()
-                   << " material # = " << dwi << std::endl;
-      }
-
-      // this is a new patch, so create empty particle variables.
-      if (!new_dw->haveParticleSubset(dwi, patch)) {
-        ParticleSubset* pset = new_dw->createParticleSubset(0, dwi, patch);
-
-        // Create arrays for the particle data
-        ParticleVariable<Point> px;
-        ParticleVariable<double> pMass, pVolume, pTemperature;
-        ParticleVariable<Vector> pVelocity, pExternalForce, pSize, pDisplacement;
-        ParticleVariable<int> pLoadCurve;
-        ParticleVariable<long64> pID;
-        ParticleVariable<Matrix3> pdeform, pstress;
-
-        new_dw->allocateAndPut(px, d_mpm_labels->pXLabel, pset);
-        new_dw->allocateAndPut(pMass, d_mpm_labels->pMassLabel, pset);
-        new_dw->allocateAndPut(pVolume, d_mpm_labels->pVolumeLabel, pset);
-        new_dw->allocateAndPut(pVelocity, d_mpm_labels->pVelocityLabel, pset);
-        new_dw->allocateAndPut(pTemperature,
-                               d_mpm_labels->pTemperatureLabel,
-                               pset);
-        new_dw->allocateAndPut(pExternalForce,
-                               d_mpm_labels->pExternalForceLabel,
-                               pset);
-        new_dw->allocateAndPut(pID, d_mpm_labels->pParticleIDLabel, pset);
-        new_dw->allocateAndPut(pDisplacement, d_mpm_labels->pDispLabel, pset);
-        new_dw->allocateAndPut(pdeform, d_mpm_labels->pDefGradLabel, pset);
-        new_dw->allocateAndPut(pstress, d_mpm_labels->pStressLabel, pset);
-        if (d_mpm_flags->d_useLoadCurves) {
-          new_dw->allocateAndPut(pLoadCurve,
-                                 d_mpm_labels->pLoadCurveIDLabel,
-                                 pset);
-        }
-        new_dw->allocateAndPut(pSize, d_mpm_labels->pSizeLabel, pset);
-      }
-    }
-  }
-
-} // end refine()

@@ -77,7 +77,7 @@ public:
 public:
   SerialMPM(const ProcessorGroup* myworld, const MaterialManagerP& matManager);
 
-  ~SerialMPM() noexcept(false) override;
+  virtual ~SerialMPM() noexcept(false) override;
 
   // No copy or move allowed
   SerialMPM(const SerialMPM&) = delete;
@@ -93,28 +93,28 @@ public:
     return delT * 0.1;
   }
 
-  void
+  virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
                GridP& grid,
                const std::string& input_ups_dir = "") override;
 
-  void
+  virtual void
   outputProblemSpec(ProblemSpecP& ps) override;
 
-  void
+  virtual void
   scheduleInitialize(const LevelP& level, SchedulerP&) override;
 
-  void
+  virtual void
   scheduleRestartInitialize(const LevelP& level, SchedulerP& sched) override;
 
-  virtual void
+  void
   scheduleDeleteGeometryObjects(const LevelP& level, SchedulerP& sched);
 
-  void
+  virtual void
   scheduleComputeStableTimestep(const LevelP& level, SchedulerP&) override;
 
-  void
+  virtual void
   scheduleTimeAdvance(const LevelP& level, SchedulerP&) override;
 
   void
@@ -341,7 +341,6 @@ protected:
                              const PatchSet* patches,
                              const MaterialSet* matls);
 
-private:
 protected:
   virtual void
   actuallyInitialize(const ProcessorGroup*,
@@ -439,7 +438,7 @@ protected:
                      DataWarehouse* old_dw,
                      DataWarehouse* new_dw);
 
-  void
+  virtual void
   actuallyComputeStableTimestep(const ProcessorGroup*,
                                 const PatchSubset* patches,
                                 const MaterialSubset* matls,
