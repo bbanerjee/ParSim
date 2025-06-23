@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Limited, NZ
+ * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -41,9 +41,9 @@
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
+#include <Core/Grid/Patch.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
-#include <Core/Grid/Patch.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
@@ -53,11 +53,12 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <vector>
 
 using namespace Uintah;
 
-using std::string;
 using std::vector;
+using std::string;
 
 #define MAX_BASIS 27
 
@@ -80,7 +81,7 @@ Crack::Crack(const ProblemSpecP& ps,
   if (n8or27 == 8) {
     NGP = 1;
     NGN = 1;
-  } else if (n8or27 == MAX_BASIS || flags->d_8or27 == 64) {
+  } else if (n8or27 == MAX_BASIS) {
     NGP = 2;
     NGN = 2;
   }
@@ -89,12 +90,12 @@ Crack::Crack(const ProblemSpecP& ps,
   d_doCrackPropagation = false;
   useVolumeIntegral    = false;
   smoothCrackFront     = false;
-  outputJ              = false;
   saveCrackGeometry    = true;
 
-  rdadx = 1.;  // Ratio of crack incremental to cell-size
-  rJ    = -1.; // Radius of J-integral contour
-  NJ    = 2;   // J-integral contour size
+  rdadx     = 1.;  // Ratio of crack incremental to cell-size
+  rJ        = -1.; // Radius of J-integral contour
+  NJ        = 2;   // J-integral contour size
+  CODOption = 0;   // Calculate COD at a fixed location by default
 
   computeJKInterval = 0.; // Intervals of calculating J & K
   growCrackInterval = 0.; // Interval of doing crack propagation
@@ -118,7 +119,7 @@ Crack::Crack(const ProblemSpecP& ps,
     mpm_soln_ps->get("smooth_crack_front", smoothCrackFront);
     mpm_soln_ps->get("J_radius", rJ);
     mpm_soln_ps->get("dadx", rdadx);
-    mpm_soln_ps->get("outputJ", outputJ);
+    mpm_soln_ps->get("CODOption", CODOption);
   }
 
   // Get .uda directory
@@ -139,36 +140,35 @@ Crack::Crack(const ProblemSpecP& ps,
     ps->findBlock("Grid")->findBlock("BoundaryConditions");
   for (ProblemSpecP face_ps = grid_bc_ps->findBlock("Face"); face_ps != 0;
        face_ps              = face_ps->findNextBlock("Face")) {
-    std::map<std::string, string> values;
+    std::map<std::string, std::string> values;
     face_ps->getAttributes(values);
     ProblemSpecP bcType_ps = face_ps->findBlock("BCType");
-    std::map<std::string, string> bc_attr;
+    std::map<std::string, std::string> bc_attr;
     bcType_ps->getAttributes(bc_attr);
-    if (values["side"] == "x-") {
+    if (values["side"] == "x-")
       GridBCType[Patch::xminus] = bc_attr["var"];
-    } else if (values["side"] == "x+") {
+    else if (values["side"] == "x+")
       GridBCType[Patch::xplus] = bc_attr["var"];
-    } else if (values["side"] == "y-") {
+    else if (values["side"] == "y-")
       GridBCType[Patch::yminus] = bc_attr["var"];
-    } else if (values["side"] == "y+") {
+    else if (values["side"] == "y+")
       GridBCType[Patch::yplus] = bc_attr["var"];
-    } else if (values["side"] == "z-") {
+    else if (values["side"] == "z-")
       GridBCType[Patch::zminus] = bc_attr["var"];
-    } else if (values["side"] == "z+") {
+    else if (values["side"] == "z+")
       GridBCType[Patch::zplus] = bc_attr["var"];
-    }
   }
 
   // Task 3: Allocate memory for crack geometrical data
 
   int numMPMMatls = 0;
   ProblemSpecP mpm_ps =
-    ps->findBlockWithOutAttributes("MaterialProperties")->findBlock("MPM");
+    ps->findBlockWithOutAttribute("MaterialProperties")->findBlock("MPM");
   for (ProblemSpecP mat_ps = mpm_ps->findBlock("material"); mat_ps != 0;
-       mat_ps              = mat_ps->findNextBlock("material")) {
+       mat_ps              = mat_ps->findNextBlock("material"))
     numMPMMatls++;
-  }
   // Physical properties of cracks
+  stressState.resize(numMPMMatls);
   crackType.resize(numMPMMatls);
   cmu.resize(numMPMMatls);
 
@@ -215,36 +215,37 @@ Crack::Crack(const ProblemSpecP& ps,
   cmax.resize(numMPMMatls);
 
   // Task 4:  Read in cracks
-  d_crackGeometry.resize(numMPMMatls);
+
   int m = 0;
   for (ProblemSpecP mat_ps = mpm_ps->findBlock("material"); mat_ps != 0;
        mat_ps              = mat_ps->findNextBlock("material")) {
     ProblemSpecP crk_ps = mat_ps->findBlock("crack");
-    if (crk_ps == 0) {
+    if (crk_ps == 0)
       crackType[m] = "NO_CRACK";
-    }
     if (crk_ps != 0) {
       // Crack surface contact type, either "friction", "stick" or "null"
       crk_ps->require("type", crackType[m]);
       if (crackType[m] != "friction" && crackType[m] != "stick" &&
           crackType[m] != "null") {
-        std::cout << "Error: unknown crack type: " << crackType[m] << std::endl;
+        std::cout << "Error: unknown crack type: " << crackType[m] << "\n";
         exit(1);
       }
 
       // Friction coefficient needed for friction contact, zero by default
       cmu[m] = 0.0;
-      if (crackType[m] == "friction") {
+      if (crackType[m] == "friction")
         crk_ps->get("mu", cmu[m]);
-      }
 
-      // Read in crack segments. Presently seven kinds of basic shapes are
-      // available. More complicated crack plane can be input by combining the
-      // basic shapes.
-#if 1
-      CrackGeometry* cg = CrackGeometryFactory::create(crk_ps);
-      d_crackGeometry[m].push_back(cg);
-#else
+      // Stress state at crack front
+      stressState[m] = "planeStress";
+      crk_ps->get("stress_state", stressState[m]);
+
+// Read in crack segments. Presently seven kinds of basic shapes are available.
+// More complicated crack plane can be input by combining the basic shapes.
+#if 0
+       CrackGeometry* cg = CrackGeometryFactory::create(crk_ps);
+       d_crackGeometry.push_back(cg);
+#endif
 
       ProblemSpecP geom_ps = crk_ps->findBlock("crack_segments");
       ReadQuadCracks(m, geom_ps);
@@ -253,193 +254,11 @@ Crack::Crack(const ProblemSpecP& ps,
       ReadArcCracks(m, geom_ps);
       ReadEllipticCracks(m, geom_ps);
       ReadPartialEllipticCracks(m, geom_ps);
-#endif
     }
     m++;
   }
-#if 1
-  for (int i = 0; i < numMPMMatls; i++) {
-    for (int j = 0; j < (int)d_crackGeometry[i].size(); j++) {
-      d_crackGeometry[i][j]->outputInitialCrackPlane(i);
-    }
-  }
-#else
+
   OutputInitialCrackPlane(numMPMMatls);
-#endif
-}
-
-void
-Crack::OutputInitialCrackPlane(const int& numMatls)
-{
-  int pid;
-  MPI_Comm_rank(mpi_crack_comm, &pid);
-  if (pid == 0) { // output from the first rank
-    for (int m = 0; m < numMatls; m++) {
-      if (crackType[m] == "NO_CRACK") {
-        std::cout << "\nMaterial " << m << ": no crack exists" << std::endl;
-      } else {
-        std::cout << "\nMaterial " << m << ":\n"
-                  << "  Crack contact type: " << crackType[m] << std::endl;
-        if (crackType[m] == "friction") {
-          std::cout << "    Frictional coefficient: " << cmu[m] << std::endl;
-        }
-
-        std::cout << "  Crack geometry:" << std::endl;
-        // general quad cracks
-        for (int i = 0; i < (int)quads[m].size(); i++) {
-          std::cout << "  * Quad " << i + 1 << ": meshed by [" << quadN12[m][i]
-                    << ", " << quadN23[m][i] << ", " << quadN12[m][i] << ", "
-                    << quadN23[m][i] << "]" << std::endl;
-          for (int j = 0; j < 8; j++) {
-            std::cout << "    p" << j + 1 << ": " << quads[m][i][j]
-                      << std::endl;
-          }
-          for (int j = 0; j < 4; j++) {
-            if (quadCrackSidesAtFront[m][i][j]) {
-              int j2 = (j + 2 < 5 ? j + 2 : 1);
-              std::cout << "    Side " << j + 1 << " (p" << j + 1 << "-" << "p"
-                        << j2 << ") is a crack front." << std::endl;
-            }
-          }
-          // repetition information
-          if (quadRepetition[m][i] > 1) {
-            std::cout << "    The quad is repeated " << quadRepetition[m][i]
-                      << " times with the offset " << quadOffset[m][i] << "."
-                      << std::endl;
-          }
-        }
-
-        // curved quad cracks
-        for (int i = 0; i < (int)cquads[m].size(); i++) {
-          std::cout << "  * Curved quad " << i + 1 << ":" << std::endl;
-          std::cout << "    Four vertices:" << std::endl;
-          // four vertices
-          for (int j = 0; j < 4; j++) {
-            std::cout << "      p" << j + 1 << ": " << cquads[m][i][j]
-                      << std::endl;
-          }
-          // resolution on straight sides 1 & 3
-          std::cout
-            << "    Resolution on straight sides (sides p1-p2 and p3-p4):"
-            << cquadNStraightSides[m][i] << std::endl;
-          // points on curved egde 2
-          std::cout << "    Points on curved side 2 (p2-p3): " << std::endl;
-          for (int j = 0; j < (int)cquadPtsSide2[m][i].size(); j++) {
-            std::cout << "      p" << j + 1 << ": " << cquadPtsSide2[m][i][j]
-                      << std::endl;
-          }
-          // points on curved side 3
-          std::cout << "    Points on curved side 4 (p1-p4): " << std::endl;
-          for (int j = 0; j < (int)cquadPtsSide4[m][i].size(); j++) {
-            std::cout << "      p" << j + 1 << ": " << cquadPtsSide4[m][i][j]
-                      << std::endl;
-          }
-          // crack-front sides
-          for (int j = 0; j < 4; j++) {
-            if (cquadCrackSidesAtFront[m][i][j]) {
-              int j2 = (j + 2 < 5 ? j + 2 : 1);
-              std::cout << "    Side " << j + 1 << " (p" << j + 1 << "-" << "p"
-                        << j2 << ") is a crack front." << std::endl;
-            }
-          }
-          // repetition information
-          if (cquadRepetition[m][i] > 1) {
-            std::cout << "    The quad is repeated " << cquadRepetition[m][i]
-                      << " times with the offset " << cquadOffset[m][i] << "."
-                      << std::endl;
-          }
-        }
-
-        // Triangular cracks
-        for (int i = 0; i < (int)triangles[m].size(); i++) {
-          std::cout << "  * Triangle " << i + 1 << ": meshed by ["
-                    << triNCells[m][i] << ", " << triNCells[m][i] << ", "
-                    << triNCells[m][i] << "]" << std::endl;
-          for (int j = 0; j < 6; j++) {
-            std::cout << "    p" << j + 1 << ": " << triangles[m][i][j]
-                      << std::endl;
-          }
-          for (int j = 0; j < 3; j++) {
-            if (triCrackSidesAtFront[m][i][j]) {
-              int j2 = (j + 2 < 4 ? j + 2 : 1);
-              std::cout << "    side " << j + 1 << " (p" << j + 1 << "-" << "p"
-                        << j2 << ") is a crack front." << std::endl;
-            }
-          }
-          // repetition information
-          if (triRepetition[m][i] > 1) {
-            std::cout << "    The triangle is repeated " << triRepetition[m][i]
-                      << " times with the offset " << triOffset[m][i] << "."
-                      << std::endl;
-          }
-        }
-
-        // Arc cracks
-        for (int i = 0; i < (int)arcs[m].size(); i++) {
-          std::cout << "  * Arc " << i + 1 << ": meshed by " << arcNCells[m][i]
-                    << " cells on the circumference." << std::endl;
-          if (arcCrkFrtSegID[m][i] == -1) {
-            std::cout << "   crack front: on the arc" << std::endl;
-          } else {
-            std::cout << "   crack front segment ID: " << arcCrkFrtSegID[m][i]
-                      << std::endl;
-          }
-          std::cout << "\n    start, middle and end points of the arc:"
-                    << std::endl;
-          for (int j = 0; j < 3; j++) {
-            std::cout << "    p" << j + 1 << ": " << arcs[m][i][j] << std::endl;
-          }
-        }
-
-        // Elliptic cracks
-        for (int i = 0; i < (int)ellipses[m].size(); i++) {
-          std::cout << "  * Ellipse " << i + 1 << ": meshed by "
-                    << ellipseNCells[m][i] << " cells on the circumference."
-                    << std::endl;
-          if (ellipseCrkFrtSegID[m][i] == -1) {
-            std::cout << "    crack front: on the ellipse circumference"
-                      << std::endl;
-          } else {
-            std::cout << "    crack front segment ID: "
-                      << ellipseCrkFrtSegID[m][i] << std::endl;
-          }
-          std::cout << "    end point on axis1: " << ellipses[m][i][0]
-                    << std::endl;
-          std::cout << "    end point on axis2: " << ellipses[m][i][1]
-                    << std::endl;
-          std::cout << "    another end point on axis1: " << ellipses[m][i][2]
-                    << std::endl;
-        }
-
-        // Partial elliptic cracks
-        for (int i = 0; i < (int)pellipses[m].size(); i++) {
-          std::cout << "  * Partial ellipse " << i + 1 << " ("
-                    << pellipseExtent[m][i] << " degree): meshed by "
-                    << pellipseNCells[m][i] << " cells on the circumference."
-                    << std::endl;
-          if (pellipseCrkFrtSegID[m][i] == -1) {
-            std::cout << "    crack front: on the ellipse circumference"
-                      << std::endl;
-          } else {
-            std::cout << "    crack front segment ID: "
-                      << pellipseCrkFrtSegID[m][i] << std::endl;
-          }
-          std::cout << "    center: " << pellipses[m][i][0] << std::endl;
-          std::cout << "    end point on axis1: " << pellipses[m][i][1]
-                    << std::endl;
-          std::cout << "    end point on axis2: " << pellipses[m][i][2]
-                    << std::endl;
-        }
-      }
-    } // End of loop over materials
-
-    // Ratio of crack propagation incremental to cell-size
-    if (d_doCrackPropagation) {
-      std::cout << "  Ratio of crack increment to cell size (dadx) = " << rdadx
-                << "." << std::endl
-                << std::endl;
-    }
-  }
 }
 
 void
@@ -471,7 +290,523 @@ Crack::outputProblemSpec(ProblemSpecP& mpm_ps, ProblemSpecP& uda_ps)
         crk_ps->appendElement("mu", cmu[mat]);
       }
     }
+
+    crk_ps->appendElement("stress_state", stressState[mat]);
+    ProblemSpecP geom_ps = crk_ps->appendChild("crack_segments");
+
+    // *TODO* Output crack geometry inputs
+    //outputQuadCrackProblemSpec(m, geom_ps);
+    //outputReadCurvedQuadCrackProblemSpec(m, geom_ps);
+    //outputReadTriangularCrackProblemSpec(m, geom_ps);
+    //outputReadArcCrackProblemSpec(m, geom_ps);
+    //outputReadEllipticCrackProblemSpec(m, geom_ps);
+    //outputReadPartialEllipticCrackProblemSpec(m, geom_ps);
+
     mat++;
+  }
+
+}
+
+
+void
+Crack::ReadCurvedQuadCracks(const int& m, const ProblemSpecP& geom_ps)
+{
+  for (ProblemSpecP cquad_ps = geom_ps->findBlock("curved_quad"); cquad_ps != 0;
+       cquad_ps              = cquad_ps->findNextBlock("curved_quad")) {
+
+    // Four vertices of the curved quad
+    Point p;
+    std::vector<Point> vertices;
+    cquad_ps->require("p1", p);
+    vertices.push_back(p);
+    cquad_ps->require("p2", p);
+    vertices.push_back(p);
+    cquad_ps->require("p3", p);
+    vertices.push_back(p);
+    cquad_ps->require("p4", p);
+    vertices.push_back(p);
+    cquads[m].push_back(vertices);
+    vertices.clear();
+
+    // Mesh resolution on two opposite straight sides
+    int n = 1;
+    cquad_ps->get("resolution_straight_sides", n);
+    cquadNStraightSides[m].push_back(n);
+
+    // Characteristic points on two opposite cuvered sides
+    std::vector<Point> ptsSide2, ptsSide4;
+    ProblemSpecP side2_ps = cquad_ps->findBlock("points_curved_side2");
+    for (ProblemSpecP pt_ps = side2_ps->findBlock("point"); pt_ps != 0;
+         pt_ps              = pt_ps->findNextBlock("point")) {
+      pt_ps->get("val", p);
+      ptsSide2.push_back(p);
+    }
+    cquadPtsSide2[m].push_back(ptsSide2);
+
+    ProblemSpecP side4_ps = cquad_ps->findBlock("points_curved_side4");
+    for (ProblemSpecP pt_ps = side4_ps->findBlock("point"); pt_ps != 0;
+         pt_ps              = pt_ps->findNextBlock("point")) {
+      pt_ps->get("val", p);
+      ptsSide4.push_back(p);
+    }
+    cquadPtsSide4[m].push_back(ptsSide4);
+
+    if (ptsSide4.size() != ptsSide2.size()) {
+      std::cout << "Error: The points on curved side 2 and side 4 "
+                << "should appear in pairs."
+                << "\n";
+    }
+    ptsSide2.clear();
+    ptsSide4.clear();
+
+    // Crack front
+    std::vector<short> crackSidesAtFront;
+    string cfsides("");
+    cquad_ps->get("crack_front_sides", cfsides);
+    if (cfsides.length() == 4) {
+      for (string::const_iterator iter = cfsides.begin(); iter != cfsides.end();
+           iter++) {
+        short atFront = NO;
+        if (*iter == 'Y' || *iter == 'y')
+          atFront = YES;
+        crackSidesAtFront.push_back(atFront);
+      }
+    } else if (cfsides.length() == 0) {
+      for (int i = 0; i < 4; i++)
+        crackSidesAtFront.push_back(NO);
+    }
+    cquadCrackSidesAtFront[m].push_back(crackSidesAtFront);
+    crackSidesAtFront.clear();
+
+    // Repetition information
+    n = 1;
+    cquad_ps->get("repetition", n);
+    cquadRepetition[m].push_back(n);
+
+    Vector offset = Vector(0., 0., 0.);
+    if (n > 1)
+      cquad_ps->require("offset", offset);
+    cquadOffset[m].push_back(offset);
+  }
+}
+
+void
+Crack::ReadQuadCracks(const int& m, const ProblemSpecP& geom_ps)
+{
+  for (ProblemSpecP quad_ps = geom_ps->findBlock("quad"); quad_ps != 0;
+       quad_ps              = quad_ps->findNextBlock("quad")) {
+
+    // Four vertices (p1-p4) of the quad
+    Point p1, p2, p3, p4, p5, p6, p7, p8;
+    std::vector<Point> vertices;
+    quad_ps->require("p1", p1);
+    vertices.push_back(p1);
+    quad_ps->require("p2", p2);
+    vertices.push_back(p2);
+    quad_ps->require("p3", p3);
+    vertices.push_back(p3);
+    quad_ps->require("p4", p4);
+    vertices.push_back(p4);
+
+    // Four middle points (p5-p8) of the quad
+    if (!quad_ps->get("p5", p5)) {
+      p5 = p1 + 0.5 * (p2 - p1);
+    }
+    vertices.push_back(p5);
+    if (!quad_ps->get("p6", p6)) {
+      p6 = p2 + 0.5 * (p3 - p2);
+    }
+    vertices.push_back(p6);
+    if (!quad_ps->get("p7", p7)) {
+      p7 = p3 + 0.5 * (p4 - p3);
+    }
+    vertices.push_back(p7);
+    if (!quad_ps->get("p8", p8)) {
+      p8 = p1 + 0.5 * (p4 - p1);
+    }
+    vertices.push_back(p8);
+
+    quads[m].push_back(vertices);
+    vertices.clear();
+
+    // Mesh resolutions
+    int n12 = 1, n23 = 1;
+    quad_ps->get("resolution_p1_p2", n12);
+    quadN12[m].push_back(n12);
+    quad_ps->get("resolution_p2_p3", n23);
+    quadN23[m].push_back(n23);
+
+    // Crack front
+    std::vector<short> crackSidesAtFront;
+    string cfsides("");
+    quad_ps->get("crack_front_sides", cfsides);
+    if (cfsides.length() == 4) {
+      for (auto side : cfsides) {
+        short atFront = NO;
+        if (std::tolower(side) == 'y') {
+          atFront = YES;
+        }
+        crackSidesAtFront.push_back(atFront);
+      }
+    } else if (cfsides.length() == 0) {
+      for (int i = 0; i < 4; i++) {
+        crackSidesAtFront.push_back(NO);
+      }
+    }
+    quadCrackSidesAtFront[m].push_back(crackSidesAtFront);
+    crackSidesAtFront.clear();
+
+    // Repetition information
+    int n = 1;
+    quad_ps->get("repetition", n);
+    quadRepetition[m].push_back(n);
+
+    Vector offset = Vector(0., 0., 0.);
+    if (n > 1)
+      quad_ps->require("offset", offset);
+    quadOffset[m].push_back(offset);
+  }
+}
+
+void
+Crack::ReadTriangularCracks(const int& m, const ProblemSpecP& geom_ps)
+{
+  for (ProblemSpecP tri_ps = geom_ps->findBlock("triangle"); tri_ps != 0;
+       tri_ps              = tri_ps->findNextBlock("triangle")) {
+
+    // Three vertices (p1-p3) of the triangle
+    Point p1, p2, p3, p4, p5, p6;
+    std::vector<Point> vertices;
+    tri_ps->require("p1", p1);
+    vertices.push_back(p1);
+    tri_ps->require("p2", p2);
+    vertices.push_back(p2);
+    tri_ps->require("p3", p3);
+    vertices.push_back(p3);
+
+    // Three middle points (p4-p6) of the triangle
+    if (!tri_ps->get("p4", p4)) {
+      p4 = p1 + 0.5 * (p2 - p1);
+    }
+    vertices.push_back(p4);
+    if (!tri_ps->get("p5", p5)) {
+      p5 = p2 + 0.5 * (p3 - p2);
+    }
+    vertices.push_back(p5);
+    if (!tri_ps->get("p6", p6)) {
+      p6 = p3 + 0.5 * (p1 - p3);
+    }
+    vertices.push_back(p6);
+
+    triangles[m].push_back(vertices);
+    vertices.clear();
+
+    // Mesh resolution
+    int n = 1;
+    tri_ps->get("resolution", n);
+    triNCells[m].push_back(n);
+
+    // Crack front
+    string cfsides("");
+    std::vector<short> crackSidesAtFront;
+    tri_ps->get("crack_front_sides", cfsides);
+    if (cfsides.length() == 3) {
+      for (string::const_iterator iter = cfsides.begin(); iter != cfsides.end();
+           iter++) {
+        short atFront = NO;
+        if (*iter == 'Y' || *iter == 'n')
+          atFront = YES;
+        crackSidesAtFront.push_back(atFront);
+      }
+    } else if (cfsides.length() == 0) {
+      for (int i = 0; i < 3; i++)
+        crackSidesAtFront.push_back(NO);
+    }
+    triCrackSidesAtFront[m].push_back(crackSidesAtFront);
+    crackSidesAtFront.clear();
+
+    // Repetition information
+    n = 1;
+    tri_ps->get("repetition", n);
+    triRepetition[m].push_back(n);
+
+    Vector offset = Vector(0., 0., 0.);
+    if (n > 1)
+      tri_ps->require("offset", offset);
+    triOffset[m].push_back(offset);
+  }
+}
+
+void
+Crack::ReadArcCracks(const int& m, const ProblemSpecP& geom_ps)
+{
+  for (ProblemSpecP arc_ps = geom_ps->findBlock("arc"); arc_ps != 0;
+       arc_ps              = arc_ps->findNextBlock("arc")) {
+
+    // Three points on the arc
+    Point p;
+    std::vector<Point> thisArcPts;
+    arc_ps->require("start_point", p);
+    thisArcPts.push_back(p);
+    arc_ps->require("middle_point", p);
+    thisArcPts.push_back(p);
+    arc_ps->require("end_point", p);
+    thisArcPts.push_back(p);
+    arcs[m].push_back(thisArcPts);
+    thisArcPts.clear();
+
+    // Resolution on circumference
+    int n = 1;
+    arc_ps->require("resolution_circumference", n);
+    arcNCells[m].push_back(n);
+
+    // Crack front segment ID, -1 by default which means all segments are crack
+    // front
+    int cfsID;
+    if (!arc_ps->get("crack_front_segment_ID", cfsID))
+      cfsID = -1;
+    arcCrkFrtSegID[m].push_back(cfsID);
+  }
+}
+
+void
+Crack::ReadEllipticCracks(const int& m, const ProblemSpecP& geom_ps)
+{
+  for (ProblemSpecP ellipse_ps = geom_ps->findBlock("ellipse"); ellipse_ps != 0;
+       ellipse_ps              = ellipse_ps->findNextBlock("ellipse")) {
+
+    // Three points on the arc
+    Point p;
+    std::vector<Point> thisEllipsePts;
+    ellipse_ps->require("point1_axis1", p);
+    thisEllipsePts.push_back(p);
+    ellipse_ps->require("point_axis2", p);
+    thisEllipsePts.push_back(p);
+    ellipse_ps->require("point2_axis1", p);
+    thisEllipsePts.push_back(p);
+    ellipses[m].push_back(thisEllipsePts);
+    thisEllipsePts.clear();
+
+    // Resolution on circumference
+    int n = 1;
+    ellipse_ps->require("resolution_circumference", n);
+    ellipseNCells[m].push_back(n);
+
+    // Crack front segment ID, -1 by default which means all segments are crack
+    // front
+    int cfsID;
+    if (!ellipse_ps->get("crack_front_segment_ID", cfsID))
+      cfsID = -1;
+    ellipseCrkFrtSegID[m].push_back(cfsID);
+  }
+}
+
+void
+Crack::ReadPartialEllipticCracks(const int& m, const ProblemSpecP& geom_ps)
+{
+  for (ProblemSpecP pellipse_ps = geom_ps->findBlock("partial_ellipse");
+       pellipse_ps != 0;
+       pellipse_ps = pellipse_ps->findNextBlock("partial_ellipse")) {
+
+    // Center,two points on major and minor axes
+    Point p;
+    std::vector<Point> thispEllipsePts;
+    pellipse_ps->require("center", p);
+    thispEllipsePts.push_back(p);
+    pellipse_ps->require("point_axis1", p);
+    thispEllipsePts.push_back(p);
+    pellipse_ps->require("point_axis2", p);
+    thispEllipsePts.push_back(p);
+    pellipses[m].push_back(thispEllipsePts);
+    thispEllipsePts.clear();
+
+    // Extent in degree of the partial ellipse rotating from axis1
+    double extent = 360.;
+    pellipse_ps->get("extent", extent);
+    pellipseExtent[m].push_back(extent);
+
+    // Resolution on circumference
+    int n = 1;
+    pellipse_ps->require("resolution_circumference", n);
+    pellipseNCells[m].push_back(n);
+
+    // Crack front segment ID, -1 by default which means all segments are crack
+    // front
+    int cfsID;
+    if (!pellipse_ps->get("crack_front_segment_ID", cfsID))
+      cfsID = -1;
+    pellipseCrkFrtSegID[m].push_back(cfsID);
+  }
+}
+
+void
+Crack::OutputInitialCrackPlane(const int& numMatls)
+{
+  int pid;
+  MPI_Comm_rank(mpi_crack_comm, &pid);
+  if (pid == 0) { // output from the first rank
+    for (int m = 0; m < numMatls; m++) {
+      if (crackType[m] == "NO_CRACK")
+        std::cout << "\nMaterial " << m << ": no crack exists"
+                  << "\n";
+      else {
+        std::cout << "\nMaterial " << m << ":\n"
+                  << "  Crack contact type: " << crackType[m] << "\n";
+        if (crackType[m] == "friction")
+          std::cout << "    Frictional coefficient: " << cmu[m] << "\n";
+
+        std::cout << "  Crack geometry:"
+                  << "\n";
+        // general quad cracks
+        for (int i = 0; i < (int)quads[m].size(); i++) {
+          std::cout << "  * Quad " << i + 1 << ": meshed by [" << quadN12[m][i]
+                    << ", " << quadN23[m][i] << ", " << quadN12[m][i] << ", "
+                    << quadN23[m][i] << "]"
+                    << "\n";
+          for (int j = 0; j < 8; j++)
+            std::cout << "    p" << j + 1 << ": " << quads[m][i][j] << "\n";
+          for (int j = 0; j < 4; j++) {
+            if (quadCrackSidesAtFront[m][i][j]) {
+              int j2 = (j + 2 < 5 ? j + 2 : 1);
+              std::cout << "    Side " << j + 1 << " (p" << j + 1 << "-"
+                        << "p" << j2 << ") is a crack front."
+                        << "\n";
+            }
+          }
+          // repetition information
+          if (quadRepetition[m][i] > 1) {
+            std::cout << "    The quad is repeated " << quadRepetition[m][i]
+                      << " times with the offset " << quadOffset[m][i] << "."
+                      << "\n";
+          }
+        }
+
+        // curved quad cracks
+        for (int i = 0; i < (int)cquads[m].size(); i++) {
+          std::cout << "  * Curved quad " << i + 1 << ":"
+                    << "\n";
+          std::cout << "    Four vertices:"
+                    << "\n";
+          // four vertices
+          for (int j = 0; j < 4; j++)
+            std::cout << "      p" << j + 1 << ": " << cquads[m][i][j] << "\n";
+          // resolution on straight sides 1 & 3
+          std::cout
+            << "    Resolution on straight sides (sides p1-p2 and p3-p4):"
+            << cquadNStraightSides[m][i] << "\n";
+          // points on curved egde 2
+          std::cout << "    Points on curved side 2 (p2-p3): "
+                    << "\n";
+          for (int j = 0; j < (int)cquadPtsSide2[m][i].size(); j++)
+            std::cout << "      p" << j + 1 << ": " << cquadPtsSide2[m][i][j]
+                      << "\n";
+          // points on curved side 3
+          std::cout << "    Points on curved side 4 (p1-p4): "
+                    << "\n";
+          for (int j = 0; j < (int)cquadPtsSide4[m][i].size(); j++)
+            std::cout << "      p" << j + 1 << ": " << cquadPtsSide4[m][i][j]
+                      << "\n";
+          // crack-front sides
+          for (int j = 0; j < 4; j++) {
+            if (cquadCrackSidesAtFront[m][i][j]) {
+              int j2 = (j + 2 < 5 ? j + 2 : 1);
+              std::cout << "    Side " << j + 1 << " (p" << j + 1 << "-"
+                        << "p" << j2 << ") is a crack front."
+                        << "\n";
+            }
+          }
+          // repetition information
+          if (cquadRepetition[m][i] > 1) {
+            std::cout << "    The quad is repeated " << cquadRepetition[m][i]
+                      << " times with the offset " << cquadOffset[m][i] << "."
+                      << "\n";
+          }
+        }
+
+        // Triangular cracks
+        for (int i = 0; i < (int)triangles[m].size(); i++) {
+          std::cout << "  * Triangle " << i + 1 << ": meshed by ["
+                    << triNCells[m][i] << ", " << triNCells[m][i] << ", "
+                    << triNCells[m][i] << "]"
+                    << "\n";
+          for (int j = 0; j < 6; j++)
+            std::cout << "    p" << j + 1 << ": " << triangles[m][i][j] << "\n";
+          for (int j = 0; j < 3; j++) {
+            if (triCrackSidesAtFront[m][i][j]) {
+              int j2 = (j + 2 < 4 ? j + 2 : 1);
+              std::cout << "    side " << j + 1 << " (p" << j + 1 << "-"
+                        << "p" << j2 << ") is a crack front."
+                        << "\n";
+            }
+          }
+          // repetition information
+          if (triRepetition[m][i] > 1) {
+            std::cout << "    The triangle is repeated " << triRepetition[m][i]
+                      << " times with the offset " << triOffset[m][i] << "."
+                      << "\n";
+          }
+        }
+
+        // Arc cracks
+        for (int i = 0; i < (int)arcs[m].size(); i++) {
+          std::cout << "  * Arc " << i + 1 << ": meshed by " << arcNCells[m][i]
+                    << " cells on the circumference."
+                    << "\n";
+          if (arcCrkFrtSegID[m][i] == -1)
+            std::cout << "   crack front: on the arc"
+                      << "\n";
+          else
+            std::cout << "   crack front segment ID: " << arcCrkFrtSegID[m][i]
+                      << "\n";
+          std::cout << "\n    start, middle and end points of the arc:"
+                    << "\n";
+          for (int j = 0; j < 3; j++)
+            std::cout << "    p" << j + 1 << ": " << arcs[m][i][j] << "\n";
+        }
+
+        // Elliptic cracks
+        for (int i = 0; i < (int)ellipses[m].size(); i++) {
+          std::cout << "  * Ellipse " << i + 1 << ": meshed by "
+                    << ellipseNCells[m][i] << " cells on the circumference."
+                    << "\n";
+          if (ellipseCrkFrtSegID[m][i] == -1)
+            std::cout << "    crack front: on the ellipse circumference"
+                      << "\n";
+          else
+            std::cout << "    crack front segment ID: "
+                      << ellipseCrkFrtSegID[m][i] << "\n";
+          std::cout << "    end point on axis1: " << ellipses[m][i][0] << "\n";
+          std::cout << "    end point on axis2: " << ellipses[m][i][1] << "\n";
+          std::cout << "    another end point on axis1: " << ellipses[m][i][2]
+                    << "\n";
+        }
+
+        // Partial elliptic cracks
+        for (int i = 0; i < (int)pellipses[m].size(); i++) {
+          std::cout << "  * Partial ellipse " << i + 1 << " ("
+                    << pellipseExtent[m][i] << " degree): meshed by "
+                    << pellipseNCells[m][i] << " cells on the circumference."
+                    << "\n";
+          if (pellipseCrkFrtSegID[m][i] == -1)
+            std::cout << "    crack front: on the ellipse circumference"
+                      << "\n";
+          else
+            std::cout << "    crack front segment ID: "
+                      << pellipseCrkFrtSegID[m][i] << "\n";
+          std::cout << "    center: " << pellipses[m][i][0] << "\n";
+          std::cout << "    end point on axis1: " << pellipses[m][i][1] << "\n";
+          std::cout << "    end point on axis2: " << pellipses[m][i][2] << "\n";
+        }
+      }
+    } // End of loop over materials
+
+    // Ratio of crack propagation incremental to cell-size
+    if (d_doCrackPropagation) {
+      std::cout << "  Ratio of crack increment to cell size (dadx) = " << rdadx
+                << "."
+                << "\n"
+                << "\n";
+    }
   }
 }
 
@@ -601,17 +936,15 @@ Crack::CrackDiscretization(const ProcessorGroup*,
               count++;
             }
           }
-          if (count != 0) {
+          if (count != 0)
             csa[m] /= count;
-          } else {
+          else
             csa[m] = 180;
-          }
 
           // Calculate normals of crack plane at crack-front nodes
           if (smoothCrackFront) {
-            if (!SmoothCrackFrontAndCalculateNormals(m)) {
+            if (!SmoothCrackFrontAndCalculateNormals(m))
               CalculateCrackFrontNormals(m);
-            }
           } else {
             CalculateCrackFrontNormals(m);
           }
@@ -648,14 +981,12 @@ Crack::DiscretizeCurvedQuadCracks(const int& m, int& nnode0)
       num = (ni + 1) * (nj + 1) + ni * nj;
 
       // Flag if node i is on edge j, initialized by NO
-      short** nodeOnEdge = scinew short* [num];
-      for (i = 0; i < num; i++) {
+      short** nodeOnEdge = scinew short * [num];
+      for (i          = 0; i < num; i++)
         nodeOnEdge[i] = scinew short[4];
-      }
       for (i = 0; i < num; i++) {
-        for (j = 0; j < 4; j++) {
+        for (j             = 0; j < 4; j++)
           nodeOnEdge[i][j] = NO;
-        }
       }
 
       // Nodes on curved sides 2 (p2-p3) & 4 (p1-p4) - "j" direction
@@ -680,18 +1011,14 @@ Crack::DiscretizeCurvedQuadCracks(const int& m, int& nnode0)
         for (i = 0; i <= ni; i++) {
           // Detect edge nodes
           count++;
-          if (j == 0) {
+          if (j == 0)
             nodeOnEdge[count][0] = YES;
-          }
-          if (i == ni) {
+          if (i == ni)
             nodeOnEdge[count][1] = YES;
-          }
-          if (j == nj) {
+          if (j == nj)
             nodeOnEdge[count][2] = YES;
-          }
-          if (i == 0) {
+          if (i == 0)
             nodeOnEdge[count][3] = YES;
-          }
           pt = p_s4[2 * j] + (p_s2[2 * j] - p_s4[2 * j]) * (float)i / ni;
           cx[m].push_back(pt);
         }
@@ -735,7 +1062,7 @@ Crack::DiscretizeCurvedQuadCracks(const int& m, int& nnode0)
           n3 = nstart3 + i;
           ce[m].push_back(IntVector(n1, n2, n3));
         } // End of loop over j
-      } // End of loop over i
+      }   // End of loop over i
 
       // Collect crack-front nodes
       for (int j = 0; j < 4; j++) { // Loop over sides of the quad
@@ -745,9 +1072,8 @@ Crack::DiscretizeCurvedQuadCracks(const int& m, int& nnode0)
             n1 = ce[m][i].x();
             n2 = ce[m][i].y();
             n3 = ce[m][i].z();
-            if (n1 < nnode0 || n2 < nnode0 || n3 < nnode0) {
+            if (n1 < nnode0 || n2 < nnode0 || n3 < nnode0)
               continue;
-            }
             for (int s = 0; s < 3; s++) { // Loop over sides of the element
               int sn = n1, en = n2;
               if (s == 1) {
@@ -790,14 +1116,12 @@ Crack::DiscretizeQuadCracks(const int& m, int& nnode0)
       num = (ni + 1) * (nj + 1) + ni * nj;
 
       // Flag if node i is on edge j, initialized by NO
-      short** nodeOnEdge = scinew short* [num];
-      for (i = 0; i < num; i++) {
+      short** nodeOnEdge = scinew short * [num];
+      for (i          = 0; i < num; i++)
         nodeOnEdge[i] = scinew short[4];
-      }
       for (i = 0; i < num; i++) {
-        for (j = 0; j < 4; j++) {
+        for (j             = 0; j < 4; j++)
           nodeOnEdge[i][j] = NO;
-        }
       }
 
       // Generate crack nodes
@@ -806,18 +1130,14 @@ Crack::DiscretizeQuadCracks(const int& m, int& nnode0)
         for (i = 0; i <= ni; i++) {
           // Detect edge nodes
           count++;
-          if (j == 0) {
+          if (j == 0)
             nodeOnEdge[count][0] = YES;
-          }
-          if (i == ni) {
+          if (i == ni)
             nodeOnEdge[count][1] = YES;
-          }
-          if (j == nj) {
+          if (j == nj)
             nodeOnEdge[count][2] = YES;
-          }
-          if (i == 0) {
+          if (i == 0)
             nodeOnEdge[count][3] = YES;
-          }
           // Intrinsic coordinates
           ksi = -1.0 + (float)(2 * i) / ni;
           eta = -1.0 + (float)(2 * j) / nj;
@@ -875,9 +1195,8 @@ Crack::DiscretizeQuadCracks(const int& m, int& nnode0)
             n1 = ce[m][i].x();
             n2 = ce[m][i].y();
             n3 = ce[m][i].z();
-            if (n1 < nnode0 || n2 < nnode0 || n3 < nnode0) {
+            if (n1 < nnode0 || n2 < nnode0 || n3 < nnode0)
               continue;
-            }
             for (int s = 0; s < 3; s++) { // Loop over sides of the element
               int sn = n1, en = n2;
               if (s == 1) {
@@ -897,6 +1216,8 @@ Crack::DiscretizeQuadCracks(const int& m, int& nnode0)
         }
       } // End of loop over j
       nnode0 += num;
+      for (int i = 0; i < num; i++)
+        delete nodeOnEdge[i];
       delete[] nodeOnEdge;
     }
   } // End of loop over quads
@@ -937,7 +1258,7 @@ void
 Crack::DiscretizeTriangularCracks(const int& m, int& nnode0)
 {
   int k, l, i, j;
-  int neq, num, nstart1, nstart2, n1, n2, n3;
+  int neq, num, nstart1, nstart2, n1 = 0, n2 = 0, n3 = 0;
   Point pt;
 
   for (k = 0; k < (int)triangles[m].size(); k++) {
@@ -949,14 +1270,12 @@ Crack::DiscretizeTriangularCracks(const int& m, int& nnode0)
       num = (neq + 1) * (neq + 2) / 2;
 
       // Flag if node 'i' is on edge 'j', initialized by NO
-      short** nodeOnEdge = scinew short* [num];
-      for (i = 0; i < num; i++) {
+      short** nodeOnEdge = scinew short * [num];
+      for (i          = 0; i < num; i++)
         nodeOnEdge[i] = scinew short[3];
-      }
       for (i = 0; i < num; i++) {
-        for (j = 0; j < 3; j++) {
+        for (j             = 0; j < 3; j++)
           nodeOnEdge[i][j] = NO;
-        }
       }
 
       // Generate crack nodes
@@ -965,15 +1284,12 @@ Crack::DiscretizeTriangularCracks(const int& m, int& nnode0)
         for (i = 0; i <= neq - j; i++) {
           // Detect edge nodes
           count++;
-          if (j == 0) {
+          if (j == 0)
             nodeOnEdge[count][0] = YES;
-          }
-          if (i + j == neq) {
+          if (i + j == neq)
             nodeOnEdge[count][1] = YES;
-          }
-          if (i == 0) {
+          if (i == 0)
             nodeOnEdge[count][2] = YES;
-          }
           // Intrinsic coordinates
           double ksi = (float)i / neq;
           double eta = (float)j / neq;
@@ -1012,9 +1328,8 @@ Crack::DiscretizeTriangularCracks(const int& m, int& nnode0)
             n1 = ce[m][i].x();
             n2 = ce[m][i].y();
             n3 = ce[m][i].z();
-            if (n1 < nnode0 || n2 < nnode0 || n3 < nnode0) {
+            if (n1 < nnode0 || n2 < nnode0 || n3 < nnode0)
               continue;
-            }
             for (int s = 0; s < 3; s++) { // Loop over sides of the element
               int sn = n1, en = n2;
               if (s == 1) {
@@ -1137,17 +1452,15 @@ Crack::DiscretizeArcCracks(const int& m, int& nnode0)
     double sinTheta = y3prime / radius;
     double thetaQ   = fabs(asin(y3prime / radius));
     if (sinTheta >= 0.) {
-      if (cosTheta >= 0) {
+      if (cosTheta >= 0)
         angleOfArc = thetaQ;
-      } else {
+      else
         angleOfArc = PI - thetaQ;
-      }
     } else {
-      if (cosTheta <= 0.) {
+      if (cosTheta <= 0.)
         angleOfArc = PI + thetaQ;
-      } else {
+      else
         angleOfArc = 2 * PI - thetaQ;
-      }
     }
 
     // Generate crack nodes
@@ -1328,8 +1641,9 @@ Crack::CombineCrackSegments(const int& m)
     for (int j = 0; j < num; j++) {
       if (i != j && TwoPointsCoincide(cx[m][i], cx[m][j])) {
         std::cout << "Error: duplicate crack nodes are found: cx[" << m << "]["
-                  << i << "] = " << "cx[" << m << "][" << j
-                  << "]. Program terminated." << std::endl;
+                  << i << "] = "
+                  << "cx[" << m << "][" << j << "]. Program terminated."
+                  << "\n";
         exit(1);
       }
     }
@@ -1338,7 +1652,8 @@ Crack::CombineCrackSegments(const int& m)
     int n1 = ce[m][i].x(), n2 = ce[m][i].y(), n3 = ce[m][i].z();
     if (n1 == n2 || n1 == n3 || n2 == n3) {
       std::cout << "Error: crack element ce[m][" << i << "] = " << ce[m][i]
-                << " has two same nodes. Program terminted." << std::endl;
+                << " has two same nodes. Program terminted."
+                << "\n";
       exit(1);
     }
   }
@@ -1347,34 +1662,36 @@ Crack::CombineCrackSegments(const int& m)
 short
 Crack::TwoPointsCoincide(const Point& p1, const Point& p2)
 {
-  return TwoDoublesEqual(p1.x(), p2.x()) && TwoDoublesEqual(p1.y(), p2.y()) &&
-         TwoDoublesEqual(p1.z(), p2.z());
+  double t = 1.e-6;
+  return TwoDoublesEqual(p1.x(), p2.x(), t) &&
+         TwoDoublesEqual(p1.y(), p2.y(), t) &&
+         TwoDoublesEqual(p1.z(), p2.z(), t);
 }
 
 short
-Crack::TwoDoublesEqual(const double& db1, const double& db2)
+Crack::TwoDoublesEqual(const double& db1,
+                       const double& db2,
+                       const double& tolerance)
 {
   double ab1 = fabs(db1);
   double ab2 = fabs(db2);
   double change;
 
-  if (db1 == db2) {
+  if (db1 == db2)
     return (YES);
-  } else if (ab1 > ab2) {
+  else if (ab1 > ab2)
     change = fabs(db1 - db2) / ab1;
-  } else {
+  else
     change = fabs(db1 - db2) / ab2;
-  }
 
   // Equal if different by less than 100 ppm
-  if (change < 1.e-6) {
+  if (change < tolerance)
     return (YES);
-  } else {
-    if (ab1 < 1.e-8 && ab2 < 1.e-8) {
+  else {
+    if (ab1 < tolerance / 100. && ab2 < tolerance / 100.)
       return (YES);
-    } else {
+    else
       return (NO);
-    }
   }
 }
 
@@ -1385,18 +1702,16 @@ Crack::ResetCrackNodes(const int& m, const int& n1, const int& /*n2*/)
 
   int num    = (int)cx[m].size();
   Point* tmp = scinew Point[num];
-  for (int i = 0; i < num; i++) {
-    tmp[i] = cx[m][i];
-  }
+  for (int i = 0; i < num; i++)
+    tmp[i]   = cx[m][i];
 
   cx[m].clear();
   cx[m].resize(num - 1);
   for (int i = 0; i < num - 1; i++) {
-    if (i < n1) {
+    if (i < n1)
       cx[m][i] = tmp[i];
-    } else {
+    else
       cx[m][i] = tmp[i + 1];
-    }
   }
   delete[] tmp;
 }
@@ -1406,39 +1721,35 @@ Crack::ResetCrackElements(const int& m, const int& n1, const int& n2)
 {
   int num        = (int)ce[m].size();
   IntVector* tmp = scinew IntVector[num];
-  for (int i = 0; i < num; i++) {
-    tmp[i] = ce[m][i];
-  }
+  for (int i = 0; i < num; i++)
+    tmp[i]   = ce[m][i];
 
   for (int i = 0; i < num; i++) {
     int n = -1;
     // first node of the element
     n = tmp[i].x();
-    if (n < n1) {
+    if (n < n1)
       ce[m][i][0] = n;
-    } else if (n == n1) {
+    else if (n == n1)
       ce[m][i][0] = n2;
-    } else {
+    else
       ce[m][i][0] = n - 1;
-    }
     // second node of the element
     n = tmp[i].y();
-    if (n < n1) {
+    if (n < n1)
       ce[m][i][1] = n;
-    } else if (n == n1) {
+    else if (n == n1)
       ce[m][i][1] = n2;
-    } else {
+    else
       ce[m][i][1] = n - 1;
-    }
     // third node of the element
     n = tmp[i].z();
-    if (n < n1) {
+    if (n < n1)
       ce[m][i][2] = n;
-    } else if (n == n1) {
+    else if (n == n1)
       ce[m][i][2] = n2;
-    } else {
+    else
       ce[m][i][2] = n - 1;
-    }
   }
   delete[] tmp;
 }
@@ -1448,19 +1759,17 @@ Crack::ResetCrackFrontNodes(const int& m, const int& n1, const int& n2)
 {
   int num  = (int)cfSegNodes[m].size();
   int* tmp = scinew int[num];
-  for (int i = 0; i < num; i++) {
-    tmp[i] = cfSegNodes[m][i];
-  }
+  for (int i = 0; i < num; i++)
+    tmp[i]   = cfSegNodes[m][i];
 
   for (int i = 0; i < num; i++) {
     int n = tmp[i];
-    if (n < n1) {
+    if (n < n1)
       cfSegNodes[m][i] = n;
-    } else if (n == n1) {
+    else if (n == n1)
       cfSegNodes[m][i] = n2;
-    } else {
+    else
       cfSegNodes[m][i] = n - 1;
-    }
   }
   delete[] tmp;
 }
@@ -1559,9 +1868,8 @@ Crack::FindCrackFrontNodeIndexes(const int& m)
     }
     cfSegMinIdx[m][i] = minIdx;
     cfSegMaxIdx[m][i] = maxIdx;
-    if (i == maxIdx) {
+    if (i == maxIdx)
       minIdx = maxIdx + 1;
-    }
   }
 }
 
@@ -1634,16 +1942,14 @@ Crack::SmoothCrackFrontAndCalculateNormals(const int& mm)
       if (preIdx < 0 || preIdx == minIdx) {
         pts[ki] = cx[mm][cfSegNodes[mm][k]];
         // Arc length
-        if (k == minIdx) {
+        if (k == minIdx)
           dis[ki] = 0.;
-        } else {
+        else
           dis[ki] = dis[ki - 1] + (pts[ki] - pts[ki - 1]).length();
-        }
       }
       idx[k] = ki;
-      if (k < maxIdx) {
+      if (k < maxIdx)
         continue; // Collect next points
-      }
     }
 
     // Step b: Define how to smooth the sub-crack
@@ -1673,9 +1979,8 @@ Crack::SmoothCrackFrontAndCalculateNormals(const int& mm)
 
     // Positins of the intervals
     s[1] = S[1] - (S[2] - S[1]) / 50.;
-    for (l = 2; l <= m; l++) {
+    for (l = 2; l <= m; l++)
       s[l] = s[1] + (S[n] - s[1]) / m * (l - 1);
-    }
 
     // Number of crack-front nodes of each seg & the segs to which
     // the points belongs
@@ -1720,15 +2025,14 @@ Crack::SmoothCrackFrontAndCalculateNormals(const int& mm)
         Zv2 = ez[7 * l - 4];
         Zv3 = ez[7 * l - 3];
 
-        double t0, t1, t2, t3, t0p, t1p, t2p, t3p;
-        t0  = 1.;
-        t1  = t;
-        t2  = 2 * t * t - 1.;
-        t3  = 4 * t * t * t - 3 * t;
-        t0p = 0.;
-        t1p = dtdS;
-        t2p = 4 * t * dtdS;
-        t3p = (12. * t * t - 3.) * dtdS;
+        double t0  = 1.;
+        double t1  = t;
+        double t2  = 2 * t * t - 1.;
+        double t3  = 4 * t * t * t - 3 * t;
+        //double t0p = 0.;
+        double t1p = dtdS;
+        double t2p = 4 * t * dtdS;
+        double t3p = (12. * t * t - 3.) * dtdS;
 
         V3[i - 1].x(Xv1 * t1p + Xv2 * t2p + Xv3 * t3p);
         V3[i - 1].y(Yv1 * t1p + Yv2 * t2p + Yv3 * t3p);
@@ -1855,24 +2159,21 @@ Crack::CubicSpline(const int& n,
   double h1, h2, xlk, xlk1, a1, a2, a3, a4, t;
 
   double** f = new double*[n1 + 1];
-  for (i = 0; i < n1 + 1; i++) {
+  for (i = 0; i < n1 + 1; i++)
     f[i] = new double[14];
-  }
 
   for (i = 1; i <= n1; i++) {
     e[i] = 0.;
-    for (k = 1; k <= 13; k++) {
+    for (k    = 1; k <= 13; k++)
       f[i][k] = 0.;
-    }
   }
 
   n3 = 0;
   for (l = 1; l <= m; l++) {
-    if (l < m) {
+    if (l < m)
       h1 = 1. / (z[l + 1] - z[l]);
-    } else {
+    else
       h1 = 1. / (x[n] - z[m]);
-    }
 
     j1 = j[l];
     for (k = 1; k <= j1; k++) {
@@ -1928,11 +2229,10 @@ Crack::CubicSpline(const int& n,
     f[7 * l - 3][10] = 48. * h1 * h1;
 
     if (l <= m - 1) {
-      if (l < m - 1) {
+      if (l < m - 1)
         h2 = 1. / (z[l + 2] - z[l + 1]);
-      } else {
+      else
         h2 = 1. / (x[n] - z[m]);
-      }
 
       f[7 * l - 2][3]  = 1.;
       f[7 * l - 2][4]  = 1.;
@@ -1962,12 +2262,11 @@ Crack::CubicSpline(const int& n,
     lly = lk - jj;
     nnj = n1 + 1 - jj;
     for (i = 1; i <= lly; i++) {
-      for (k = 2; k <= 13; k++) {
+      for (k         = 2; k <= 13; k++)
         f[jj][k - 1] = f[jj][k];
-      }
-      f[jj][13]   = 0.;
-      mmi         = 14 - i;
-      f[nnj][mmi] = 0.;
+      f[jj][13]      = 0.;
+      mmi            = 14 - i;
+      f[nnj][mmi]    = 0.;
     }
   }
 
@@ -1976,9 +2275,8 @@ Crack::CubicSpline(const int& n,
     k  = i;
     ii = i + 1;
     for (my = ii; my <= lk; my++) {
-      if (fabs(f[my][1]) <= fabs(f[k][1])) {
+      if (fabs(f[my][1]) <= fabs(f[k][1]))
         continue;
-      }
       k = my;
     }
 
@@ -1998,23 +2296,20 @@ Crack::CubicSpline(const int& n,
       return flag; // unsuccessful
     } else {
       e[i] /= f[i][1];
-      for (jj = 2; jj <= 13; jj++) {
+      for (jj = 2; jj <= 13; jj++)
         f[i][jj] /= f[i][1];
-      }
 
       ii = i + 1;
       for (my = ii; my <= lk; my++) {
         t = f[my][1];
         e[my] -= t * e[i];
-        for (jj = 2; jj <= 13; jj++) {
+        for (jj         = 2; jj <= 13; jj++)
           f[my][jj - 1] = f[my][jj] - t * f[i][jj];
-        }
-        f[my][13] = 0.;
+        f[my][13]       = 0.;
       }
 
-      if (lk == n1) {
+      if (lk == n1)
         continue;
-      }
       lk++;
     }
   }
@@ -2028,9 +2323,8 @@ Crack::CubicSpline(const int& n,
       nij = ni - 1 + jj;
       e[ni] -= f[ni][jj] * e[nij];
     }
-    if (jm == 13) {
+    if (jm == 13)
       continue;
-    }
     jm++;
   }
 
@@ -2110,12 +2404,10 @@ Crack::CalculateCrackFrontNormals(const int& mm)
     int node = cfSegNodes[mm][k];
     int segs[2];
     FindSegsFromNode(mm, node, segs);
-    if (segs[R] < 0) {
+    if (segs[R] < 0)
       cfSegV3[mm][k] = cfSegV3[mm][k + 1];
-    }
-    if (segs[L] < 0) {
+    if (segs[L] < 0)
       cfSegV3[mm][k] = cfSegV3[mm][k - 1];
-    }
   }
 
   // Task 2: Calculate normals of crack plane at crack-front nodes
@@ -2128,9 +2420,8 @@ Crack::CalculateCrackFrontNormals(const int& mm)
     int segs[2];
     FindSegsFromNode(mm, node, segs);
     short edgeNode = NO;
-    if (segs[L] < 0 || segs[R] < 0) {
+    if (segs[L] < 0 || segs[R] < 0)
       edgeNode = YES;
-    }
 
     // End information of the sub crack
     int minNode = cfSegNodes[mm][cfSegMinIdx[mm][k]];
@@ -2148,17 +2439,15 @@ Crack::CalculateCrackFrontNormals(const int& mm)
 
         // Detect if the elem is connected to the node
         short elemRelatedToNode = NO;
-        if (node == n1 || node == n2 || node == n3) {
+        if (node == n1 || node == n2 || node == n3)
           elemRelatedToNode = YES;
-        }
 
         // Detect if the elem is an inner elem
         short innerElem = YES;
         if (minNode != maxNode &&
             (n1 == minNode || n2 == minNode || n3 == minNode || n1 == maxNode ||
-             n2 == maxNode || n3 == maxNode)) {
+             n2 == maxNode || n3 == maxNode))
           innerElem = NO;
-        }
 
         // The elem will be used if it is connected to the node AND
         // if the node is an edge node or the elem is an interior element.
@@ -2189,7 +2478,7 @@ Crack::CalculateCrackFrontNormals(const int& mm)
       } else {
         std::cout << "Error: divided by zero in calculating outer normal"
                   << " at crack front node, cfSegNodes[" << mm << "][" << k
-                  << "] = " << cfSegNodes[mm][k] << std::endl;
+                  << "] = " << cfSegNodes[mm][k] << "\n";
         exit(1);
       }
 
@@ -2206,12 +2495,10 @@ Crack::CalculateCrackFrontNormals(const int& mm)
     int node = cfSegNodes[mm][k];
     int segs[2];
     FindSegsFromNode(mm, node, segs);
-    if (segs[R] < 0) {
+    if (segs[R] < 0)
       cfSegV2[mm][k] = cfSegV2[mm][k + 1];
-    }
-    if (segs[L] < 0) {
+    if (segs[L] < 0)
       cfSegV2[mm][k] = cfSegV2[mm][k - 1];
-    }
   }
 
   // Task 3: Calculate bi-normals of crack plane at crack-front nodes
@@ -2239,18 +2526,17 @@ Crack::FindSegsFromNode(const int& m, const int& node, int segs[])
   for (int j = 0; j < ncfSegs; j++) {
     int node0 = cfSegNodes[m][2 * j];
     int node1 = cfSegNodes[m][2 * j + 1];
-    if (node == node1) { // the right seg
+    if (node == node1) // the right seg
       segs[R] = j;
-    }
-    if (node == node0) { // the left seg
+    if (node == node0) // the left seg
       segs[L] = j;
-    }
   } // End of loop over j
 
   // See if reasonable
   if (segs[R] < 0 && segs[L] < 0) {
     std::cout << "Error: failure to find the crack-front segments for node "
-              << node << ". Program terminated." << std::endl;
+              << node << ". Program terminated."
+              << "\n";
     exit(1);
   }
 }
@@ -2274,11 +2560,10 @@ Crack::TriangleNormal(const Point& p1, const Point& p2, const Point& p3)
   b = x31 * z21 - z31 * x21;
   c = x21 * y31 - y21 * x31;
 
-  if (Vector(a, b, c).length() > 1.e-16) {
+  if (Vector(a, b, c).length() > 1.e-16)
     norm = Vector(a, b, c) / Vector(a, b, c).length();
-  } else {
+  else
     norm = Vector(a, b, c);
-  }
 
   return norm;
 }
@@ -2289,46 +2574,47 @@ Crack::OutputInitialCrackMesh(const int& m)
   int pid;
   MPI_Comm_rank(mpi_crack_comm, &pid);
   if (pid == 0) { // Output from the first rank
-    std::cout << "\n---Initial Crack mesh---" << std::endl;
-    std::cout << "MatID: " << m << std::endl;
+    std::cout << "\n---Initial Crack mesh---"
+              << "\n";
+    std::cout << "MatID: " << m << "\n";
     std::cout << "  Number of crack elements: " << (int)ce[m].size()
               << "\n  Number of crack nodes: " << (int)cx[m].size()
               << "\n  Number of crack-front elements: "
-              << (int)cfSegNodes[m].size() / 2 << std::endl;
+              << (int)cfSegNodes[m].size() / 2 << "\n";
 
     std::cout << "  Crack elements (" << (int)ce[m].size()
-              << " elements in total):" << std::endl;
+              << " elements in total):"
+              << "\n";
     for (int i = 0; i < (int)ce[m].size(); i++) {
-      std::cout << "     Elem " << i << ": " << ce[m][i] << std::endl;
+      std::cout << "     Elem " << i << ": " << ce[m][i] << "\n";
     }
 
-    std::cout << "  Crack nodes (" << (int)cx[m].size()
-              << " nodes in total):" << std::endl;
+    std::cout << "  Crack nodes (" << (int)cx[m].size() << " nodes in total):"
+              << "\n";
     for (int i = 0; i < (int)cx[m].size(); i++) {
-      std::cout << "     Node " << i << ": " << cx[m][i] << std::endl;
+      std::cout << "     Node " << i << ": " << cx[m][i] << "\n";
     }
 
     std::cout << "  Crack-front elements and normals ("
               << (int)cfSegNodes[m].size() / 2 << " elements in total)"
-              << std::endl;
+              << "\n";
     std::cout << "     V1: bi-normal; V2: outer normal; V3: tangential normal."
-              << std::endl;
+              << "\n";
     for (int i = 0; i < (int)cfSegNodes[m].size(); i++) {
       std::cout << "     Seg " << i / 2 << ": node " << cfSegNodes[m][i]
                 << cx[m][cfSegNodes[m][i]] << ", V1: " << cfSegV1[m][i]
                 << ", V2: " << cfSegV2[m][i] << ", V3: " << cfSegV3[m][i]
-                << std::endl;
-      if (i % 2 != 0) {
-        std::cout << std::endl;
-      }
+                << "\n";
+      if (i % 2 != 0)
+        std::cout << "\n";
     }
 
     std::cout << "  Average length of crack-front segments, css[m]=" << css[m]
-              << std::endl;
+              << "\n";
     std::cout << "  Average angle of crack-front segments, csa[m]=" << csa[m]
-              << " degree." << std::endl;
-    std::cout << "  Crack extent: " << cmin[m] << "-->" << cmax[m] << std::endl
-              << std::endl;
+              << " degree."
+              << "\n";
+    std::cout << "  Crack extent: " << cmin[m] << "-->" << cmax[m] << "\n"
+              << "\n";
   }
 }
-
