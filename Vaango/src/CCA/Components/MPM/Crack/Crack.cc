@@ -50,6 +50,8 @@
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
+
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -799,7 +801,8 @@ Crack::OutputInitialCrackPlane(const int& numMatls)
             std::cout << "    crack front segment ID: "
                       << d_ellipseCrkFrtSegID[m][i] << "\n";
           }
-          std::cout << "    end point on axis2: " << d_ellipses[m][i][1] << "\n";
+          std::cout << "    end point on axis2: " << d_ellipses[m][i][1]
+                    << "\n";
           std::cout << "    another end point on axis1: " << d_ellipses[m][i][2]
                     << "\n";
         }
@@ -942,7 +945,9 @@ Crack::CrackDiscretization(const ProcessorGroup*,
             int n2 = d_cfSegNodes[m][2 * i + 1];
             d_css[m] += (d_cx[m][n1] - d_cx[m][n2]).length();
           }
-          d_css[m] /= ncfSegs;
+          if (ncfSegs > 0) {
+            d_css[m] /= ncfSegs;
+          }
 
           // Determine connectivity of crack-front nodes
           FindCrackFrontNodeIndexes(m);
@@ -952,13 +957,23 @@ Crack::CrackDiscretization(const ProcessorGroup*,
           int count = 0;
           for (int i = 0; i < num; i++) {
             int preIdx = d_cfSegPreIdx[m][i];
-            if (preIdx > 0) {
+            /* if (preIdx > 0) */
+            // 1. Ensure a previous occurrence was found (preIdx != -1).
+            // 2. Ensure (i - 2) is a valid non-negative index (i >= 2).
+            // 3. Ensure (i + 1) is a valid index within bounds (i < num - 1).
+            if (preIdx != -1 && i >= 2 && i < num - 1)
+            {
+              //std::cout << std::format("m = {}, i = {}, num = {}", m, i, num)
+              //          << std::format("preIdx = {}, cfSegNodes = {}",
+              //                         preIdx,
+              //                         d_cfSegNodes[m][i])
+              //          << std::endl;
               Point p   = d_cx[m][d_cfSegNodes[m][i]];
               Point p1  = d_cx[m][d_cfSegNodes[m][i - 2]];
               Point p2  = d_cx[m][d_cfSegNodes[m][i + 1]];
               Vector v1 = TwoPtsDirCos(p1, p);
               Vector v2 = TwoPtsDirCos(p, p2);
-              d_csa[m] += fabs(acos(Dot(v1, v2))) * 180 / 3.141592654;
+              d_csa[m] += std::abs(acos(Dot(v1, v2))) * 180 / 3.141592654;
               count++;
             }
           }
@@ -1499,7 +1514,7 @@ Crack::DiscretizeArcCracks(const int& m, int& nnode0)
     y3prime         = ly * (x3 - x0) + my * (y3 - y0) + ny * (z3 - z0);
     double cosTheta = x3prime / radius;
     double sinTheta = y3prime / radius;
-    double thetaQ   = fabs(asin(y3prime / radius));
+    double thetaQ   = std::abs(asin(y3prime / radius));
     if (sinTheta >= 0.) {
       if (cosTheta >= 0) {
         angleOfArc = thetaQ;
@@ -1725,16 +1740,16 @@ Crack::TwoDoublesEqual(const double& db1,
                        const double& db2,
                        const double& tolerance)
 {
-  double ab1 = fabs(db1);
-  double ab2 = fabs(db2);
+  double ab1 = std::abs(db1);
+  double ab2 = std::abs(db2);
   double change;
 
   if (db1 == db2) {
     return (YES);
   } else if (ab1 > ab2) {
-    change = fabs(db1 - db2) / ab1;
+    change = std::abs(db1 - db2) / ab1;
   } else {
-    change = fabs(db1 - db2) / ab2;
+    change = std::abs(db1 - db2) / ab2;
   }
 
   // Equal if different by less than 100 ppm
@@ -1887,54 +1902,198 @@ Crack::ReorderCrackFrontNodes(const int& m)
   }
 }
 
+/**
+ * @brief Ensures the outer vectors (d_cfSegNodes, d_cfSegPreIdx, etc.) are
+ * sized appropriately to contain the given segment index `m_idx`.
+ * This prevents out-of-bounds access when accessing d_cfSegNodes[m_idx], etc.
+ * @param m_idx The segment index to ensure capacity for.
+ */
+void
+Crack::ensure_segment_vectors_sized(int m_idx)
+{
+  if (m_idx < 0) {
+    // Negative index is invalid; handle as an error or assert
+    return;
+  }
+  // Resize all relevant member vectors if m_idx is beyond their current
+  // capacity
+  if (static_cast<size_t>(m_idx) >= d_cfSegNodes.size()) {
+    d_cfSegNodes.resize(m_idx + 1);
+  }
+  if (static_cast<size_t>(m_idx) >= d_cfSegPreIdx.size()) {
+    d_cfSegPreIdx.resize(m_idx + 1);
+  }
+  if (static_cast<size_t>(m_idx) >= d_cfSegMinIdx.size()) {
+    d_cfSegMinIdx.resize(m_idx + 1);
+  }
+  if (static_cast<size_t>(m_idx) >= d_cfSegMaxIdx.size()) {
+    d_cfSegMaxIdx.resize(m_idx + 1);
+  }
+}
+
+/**
+ * @brief Finds crack-front node indexes for a specific segment `m_idx`.
+ * This includes:
+ * 1. `d_cfSegPreIdx`: The previous index of a crack-front node
+ * with the same value (if any, otherwise -1).
+ * 2. `d_cfSegMinIdx` and `d_cfSegMaxIdx`: The minimum and maximum
+ * node indexes of the crack-front segment to which the node belongs.
+ * @param m_idx The index of the crack-front segment to process.
+ */
+void
+Crack::FindCrackFrontNodeIndexes(const int& m_idx)
+{
+  // Ensure the outer vectors are sufficiently sized for m_idx
+  ensure_segment_vectors_sized(m_idx);
+  if (m_idx < 0) {
+    return;
+  }
+
+  // Get the number of nodes in the current segment
+  int num = static_cast<int>(d_cfSegNodes[m_idx].size());
+
+  // --- Part 1: Calculate d_cfSegPreIdx (Previous Node Index) ---
+  // For each node, find the index of its last previous occurrence in the
+  // segment. Optimized from O(N^2) to average O(N) using a hash map.
+  // Initialize d_cfSegPreIdx[m_idx] with -1 and resize to `num`.
+  d_cfSegPreIdx[m_idx].assign(num, -1);
+  // Map to store the most recent index where each node value was encountered.
+  std::unordered_map<int, int> last_seen_index;
+
+  for (int i = 0; i < num; ++i) {
+    int current_node_value = d_cfSegNodes[m_idx][i];
+    // Check if this node value has been seen before (C++20 `contains`)
+    if (last_seen_index.contains(current_node_value)) {
+      // If yes, set d_cfSegPreIdx[m_idx][i] to the last seen index.
+      d_cfSegPreIdx[m_idx][i] = last_seen_index[current_node_value];
+    }
+    // Always update the last seen index for the current node value to its
+    // current position `i`.
+    last_seen_index[current_node_value] = i;
+  }
+
+  // --- Part 2: Calculate d_cfSegMinIdx and d_cfSegMaxIdx (Segment Min/Max
+  // Indexes) --- These identify the boundaries of logical crack-front
+  // segments within d_cfSegNodes[m_idx]. Initialize both vectors with -1 and
+  // resize to `num`.
+  d_cfSegMinIdx[m_idx].assign(num, -1);
+  d_cfSegMaxIdx[m_idx].assign(num, -1);
+
+  // If the segment is empty, there's nothing more to do.
+  if (num == 0) {
+    return;
+  }
+
+  // `current_segment_min_idx` tracks the starting index of the segment
+  // currently being defined.
+  int current_segment_min_idx = 0;
+
+  // Iterate through each node in the segment.
+  // We determine segments block by block. Once a segment's min/max are found,
+  // we fill values for all nodes within that segment.
+  for (int i = 0; i < num; ++i) {
+    // Only search for a new segment's boundaries if `i` is the actual start
+    // of a new segment. This prevents redundant calculations for nodes
+    // already assigned to a segment.
+    if (i == current_segment_min_idx) {
+      // `current_segment_max_idx` will store the end index of the current
+      // segment. Initialize it to the end of the array, assuming it's a
+      // single segment for now.
+      int current_segment_max_idx = num - 1;
+
+      // Determine `j_start_for_boundary_check` as per original logic:
+      // If `i` is odd, `j_start` is `i`. If `i` is even, `j_start` is `i +
+      // 1`. This means `j_start` will always be an odd index, or `num` if `i`
+      // is `num-1` (and even).
+      int j_start_for_boundary_check = (i % 2 != 0) ? i : (i + 1);
+
+      // Iterate from `j_start_for_boundary_check` with a step of 2 to find
+      // segment boundaries. This specific iteration pattern suggests that
+      // segment breaks are determined by comparing nodes at `odd_index` and
+      // `odd_index + 1`.
+      for (int j = j_start_for_boundary_check; j < num; j += 2) {
+        // Check if `j` is the last element. If so, the segment ends here.
+        if (j == num - 1) {
+          current_segment_max_idx = j;
+          break; // End of array reached, segment ends here.
+        }
+        // Check if the node at `j` is different from the node at `j + 1`.
+        // If they are different, it signifies a segment boundary.
+        if (d_cfSegNodes[m_idx][j] != d_cfSegNodes[m_idx][j + 1]) {
+          current_segment_max_idx = j;
+          break; // Segment break detected.
+        }
+      }
+
+      // After the inner loop, `current_segment_max_idx` holds the true end
+      // index of the segment that started at `current_segment_min_idx`.
+
+      // Now, assign these determined `minIdx` and `maxIdx` values to all
+      // nodes within this identified segment.
+      for (int k = current_segment_min_idx; k <= current_segment_max_idx; ++k) {
+        d_cfSegMinIdx[m_idx][k] = current_segment_min_idx;
+        d_cfSegMaxIdx[m_idx][k] = current_segment_max_idx;
+      }
+
+      // Advance `current_segment_min_idx` to the start of the next potential
+      // segment.
+      current_segment_min_idx = current_segment_max_idx + 1;
+    }
+    // The outer loop `i` will eventually catch up to
+    // `current_segment_min_idx` to start processing the next block.
+  }
+}
+
+/*
 // Determine how the crack-font nodes are connected
 void
 Crack::FindCrackFrontNodeIndexes(const int& m)
 {
-  // The previous node index of a crack-front node (d_cfSegPreIdx)
-  // for which node[i]=node[preIdx] (preIdx<i)
-  d_cfSegPreIdx[m].clear();
-  int num = (int)d_cfSegNodes[m].size();
-  d_cfSegPreIdx[m].resize(num);
+// The previous node index of a crack-front node (d_cfSegPreIdx)
+// for which node[i]=node[preIdx] (preIdx<i)
+d_cfSegPreIdx[m].clear();
+int num = (int)d_cfSegNodes[m].size();
+d_cfSegPreIdx[m].resize(num);
 
-  for (int i = 0; i < num; i++) {
-    int preIdx   = -1;
-    int thisNode = d_cfSegNodes[m][i];
-    for (int j = i - 1; j >= 0; j--) {
-      int preNode = d_cfSegNodes[m][j];
-      if (thisNode == preNode) {
-        preIdx = j;
+for (int i = 0; i < num; i++) {
+  int preIdx   = -1;
+  int thisNode = d_cfSegNodes[m][i];
+  for (int j = i - 1; j >= 0; j--) {
+    int preNode = d_cfSegNodes[m][j];
+    if (thisNode == preNode) {
+      preIdx = j;
+      break;
+    }
+  }
+  d_cfSegPreIdx[m][i] = preIdx;
+}
+
+// The minimum and maximum node indexes of the crack-front
+// on which the node resides: d_cfSegMaxIdx and d_cfSegMinIdx
+d_cfSegMaxIdx[m].clear();
+d_cfSegMinIdx[m].clear();
+d_cfSegMaxIdx[m].resize(num);
+d_cfSegMinIdx[m].resize(num);
+
+int maxIdx = -1, minIdx = 0;
+for (int i = 0; i < num; i++) {
+  if (!(i >= minIdx && i <= maxIdx)) {
+    for (int j = ((i % 2) != 0 ? i : i + 1); j < num; j += 2) {
+      if (j == num - 1 ||
+          (j < num - 1 && d_cfSegNodes[m][j] != d_cfSegNodes[m][j + 1])) {
+        maxIdx = j;
         break;
       }
     }
-    d_cfSegPreIdx[m][i] = preIdx;
   }
-
-  // The minimum and maximum node indexes of the crack-front
-  // on which the node resides: d_cfSegMaxIdx and d_cfSegMinIdx
-  d_cfSegMaxIdx[m].clear();
-  d_cfSegMinIdx[m].clear();
-  d_cfSegMaxIdx[m].resize(num);
-  d_cfSegMinIdx[m].resize(num);
-
-  int maxIdx = -1, minIdx = 0;
-  for (int i = 0; i < num; i++) {
-    if (!(i >= minIdx && i <= maxIdx)) {
-      for (int j = ((i % 2) != 0 ? i : i + 1); j < num; j += 2) {
-        if (j == num - 1 ||
-            (j < num - 1 && d_cfSegNodes[m][j] != d_cfSegNodes[m][j + 1])) {
-          maxIdx = j;
-          break;
-        }
-      }
-    }
-    d_cfSegMinIdx[m][i] = minIdx;
-    d_cfSegMaxIdx[m][i] = maxIdx;
-    if (i == maxIdx) {
-      minIdx = maxIdx + 1;
-    }
+  d_cfSegMinIdx[m][i] = minIdx;
+  d_cfSegMaxIdx[m][i] = maxIdx;
+  if (i == maxIdx) {
+    minIdx = maxIdx + 1;
   }
 }
+}
+*/
 
 // Calculate direction cosines of line p1->p2
 Vector
@@ -2346,7 +2505,7 @@ Crack::CubicSpline(const int& n,
     k  = i;
     ii = i + 1;
     for (my = ii; my <= lk; my++) {
-      if (fabs(f[my][1]) <= fabs(f[k][1])) {
+      if (std::abs(f[my][1]) <= std::abs(f[k][1])) {
         continue;
       }
       k = my;
@@ -2363,7 +2522,7 @@ Crack::CubicSpline(const int& n,
       }
     }
 
-    if (ep >= fabs(f[i][1])) {
+    if (ep >= std::abs(f[i][1])) {
       flag = 0;
       return flag; // unsuccessful
     } else {

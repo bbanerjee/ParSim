@@ -228,6 +228,11 @@ FractureMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 
   sched->addTask(t, patches, d_materialManager->allMaterials("MPM"));
 
+  // The task will have a reference to zeroth_matl
+  if (zeroth_matl->removeReference()) {
+    delete zeroth_matl; // shouln't happen, but...
+  }
+
   schedulePrintParticleCount(level, sched);
 
   // for FractureMPM: Discretize crack plane into triangular elements

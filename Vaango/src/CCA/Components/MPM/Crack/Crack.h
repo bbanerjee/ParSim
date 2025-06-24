@@ -289,6 +289,8 @@ private:
   void
   ReorderCrackFrontNodes(const int&);
   void
+  ensure_segment_vectors_sized(int m_idx);
+  void
   FindCrackFrontNodeIndexes(const int&);
   short
   SmoothCrackFrontAndCalculateNormals(const int& m);
