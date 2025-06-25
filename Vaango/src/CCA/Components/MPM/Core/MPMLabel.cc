@@ -422,6 +422,8 @@ MPMLabel::MPMLabel()
 
   frictionalWorkLabel = VarLabel::create(
     "frictionalWork", NCVariable<double>::getTypeDescription());
+  frictionalWorkCrackLabel = VarLabel::create(
+    "frictionalWorkCrack", NCVariable<double>::getTypeDescription());
 
   gNumNearParticlesLabel = VarLabel::create(
     "NumNearParticles", NCVariable<double>::getTypeDescription());
@@ -889,6 +891,7 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(dTdt_NCLabel);
   VarLabel::destroy(massBurnFractionLabel);
   VarLabel::destroy(frictionalWorkLabel);
+  VarLabel::destroy(frictionalWorkCrackLabel);
   VarLabel::destroy(gNumNearParticlesLabel);
 
   VarLabel::destroy(partCountLabel);

@@ -182,6 +182,7 @@ public:
   const VarLabel* dTdt_NCLabel;          // for heat conduction
   const VarLabel* massBurnFractionLabel; // for burn modeling
   const VarLabel* frictionalWorkLabel;
+  const VarLabel* frictionalWorkCrackLabel;
   const VarLabel* gNumNearParticlesLabel;
 
   const VarLabel* StrainEnergyLabel;

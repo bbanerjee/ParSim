@@ -104,7 +104,7 @@ Crack::addComputesAndRequiresAdjustCrackContactInterpolated(Task* t,const PatchS
   t->modifies(lb->gVelocityLabel, mss);
   t->modifies(lb->GVelocityLabel, mss);
 
-  t->computes(lb->frictionalWorkLabel);
+  t->computes(lb->frictionalWorkCrackLabel);
 }
 
 void
@@ -160,7 +160,7 @@ Crack::AdjustCrackContactInterpolated(const ProcessorGroup*,
       new_dw->get(Gdisplacement[m],lb->GDisplacementLabel,dwi,patch,gnone,0);
       new_dw->getModifiable(Gvelocity[m],lb->GVelocityLabel,dwi,patch);
 
-      new_dw->allocateAndPut(frictionWork[m],lb->frictionalWorkLabel,dwi,patch);
+      new_dw->allocateAndPut(frictionWork[m],lb->frictionalWorkCrackLabel,dwi,patch);
       frictionWork[m].initialize(0.);
 
       if(d_crackType[m]=="NO_CRACK") continue;  // no crack in this material
@@ -284,7 +284,7 @@ Crack::addComputesAndRequiresAdjustCrackContactIntegrated(Task* t,
   t->needs(Task::NewDW, lb->GVelocityLabel,      Ghost::None); 
   t->modifies(             lb->GVelocityStarLabel,  mss);
   t->modifies(             lb->GAccelerationLabel,  mss);
-  t->modifies(             lb->frictionalWorkLabel, mss);
+  t->modifies(             lb->frictionalWorkCrackLabel, mss);
 
 }
 
@@ -352,7 +352,7 @@ Crack::AdjustCrackContactIntegrated(const ProcessorGroup*,
                                                          dwi, patch);
       new_dw->getModifiable(Gacceleration[m],lb->GAccelerationLabel,
                                                          dwi, patch);
-      new_dw->getModifiable(frictionWork[m], lb->frictionalWorkLabel,
+      new_dw->getModifiable(frictionWork[m], lb->frictionalWorkCrackLabel,
                                                          dwi, patch);
 
       delt_vartype delT;

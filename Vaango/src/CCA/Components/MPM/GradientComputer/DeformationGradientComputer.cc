@@ -116,8 +116,11 @@ DeformationGradientComputer::addInitialComputesAndRequires(
 
   ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
   if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+    std::cout << "Incremental model" << std::endl;
     task->computes(lb->pRemoveLabel, matlset);
     task->computes(lb->pPolarDecompRLabel, matlset);
+  } else {
+    std::cout << "Total model" << std::endl;
   }
 }
 
