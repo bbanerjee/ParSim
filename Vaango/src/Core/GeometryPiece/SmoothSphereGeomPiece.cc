@@ -256,6 +256,9 @@ SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
     Vector r1 = (pr - pp) * 2.0;
     Vector r2 = (pphi - pp) * 2.0;
     Vector r3 = (ptheta - pp) * 2.0;
+    r1.normalize();
+    r2.normalize();
+    r3.normalize();
 
     Matrix3 size;
     size(0, 0) = r1[0];
@@ -341,6 +344,9 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
     Vector r1(mid_radius, 0, 0);
     Vector r2(0, mid_radius, 0);
     Vector r3(0, 0, mid_radius);
+    r1.normalize();
+    r2.normalize();
+    r3.normalize();
     size(0, 0) = r1[0];
     size(1, 0) = r1[1];
     size(2, 0) = r1[2];
@@ -402,6 +408,9 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
   Vector r1(outer_radius - inner_radius, 0, 0);
   Vector r2(0, outer_radius - inner_radius, 0);
   Vector r3(0, 0, outer_radius - inner_radius);
+  r1.normalize();
+  r2.normalize();
+  r3.normalize();
   size(0, 0) = r1[0];
   size(1, 0) = r1[1];
   size(2, 0) = r1[2];
@@ -493,18 +502,21 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
       thetaInc = 0.5 * (points_polar_theta[ii + 1] - points_polar_theta[ii]);
     }
     Vector pp(x, y, z);
-    Vector pr(outer_radius * sin(phi) * cos(theta),
-              outer_radius * sin(phi) * sin(theta),
-              outer_radius * cos(phi) + d_center.z());
-    Vector pphi(mid_radius * sin(phi + phiInc) * cos(theta),
-                mid_radius * sin(phi + phiInc) * sin(theta),
-                mid_radius * cos(phi + phiInc) + d_center.z());
-    Vector ptheta(mid_radius * sin(phi) * cos(theta + thetaInc),
-                  mid_radius * sin(phi) * sin(theta + thetaInc),
-                  mid_radius * cos(phi) + d_center.z());
-    Vector r1 = (pr - pp) * 2.0;
-    Vector r2 = (pphi - pp) * 2.0;
-    Vector r3 = (ptheta - pp) * 2.0;
+    Vector pr(sin(phi) * cos(theta),
+              sin(phi) * sin(theta),
+              cos(phi));
+    Vector pphi(cos(phi) * cos(theta),
+                cos(phi) * sin(theta),
+                -sin(phi));
+    Vector ptheta(-sin(theta),
+                  cos(theta),
+                  0.0);
+    Vector r1 = pr;
+    Vector r2 = pphi;
+    Vector r3 = ptheta;
+    r1.normalize();
+    r2.normalize();
+    r3.normalize();
 
     Matrix3 size;
     size(0, 0) = r1[0];
@@ -524,6 +536,7 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
         size(ii, jj) *= scale_factor;
       }
     }
+    //std::cout << std::format("r1 = {}, r2 = {}, r3 = {}\n", r1, r2, r3);
     //std::cout << std::format("vol = {}, det_size = {}, scale_factor = {}\n", point_volume, det_size, scale_factor);
 
     d_points.push_back(Point(x, y, z));

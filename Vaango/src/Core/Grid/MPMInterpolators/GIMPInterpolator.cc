@@ -29,7 +29,8 @@
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/MiscMath.h>
 
-using namespace Uintah;
+#include <format>
+
 using namespace Uintah;
 
     
@@ -66,9 +67,15 @@ void GIMPInterpolator::findCellAndWeights(const Point& pos,
   int iy = Floor(cellpos.y());
   int iz = Floor(cellpos.z());
   int nnx,nny,nnz;
-  double lx = size(0,0)/2.;
-  double ly = size(1,1)/2.;
-  double lz = size(2,2)/2.;
+  Vector r1 = {size(0,0), size(1,0), size(2,0)};
+  Vector r2 = {size(0,1), size(1,1), size(2,1)};
+  Vector r3 = {size(0,2), size(1,2), size(2,2)};
+  double lx = r1.length()/2.0;
+  double ly = r2.length()/2.0;
+  double lz = r3.length()/2.0;
+  //double lx = size(0,0)/2.;
+  //double ly = size(1,1)/2.;
+  //double lz = size(2,2)/2.;
   
   if(cellpos.x()-(ix) <= .5){ nnx = -1; } else{ nnx = 2; }
   if(cellpos.y()-(iy) <= .5){ nny = -1; } else{ nny = 2; }
@@ -205,9 +212,15 @@ void GIMPInterpolator::findCellAndShapeDerivatives(const Point& pos,
   int iy = Floor(cellpos.y());
   int iz = Floor(cellpos.z());
   int nnx,nny,nnz;
-  double lx = size(0,0)/2.;
-  double ly = size(1,1)/2.;
-  double lz = size(2,2)/2.;
+  Vector r1 = {size(0,0), size(1,0), size(2,0)};
+  Vector r2 = {size(0,1), size(1,1), size(2,1)};
+  Vector r3 = {size(0,2), size(1,2), size(2,2)};
+  double lx = r1.length()/2.0;
+  double ly = r2.length()/2.0;
+  double lz = r3.length()/2.0;
+  //double lx = size(0,0)/2.;
+  //double ly = size(1,1)/2.;
+  //double lz = size(2,2)/2.;
   
   if(cellpos.x()-(ix) <= .5){ nnx = -1; } else{ nnx = 2; }
   if(cellpos.y()-(iy) <= .5){ nny = -1; } else{ nny = 2; }
@@ -378,9 +391,16 @@ GIMPInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
   int iy = Floor(cellpos.y());
   int iz = Floor(cellpos.z());
   int nnx,nny,nnz;
-  double lx = size(0,0)/2.;
-  double ly = size(1,1)/2.;
-  double lz = size(2,2)/2.;
+
+  Vector r1 = {size(0,0), size(1,0), size(2,0)};
+  Vector r2 = {size(0,1), size(1,1), size(2,1)};
+  Vector r3 = {size(0,2), size(1,2), size(2,2)};
+  double lx = r1.length()/2.0;
+  double ly = r2.length()/2.0;
+  double lz = r3.length()/2.0;
+  //double lx = size(0,0)/2.;
+  //double ly = size(1,1)/2.;
+  //double lz = size(2,2)/2.;
   
   if(cellpos.x()-(ix) <= .5){ nnx = -1; } else{ nnx = 2; }
   if(cellpos.y()-(iy) <= .5){ nny = -1; } else{ nny = 2; }
@@ -505,6 +525,12 @@ GIMPInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
     dfz[1] = -pz1/lz;
     dfz[2] = (1. + lz + pz2)/(2.*lz);
   }
+
+  //std::cout << std::format("size = {}", size);
+  //std::cout << std::format("lz = {} fx = {},{},{} fy={},{},{} fz = {},{},{}\n",
+  //  lz, fx[0], fx[1], fx[2], fy[0], fy[1], fy[2], fz[0], fz[1], fz[2]);
+  //std::cout << std::format("dfx = {},{},{} dfy={},{},{} dfz = {},{},{}\n",
+  //  dfx[0], dfx[1], dfx[2], dfy[0], dfy[1], dfy[2], dfz[0], dfz[1], dfz[2]);
   
   S[0]  = fx[0]*fy[0]*fz[0];
   S[1]  = fx[1]*fy[0]*fz[0];
