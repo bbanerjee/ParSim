@@ -45,6 +45,7 @@
 
 #include   <string>
 #include   <iosfwd>
+#include <format>
 
 
 
@@ -533,5 +534,15 @@ namespace Uintah {
 
 } // End namespace Uintah
 
+template<>
+struct std::formatter<Uintah::Vector> {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        return ctx.begin();
+    }
+    
+    auto format(const Uintah::Vector& v, std::format_context& ctx) const {
+        return std::format_to(ctx.out(), "[{}, {}, {}]", v.x(), v.y(), v.z());
+    }
+};
 
 #endif

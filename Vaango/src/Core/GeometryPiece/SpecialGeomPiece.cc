@@ -31,6 +31,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <format>
 
 namespace Uintah {
 
@@ -51,9 +52,10 @@ SpecialGeomPiece::getPoints()
 const SpecialGeomPiece::ParticleScalarData*
 SpecialGeomPiece::getScalar(const std::string& scalar_name) const
 {
-  try {
-    return &d_scalars.at(scalar_name);
-  } catch (std::out_of_range& err) {
+  auto it = d_scalars.find(scalar_name);
+  if (it != d_scalars.end()) {
+    return &(it->second);
+  } else {
     return nullptr;
   }
 }
@@ -61,9 +63,10 @@ SpecialGeomPiece::getScalar(const std::string& scalar_name) const
 const SpecialGeomPiece::ParticleVectorData*
 SpecialGeomPiece::getVector(const std::string& vector_name) const
 {
-  try {
-    return &d_vectors.at(vector_name);
-  } catch (std::out_of_range& err) {
+  auto it = d_vectors.find(vector_name);
+  if (it != d_vectors.end()) {
+    return &(it->second);
+  } else {
     return nullptr;
   }
 }
@@ -71,9 +74,10 @@ SpecialGeomPiece::getVector(const std::string& vector_name) const
 const SpecialGeomPiece::ParticleTensorData*
 SpecialGeomPiece::getTensor(const std::string& tensor_name) const
 {
-  try {
-    return &d_tensors.at(tensor_name);
-  } catch (std::out_of_range& err) {
+  auto it = d_tensors.find(tensor_name);
+  if (it != d_tensors.end()) {
+    return &(it->second);
+  } else {
     return nullptr;
   }
 }

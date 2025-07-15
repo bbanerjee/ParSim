@@ -33,8 +33,11 @@
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
+#include <Core/GeometryPiece/SpecialGeomPiece.h>
 
 #include <map>
+#include <optional>
+#include <string_view>
 #include <vector>
 
 namespace Uintah {
@@ -220,6 +223,59 @@ protected:
   bool d_coupledFlow{ false };
 
   std::vector<const VarLabel*> particle_state, particle_state_preReloc;
+
+private:
+
+  // Helper for getting and iterating over SpecialGeometryPiece data
+  template<typename T>
+  struct SGPData
+  {
+    const std::vector<T>* data = nullptr;
+    typename std::vector<T>::const_iterator iterator;
+
+    SGPData() = default;
+
+    void
+    initialize(SpecialGeomPiece* sgp,
+               ObjectVars& obj_vars,
+               const std::string& name,
+               GeometryObject* obj_ptr)
+    {
+      if (sgp) {
+        if constexpr (std::is_same_v<T, double>) {
+          data     = sgp->getScalar(name);
+          auto key = std::make_pair(name, obj_ptr);
+          if (auto map_iter = obj_vars.scalars.find(key);
+              map_iter != obj_vars.scalars.end()) {
+            iterator = map_iter->second.begin();
+          }
+        } else if constexpr (std::is_same_v<T, Vector>) {
+          data     = sgp->getVector(name);
+          auto key = std::make_pair(name, obj_ptr);
+          if (auto map_iter = obj_vars.vectors.find(key);
+              map_iter != obj_vars.vectors.end()) {
+            iterator = map_iter->second.begin();
+          }
+        } else if constexpr (std::is_same_v<T, Matrix3>) {
+          data     = sgp->getTensor(name);
+          auto key = std::make_pair(name, obj_ptr);
+          if (auto map_iter = obj_vars.tensors.find(key);
+              map_iter != obj_vars.tensors.end()) {
+            iterator = map_iter->second.begin();
+          }
+        }
+      }
+    }
+
+    std::optional<T>
+    get_and_advance()
+    {
+      if (data && iterator != data->end()) {
+        return *iterator++;
+      }
+      return std::nullopt;
+    }
+  };
 };
 
 } // End of namespace Uintah

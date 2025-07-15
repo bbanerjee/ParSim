@@ -35,6 +35,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <format>
 
 namespace Uintah {
 
@@ -160,7 +161,7 @@ SmoothSphereGeomPiece::createPoints()
 int
 SmoothSphereGeomPiece::createSpherePointsSpiral()
 {
-  std::cout << "Creating particles for the Solid Sphere"
+  std::cout << "Creating particles for the Solid Sphere (spiral)"
             << "\n";
 
   // Find the characteristic distance between points
@@ -188,13 +189,22 @@ SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
   // Find the radius of the middle of the annulus
   double mid_radius = 0.5 * (outer_radius + inner_radius);
 
+  // try_emplace will only insert if the key does not already exist
+  d_scalars.try_emplace("p.volume");
+  d_tensors.try_emplace("p.size");
+  d_vectors.try_emplace("p.rvec1");
+  d_vectors.try_emplace("p.rvec2");
+  d_vectors.try_emplace("p.rvec3");
+
   // This is the point at the center of the sphere that is being discretized
   if (inner_radius < 1.0e-16) {
     d_points.emplace_back(Point(0.0, 0.0, 0.0));
-    d_scalars.at("p.volume").emplace_back(volumeOfSphere(mid_radius));
+    auto point_volume = volumeOfSphere(mid_radius);
+    d_scalars.at("p.volume").emplace_back(point_volume);
+    auto point_size = std::pow(point_volume, 1.0/3.0);
     d_tensors.at("p.size").emplace_back(
-      Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0));
-    d_vectors.at("p,rvec1").emplace_back(Vector(1.0, 0.0, 0.0));
+      Matrix3(point_size, 0.0, 0.0, 0.0, point_size, 0.0, 0.0, 0.0, point_size));
+    d_vectors.at("p.rvec1").emplace_back(Vector(1.0, 0.0, 0.0));
     d_vectors.at("p.rvec2").emplace_back(Vector(0.0, 1.0, 0.0));
     d_vectors.at("p.rvec3").emplace_back(Vector(0.0, 0.0, 1.0));
     return;
@@ -258,10 +268,18 @@ SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
     size(1, 2) = r3[1];
     size(2, 2) = r3[2];
 
+    auto det_size = std::abs(size.Determinant());
+    auto scale_factor = std::pow(point_volume/det_size, 1.0/3.0);
+    for (int ii = 0; ii < 3; ii++) {
+      for (int jj = 0; jj < 3; jj++) {
+        size(ii, jj) *= scale_factor;
+      }
+    }
+
     d_points.push_back(Point(x, y, z));
     d_scalars.at("p.volume").push_back(point_volume);
     d_tensors.at("p.size").push_back(size);
-    d_vectors.at("p,rvec1").push_back(r1);
+    d_vectors.at("p.rvec1").push_back(r1);
     d_vectors.at("p.rvec2").push_back(r2);
     d_vectors.at("p.rvec3").push_back(r3);
   }
@@ -281,7 +299,7 @@ SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
 int
 SmoothSphereGeomPiece::createSpherePointsEqualArea()
 {
-  std::cout << "Creating particles for the Solid Sphere ...";
+  std::cout << "Creating particles for the Solid Sphere (equal area)...";
 
   // Find the characteristic distance between points
   double thickness = d_outerRadius - d_innerRadius;
@@ -310,6 +328,13 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
   // Find the radius of the middle of the annulus
   double mid_radius = 0.5 * (outer_radius + inner_radius);
 
+  // try_emplace will only insert if the key does not already exist
+  d_scalars.try_emplace("p.volume");
+  d_tensors.try_emplace("p.size");
+  d_vectors.try_emplace("p.rvec1");
+  d_vectors.try_emplace("p.rvec2");
+  d_vectors.try_emplace("p.rvec3");
+
   // This is the point at the center of the sphere that is being discretized
   if (mid_radius < char_dist) {
     Matrix3 size;
@@ -326,10 +351,18 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
     size(1, 2) = r3[1];
     size(2, 2) = r3[2];
 
+    auto point_volume = volumeOfSphere(mid_radius);
+    auto det_size = std::abs(size.Determinant());
+    auto scale_factor = std::pow(point_volume/det_size, 1.0/3.0);
+    for (int ii = 0; ii < 3; ii++) {
+      for (int jj = 0; jj < 3; jj++) {
+        size(ii, jj) *= scale_factor;
+      }
+    }
     d_points.push_back(d_center);
-    d_scalars.at("p.volume").push_back(volumeOfSphere(mid_radius));
+    d_scalars.at("p.volume").push_back(point_volume);
     d_tensors.at("p.size").push_back(size);
-    d_vectors.at("p,rvec1").push_back(r1);
+    d_vectors.at("p.rvec1").push_back(r1);
     d_vectors.at("p.rvec2").push_back(r2);
     d_vectors.at("p.rvec3").push_back(r3);
     return;
@@ -344,8 +377,8 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
   len_max *= (2.0 * mid_radius);
   int num_points = std::ceil(len_max / char_dist);
 
-  // std::cout << "radius = " << mid_radius << " char_dist = " << char_dist
-  //           << " num_points = " << num_points << "\n";
+  //std::cout << "radius = " << mid_radius << " char_dist = " << char_dist
+  //          << " num_points = " << num_points << "\n";
 
   // Compute volume of sphere/annulus
   double outer_volume = volumeOfSphere(outer_radius);
@@ -484,12 +517,23 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
     size(1, 2) = r3[1];
     size(2, 2) = r3[2];
 
+    auto det_size = std::abs(size.Determinant());
+    auto scale_factor = std::pow(point_volume/det_size, 1.0/3.0);
+    for (int ii = 0; ii < 3; ii++) {
+      for (int jj = 0; jj < 3; jj++) {
+        size(ii, jj) *= scale_factor;
+      }
+    }
+    //std::cout << std::format("vol = {}, det_size = {}, scale_factor = {}\n", point_volume, det_size, scale_factor);
+
     d_points.push_back(Point(x, y, z));
     d_scalars.at("p.volume").push_back(point_volume);
     d_tensors.at("p.size").push_back(size);
-    d_vectors.at("p,rvec1").push_back(r1);
+    d_vectors.at("p.rvec1").push_back(r1);
     d_vectors.at("p.rvec2").push_back(r2);
     d_vectors.at("p.rvec3").push_back(r3);
+    //std::cout << std::format("sphere point vol = {}, location = {}, {}, {}\n",
+    //  point_volume, x, y, z);
   }
 }
 

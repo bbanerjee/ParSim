@@ -54,7 +54,6 @@
 #include <Core/GeometryPiece/FileGeometryPiece.h>
 #include <Core/GeometryPiece/GeometryObject.h>
 #include <Core/GeometryPiece/GeometryPiece.h>
-#include <Core/GeometryPiece/SpecialGeomPiece.h>
 
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Patch.h>
@@ -100,125 +99,67 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 
   ParticleVars pvars;
   int dwi = matl->getDWIndex();
-  allocateVariables(numParticles, dwi, patch, new_dw, pvars);
+  ParticleSubset* pset = allocateVariables(numParticles, dwi, patch, new_dw, pvars);
 
-  particleIndex start = 0;
+  particleIndex current_particle_index = 0;
 
-  for (auto& obj : geom_objs) {
-    particleIndex count  = 0;
-    GeometryPieceP piece = obj->getPiece();
-    Box b1               = piece->getBoundingBox();
-    Box b2               = patch->getExtraBox();
-    Box b                = b1.intersect(b2);
+  for (const auto& obj_sp : geom_objs) {
+    GeometryObject* obj_ptr = obj_sp.get();
+    GeometryPieceP piece = obj_sp->getPiece();
+
+    Box b = piece->getBoundingBox().intersect(patch->getExtraBox());
     if (b.degenerate()) {
-      count = 0;
       continue;
     }
 
-    Vector dxpp = patch->dCell() / obj->getInitialData_IntVector("res");
+    Vector dxpp = patch->dCell() / obj_sp->getInitialData_IntVector("res");
 
     // Special case exception for SpecialGeomPieces
     // (includes FileGP, SmoothGP, AbaqusGP, CorrugatedGP etc.)
     auto* sgp = dynamic_cast<SpecialGeomPiece*>(piece.get());
 
-    // Set up pointers to SpecialGeometryPiece particle data
-    const std::vector<double>* pVolumes        = nullptr;
-    const std::vector<double>* pTemperatures   = nullptr;
-    const std::vector<double>* pColors         = nullptr;
-    const std::vector<double>* pConcentrations = nullptr;
-    const std::vector<double>* pPosCharges     = nullptr;
-    const std::vector<double>* pNegCharges     = nullptr;
-    const std::vector<double>* pPermittivities = nullptr;
-    const std::vector<Vector>* pForces         = nullptr;
-    const std::vector<Vector>* pFiberDirs      = nullptr;
-    const std::vector<Vector>* pVelocities     = nullptr;
-    const std::vector<Vector>* pAreas          = nullptr;
-    const std::vector<Matrix3>* pSizes         = nullptr;
-
-    // Create pairs for the particle variables created by
-    // the SpecialGeometryPieces
-    auto vol_pair   = std::make_pair("p.volume", obj.get());
-    auto temp_pair  = std::make_pair("p.temperature", obj.get());
-    auto color_pair = std::make_pair("p.color", obj.get());
-    auto conc_pair  = std::make_pair("p.concentration", obj.get());
-    auto pos_pair   = std::make_pair("p.poscharge", obj.get());
-    auto neg_pair   = std::make_pair("p.negcharge", obj.get());
-    auto perm_pair  = std::make_pair("p.permittivity", obj.get());
-    auto force_pair = std::make_pair("p.externalforce", obj.get());
-    auto fiber_pair = std::make_pair("p.fiber", obj.get());
-    auto vel_pair   = std::make_pair("p.velocity", obj.get());
-    auto area_pair  = std::make_pair("p.area", obj.get());
-    auto size_pair  = std::make_pair("p.size", obj.get());
-
-    // Set up iterators for SpecialGeometryObject data
-    std::vector<double>::const_iterator sgp_vol_iter;
-    std::vector<double>::const_iterator sgp_temp_iter;
-    std::vector<double>::const_iterator sgp_color_iter;
-    std::vector<double>::const_iterator sgp_concentration_iter;
-    std::vector<double>::const_iterator sgp_poscharge_iter;
-    std::vector<double>::const_iterator sgp_negcharge_iter;
-    std::vector<double>::const_iterator sgp_permittivity_iter;
-    std::vector<Vector>::const_iterator sgp_force_iter;
-    std::vector<Vector>::const_iterator sgp_fiber_iter;
-    std::vector<Vector>::const_iterator sgp_velocity_iter;
-    std::vector<Vector>::const_iterator sgp_area_iter;
-    std::vector<Matrix3>::const_iterator sgp_size_iter;
+    // Set up the local SpecialGeometryPiece particle data
+    SGPData<double> sgp_vol_data;
+    SGPData<double> sgp_temp_data;
+    SGPData<Vector> sgp_force_data;
+    SGPData<Vector> sgp_fiber_data;
+    SGPData<Vector> sgp_velocity_data;
+    SGPData<Matrix3> sgp_size_data;
+    SGPData<double> sgp_color_data;
+    SGPData<double> sgp_concentration_data;
+    SGPData<Vector> sgp_area_data;
+    SGPData<double> sgp_poscharge_data;
+    SGPData<double> sgp_negcharge_data;
+    SGPData<double> sgp_permittivity_data;
 
     if (sgp) {
 
-      std::cout << "Created a special geometry with #particles = "
-                << numParticles << std::endl;
+      std::cout << std::format(
+        "Created a special geometry of type {} with #particles = {}\n",
+        piece->getType(), numParticles);
 
-      if ((pVolumes = sgp->getScalar("p.volume"))) {
-        sgp_vol_iter = obj_vars.scalars.at(vol_pair).begin();
-      }
-
-      if ((pTemperatures = sgp->getScalar("p.temperature"))) {
-        sgp_temp_iter = obj_vars.scalars.at(temp_pair).begin();
-      }
-
-      if ((pForces = sgp->getVector("p.externalforce"))) {
-        sgp_force_iter = obj_vars.vectors.at(force_pair).begin();
-      }
-
-      if ((pFiberDirs = sgp->getVector("p.fiberdirs"))) {
-        sgp_fiber_iter = obj_vars.vectors.at(fiber_pair).begin();
-      }
-
-      if ((pVelocities = sgp->getVector("p.velocity"))) {
-        sgp_velocity_iter = obj_vars.vectors.at(vel_pair).begin();
-      }
-
-      if ((pSizes = sgp->getTensor("p.size"))) {
-        sgp_size_iter = obj_vars.tensors.at(size_pair).begin();
-      }
+      sgp_vol_data.initialize(sgp, obj_vars, "p.volume", obj_ptr);
+      sgp_temp_data.initialize(sgp, obj_vars, "p.temperature", obj_ptr);
+      sgp_force_data.initialize(sgp, obj_vars, "p.externalforce", obj_ptr);
+      sgp_fiber_data.initialize(sgp, obj_vars, "p.fiberdirs", obj_ptr);
+      sgp_velocity_data.initialize(sgp, obj_vars, "p.velocity", obj_ptr);
+      sgp_size_data.initialize(sgp, obj_vars, "p.size", obj_ptr);
 
       if (d_withColor) {
-        if ((pColors = sgp->getScalar("p.color"))) {
-          sgp_color_iter = obj_vars.scalars.at(color_pair).begin();
-        }
+        sgp_color_data.initialize(sgp, obj_vars, "p.color", obj_ptr);
       }
 
       if (d_doScalarDiffusion) {
-        if ((pConcentrations = sgp->getScalar("p.concentration"))) {
-          sgp_concentration_iter = obj_vars.scalars.at(conc_pair).begin();
-        }
-
-        if ((pAreas = sgp->getVector("p.area"))) {
-          sgp_area_iter = obj_vars.vectors.at(area_pair).begin();
-        }
+        sgp_concentration_data.initialize(
+          sgp, obj_vars, "p.concentration", obj_ptr);
+        sgp_area_data.initialize(sgp, obj_vars, "p.area", obj_ptr);
       }
 
       if (d_withGaussSolver) {
-        if ((pPosCharges = sgp->getScalar("p.poscharge"))) {
-          sgp_poscharge_iter = obj_vars.scalars.at(pos_pair).begin();
-        }
-        if ((pNegCharges = sgp->getScalar("p.negcharge"))) {
-          sgp_negcharge_iter = obj_vars.scalars.at(neg_pair).begin();
-        }
-        if ((pPermittivities = sgp->getScalar("p.permittivity"))) {
-          sgp_permittivity_iter = obj_vars.scalars.at(perm_pair).begin();
-        }
+        sgp_poscharge_data.initialize(sgp, obj_vars, "p.poscharge", obj_ptr);
+        sgp_negcharge_data.initialize(sgp, obj_vars, "p.negcharge", obj_ptr);
+        sgp_permittivity_data.initialize(
+          sgp, obj_vars, "p.permittivity", obj_ptr);
       }
 
     } else {
@@ -226,115 +167,95 @@ ParticleCreator::createParticles(MPMMaterial* matl,
                 << std::endl;
     }
 
-    for (auto point : obj_vars.points.at(obj.get())) {
+    for (const auto& point : obj_vars.points.at(obj_ptr)) {
       IntVector cell_idx;
-      if (!patch->findCell(point, cell_idx)) {
+      if (!patch->findCell(point, cell_idx) || !patch->containsPoint(point)) {
         continue;
       }
 
-      if (!patch->containsPoint(point)) {
-        continue;
-      }
+      particleIndex pidx = current_particle_index++;
 
-      particleIndex pidx = start + count;
-
-      // std::cout << "Point["<<pidx<<"]="<<point<<" Cell = "<<cell_idx<<endl;
+      //std::cout << std::format("Point[{}] = {} Cell = {}\n", pidx, point, cell_idx);
       initializeParticle(
-        patch, obj.get(), matl, point, cell_idx, pidx, cellNAPID, pvars);
+        patch, obj_ptr, matl, point, cell_idx, pidx, cellNAPID, pvars);
 
       // Again, everything below exists for SpecialGeometryPiece only
       if (sgp) {
 
-        if (sgp_vol_iter != obj_vars.scalars.at(vol_pair).end()) {
-          pvars.pVolume[pidx] = *sgp_vol_iter;
+        if (auto vol = sgp_vol_data.get_and_advance()) {
+          pvars.pVolume[pidx] = *vol;
           pvars.pMass[pidx]   = matl->getInitialDensity() * pvars.pVolume[pidx];
-          ++sgp_vol_iter;
         }
 
-        if (sgp_temp_iter != obj_vars.scalars.at(temp_pair).end()) {
-          pvars.pTemperature[pidx] = *sgp_temp_iter;
-          ++sgp_temp_iter;
+        if (auto temp = sgp_temp_data.get_and_advance()) {
+          pvars.pTemperature[pidx] = *temp;
         }
 
-        if (sgp_force_iter != obj_vars.vectors.at(force_pair).end()) {
-          pvars.pExternalForce[pidx] = *sgp_force_iter;
-          ++sgp_force_iter;
+        if (auto force = sgp_force_data.get_and_advance()) {
+          pvars.pExternalForce[pidx] = *force;
         }
 
-        if (sgp_velocity_iter != obj_vars.vectors.at(vel_pair).end()) {
-          pvars.pVelocity[pidx] = *sgp_velocity_iter;
-          ++sgp_velocity_iter;
+        if (auto vel = sgp_velocity_data.get_and_advance()) {
+          pvars.pVelocity[pidx] = *vel;
         }
 
-        if (sgp_fiber_iter != obj_vars.vectors.at(fiber_pair).end()) {
-          pvars.pFiberDir[pidx] = *sgp_fiber_iter;
-          ++sgp_fiber_iter;
+        if (auto fiber_dir = sgp_fiber_data.get_and_advance()) {
+          pvars.pFiberDir[pidx] = *fiber_dir;
         }
 
-        if (!d_useCPTI) {
-          // CPDI and others
-          // Read pSize from file
-          if (sgp_size_iter != obj_vars.tensors.at(size_pair).end()) {
-            Vector dxcc       = patch->dCell();
-            pvars.pSize[pidx] = *sgp_size_iter;
-            // Calculate CPDI hexahedron volume from pSize
-            // (if volume not passed from FileGeometryPiece)
+        if (auto size_val =
+              sgp_size_data.get_and_advance()) { // Renamed 'size' to 'size_val'
+                                                 // to avoid conflict
+          Vector dxcc       = patch->dCell();
+          pvars.pSize[pidx] = *size_val;
+
+          // Calculate volume based on type
+          if (!d_useCPTI) { // CPDI and others
             pvars.pVolume[pidx] = std::abs(pvars.pSize[pidx].Determinant());
-            pvars.pMass[pidx] = matl->getInitialDensity() * pvars.pVolume[pidx];
-
-            // Modify pSize (CPDI R-vectors) to be normalized by cell spacing
-            Matrix3 size(1. / ((double)dxcc.x()),
-                         0.,
-                         0.,
-                         0.,
-                         1. / ((double)dxcc.y()),
-                         0.,
-                         0.,
-                         0.,
-                         1. / ((double)dxcc.z()));
-            pvars.pSize[pidx] = pvars.pSize[pidx] * size;
-            ++sgp_size_iter;
-          }
-        } else {
-          // CPTI
-          // Read pSize from file
-          if (sgp_size_iter != obj_vars.tensors.at(size_pair).end()) {
-            Vector dxcc       = patch->dCell();
-            pvars.pSize[pidx] = *sgp_size_iter;
-            // Calculate CPTI tetrahedron volume from pSize
-            // (if volume not passed from FileGeometryPiece)
+          } else { // CPTI
             pvars.pVolume[pidx] =
               std::abs(pvars.pSize[pidx].Determinant() / 6.0);
-            pvars.pMass[pidx] = matl->getInitialDensity() * pvars.pVolume[pidx];
+          }
+          pvars.pMass[pidx] = matl->getInitialDensity() * pvars.pVolume[pidx];
 
-            // Modify pSize (CPTI R-vectors) to be normalized by cell spacing
-            Matrix3 size(1. / ((double)dxcc.x()),
-                         0.,
-                         0.,
-                         0.,
-                         1. / ((double)dxcc.y()),
-                         0.,
-                         0.,
-                         0.,
-                         1. / ((double)dxcc.z()));
-            pvars.pSize[pidx] = pvars.pSize[pidx] * size;
-            ++sgp_size_iter;
+          // Modify pSize (R-vectors) normalized by cell spacing
+          Matrix3 cell_size_norm(1.0 / dxcc.x(),
+                                 0.0,
+                                 0.0,
+                                 0.0,
+                                 1.0 / dxcc.y(),
+                                 0.0,
+                                 0.0,
+                                 0.0,
+                                 1.0 / dxcc.z());
+          pvars.pSize[pidx] = pvars.pSize[pidx] * cell_size_norm;
+        }
+
+        if (d_withColor) {
+          if (auto color = sgp_color_data.get_and_advance()) {
+            pvars.pColor[pidx] = *color;
           }
         }
 
-        if (sgp_color_iter != obj_vars.scalars.at(color_pair).end()) {
-          pvars.pColor[pidx] = *sgp_color_iter;
-          ++sgp_color_iter;
+        if (d_doScalarDiffusion) {
+          if (auto area = sgp_area_data.get_and_advance()) {
+            pvars.pArea[pidx] = *area;
+          }
+          if (auto conc = sgp_concentration_data.get_and_advance()) {
+            pvars.pConcentration[pidx] = *conc;
+          }
         }
 
-        if (sgp_area_iter != obj_vars.vectors.at(area_pair).end()) {
-          pvars.pArea[pidx] = *sgp_area_iter;
-          ++sgp_area_iter;
-        }
-
-        if (sgp_concentration_iter != obj_vars.scalars.at(conc_pair).end()) {
-          pvars.pConcentration[pidx] = *sgp_concentration_iter;
-          ++sgp_concentration_iter;
+        if (d_withGaussSolver) {
+          if (auto pos_charge = sgp_poscharge_data.get_and_advance()) {
+            pvars.pPosCharge[pidx] = *pos_charge;
+          }
+          if (auto neg_charge = sgp_negcharge_data.get_and_advance()) {
+            pvars.pNegCharge[pidx] = *neg_charge;
+          }
+          if (auto permittivity = sgp_permittivity_data.get_and_advance()) {
+            pvars.pPermittivity[pidx] = *permittivity;
+          }
         }
       }
 
@@ -342,21 +263,19 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       // a physical BC attached to it then mark with the
       // physical BC pointer
       if (d_useLoadCurves) {
-        if (checkForSurface(piece, point, dxpp)) {
-          pvars.pLoadCurveID[pidx] = getLoadCurveID(point, dxpp);
-          // std::cout << " Particle: " << pidx << " use_load_curves = " <<
-          // d_useLoadCurves << std::endl; std::cout << "\t surface particle;
-          // Load curve id = " << pvars.pLoadCurveID[pidx] << std::endl;
-        } else {
-          pvars.pLoadCurveID[pidx] = 0;
-          // std::cout << "\t not surface particle; Load curve id = " <<
-          // pLoadCurveID[pidx] << std::endl;
-        }
+        pvars.pLoadCurveID[pidx] =
+          checkForSurface(piece, point, dxpp) ? getLoadCurveID(point, dxpp) : 0;
       }
-      count++;
+      //for (const auto pidx : *pset) {
+      //  std::cout << std::format(
+      //    "pidx = {}, volume = {}\n", pidx, pvars.pVolume[pidx]);
+      //}
     }
-    start += count;
   }
+
+  //for (const auto pidx: *pset) {
+  //  std::cout << std::format("pidx = {}, volume = {}\n", pidx, pvars.pVolume[pidx]);
+  //}
   return numParticles;
 }
 
@@ -861,6 +780,10 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
 
     for (int ii = 0; ii < numPts; ++ii) {
       p = points->at(ii);
+      //IntVector l(patch->getCellLowIndex());
+      //IntVector h(patch->getCellHighIndex());
+      //IntVector c = patch->getLevel()->getCellIndex(p);
+      //std::cout << std::format("Point = {}, cell index = {}, low = {}, hi = {}\n", p, c, l, h);
       if (patch->findCell(p, cell_idx)) {
         if (patch->containsPoint(p)) {
           obj_vars.points[obj].push_back(p);

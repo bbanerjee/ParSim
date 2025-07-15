@@ -45,6 +45,8 @@
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/Point.h>
 
+#include <format>
+
 namespace Uintah {
 
   class Piostream;
@@ -262,5 +264,16 @@ namespace Uintah {
   }
 
 } // End namespace Uintah
+
+template<>
+struct std::formatter<Uintah::IntVector> {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        return ctx.begin();
+    }
+    
+    auto format(const Uintah::IntVector& v, std::format_context& ctx) const {
+        return std::format_to(ctx.out(), "[{}, {}, {}]", v.x(), v.y(), v.z());
+    }
+};
 
 #endif

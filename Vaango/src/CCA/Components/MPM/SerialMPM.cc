@@ -100,6 +100,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <format>
 
 // #define XPIC2_UPDATE
 #define CHECK_PARTICLE_DELETION
@@ -2350,11 +2351,9 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
         pBodyForceAcc, d_mpm_labels->pBodyForceAccLabel_preReloc, pset);
       new_dw->get(pExternalForce, d_mpm_labels->pExtForceLabel_preReloc, pset);
 
-      /*
-      std::cout << "patch = " << patch << " matID = " << matID
-                << " numparticles = " << pset->numParticles() << "
-      d_numGhostParticles = " << d_numGhostParticles << "\n";
-      */
+      //std::cout << "patch = " << patch << " matID = " << matID
+      //          << " numparticles = " << pset->numParticles()
+      //          << "d_numGhostParticles = " << d_numGhostParticles << "\n ";
 
       constParticleVariable<int> pLoadCurveID;
       if (d_mpm_flags->d_useLoadCurves) {
@@ -2463,6 +2462,8 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
       // loop over all particles in the patch:
       for (int idx : *pset) {
+
+        // std::cout << std::format("pidx = {}, volume = {}\n", idx, pVolume[idx]);
         interpolator->findCellAndWeights(
           pX[idx], ni, S, pSize[idx], pDefGrad_old[idx]);
         auto pMom = pVelocity[idx] * pMass[idx];
@@ -3715,8 +3716,8 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
             pX[idx], ni, S, d_S, pSize[idx], pDefGrad_old[idx]);
           stressvol   = pStress[idx] * pVol[idx];
           stresspress = pStress[idx] + Id * (p_pressure[idx] - p_q[idx]);
-          // std::cerr << " idx = " << idx << " pStress = " << pStress[idx] <<
-          // "\n";
+          //std::cerr << std::format("idx = {} pStress = {}\n", idx, pStress[idx]);
+          //std::cerr << std::format("stressvol = {}, stresspress = {}\n", stressvol, stresspress);
 
           for (int k = 0; k < numInfluenceNodes; k++) {
             auto node = ni[k];
@@ -3724,8 +3725,15 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
               Vector div(d_S[k].x() * oodx[0],
                          d_S[k].y() * oodx[1],
                          d_S[k].z() * oodx[2]);
+              //std::cout << std::format("node = {}, gInternalForce[node] = {}\n",
+              //  node, gInternalForce[node]);
               gInternalForce[node] -= (div * stresspress) * pVol[idx];
               gStress[node] += stressvol * S[k];
+              if (!std::isfinite(gInternalForce[node].x())) {
+                std::cout << std::format(
+                  "idx = {}, k = {}, div = {}, S[k] = {}, pVol[idx] = {}, stresspress = {}, stressvol = {}\n",
+                  idx, k, div, S[k], pVol[idx], stresspress, stressvol);
+              }
 
 #ifdef DEBUG_WITH_PARTICLE_ID
               if (pParticleID[idx] == testParticleID) {

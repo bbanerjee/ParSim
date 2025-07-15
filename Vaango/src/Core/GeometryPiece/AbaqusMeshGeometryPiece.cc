@@ -404,24 +404,31 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
             << " and max = " << max << std::endl;
 
   // Now push the coordinates and volumes of nodes into d_points and d_volumes
+  // try_emplace will only insert if the key does not already exist
+  d_tensors.try_emplace("p.size");
+  d_vectors.try_emplace("p.rvec1");
+  d_vectors.try_emplace("p.rvec2");
+  d_vectors.try_emplace("p.rvec3");
   if (d_use_gauss_pts) {
     for (auto node : gaussPtArray) {
+      double size_val = std::pow(node.volume_, 1.0/3.0);
       d_points.push_back(Point(node.x_, node.y_, node.z_));
       d_scalars["p.volume"].push_back(node.volume_);
       d_tensors.at("p.size").push_back(
-        Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0));
-      d_vectors.at("p,rvec1").push_back(Vector(1.0, 0.0, 0.0));
+        Matrix3(size_val, 0.0, 0.0, 0.0, size_val, 0.0, 0.0, 0.0, size_val));
+      d_vectors.at("p.rvec1").push_back(Vector(1.0, 0.0, 0.0));
       d_vectors.at("p.rvec2").push_back(Vector(0.0, 1.0, 0.0));
       d_vectors.at("p.rvec3").push_back(Vector(0.0, 0.0, 1.0));
     }
   } else {
     for (auto iter = nodeArray.begin(); iter != nodeArray.end(); ++iter) {
       MeshNode node = *iter;
+      double size_val = std::pow(node.volume_, 1.0/3.0);
       d_points.push_back(Point(node.x_, node.y_, node.z_));
       d_scalars["p.volume"].push_back(node.volume_);
       d_tensors.at("p.size").push_back(
-        Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0));
-      d_vectors.at("p,rvec1").push_back(Vector(1.0, 0.0, 0.0));
+        Matrix3(size_val, 0.0, 0.0, 0.0, size_val, 0.0, 0.0, 0.0, size_val));
+      d_vectors.at("p.rvec1").push_back(Vector(1.0, 0.0, 0.0));
       d_vectors.at("p.rvec2").push_back(Vector(0.0, 1.0, 0.0));
       d_vectors.at("p.rvec3").push_back(Vector(0.0, 0.0, 1.0));
     }

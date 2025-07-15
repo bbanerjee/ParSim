@@ -47,8 +47,10 @@
 #include <Core/Math/MinMax.h>
 #include <Core/Math/Weibull.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+
 #include <fstream>
 #include <iostream>
+#include <format>
 
 using namespace Uintah;
 using namespace Vaango;
@@ -375,10 +377,13 @@ UCNH::initializeCMData(const Patch* patch,
     ParticleSubset::iterator iter = pset->begin();
     // Initial stress option
     if (!d_useInitialStress) {
+      //ParticleVariable<double> pVolume;
+      //new_dw->getModifiable(pVolume, lb->pVolumeLabel, pset);
       for (; iter != pset->end(); iter++) {
         particleIndex idx = *iter;
         pdTdt[idx]        = 0.0;
         pStress[idx]      = zero;
+        //std::cout << std::format("UCNH: matl = {}, idx = {}, pVolume[idx] = {}\n", matl->getDWIndex(), idx, pVolume[idx]);
       }
     } else {
       ParticleVariable<double> pVolume;

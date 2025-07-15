@@ -33,6 +33,7 @@
 
 #include <iosfwd>
 #include <string>
+#include <format>
 
 namespace Uintah {
 
@@ -455,6 +456,18 @@ const TypeDescription*
 get_type_description(Point*);
 
 } // End namespace Uintah
+
+// Custom formatter for Point
+template<>
+struct std::formatter<Uintah::Point> {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        return ctx.begin();
+    }
+    
+    auto format(const Uintah::Point& p, std::format_context& ctx) const {
+        return std::format_to(ctx.out(), "({}, {}, {})", p.x(), p.y(), p.z());
+    }
+};
 
 // Adding a hash function for Point.  Needed by TriGeometryPice.
 namespace std {

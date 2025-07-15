@@ -43,6 +43,7 @@
 #include <iosfwd>
 #include <vector>
 #include <string>
+#include <format>
 
 namespace Uintah {
 
@@ -761,6 +762,20 @@ namespace Uintah {
    void Pio( Piostream&, Uintah::Matrix3& );
 } // namespace Uintah
 
+template<>
+struct std::formatter<Uintah::Matrix3> {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        return ctx.begin();
+    }
+    
+    auto format(const Uintah::Matrix3& m, std::format_context& ctx) const {
+      return std::format_to(ctx.out(),
+                            "[{}, {}, {}, {}, {}, {}, {}, {}, {}]",
+                            m(0, 0), m(0, 1), m(0, 2),
+                            m(1, 0), m(1, 1), m(1, 2),
+                            m(2, 0), m(2, 1), m(2, 2));
+    }
+};
 
 #endif  // __MATRIX3_H__
 
