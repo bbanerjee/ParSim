@@ -139,6 +139,7 @@ DeformationGradientComputer::initializeGradient(const Patch* patch,
 
   ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
   if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+    dbg_doing << "Doing DefGrad::initializeGradient for incremental model\n";
     ParticleSubset* pset =
       new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
     ParticleVariable<int> pRemove;
@@ -212,6 +213,7 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
 
   ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
   if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+    dbg_doing << "Doing DefGrad::addComputesAndRequires for " << cm->modelType() << " model\n";
     const MaterialSubset* matlset = mpm_matl->thisMaterial();
     task->needs(Task::OldDW, lb->pPolarDecompRLabel, matlset, Ghost::None);
     task->computes(lb->pRemoveLabel_preReloc, matlset);

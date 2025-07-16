@@ -158,6 +158,8 @@ void
 HypoElasticFracture::addParticleState(std::vector<const VarLabel*>& from,
                               std::vector<const VarLabel*>& to)
 {
+  HypoElastic::addParticleState(from, to);
+
   from.push_back(lb->pDispGradsLabel);
   from.push_back(lb->pStrainEnergyDensityLabel);
   to.push_back(lb->pDispGradsLabel_preReloc);
@@ -210,7 +212,7 @@ HypoElasticFracture::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pStrainEnergyDensity, lb->pStrainEnergyDensityLabel, pset);
     old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     old_dw->get(pDispGrads, lb->pDispGradsLabel, pset);
-    old_dw->get(pStress_old, lb->pStressLabel, pset);
+    new_dw->get(pStress_old, lb->pStressUnrotatedLabel, pset);
 
     new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(pDefRate_mid, lb->pDeformRateMidLabel, pset);

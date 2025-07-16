@@ -5401,6 +5401,7 @@ SerialMPM::scheduleComputeStressTensor(SchedulerP& sched,
     return;
   }
 
+  /* Create a task for computing the stress tensor */
   scheduleUnrotateStressAndDeformationRate(sched, patches, matls);
 
   /* Create a task for computing the stress tensor */
