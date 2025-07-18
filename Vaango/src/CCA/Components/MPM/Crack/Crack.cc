@@ -36,6 +36,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Crack/CrackGeometry.h>
 #include <CCA/Components/MPM/Crack/CrackGeometryFactory.h>
+#include <CCA/Components/MPM/Crack/JIntegralCalculatorDefs.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
@@ -54,6 +55,7 @@
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 
 using namespace Uintah;
@@ -82,7 +84,7 @@ Crack::Crack(const ProblemSpecP& ps,
   if (d_n8or27 == 8) {
     d_NGP = 1;
     d_NGN = 1;
-  } else if (d_n8or27 == MAX_BASIS) {
+  } else {
     d_NGP = 2;
     d_NGN = 2;
   }
@@ -2758,30 +2760,42 @@ Crack::CalculateCrackFrontNormals(const int& mm)
 
 // Find the segment numbers which are connected by the same node
 void
-Crack::FindSegsFromNode(const int& m, const int& node, int segs[])
+Crack::FindSegsFromNode(const int& m, const int& node, std::span<int, 2> segs)
 {
-  // segs[R] -- the segment on the right of the node
-  // segs[L] -- the segment on the left of the node
-  segs[R] = segs[L] = -1;
+  // Initialize segments to -1 (indicating not found)
+  segs[R] = -1; // Segment on the right of the node
+  segs[L] = -1; // Segment on the left of the node
 
-  int ncfSegs = (int)d_cfSegNodes[m].size() / 2;
-  for (int j = 0; j < ncfSegs; j++) {
-    int node0 = d_cfSegNodes[m][2 * j];
-    int node1 = d_cfSegNodes[m][2 * j + 1];
-    if (node == node1) { // the right seg
-      segs[R] = j;
-    }
-    if (node == node0) { // the left seg
-      segs[L] = j;
-    }
-  } // End of loop over j
+  // Get the total number of crack-front segments for the given material
+  // d_cfSegNodes[m] is assumed to be a std::vector<int>
+  // Its size should be an even number (2 * ncfSegs)
+  int ncfSegs = static_cast<int>(d_cfSegNodes[m].size()) / 2;
 
-  // See if reasonable
+  // Iterate through all crack-front segments
+  for (int j = 0; j < ncfSegs; ++j) {
+    // Each segment is defined by two nodes: node0 (start) and node1 (end)
+    int node0 = d_cfSegNodes[m][2 * j];     // Starting node of the segment
+    int node1 = d_cfSegNodes[m][2 * j + 1]; // Ending node of the segment
+
+    // Check if the current node is the end node (right side) of the segment
+    if (node == node1) {
+      segs[R] = j; // Assign the segment index to the right segment
+    }
+
+    // Check if the current node is the start node (left side) of the segment
+    if (node == node0) {
+      segs[L] = j; // Assign the segment index to the left segment
+    }
+  } // End of loop over segments
+
+  // Error handling: If neither a right nor a left segment was found for the node
   if (segs[R] < 0 && segs[L] < 0) {
-    std::cout << "Error: failure to find the crack-front segments for node "
-              << node << ". Program terminated."
-              << "\n";
-    exit(1);
+    // Instead of exiting, throw an exception to allow for graceful error handling
+    // by the calling code.
+    std::string error_msg = "Error: Failed to find crack-front segments for node ";
+    error_msg += std::to_string(node);
+    error_msg += ".";
+    throw std::runtime_error(error_msg);
   }
 }
 

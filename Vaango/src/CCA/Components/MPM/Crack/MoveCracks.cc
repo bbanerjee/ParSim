@@ -148,7 +148,18 @@ Crack::MoveCracks(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
+    int NGC = 2 * d_NGN;
+    IntVector var_lo_index(0.0, 0.0, 0.0);
+    IntVector var_hi_index(0.0, 0.0, 0.0);
+    patch->computeVariableExtents(Patch::NodeBased,
+                                  IntVector(0.0, 0.0, 0.0),
+                                  Ghost::AroundCells,
+                                  NGC,
+                                  var_lo_index,
+                                  var_hi_index);
+
     auto interpolator = d_flag->d_interpolator->clone(patch);
+    auto numInfluenceNodes = interpolator->size();
     std::vector<IntVector> ni(interpolator->size());
     std::vector<double> S(interpolator->size());
 
@@ -186,7 +197,6 @@ Crack::MoveCracks(const ProcessorGroup*,
       constNCVariable<double> gMass, Gmass;
       constNCVariable<int> gnum, Gnum;
       constNCVariable<Vector> gVelocity_star, Gvelocity_star;
-      int NGC = 2 * d_NGN;
       new_dw->get(gMass, lb->gMassLabel, dwi, patch, gac, NGC);
       new_dw->get(gnum, lb->gNumPatlsLabel, dwi, patch, gac, NGC);
       new_dw->get(gVelocity_star, lb->gVelocityStarLabel, dwi, patch, gac, NGC);
@@ -214,23 +224,31 @@ Crack::MoveCracks(const ProcessorGroup*,
               // Sum of shape functions from nodes with particle(s) around them
               // This part is necessary for crack nodes outside the material
               double sumS = 0.0;
-              for (int k = 0; k < d_n8or27; k++) {
-                Point pi = patch->nodePosition(ni[k]);
+              for (int k = 0; k < numInfluenceNodes; k++) {
+                const auto node = ni[k];
+                if (!patch->containsIndex(var_lo_index, var_hi_index, node)) {
+                  continue;
+                }
+                Point pi = patch->nodePosition(node);
                 if (PhysicalGlobalGridContainsPoint(dx_min,
                                                     pi) && // ni[k] in real grid
-                    (gnum[ni[k]] + Gnum[ni[k]] != 0)) {
+                    (gnum[node] + Gnum[node] != 0)) {
                   sumS += S[k];
                 }
               }
               if (sumS > 1.e-6) {
-                for (int k = 0; k < d_n8or27; k++) {
-                  Point pi = patch->nodePosition(ni[k]);
+                for (int k = 0; k < numInfluenceNodes; k++) {
+                  const auto node = ni[k];
+                  if (!patch->containsIndex(var_lo_index, var_hi_index, node)) {
+                    continue;
+                  }
+                  Point pi = patch->nodePosition(node);
                   if (PhysicalGlobalGridContainsPoint(dx_min, pi) &&
-                      (gnum[ni[k]] + Gnum[ni[k]] != 0)) {
-                    mg = gMass[ni[k]];
-                    mG = Gmass[ni[k]];
-                    vg = gVelocity_star[ni[k]];
-                    vG = Gvelocity_star[ni[k]];
+                      (gnum[node] + Gnum[node] != 0)) {
+                    mg = gMass[node];
+                    mG = Gmass[node];
+                    vg = gVelocity_star[node];
+                    vG = Gvelocity_star[node];
                     vcm += (mg * vg + mG * vG) / (mg + mG) * S[k] / sumS;
                   }
                 }

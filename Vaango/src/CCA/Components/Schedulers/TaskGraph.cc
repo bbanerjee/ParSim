@@ -185,15 +185,28 @@ TaskGraph::addTask(std::shared_ptr<Task> task,
 
 #if 0
     //__________________________________
-    // Usefull debugging tool
+    // Useful debugging tool
     // This snippet will find all the tasks that require a label, simply change the value of "search_name"
     for (Task::Dependency* m_req = task->getRequires(); m_req != nullptr; m_req = m_req->m_next) {
       const VarLabel* label = m_req->m_var;
       std::string name = label->getName();
-      std::string search_name("abskg");
+      //std::string search_name("abskg");
+      std::string search_name("p.stressUnrotated");
       if (name == search_name) {
         std::cout << "\n" << "Rank-" << std::setw(4) << std::left << Parallel::getMPIRank() << " "
                   << task->getName() << " requires label " << "\"" << search_name << "\"";
+        task->displayAll_DOUT(g_add_task_dbg);
+      }
+    }
+    for (Task::Dependency* m_com = task->getComputes(); m_com != nullptr; m_com = m_com->m_next) {
+      const VarLabel* label = m_com->m_var;
+      std::string name = label->getName();
+      //std::string search_name("abskg");
+      std::string search_name("p.stressUnrotated");
+      //std::string search_name(name);
+      if (name == search_name) {
+        std::cout << "\n" << "Rank-" << std::setw(4) << std::left << Parallel::getMPIRank() << " "
+                  << task->getName() << " computes label " << "\"" << search_name << "\"";
         task->displayAll_DOUT(g_add_task_dbg);
       }
     }

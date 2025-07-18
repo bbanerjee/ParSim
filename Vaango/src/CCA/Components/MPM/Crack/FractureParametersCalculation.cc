@@ -35,7 +35,9 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Components/MPM/Crack/Crack.h>
+#include <CCA/Components/MPM/Crack/JIntegralCalculatorDefs.h>
 #include <CCA/Ports/DataWarehouse.h>
+#include <Core/Exceptions/InvalidValue.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Grid.h>
@@ -49,24 +51,45 @@
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
+#include <Core/Util/DOUT.hpp>
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <numbers>
 #include <vector>
-
-using namespace Uintah;
 
 using std::string;
 using std::vector;
 
 #define MAX_BASIS 27
 
+namespace {
+
+// Usage: export SCI_DEBUG="FracParamDoing:+;FracParamDebug:+"
+
+Uintah::Dout g_frac_param_doing("FracParamDoing",
+                    "Crack",
+                    "Tracks the tasks that are being done",
+                    false);
+Uintah::Dout g_frac_param_debug("FracParamDebug",
+                    "Crack",
+                    "Debug fracture parameter calculation",
+                    false);
+Uintah::Dout g_frac_param_dbg("FracParamDbg",
+                    "Crack",
+                    "Fine scale debug of fracture parameter calculation",
+                    false);
+}
+
+namespace Uintah {
 void
 Crack::addComputesAndRequiresGetNodalSolutions(
   Task* t,
   const PatchSet* /*patches*/,
   const MaterialSet* /*matls*/) const
 {
+  DOUT(g_frac_param_doing, "Doing Crack::addComputesAndRequiresGetNodalSolutions");
+
   Ghost::GhostType gan   = Ghost::AroundNodes;
   Ghost::GhostType gnone = Ghost::None;
 
@@ -103,6 +126,8 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
                          DataWarehouse* old_dw,
                          DataWarehouse* new_dw)
 {
+  DOUT(g_frac_param_doing, "Doing Crack::GetNodalSolutions");
+
   // Compute nodal solutions of stresses, displacement gradients,
   // strain energy density and  kinetic energy density by interpolating
   // particle's solutions to grid. Those variables will be used to calculate
@@ -116,8 +141,9 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     auto interpolator = d_flag->d_interpolator->clone(patch);
-    std::vector<IntVector> ni(interpolator->size());
-    std::vector<double> S(interpolator->size());
+    auto numInfluenceNodes = interpolator->size();
+    std::vector<IntVector> ni(numInfluenceNodes);
+    std::vector<double> S(numInfluenceNodes);
 
     // Detect if calculating fracture parameters or
     // doing crack propagation at this time step
@@ -201,7 +227,7 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
           interpolator->findCellAndWeights(
             px[idx], ni, S, pSize[idx], pDefGrad[idx]);
 
-          for (int k = 0; k < d_n8or27; k++) {
+          for (int k = 0; k < numInfluenceNodes; k++) {
             if (patch->containsNode(ni[k])) {
               double pMassTimesS = pMass[idx] * S[k];
               if (pgCode[idx][k] == 1) {
@@ -253,8 +279,10 @@ Crack::addComputesAndRequiresCalculateFractureParameters(
   const PatchSet* /*patches*/,
   const MaterialSet* /*matls*/) const
 {
+  DOUT(g_frac_param_doing, "Doing Crack::addComputesAndRequiresCalculateFractureParameters");
+
   // Required for contour integral
-  int NGC              = d_NJ + d_NGN + 1;
+  int NGC              = d_NJ + d_NGP + 1;
   Ghost::GhostType gac = Ghost::AroundCells;
 
   t->needs(Task::OldDW, lb->delTLabel);
@@ -291,6 +319,8 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                                    DataWarehouse* old_dw,
                                    DataWarehouse* new_dw)
 {
+  DOUT(g_frac_param_doing, "Doing Crack::CalculateFractureParameters");
+
   simTime_vartype simTimeVar;
   old_dw->get(simTimeVar, lb->simulationTimeLabel);
   double time = simTimeVar;
@@ -303,9 +333,20 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
     Vector dx          = patch->dCell();
     double dx_max      = Max(dx.x(), dx.y(), dx.z());
 
+    int NGC = d_NJ + d_NGN + 1;
+    IntVector var_lo_index(0.0, 0.0, 0.0);
+    IntVector var_hi_index(0.0, 0.0, 0.0);
+    patch->computeVariableExtents(Patch::NodeBased,
+                                  IntVector(0.0, 0.0, 0.0),
+                                  Ghost::AroundCells,
+                                  NGC,
+                                  var_lo_index,
+                                  var_hi_index);
+
     auto interpolator = d_flag->d_interpolator->clone(patch);
-    std::vector<IntVector> ni(interpolator->size());
-    std::vector<double> S(interpolator->size());
+    auto numInfluenceNodes = interpolator->size();
+    std::vector<IntVector> ni(numInfluenceNodes);
+    std::vector<double> S(numInfluenceNodes);
 
     int pid, patch_size;
     MPI_Comm_size(d_mpi_crack_comm, &patch_size);
@@ -333,7 +374,6 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
       constNCVariable<Matrix3> gvelGrads, GvelGrads;
 
       // Get nodal solutions
-      int NGC              = d_NJ + d_NGN + 1;
       Ghost::GhostType gac = Ghost::AroundCells;
       new_dw->get(gMass, lb->gMassLabel, dwi, patch, gac, NGC);
       new_dw->get(Gmass, lb->GMassLabel, dwi, patch, gac, NGC);
@@ -458,6 +498,8 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   Matrix3 T  = Matrix3(l1, m1, n1, l2, m2, n2, l3, m3, n3);
                   Matrix3 TT = Matrix3(l1, l2, l3, m1, m2, m3, n1, n2, n3);
 
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 1 complete");
+
                   // Step 2: Find parameters A[14] of J-integral contour
                   //   with the equation:
                   //   A0x^2+A1y^2+A2z^2+A3xy+A4xz+A5yz+A6x+A7y+A8z+A9-r^2=0 and
@@ -465,6 +507,8 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
 
                   double A[14];
                   FindJIntegralPath(origin, v1, v2, v3, A);
+
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 2 complete");
 
                   // Step 3: Find intersection (crossPt) between J-integral
                   // contour
@@ -476,67 +520,75 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                     !FindIntersectionJPathAndCrackPlane(m, rJ, A, crossPt)) {
                     rJ *= 0.7;
                     if (rJ / d_rJ < 0.01) {
-                      std::cout << "Error: J-integral radius (rJ) has been "
+                      std::ostringstream warn;
+                      warn << "Error: J-integral radius (rJ) has been "
                                    "decreassed 100 times "
                                 << " before finding the intersection between "
                                    "J-contour and crack plane."
                                 << " Program terminated."
                                 << "\n";
-                      exit(1);
+                      throw InvalidValue(warn.str(), __FILE__, __LINE__);
                     }
                   }
 
                   // Get coordinates of intersection in local system
-                  double xc, yc, zc, xcprime, ycprime, scprime;
-                  xc      = crossPt.x();
-                  yc      = crossPt.y();
-                  zc      = crossPt.z();
-                  xcprime = l1 * (xc - x0) + m1 * (yc - y0) + n1 * (zc - z0);
-                  ycprime = l2 * (xc - x0) + m2 * (yc - y0) + n2 * (zc - z0);
-                  scprime = sqrt(xcprime * xcprime + ycprime * ycprime);
+                  double xc      = crossPt.x();
+                  double yc      = crossPt.y();
+                  double zc      = crossPt.z();
+                  double xcprime = l1 * (xc - x0) + m1 * (yc - y0) + n1 * (zc - z0);
+                  double ycprime = l2 * (xc - x0) + m2 * (yc - y0) + n2 * (zc - z0);
+                  double scprime = std::sqrt(xcprime * xcprime + ycprime * ycprime);
+
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 3 complete");
 
                   // Step 4: Set integral points in J-integral contour
 
                   int nSegs = 16;
-                  double xprime, yprime, x, y, z;
-                  double PI = 3.141592654;
-                  Point* X  = scinew Point[nSegs + 1];  // Integration points
-                  double* W = scinew double[nSegs + 1]; // Strain energy density
-                  double* K =
-                    scinew double[nSegs + 1]; // Kinetic energy density
-                  Matrix3* ST =
-                    scinew Matrix3[nSegs + 1]; // Stresses in global coordinates
-                  Matrix3* DG = scinew
-                    Matrix3[nSegs + 1]; // Disp grads in global coordinates
-                  Matrix3* st =
-                    scinew Matrix3[nSegs + 1]; // Stresses in local coordinates
-                  Matrix3* dg = scinew
-                    Matrix3[nSegs + 1]; // Disp grads in local coordinates
+                  const double PI = std::numbers::pi_v<double>;
 
-                  for (int j = 0; j <= nSegs;
-                       j++) { // Loop over points on the circle
-                    double angle, cosTheta, sinTheta;
-                    angle = 2 * PI * (float)j / (float)nSegs;
-                    cosTheta =
-                      (xcprime * cos(angle) - ycprime * sin(angle)) / scprime;
-                    sinTheta =
-                      (ycprime * cos(angle) + xcprime * sin(angle)) / scprime;
-                    // Coordinates of integration points in local coordinates
-                    xprime = d_rJ * cosTheta;
-                    yprime = d_rJ * sinTheta;
-                    // Coordinates of integration points in global coordinates
-                    x    = l1 * xprime + l2 * yprime + x0;
-                    y    = m1 * xprime + m2 * yprime + y0;
-                    z    = n1 * xprime + n2 * yprime + z0;
-                    X[j] = Point(x, y, z);
-                    // Initialize the variables at the integration points
-                    W[j]  = 0.0;
-                    K[j]  = 0.0;
-                    ST[j] = Matrix3(0.);
-                    DG[j] = Matrix3(0.);
-                    st[j] = Matrix3(0.);
-                    dg[j] = Matrix3(0.);
+                  // Initialize all elements using the default constructor of JContourIntegrationPointData
+                  std::vector<Vaango::JContourIntegrationPointData> intData(nSegs + 1);
+
+                    // Loop over points on the circle
+                  for (int j = 0; j <= nSegs; ++j) {
+                    double angle = 2 * PI * static_cast<double>(j) /
+                                   static_cast<double>(nSegs);
+
+                    // Calculate cosTheta and sinTheta based on the original
+                    // cross-point's local coordinates This rotates the
+                    // cross-point's local coordinates around the origin by
+                    // 'angle' and then normalizes by scprime to get the
+                    // cosine/sine of the angle relative to cross-point.
+                    double cosTheta =
+                      (xcprime * std::cos(angle) - ycprime * std::sin(angle)) /
+                      scprime;
+                    double sinTheta =
+                      (ycprime * std::cos(angle) + xcprime * std::sin(angle)) /
+                      scprime;
+
+                    // Coordinates of integration points in local crack-front
+                    // coordinates
+                    double xprime = d_rJ * cosTheta;
+                    double yprime = d_rJ * sinTheta;
+
+                    // Convert local coordinates back to global coordinates for
+                    // the current integration point Using the inverse
+                    // transformation (transpose of T_global_to_local if
+                    // orthonormal) T_global_to_local.Transpose() is equivalent
+                    // to using l1, m1, n1, etc. directly for column vectors
+                    double x    = l1 * xprime + l2 * yprime + x0;
+                    double y    = m1 * xprime + m2 * yprime + y0;
+                    double z    = n1 * xprime + n2 * yprime + z0;
+
+                    // Assign to the struct within the vector
+                    intData[j].X = Point(x, y, z);
                   }
+
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 4 complete");
+
+                  DOUT(g_frac_param_dbg,
+                       "Crack::JIntCalc: Step 4 " << var_lo_index << " "
+                                                    << var_hi_index);
 
                   // Step 5: Evaluate solutions at integration points in global
                   // coordinates
@@ -547,21 +599,37 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   Matrix3 Sca = Matrix3(0.), Scb = Matrix3(0.);
                   for (int j = 0; j <= nSegs; j++) {
                     interpolator->findCellAndWeights(
-                      X[j], ni, S, pSize[j], pDefGrad[j]);
-                    for (int k = 0; k < d_n8or27; k++) {
+                      intData[j].X, ni, S, pSize[j], pDefGrad[j]);
+                    for (int k = 0; k < numInfluenceNodes; k++) {
                       // Calculate the values of the variables used in
                       // J-integral
-                      if (GnumPatls[ni[k]] != 0 &&
+                      DOUT(g_frac_param_dbg, 
+                          "Crack::JIntCalc: j = " << j << " k = " << k << " ni[k] = " << ni[k]);
+                      const auto node = ni[k];
+                      const auto weight = S[k];
+                      if (!patch->containsIndex(var_lo_index, var_hi_index, node)) {
+                        continue;
+                      }
+                      if (GnumPatls[node] != 0 &&
                           j < nSegs / 2) { // below crack
-                        W[j] += GW[ni[k]] * S[k];
-                        K[j] += GK[ni[k]] * S[k];
-                        ST[j] += GgridStress[ni[k]] * S[k];
-                        DG[j] += GdispGrads[ni[k]] * S[k];
+                        DOUT(g_frac_param_dbg,
+                             "Crack::JIntCalc: Below: j = " << j
+                                                            << " k = " << k);
+                        intData[j].W += GW[node] * weight;
+                        intData[j].K += GK[node] * weight;
+                        intData[j].ST += GgridStress[node] * weight;
+                        intData[j].DG += GdispGrads[node] * weight;
                       } else { // above crack or non-crack zone
-                        W[j] += gW[ni[k]] * S[k];
-                        K[j] += gK[ni[k]] * S[k];
-                        ST[j] += ggridStress[ni[k]] * S[k];
-                        DG[j] += gdispGrads[ni[k]] * S[k];
+                        DOUT(g_frac_param_dbg,
+                             "Crack::JIntCalc: Above: j = "
+                               << j << " k = " << k << " ni[k] = " << node);
+                        intData[j].W += gW[node] * weight;
+                        intData[j].K += gK[node] * weight;
+                        intData[j].ST += ggridStress[node] * weight;
+                        intData[j].DG += gdispGrads[node] * weight;
+                        DOUT(g_frac_param_dbg,
+                             "Crack::JIntCalc: Above: j = " << j << " k = " << k
+                                                            << " done");
                       }
                     } // End of loop over k
 
@@ -571,13 +639,19 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                     // interpolation.
                     if (j == 0) {
                       double sumS = 0.;
-                      for (int k = 0; k < d_n8or27; k++) {
-                        if (GnumPatls[ni[k]] != 0) {
-                          Sca += ggridStress[ni[k]] * S[k];
-                          Scb += GgridStress[ni[k]] * S[k];
-                          Uca += gdisp[ni[k]] * S[k];
-                          Ucb += Gdisp[ni[k]] * S[k];
-                          sumS += S[k];
+                      for (int k = 0; k < numInfluenceNodes; k++) {
+                        const auto node   = ni[k];
+                        const auto weight = S[k];
+                        if (!patch->containsIndex(
+                              var_lo_index, var_hi_index, node)) {
+                          continue;
+                        }
+                        if (GnumPatls[node] != 0) {
+                          Sca += ggridStress[node] * weight;
+                          Scb += GgridStress[node] * weight;
+                          Uca += gdisp[node] * weight;
+                          Ucb += Gdisp[node] * weight;
+                          sumS += weight;
                         }
                       }
                       Sca /= sumS;
@@ -587,6 +661,8 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                     }
 
                   } // End of loop over j
+
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 5 complete");
 
                   // Step 6: Transform the solutions to crack-front local
                   // coordinates
@@ -598,10 +674,10 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                       for (int j1 = 0; j1 < 3; j1++) {
                         for (int i2 = 0; i2 < 3; i2++) {
                           for (int j2 = 0; j2 < 3; j2++) {
-                            st[j](i1, j1) +=
-                              T(i1, i2) * T(j1, j2) * ST[j](i2, j2);
-                            dg[j](i1, j1) +=
-                              T(i1, i2) * T(j1, j2) * DG[j](i2, j2);
+                            intData[j].st(i1, j1) +=
+                              T(i1, i2) * T(j1, j2) * intData[j].ST(i2, j2);
+                            intData[j].dg(i1, j1) +=
+                              T(i1, i2) * T(j1, j2) * intData[j].DG(i2, j2);
                             if (j == 0) {
                               sca(i1, j1) +=
                                 T(i1, i2) * T(j1, j2) * Sca(i2, j2);
@@ -629,6 +705,8 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   uca = Vector(uax, uay, uaz);
                   ucb = Vector(ubx, uby, ubz);
 
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 6 complete");
+
                   // Step 7: Compute integrand values at integration points
 
                   double* f1ForJx = scinew double[nSegs + 1];
@@ -641,21 +719,22 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                       (xcprime * cos(angle) - ycprime * sin(angle)) / scprime;
                     sinTheta =
                       (ycprime * cos(angle) + xcprime * sin(angle)) / scprime;
-                    double t1 = st[j](0, 0) * cosTheta + st[j](0, 1) * sinTheta;
-                    double t2 = st[j](1, 0) * cosTheta + st[j](1, 1) * sinTheta;
-                    // double t3=st[j](2,0)*cosTheta+st[j](2,1)*sinTheta;
+                    double t1 = intData[j].st(0, 0) * cosTheta + intData[j].st(0, 1) * sinTheta;
+                    double t2 = intData[j].st(1, 0) * cosTheta + intData[j].st(1, 1) * sinTheta;
+                    // double t3=intData[j].st(2,0)*cosTheta+intData[j].st(2,1)*sinTheta;
 
                     Vector t123 = Vector(t1, t2, 0. /*t3*/); // plane state
-                    Vector dgx  = Vector(dg[j](0, 0), dg[j](1, 0), dg[j](2, 0));
-                    Vector dgy  = Vector(dg[j](0, 1), dg[j](1, 1), dg[j](2, 1));
+                    Vector dgx  = Vector(intData[j].dg(0, 0), intData[j].dg(1, 0), intData[j].dg(2, 0));
+                    Vector dgy  = Vector(intData[j].dg(0, 1), intData[j].dg(1, 1), intData[j].dg(2, 1));
 
-                    f1ForJx[j] = (W[j] + K[j]) * cosTheta - Dot(t123, dgx);
-                    f1ForJy[j] = (W[j] + K[j]) * sinTheta - Dot(t123, dgy);
+                    f1ForJx[j] = (intData[j].W + intData[j].K) * cosTheta - Dot(t123, dgx);
+                    f1ForJy[j] = (intData[j].W + intData[j].K) * sinTheta - Dot(t123, dgy);
                   }
+
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 7 complete");
 
                   // Step 8: Calculate contour integral (primary part of
                   // J-integral)
-
                   double Jx1 = 0., Jy1 = 0.;
                   for (int j = 0; j < nSegs; j++) {
                     Jx1 += f1ForJx[j] + f1ForJx[j + 1];
@@ -665,15 +744,10 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   Jy1 *= d_rJ * PI / nSegs;
 
                   // Release dynamic arries for this crack front segment
-                  delete[] X;
-                  delete[] W;
-                  delete[] K;
-                  delete[] ST;
-                  delete[] DG;
-                  delete[] st;
-                  delete[] dg;
                   delete[] f1ForJx;
                   delete[] f1ForJy;
+
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 8 complete");
 
                   // Step 9: Area integral (the secondary part of J-integral)
                   //   Area integral calculation is optional.
@@ -730,7 +804,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                       interpolator->findCellAndWeights(
                         X[j], ni, S, pSize[j], pDefGrad[j]);
 
-                      for (int k = 0; k < d_n8or27; k++) {
+                      for (int k = 0; k < numInfluenceNodes; k++) {
                         if (GnumPatls[ni[k]] != 0 &&
                             x[j].y() < 0.) { // below crack
                           // Valid only for stright crack within J-path, usually
@@ -796,6 +870,8 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
 
                   } // End of if(useVoluemIntegral || Jx1<0)
 
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 9 complete");
+
                   // Step 10. Contribution of friction to energy release rate =
                   // t*u
                   //          t: stress traction at crossPt on crack surface
@@ -819,11 +895,13 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   double fricWork = 0.;
                   if (d_cmu[m] != 0.) {
                     fricWork =
-                      fabs(tc(1, 0) * uc.x()) + fabs(tc(1, 2) * uc.z());
+                      std::abs(tc(1, 0) * uc.x()) + std::abs(tc(1, 2) * uc.z());
                     if (tc(1, 1) < 0. && uc.y() < 0.) {
-                      fricWork += fabs(tc(1, 1) * uc.y());
+                      fricWork += std::abs(tc(1, 1) * uc.y());
                     }
                   }
+
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 10 complete");
 
                   // Step 11. J-integral vector
 
@@ -833,6 +911,8 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   // fricWork: frictional dissipation due to crack surface
                   // frictional sliding
                   cfJ[l] = Vector(Jx1 + Jx2 - fricWork, Jy1 + Jy2, 0.);
+
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 11 complete");
 
                   // Step 12: Convert J-integral into stress intensity (K)
 
@@ -863,7 +943,7 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   Vector disp_b = Vector(0.);
                   interpolator->findCellAndWeights(
                     p_d, ni, S, pSize[0], pDefGrad[0]);
-                  for (int k = 0; k < d_n8or27; k++) {
+                  for (int k = 0; k < numInfluenceNodes; k++) {
                     disp_a += gdisp[ni[k]] * S[k];
                     disp_b += Gdisp[ni[k]] * S[k];
                   }
@@ -882,6 +962,9 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                   cm->convertJToK(
                     mpm_matl, d_stressState[m], cfJ[l], C, D, SIF);
                   cfK[l] = SIF;
+
+                  DOUT(g_frac_param_debug, "Crack::JIntCalc: Step 12 complete");
+
                 } // End if not operated
                 else { // if operated
                   cfJ[l] = cfJ[preIdx];
@@ -918,6 +1001,8 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
 void
 Crack::DetectIfDoingFractureAnalysisAtThisTimestep(double time)
 {
+  DOUT(g_frac_param_doing, "Doing Crack::DetectIfDoingFractureAnalysisAtThisTimestep");
+
   static double timeforcalculateJK = -1.e-200;
   static double timeforpropagation = -1.e-200;
 
@@ -954,6 +1039,8 @@ Crack::FindJIntegralPath(const Point& origin,
                          const Vector& v3,
                          double A[])
 {
+  DOUT(g_frac_param_doing, "Doing Crack::FindJIntegralPath");
+
   // J-integral is a spatial circle with the equation system:
   //   A0x^2+A1y^2+A2z^2+A3xy+A4xz+A5yz+A6x+A7y+A8z+A9-r^2=0
   //   A10x+A11y+A12z+A13=0
@@ -1005,6 +1092,8 @@ Crack::FindIntersectionJPathAndCrackPlane(const int& m,
                                           const double M[],
                                           Point& crossPt)
 {
+  DOUT(g_frac_param_doing, "Doing Crack::FindIntersectionJPathAndCrackPlane");
+
   // J-integral contour's equations:
   //   Ax^2+By^2+Cz^2+Dxy+Exz+Fyz+Gx+Hy+Iz+J-r^2=0 and a1x+b1y+c1z+d1=0
   // crack plane equation:
@@ -1067,13 +1156,13 @@ Crack::FindIntersectionJPathAndCrackPlane(const int& m,
     delt1 = a1 * b2 - a2 * b1;
     delt2 = a1 * c2 - a2 * c1;
     delt3 = b1 * c2 - b2 * c1;
-    if (fabs(delt1) >= fabs(delt2) && fabs(delt1) >= fabs(delt3)) {
+    if (std::abs(delt1) >= std::abs(delt2) && std::abs(delt1) >= std::abs(delt3)) {
       CASE = 1;
     }
-    if (fabs(delt2) >= fabs(delt1) && fabs(delt2) >= fabs(delt3)) {
+    if (std::abs(delt2) >= std::abs(delt1) && std::abs(delt2) >= std::abs(delt3)) {
       CASE = 2;
     }
-    if (fabs(delt3) >= fabs(delt1) && fabs(delt3) >= fabs(delt2)) {
+    if (std::abs(delt3) >= std::abs(delt1) && std::abs(delt3) >= std::abs(delt2)) {
       CASE = 3;
     }
 
@@ -1193,6 +1282,8 @@ Crack::FindPlaneEquation(const Point& p1,
                          double& c,
                          double& d)
 {
+  DOUT(g_frac_param_doing, "Doing Crack::FindPlaneEquation");
+
   // plane equation: ax+by+cz+d=0
 
   double x21, x31, y21, y31, z21, z31;
@@ -1218,6 +1309,9 @@ Crack::PointInTriangle(const Point& p,
                        const Point& pt2,
                        const Point& pt3)
 {
+
+  DOUT(g_frac_param_doing, "Doing Crack::PointInTriangle");
+
   // y=0 for all points
 
   double x1, z1, x2, z2, x3, z3, x, z;
@@ -1236,16 +1330,16 @@ Crack::PointInTriangle(const Point& p,
   area_p2p3p = x2 * z3 + x3 * z + x * z2 - x2 * z - x3 * z2 - x * z3;
   area_p3p1p = x3 * z1 + x1 * z + x * z3 - x3 * z - x1 * z3 - x * z1;
 
-  area_p123 = fabs(x1 * z2 + x2 * z3 + x3 * z1 - x1 * z3 - x2 * z1 - x3 * z2);
+  area_p123 = std::abs(x1 * z2 + x2 * z3 + x3 * z1 - x1 * z3 - x2 * z1 - x3 * z2);
 
   // Set the area zero if relatively error less than 0.1%
-  if (fabs(area_p1p2p) / area_p123 < 1.e-3) {
+  if (std::abs(area_p1p2p) / area_p123 < 1.e-3) {
     area_p1p2p = 0.;
   }
-  if (fabs(area_p2p3p) / area_p123 < 1.e-3) {
+  if (std::abs(area_p2p3p) / area_p123 < 1.e-3) {
     area_p2p3p = 0.;
   }
-  if (fabs(area_p3p1p) / area_p123 < 1.e-3) {
+  if (std::abs(area_p3p1p) / area_p123 < 1.e-3) {
     area_p3p1p = 0.;
   }
 
@@ -1255,6 +1349,8 @@ Crack::PointInTriangle(const Point& p,
 void
 Crack::OutputCrackFrontResults(const int& m, double time, double timestep)
 {
+  DOUT(g_frac_param_doing, "Doing Crack::OutputCrackFrontResults");
+
   if (d_cfSegNodes[m].size() > 0) {
     // Create output file name in format: CrackFrontResults.matXXX
     char outFileName[200] = "";
@@ -1370,6 +1466,8 @@ Crack::GetPositionToComputeCOD(const int& m,
                                const Matrix3& T,
                                double& d)
 {
+  DOUT(g_frac_param_doing, "Doing Crack::GetPositionToComputeCOD");
+
   // m: material index
   // origin: global coordinates of crack tip
   // T: transformation matrix from global to local coordinates
@@ -1418,7 +1516,7 @@ Crack::GetPositionToComputeCOD(const int& m,
         // Compute the distances from the intersection the to two ends
         l1 = (p - ps).length();
         l2 = (p - pe).length();
-        if (fabs(l1 + l2 - l) < 1.e-3 * l) { // point 'p' on segment 'ps-pe'
+        if (std::abs(l1 + l2 - l) < 1.e-3 * l) { // point 'p' on segment 'ps-pe'
           // Distance from the intersection (p) to the origin
           d0 = sqrt(x * x + y * y);
           if (d0 < d && d0 > 1.e-3 * l) {
@@ -1429,3 +1527,5 @@ Crack::GetPositionToComputeCOD(const int& m,
     }
   }
 }
+
+} // namespace Uintah

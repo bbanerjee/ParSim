@@ -48,6 +48,7 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iomanip>
 #include <iostream>
+#include <span>
 
 using std::string;
 using std::vector;
@@ -306,8 +307,13 @@ private:
               const double&);
   void
   CalculateCrackFrontNormals(const int& m);
+  /*
   void
   FindSegsFromNode(const int&, const int&, int[]);
+  */
+  void
+  FindSegsFromNode(const int& m, const int& node, std::span<int, 2> segs);
+
   void
   OutputInitialCrackMesh(const int&);
   Vector

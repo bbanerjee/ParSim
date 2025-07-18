@@ -36,6 +36,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Core/MPMLabel.h>
 #include <CCA/Ports/DataWarehouse.h>
+#include <Core/Exceptions/InternalError.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Grid/Grid.h>
@@ -49,10 +50,12 @@
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
-#include <cstring>
+#include <filesystem> // C++17
+#include <format>     // C++20
 #include <fstream>
 #include <iostream>
-#include <sys/stat.h>
+#include <ranges> // C++20
+#include <string>
 #include <vector>
 
 using namespace Uintah;
@@ -257,11 +260,12 @@ Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
 
           if (pid == i) { // Rank i does it
             for (int j = 0; j < num; j++) {
-              int idx    = d_cfsset[m][i][j];
-              int node1  = d_cfSegNodes[m][2 * idx];
-              int node2  = d_cfSegNodes[m][2 * idx + 1];
-              Point cent = d_cx[m][node1] + (d_cx[m][node2] - d_cx[m][node1]) / 2.;
-              inMat[j]   = YES;
+              int idx   = d_cfsset[m][i][j];
+              int node1 = d_cfSegNodes[m][2 * idx];
+              int node2 = d_cfSegNodes[m][2 * idx + 1];
+              Point cent =
+                d_cx[m][node1] + (d_cx[m][node2] - d_cx[m][node1]) / 2.;
+              inMat[j] = YES;
 
               interpolator->findCellAndWeights(
                 cent, ni, S, pSize[j], pDefGrad[j]);
@@ -318,7 +322,8 @@ Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
         }
         delete[] copyData;
 
-        if (d_cfSegNodes[m].size() > 0) { // New crack front is still in material
+        if (d_cfSegNodes[m].size() >
+            0) { // New crack front is still in material
           // Seek the start crack point (sIdx), re-arrange crack-front nodes
           int node0 = d_cfSegNodes[m][0];
           int segs[2];
@@ -395,6 +400,7 @@ Crack::RecollectCrackFrontSegments(const ProcessorGroup*,
   }
 }
 
+/*
 // Output cracks for visualization
 void
 Crack::OutputCrackGeometry(const int& m, const int& timestep)
@@ -473,13 +479,15 @@ Crack::OutputCrackGeometry(const int& m, const int& timestep)
 
       // Output crack elems
       for (int i = 0; i < (int)d_ce[m].size(); i++) {
-        outputCE << d_ce[m][i].x() << " " << d_ce[m][i].y() << " " << d_ce[m][i].z()
+        outputCE << d_ce[m][i].x() << " " << d_ce[m][i].y() << " " <<
+d_ce[m][i].z()
                  << std::endl;
       }
 
       // Output crack nodes
       for (int i = 0; i < (int)d_cx[m].size(); i++) {
-        outputCX << d_cx[m][i].x() << " " << d_cx[m][i].y() << " " << d_cx[m][i].z()
+        outputCX << d_cx[m][i].x() << " " << d_cx[m][i].y() << " " <<
+d_cx[m][i].z()
                  << std::endl;
       }
 
@@ -490,4 +498,65 @@ Crack::OutputCrackGeometry(const int& m, const int& timestep)
       }
     }
   } // End if(ce[m].size()>0)
+}
+*/
+
+// Output cracks for visualization
+void
+Crack::OutputCrackGeometry(const int& m, const int& timestep)
+{
+  if (d_ce[m].empty()) {
+    return; // Early return for materials without cracks
+  }
+
+  if (!d_dataArchiver->isOutputTimestep()) {
+    return; // Early return if not time to dump
+  }
+
+  // Create output directories using modern string formatting
+  const auto crackDir = std::format("{}/t{:05d}/crackData", d_udaDir, timestep);
+
+  // Create directory with filesystem library
+  std::error_code ec;
+  std::filesystem::create_directories(crackDir, ec);
+  if (ec) {
+    std::ostringstream err;
+    err << std::format(
+      "Error creating directory {}: {}\n", crackDir, ec.message());
+    throw InternalError(err.str(), __FILE__, __LINE__);
+  }
+
+  // Generate file names using modern formatting
+  const auto ceFileName = std::format("{}/ce.mat{:03d}", crackDir, m);
+  const auto cxFileName = std::format("{}/cx.mat{:03d}", crackDir, m);
+  const auto cfFileName = std::format("{}/cf.mat{:03d}", crackDir, m);
+
+  // Open files with RAII and error handling
+  std::ofstream outputCE(ceFileName);
+  std::ofstream outputCX(cxFileName);
+  std::ofstream outputCF(cfFileName);
+
+  if (!outputCE || !outputCX || !outputCF) {
+    std::ostringstream err;
+    err << "Error: failure to open files for storing crack geometry\n";
+    throw InternalError(err.str(), __FILE__, __LINE__);
+  }
+
+  // Output crack elements using range-based for loops
+  for (const auto& elem : d_ce[m]) {
+    outputCE << std::format("{} {} {}\n", elem.x(), elem.y(), elem.z());
+  }
+
+  // Output crack nodes
+  for (const auto& node : d_cx[m]) {
+    outputCX << std::format("{} {} {}\n", node.x(), node.y(), node.z());
+  }
+
+  // Output crack-front nodes using views and structured bindings
+  auto segPairs = d_cfSegNodes[m] | std::views::chunk(2);
+  for (const auto& pair : segPairs) {
+    if (pair.size() >= 2) {
+      outputCF << std::format("{} {}\n", pair[0], pair[1]);
+    }
+  }
 }
