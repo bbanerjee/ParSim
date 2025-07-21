@@ -805,19 +805,25 @@ Crack::CalculateFractureParameters(const ProcessorGroup*,
                         X[j], ni, S, pSize[j], pDefGrad[j]);
 
                       for (int k = 0; k < numInfluenceNodes; k++) {
-                        if (GnumPatls[ni[k]] != 0 &&
+                        const auto node   = ni[k];
+                        const auto weight = S[k];
+                        if (!patch->containsIndex(
+                              var_lo_index, var_hi_index, node)) {
+                          continue;
+                        }
+                        if (GnumPatls[node] != 0 &&
                             x[j].y() < 0.) { // below crack
                           // Valid only for stright crack within J-path, usually
                           // true
-                          ACC += Gacc[ni[k]] * S[k];
-                          VEL += Gvel[ni[k]] * S[k];
-                          DG += GdispGrads[ni[k]] * S[k];
-                          VG += GvelGrads[ni[k]] * S[k];
+                          ACC += Gacc[node] * weight;
+                          VEL += Gvel[node] * weight;
+                          DG += GdispGrads[node] * weight;
+                          VG += GvelGrads[node] * weight;
                         } else { // above crack
-                          ACC += gacc[ni[k]] * S[k];
-                          VEL += gvel[ni[k]] * S[k];
-                          DG += gdispGrads[ni[k]] * S[k];
-                          VG += gvelGrads[ni[k]] * S[k];
+                          ACC += gacc[node] * weight;
+                          VEL += gvel[node] * weight;
+                          DG += gdispGrads[node] * weight;
+                          VG += gvelGrads[node] * weight;
                         }
                       }
 

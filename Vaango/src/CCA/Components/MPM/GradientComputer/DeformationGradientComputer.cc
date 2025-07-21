@@ -453,6 +453,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(
   // Get Interpolator
   // std::cout << "interpolator = " << &(flag->d_interpolator) << "\n";
   auto interpolator = flag->d_interpolator->clone(patch);
+  auto numInfluenceNodes = interpolator->size();
 
   // Set up variables to store old particle and grid data
   // for vel grad and def grad calculation
@@ -524,7 +525,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(
       Matrix3 velGrad_new(0.0);
       short pgFld[27];
       if (flag->d_fracture) {
-        for (int k = 0; k < 27; k++) {
+        for (int k = 0; k < numInfluenceNodes; k++) {
           pgFld[k] = pgCode[particle][k];
         }
       }
