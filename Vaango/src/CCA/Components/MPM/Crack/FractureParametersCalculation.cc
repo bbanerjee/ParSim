@@ -52,11 +52,20 @@
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <Core/Util/DOUT.hpp>
+
+#include <array>
+#include <algorithm>
 #include <cstring>
+#include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <numbers>
+#include <ranges>
+#include <string>
+#include <string_view>
 #include <vector>
+
 
 using std::string;
 using std::vector;
@@ -162,20 +171,20 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
       constParticleVariable<double> pMass;
       constParticleVariable<double> pstrainenergydensity;
       constParticleVariable<double> pkineticenergydensity;
-      constParticleVariable<Matrix3> pstress, pDisplacementgrads, pvelgrads,
+      constParticleVariable<Matrix3> pStress, pDispGrads, pVelGrads,
         pDefGrad;
 
       ParticleSubset* pset = old_dw->getParticleSubset(
         dwi, patch, Ghost::AroundNodes, d_NGP, lb->pXLabel);
 
       new_dw->get(pMass, lb->pMassLabel_preReloc, pset);
-      new_dw->get(pstress, lb->pStressLabel_preReloc, pset);
-      new_dw->get(pDisplacementgrads, lb->pDispGradsLabel_preReloc, pset);
+      new_dw->get(pStress, lb->pStressLabel_preReloc, pset);
+      new_dw->get(pDispGrads, lb->pDispGradsLabel_preReloc, pset);
       new_dw->get(
         pstrainenergydensity, lb->pStrainEnergyDensityLabel_preReloc, pset);
 
       new_dw->get(pgCode, lb->pgCodeLabel, pset);
-      new_dw->get(pvelgrads, lb->pVelGradsLabel, pset);
+      new_dw->get(pVelGrads, lb->pVelGradsLabel, pset);
       new_dw->get(pkineticenergydensity, lb->pKineticEnergyDensityLabel, pset);
 
       old_dw->get(px, lb->pXLabel, pset);
@@ -231,17 +240,17 @@ Crack::GetNodalSolutions(const ProcessorGroup*,
             if (patch->containsNode(ni[k])) {
               double pMassTimesS = pMass[idx] * S[k];
               if (pgCode[idx][k] == 1) {
-                ggridstress[ni[k]] += pstress[idx] * pMassTimesS;
-                gdispgrads[ni[k]] += pDisplacementgrads[idx] * pMassTimesS;
-                gvelgrads[ni[k]] += pvelgrads[idx] * pMassTimesS;
+                ggridstress[ni[k]] += pStress[idx] * pMassTimesS;
+                gdispgrads[ni[k]] += pDispGrads[idx] * pMassTimesS;
+                gvelgrads[ni[k]] += pVelGrads[idx] * pMassTimesS;
                 gstrainenergydensity[ni[k]] +=
                   pstrainenergydensity[idx] * pMassTimesS;
                 gkineticenergydensity[ni[k]] +=
                   pkineticenergydensity[idx] * pMassTimesS;
               } else if (pgCode[idx][k] == 2) {
-                Ggridstress[ni[k]] += pstress[idx] * pMassTimesS;
-                Gdispgrads[ni[k]] += pDisplacementgrads[idx] * pMassTimesS;
-                Gvelgrads[ni[k]] += pvelgrads[idx] * pMassTimesS;
+                Ggridstress[ni[k]] += pStress[idx] * pMassTimesS;
+                Gdispgrads[ni[k]] += pDispGrads[idx] * pMassTimesS;
+                Gvelgrads[ni[k]] += pVelGrads[idx] * pMassTimesS;
                 Gstrainenergydensity[ni[k]] +=
                   pstrainenergydensity[idx] * pMassTimesS;
                 Gkineticenergydensity[ni[k]] +=
@@ -1352,6 +1361,7 @@ Crack::PointInTriangle(const Point& p,
   return (area_p1p2p <= 0. && area_p2p3p <= 0. && area_p3p1p <= 0.);
 }
 
+/*
 void
 Crack::OutputCrackFrontResults(const int& m, double time, double timestep)
 {
@@ -1463,6 +1473,92 @@ Crack::OutputCrackFrontResults(const int& m, double time, double timestep)
         }
       }
     } // End of loop over i
+  }
+}
+*/
+
+void
+Crack::OutputCrackFrontResults(const int& m, double time, double timestep)
+{
+  DOUT(g_frac_param_doing, "Doing Crack::OutputCrackFrontResults");
+
+  if (d_cfSegNodes[m].empty()) {
+    return;
+  }
+
+  // Create output file name using modern string formatting
+  const auto base_filename =
+    std::format("{}/CrackFrontResults.mat{:03d}", d_udaDir, m);
+
+  auto create_output_stream = [](const std::string& filename) {
+    return std::ofstream{ filename, std::ios::app };
+  };
+
+  auto main_output = create_output_stream(base_filename);
+
+  // Create additional output streams for NF grinding problem
+  constexpr bool out3middlecracks                    = true;
+  constexpr std::array<std::string_view, 3> suffixes = { ".0", ".1", ".2" };
+  constexpr std::array<int, 3> target_indices        = { 2, 4, 6 };
+
+  std::array<std::ofstream, 3> additional_outputs;
+  for (auto&& [i, suffix] : std::views::enumerate(suffixes)) {
+    additional_outputs[i] =
+      create_output_stream(std::format("{}{}", base_filename, suffix));
+  }
+
+  const auto num   = static_cast<int>(d_cfSegNodes[m].size());
+  int numSubCracks = 0;
+
+  // Process crack front segments
+  for (int i = 0; i < num; ++i) {
+    if (i == 0 || i == num - 1 || d_cfSegPreIdx[m][i] < 0) {
+      if (i == d_cfSegMinIdx[m][i]) {
+        ++numSubCracks;
+      }
+
+      const int node   = d_cfSegNodes[m][i];
+      const Point cp   = d_cx[m][node];
+      const Vector cfJ = d_cfSegJ[m][i];
+      const Vector cfK = d_cfSegK[m][i];
+
+      // Format output data using modern formatting
+      const auto format_output_line = [&](std::ofstream& stream) {
+        const auto ratio = (cfK.x() != 0.0)
+                             ? std::format("{:15.6f}", cfK.y() / cfK.x())
+                             : std::format("{:>15}", "inf");
+        const auto cp_str = std::format("{},{},{}", cp.x(), cp.y(), cp.z());
+        const auto cfJ_str = std::format("{},{},{}", cfJ.x(), cfJ.y(), cfJ.z());
+        const auto cfK_str = std::format("{},{},{}", cfK.x(), cfK.y(), cfK.z());
+
+        stream << std::format("{},{},{},{},{},{},{},{}\n",
+                              timestep,
+                              time,
+                              (i - 1 + 2 * numSubCracks) / 2,
+                              node,
+                              cp_str,
+                              cfJ_str,
+                              cfK_str,
+                              ratio);
+      };
+
+      // Write to main output
+      format_output_line(main_output);
+
+      // Add blank line for segment separation
+      if (i == d_cfSegMaxIdx[m][i] && num > 2) {
+        main_output << '\n';
+      }
+
+      // Write to additional outputs if needed
+      if (out3middlecracks) {
+        if (auto it = std::ranges::find(target_indices, i);
+            it != target_indices.end()) {
+          const auto index = std::distance(target_indices.begin(), it);
+          format_output_line(additional_outputs[index]);
+        }
+      }
+    }
   }
 }
 

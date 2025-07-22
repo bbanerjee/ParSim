@@ -124,7 +124,8 @@ VelocityGradientComputer::computeAxiSymVelocityGradient(
   [[maybe_unused]] const Point& px)
 {
   // x -> r, y -> z, z -> theta
-  for (int k = 0; k < flag->d_8or27; k++) {
+  int numInfluenceNodes = static_cast<int>(ni.size());
+  for (int k = 0; k < numInfluenceNodes; k++) {
     Vector gvel = gVelocity[ni[k]];
     for (int j = 0; j < 2; j++) {
       for (int i = 0; i < 2; i++) {
@@ -145,8 +146,9 @@ VelocityGradientComputer::computeVelocityGradient(
   constNCVariable<Vector>& gVelocity,
   constNCVariable<Vector>& GVelocity)
 {
+  int numInfluenceNodes = static_cast<int>(ni.size());
   Vector gvel(0., 0., 0);
-  for (int k = 0; k < flag->d_8or27; k++) {
+  for (int k = 0; k < numInfluenceNodes; k++) {
     if (pgFld[k] == 1) {
       gvel = gVelocity[ni[k]];
     }
