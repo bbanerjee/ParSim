@@ -53,9 +53,11 @@ endif()
 #----------------------------------------------------------------------------
 project(Vaango 
     VERSION 1.1.0
-    LANGUAGES C CXX Fortran
+    LANGUAGES C CXX Fortran CUDA
     DESCRIPTION "Vaango project"
 )
+
+set(CMAKE_CUDA_ARCHITECTURES "native")
 
 # Optional: Create legacy variables for compatibility
 set(MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
