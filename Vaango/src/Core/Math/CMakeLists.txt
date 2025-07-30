@@ -87,6 +87,9 @@ target_link_libraries(Vaango_Core_Math PRIVATE
   ${LIBS}
   LibXml2::LibXml2 
   MPI::MPI_CXX 
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   Vaango::Options
   Vaango::Warnings
 )

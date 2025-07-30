@@ -53,11 +53,9 @@ endif()
 #----------------------------------------------------------------------------
 project(Vaango 
     VERSION 1.1.0
-    LANGUAGES C CXX Fortran CUDA
+    LANGUAGES C CXX Fortran
     DESCRIPTION "Vaango project"
 )
-
-set(CMAKE_CUDA_ARCHITECTURES "native")
 
 # Optional: Create legacy variables for compatibility
 set(MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
@@ -105,6 +103,7 @@ option(PETSC           "Build with PETSc" OFF)
 option(HYPRE           "Build with HYPRE" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(VISIT             "Build with Visit" OFF) 
+option(CUDA             "Build with CUDA" ON) 
 
 # Explicitly setting VISIT ON if VISIT_DIR is defined,
 # but consider making VISIT an option if it's user-configurable.
@@ -120,7 +119,7 @@ mark_as_advanced(CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 # C/C++ compiler configuration
 #----------------------------------------------------------------------------
 # Set C++ standard requirements
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -770,6 +769,29 @@ endif()
 #message(STATUS "Git Branch: ${GIT_BRANCH}")
 #message(STATUS "Git Hash: ${GIT_HASH}")
 #message(STATUS "Git Date: ${GIT_DATE}")
+
+#----------------------------------------------------------------------------
+# CUDA and Kokkos (other architectures ignored)
+#----------------------------------------------------------------------------
+if (CUDA)
+  find_package(CUDAToolkit REQUIRED)
+  if (CUDAToolkit_FOUND)
+    set(HAVE_CUDA TRUE)
+    set(DEF_CUDA "#define HAVE_CUDA 1")
+    set(CMAKE_CUDA_ARCHITECTURES "native")
+    set(CMAKE_CUDA_STANDARD 20)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+
+    find_package(Kokkos REQUIRED)
+    if (Kokkos_FOUND)
+      set(HAVE_KOKKOS TRUE)
+      set(DEF_KOKKOS "#define HAVE_KOKKOS 1")
+      set(DEF_KOKKOS_USING_GPU "#define KOKKOS_USING_GPU")
+      message(STATUS "Kokkos found")  
+      message(STATUS "Kokkos libraries: ${Kokkos_LIBRARIES}")  
+    endif()
+  endif (CUDAToolkit_FOUND)
+endif (CUDA)
 
 #------------------------------------------------------------------------
 # Set up vaango paths for files
