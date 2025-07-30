@@ -28,11 +28,10 @@
 #define UINTAH_HOMEBREW_ARRAY3_H
 
 #include <Core/Grid/Variables/Array3Window.h>
-
-#include <Core/Grid/Variables/BlockRange.hpp>
-
 #include <Core/Grid/Variables/Stencil4.h> // **WARNING** Needed for template instantiation
 #include <Core/Grid/Variables/Stencil7.h> // **WARNING** Needed for template instantiation
+
+#include <Core/Parallel/LoopExecution.h>
 
 #include <Core/Grid/Variables/NeighborBondEnergy.h> // **WARNING** Needed for template instantiation
 #include <Core/Grid/Variables/NeighborBondInternalForce.h> // **WARNING** Needed for template instantiation
@@ -52,6 +51,8 @@
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/MinMax.h>
 #include <Core/Util/Endian.h>
+
+#include <sci_defs/cuda_defs.h>
 
 #include <iosfwd>
 
