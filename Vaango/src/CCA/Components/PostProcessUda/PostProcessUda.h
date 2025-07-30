@@ -67,6 +67,15 @@ public:
   }
 
   virtual void
+  restartInitialize(const ProcessorGroup*,
+                    const PatchSubset*,
+                    const MaterialSubset*,
+                    DataWarehouse*,
+                    DataWarehouse*)
+  {
+  }
+
+  virtual void
   scheduleComputeStableTimestep(const LevelP&, SchedulerP&);
 
   virtual void

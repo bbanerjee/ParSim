@@ -545,7 +545,7 @@ SimulationCommon::reduceSystemVars(const ProcessorGroup* pg,
   // different due to round off.
   if (!g_deltaT_prevalidate && !g_deltaT_prevalidate_sum) {
     // Validate and put the value into the warehouse if it changed.
-    if ((validDelT = validateNextDelT(d_delTNext, -1))) {
+    if ((validDelT = validateNextDelT(d_delTNext, static_cast<unsigned int>(-1)))) {
       new_dw->override(delt_vartype(d_delTNext), d_delTLabel);
     }
   }

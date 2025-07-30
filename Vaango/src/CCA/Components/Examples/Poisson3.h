@@ -60,6 +60,9 @@ public:
   Poisson3&
   operator=(Poisson3&&) = delete;
 
+  void
+  problemSetup(const ProblemSpecP& ) {};
+
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,

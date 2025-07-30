@@ -34,16 +34,10 @@
 #include <vector>
 #include <string>
 
+using Uintah::Vector;
 namespace Uintah {
   class TypeDescription;
   class Piostream;
-}
-
-
-namespace Uintah {
-
-  using Uintah::Vector;
-
   class NeighborBondInternalForce 
   {
   public: 

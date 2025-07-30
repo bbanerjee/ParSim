@@ -125,7 +125,7 @@ getIteratorBCValue(const Patch* patch,
 {
   bool foundBC = false;
 
-  const BCDataArray* bcd = patch->getBCDataArray(face);
+  const auto& bcd = patch->getBCDataArray(face);
   //__________________________________
   //  non-symmetric BCs
   // find the bc_value and kind
@@ -174,14 +174,12 @@ getBCValue(const Patch* patch,
 {
   bool foundBC = false;
 
-  const BoundCondBaseSP bc;
-  const BoundCond<T>* new_bcs;
-  const BCDataArray* bcd = patch->getBCDataArray(face);
+  const auto& bcd = patch->getBCDataArray(face);
   //__________________________________
   //  non-symmetric BCs
   // find the bc_value and kind
   if (!foundBC) {
-    bc      = bcd->getBoundCondData(mat_id, desc, child);
+    const auto& bc = bcd->getBoundCondData(mat_id, desc, child);
     typename BoundCond<T>::BoundCondP new_bcs =
       std::dynamic_pointer_cast<BoundCond<T>>(bc);
 

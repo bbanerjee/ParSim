@@ -31,8 +31,6 @@
 #include <Core/Grid/Patch.h>
 namespace Uintah {
 
-  using Uintah::InternalError;
-
   class TypeDescription;
 
   /**************************************

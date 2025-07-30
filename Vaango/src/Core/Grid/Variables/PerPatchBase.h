@@ -32,8 +32,6 @@
 
 namespace Uintah {
 
-using Uintah::IntVector;
-
 class Patch;
 class RefCounted;
 

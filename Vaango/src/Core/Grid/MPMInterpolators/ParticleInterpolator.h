@@ -39,9 +39,6 @@ namespace Uintah {
 class Patch;
 class Stencil7;
 using std::vector;
-using Uintah::IntVector;
-using Uintah::Point;
-using Uintah::Vector;
 
 using Array2_D = std::array<double, 2>;
 using Array8_D = std::array<double, 8>;

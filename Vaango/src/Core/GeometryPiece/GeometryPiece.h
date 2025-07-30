@@ -94,7 +94,7 @@ public:
   virtual bool
   inside(const Point& p) const = 0;
 
-  virtual bool
+  bool
   inside(const Point& p, [[maybe_unused]] bool default_val) const 
   {
     return inside(p);

@@ -54,6 +54,9 @@ public:
   Switcher&
   operator=(Switcher&&) = delete;
 
+  void
+  problemSetup(const ProblemSpecP& ) {};
+
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
@@ -93,6 +96,9 @@ public:
 
   virtual bool
   needRecompile(const GridP& grid);
+
+  void
+  recomputeDelT() {}
 
   virtual double
   recomputeDelT(double delT);

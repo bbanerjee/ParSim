@@ -74,13 +74,20 @@ if (CUDA)
 endif (CUDA)
 
 add_library(Vaango_CCA_Components_Examples ${Vaango_CCA_Components_Examples_SRCS})
+if (HAVE_CUDA)
+  set_target_properties(Vaango_CCA_Components_Examples PROPERTIES
+    CUDA_STANDARD 20
+    CUDA_STANDARD_REQUIRED ON
+  )
+endif ()
 
 target_link_libraries(Vaango_CCA_Components_Examples PRIVATE
   ${Examples_LIBS}
-  ${CUDA_LIBRARY}
   LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
   $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
 )
 

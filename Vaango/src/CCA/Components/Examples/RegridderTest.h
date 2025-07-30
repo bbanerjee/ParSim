@@ -71,6 +71,9 @@ public:
   RegridderTest(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager);
   virtual ~RegridderTest(void);
 
+  void
+  problemSetup(const ProblemSpecP& ) {};
+
   // Interface inherited from Simulation Interface
   virtual void
   problemSetup(const ProblemSpecP& params,

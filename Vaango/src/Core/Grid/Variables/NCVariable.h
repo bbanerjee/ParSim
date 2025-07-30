@@ -37,8 +37,6 @@
 
 namespace Uintah {
 
-using Uintah::InternalError;
-
 class TypeDescription;
 
 /**************************************

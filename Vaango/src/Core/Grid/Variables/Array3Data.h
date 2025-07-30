@@ -32,9 +32,8 @@
 #include <Core/Util/FancyAssert.h>
 #include <Core/Util/RefCounted.h>
 
-namespace Uintah {
-
 using Uintah::IntVector;
+namespace Uintah {
 
 /**************************************
 

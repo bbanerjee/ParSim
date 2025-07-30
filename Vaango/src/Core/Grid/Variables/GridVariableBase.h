@@ -30,9 +30,9 @@
 #include <Core/Geometry/IntVector.h>
 #include <Core/Grid/Variables/Variable.h>
 #include <Core/Parallel/BufferInfo.h>
-namespace Uintah {
 
 using Uintah::IntVector;
+namespace Uintah {
 
 /**************************************
 
@@ -82,7 +82,7 @@ public:
   virtual void
   allocate(const IntVector& lowIndex, const IntVector& highIndex) = 0;
 
-  virtual void
+  void
   allocate(const GridVariableBase* src)
   {
     allocate(src->getLow(), src->getHigh());

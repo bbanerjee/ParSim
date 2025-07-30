@@ -34,10 +34,10 @@
 #include <Core/Malloc/Allocator.h>
 #include <Core/Grid/Variables/BaseIterator.h>
 
-namespace Uintah {
-
 using Uintah::IntVector;
- using std::ostream;
+using std::ostream;
+
+namespace Uintah {
 
 /**************************************
 

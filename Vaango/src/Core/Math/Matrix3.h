@@ -45,10 +45,10 @@
 #include <string>
 #include <format>
 
-namespace Uintah {
+using Uintah::Vector;
+using TNT::Array2D;
 
-  using Uintah::Vector;
-  using TNT::Array2D;
+namespace Uintah {
 
   class Matrix3 {
   private:

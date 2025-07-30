@@ -34,8 +34,7 @@
 #include <Core/Grid/Variables/GridIterator.h>
 namespace Uintah {
 
-using Uintah::IntVector;
- using std::ostream;
+using std::ostream;
 
 /**************************************
 

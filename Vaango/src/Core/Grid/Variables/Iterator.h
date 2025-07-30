@@ -31,9 +31,8 @@
 #include <Core/Util/Assert.h>
 #include <Core/Grid/Variables/BaseIterator.h>
 
+using Uintah::IntVector;
 namespace Uintah {
-
-  using Uintah::IntVector;
 
   /**************************************
 
