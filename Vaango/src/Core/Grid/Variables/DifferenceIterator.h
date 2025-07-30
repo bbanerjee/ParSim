@@ -35,8 +35,6 @@
 
 namespace Uintah {
 
-using Uintah::IntVector;
-
 /**************************************
 
   CLASS

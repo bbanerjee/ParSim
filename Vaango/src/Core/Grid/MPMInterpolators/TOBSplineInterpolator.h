@@ -52,6 +52,11 @@ public:
                      const Matrix3& size,
                      const Matrix3& defgrad);
 
+  void
+  findCellAndWeights([[maybe_unused]] const Point& p,
+                     [[maybe_unused]] std::vector<IntVector>& ni,
+                     [[maybe_unused]] std::vector<double>& S){};
+
   virtual void
   findCellAndShapeDerivatives(const Point& pos,
                               std::vector<IntVector>& ni,
