@@ -25,7 +25,7 @@
 #include <CCA/Components/Schedulers/GPUMemoryPool.h>
 #include <CCA/Components/Schedulers/OnDemandDataWarehouse.h>
 #include <CCA/Components/Schedulers/UnifiedScheduler.h>
-#include <Core/Parallel/CrowdMonitor.hpp>
+#include <Core/Parallel/CrowdMonitor.h>
 #include <Core/Parallel/MasterLock.h>
 #include <Core/Util/DebugStream.h>
 

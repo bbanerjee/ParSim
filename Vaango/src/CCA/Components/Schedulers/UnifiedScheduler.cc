@@ -1451,14 +1451,14 @@ UnifiedScheduler::prepareGpuDependencies( DetailedTask          * dtask
       }
 
       switch (label->typeDescription()->getType()) {
-        case TypeDescription::ParticleVariable: {
+        case TypeDescription::Type::ParticleVariable: {
         }
           break;
-        case TypeDescription::NCVariable:
-        case TypeDescription::CCVariable:
-        case TypeDescription::SFCXVariable:
-        case TypeDescription::SFCYVariable:
-        case TypeDescription::SFCZVariable: {
+        case TypeDescription::Type::NCVariable:
+        case TypeDescription::Type::CCVariable:
+        case TypeDescription::Type::SFCXVariable:
+        case TypeDescription::Type::SFCYVariable:
+        case TypeDescription::Type::SFCZVariable: {
 
           // TODO, This compiles a list of regions we need to copy into contiguous arrays.
           // We don't yet handle a scenario where the ghost cell region is exactly the same
@@ -1838,13 +1838,13 @@ UnifiedScheduler::initiateH2DCopies( DetailedTask * dtask )
     const TypeDescription::Type type = curDependency->m_var->typeDescription()->getType();
 
     //make sure we're dealing with a variable we support
-    if (type == TypeDescription::CCVariable
-        || type == TypeDescription::NCVariable
-        || type == TypeDescription::SFCXVariable
-        || type == TypeDescription::SFCYVariable
-        || type == TypeDescription::SFCZVariable
-        || type == TypeDescription::PerPatch
-        || type == TypeDescription::ReductionVariable) {
+    if (type == TypeDescription::Type::CCVariable
+        || type == TypeDescription::Type::NCVariable
+        || type == TypeDescription::Type::SFCXVariable
+        || type == TypeDescription::Type::SFCYVariable
+        || type == TypeDescription::Type::SFCZVariable
+        || type == TypeDescription::Type::PerPatch
+        || type == TypeDescription::Type::ReductionVariable) {
 
       constHandle<PatchSubset> patches = curDependency->getPatchesUnderDomain(dtask->getPatches());
       constHandle<MaterialSubset> matls = curDependency->getMaterialsUnderDomain(dtask->getMaterials());
@@ -1866,7 +1866,7 @@ UnifiedScheduler::initiateH2DCopies( DetailedTask * dtask )
       }
       const int matlID = varIter->first.m_matlIndex;
       int levelID = level->getID();
-      if (curDependency->m_var->typeDescription()->getType() == TypeDescription::ReductionVariable) {
+      if (curDependency->m_var->typeDescription()->getType() == TypeDescription::Type::ReductionVariable) {
         levelID = -1;
       }
 
@@ -1891,8 +1891,8 @@ UnifiedScheduler::initiateH2DCopies( DetailedTask * dtask )
       const IntVector host_size = high - low;
       const size_t elementDataSize = OnDemandDataWarehouse::getTypeDescriptionSize(curDependency->m_var->typeDescription()->getSubType()->getType());
       size_t memSize = 0;
-      if (type == TypeDescription::PerPatch
-          || type == TypeDescription::ReductionVariable) {
+      if (type == TypeDescription::Type::PerPatch
+          || type == TypeDescription::Type::ReductionVariable) {
         memSize = elementDataSize;
       } else {
         memSize = host_size.x() * host_size.y() * host_size.z() * elementDataSize;
@@ -2376,11 +2376,11 @@ UnifiedScheduler::initiateH2DCopies( DetailedTask * dtask )
           // will allocate space for it.  Otherwise if it does exist on the GPU, the upcoming
           // allocateAndPut will notice that and simply configure it to reuse the pointer.
 
-          if (type == TypeDescription::CCVariable
-              || type == TypeDescription::NCVariable
-              || type == TypeDescription::SFCXVariable
-              || type == TypeDescription::SFCYVariable
-              || type == TypeDescription::SFCZVariable) {
+          if (type == TypeDescription::Type::CCVariable
+              || type == TypeDescription::Type::NCVariable
+              || type == TypeDescription::Type::SFCXVariable
+              || type == TypeDescription::Type::SFCYVariable
+              || type == TypeDescription::Type::SFCZVariable) {
 
             // Queue this CPU var to go into the host-side GPU DW.
             // Also queue that this GPU DW var should also be found in this tasks's Task DW.
@@ -2394,13 +2394,13 @@ UnifiedScheduler::initiateH2DCopies( DetailedTask * dtask )
             if (gatherGhostCells) {
               dtask->getVarsToBeGhostReady().addVarToBeGhostReady(dtask->getName(), patch, matlID, levelID, curDependency, deviceIndex);
             }
-          } else if (type == TypeDescription::PerPatch) {
+          } else if (type == TypeDescription::Type::PerPatch) {
             //PerPatchBase* patchVar = dynamic_cast<PerPatchBase*>(curDependency->m_var->typeDescription()->createInstance());
             //dw->get(*patchVar, curDependency->m_var, matlID, patch);
             dtask->getDeviceVars().add(patch, matlID, levelID, elementDataSize, elementDataSize, curDependency, deviceIndex,
                                        nullptr, GpuUtilities::sameDeviceSameMpiRank);
             dtask->getTaskVars().addTaskGpuDWVar(patch, matlID, levelID, elementDataSize, curDependency, deviceIndex);
-          } else if (type == TypeDescription::ReductionVariable) {
+          } else if (type == TypeDescription::Type::ReductionVariable) {
             levelID = -1;
             //ReductionVariableBase* reductionVar = dynamic_cast<ReductionVariableBase*>(curDependency->m_var->typeDescription()->createInstance());
             //dw->get(*reductionVar, curDependency->m_var, patch->getLevel(), matlID);
@@ -2432,22 +2432,22 @@ UnifiedScheduler::initiateH2DCopies( DetailedTask * dtask )
           cerrLock.unlock();
         }
 
-        if (type == TypeDescription::PerPatch) {
+        if (type == TypeDescription::Type::PerPatch) {
           //For PerPatch, it's not a mesh of variables, it's just a single variable, so elementDataSize is the memSize.
           dtask->getDeviceVars().add(patch, matlID, levelID, memSize, elementDataSize, curDependency, deviceIndex, nullptr,
                                      GpuUtilities::sameDeviceSameMpiRank);
           dtask->getTaskVars().addTaskGpuDWVar(patch, matlID, levelID, elementDataSize, curDependency, deviceIndex);
-        } else if (type == TypeDescription::ReductionVariable) {
+        } else if (type == TypeDescription::Type::ReductionVariable) {
           //For ReductionVariable, it's not a mesh of variables, it's just a single variable, so elementDataSize is the memSize.
           dtask->getDeviceVars().add(patch, matlID, levelID, memSize, elementDataSize, curDependency, deviceIndex, nullptr,
                                      GpuUtilities::sameDeviceSameMpiRank);
           dtask->getTaskVars().addTaskGpuDWVar(patch, matlID, levelID, elementDataSize, curDependency, deviceIndex);
 
-        } else if (type == TypeDescription::CCVariable
-            || type == TypeDescription::NCVariable
-            || type == TypeDescription::SFCXVariable
-            || type == TypeDescription::SFCYVariable
-            || type == TypeDescription::SFCZVariable) {
+        } else if (type == TypeDescription::Type::CCVariable
+            || type == TypeDescription::Type::NCVariable
+            || type == TypeDescription::Type::SFCXVariable
+            || type == TypeDescription::Type::SFCYVariable
+            || type == TypeDescription::Type::SFCZVariable) {
           
           dtask->getDeviceVars().add(patch, matlID, levelID, false, host_size, memSize, elementDataSize, low, curDependency,
                                      curDependency->m_gtype, curDependency->m_num_ghost_cells, deviceIndex, nullptr,
@@ -2548,14 +2548,14 @@ UnifiedScheduler::prepareDeviceVars( DetailedTask * dtask )
           //Allocate the vars if needed.  If they've already been allocated, then
           //this simply sets the var to reuse the existing pointer.
           switch (type) {
-            case TypeDescription::PerPatch : {
+            case TypeDescription::Type::PerPatch : {
               GPUPerPatchBase* patchVar = OnDemandDataWarehouse::createGPUPerPatch(subtype);
               gpudw->allocateAndPut(*patchVar, label_cstr, patchID, matlIndx, levelID, elementDataSize);
               device_ptr = patchVar->getVoidPointer();
               delete patchVar;
               break;
             }
-            case TypeDescription::ReductionVariable : {
+            case TypeDescription::Type::ReductionVariable : {
 
               GPUReductionVariableBase* reductionVar = OnDemandDataWarehouse::createGPUReductionVariable(subtype);
               gpudw->allocateAndPut(*reductionVar, label_cstr, patchID, matlIndx, levelID, elementDataSize);
@@ -2563,11 +2563,11 @@ UnifiedScheduler::prepareDeviceVars( DetailedTask * dtask )
               delete reductionVar;
               break;
             }
-            case TypeDescription::CCVariable :
-            case TypeDescription::NCVariable :
-            case TypeDescription::SFCXVariable :
-            case TypeDescription::SFCYVariable :
-            case TypeDescription::SFCZVariable : {
+            case TypeDescription::Type::CCVariable :
+            case TypeDescription::Type::NCVariable :
+            case TypeDescription::Type::SFCXVariable :
+            case TypeDescription::Type::SFCYVariable :
+            case TypeDescription::Type::SFCZVariable : {
               GPUGridVariableBase* device_var = OnDemandDataWarehouse::createGPUGridVariable(subtype);
 
               if (!uses_SHRT_MAX) {
@@ -2647,11 +2647,11 @@ UnifiedScheduler::prepareDeviceVars( DetailedTask * dtask )
 
                 //The variable exists in host memory.  We just have to get one and copy it on in.
                 switch (type) {
-                  case TypeDescription::CCVariable :
-                  case TypeDescription::NCVariable :
-                  case TypeDescription::SFCXVariable :
-                  case TypeDescription::SFCYVariable :
-                  case TypeDescription::SFCZVariable : {
+                  case TypeDescription::Type::CCVariable :
+                  case TypeDescription::Type::NCVariable :
+                  case TypeDescription::Type::SFCXVariable :
+                  case TypeDescription::Type::SFCYVariable :
+                  case TypeDescription::Type::SFCZVariable : {
 
                     //The var on the host could either be a regular var or a foreign var.
                     // If it's a regular var, this will manage ghost cells by creating a host var, rewindowing it, then
@@ -2733,7 +2733,7 @@ UnifiedScheduler::prepareDeviceVars( DetailedTask * dtask )
                     }
                     break;
                   }
-                  case TypeDescription::PerPatch : {
+                  case TypeDescription::Type::PerPatch : {
                     PerPatchBase* patchVar = dynamic_cast<PerPatchBase*>(type_description->createInstance());
                     dw->get(*patchVar, label, matlIndx, patch);
                     host_ptr = patchVar->getBasePointer();
@@ -2741,7 +2741,7 @@ UnifiedScheduler::prepareDeviceVars( DetailedTask * dtask )
                     delete patchVar;
                     break;
                   }
-                  case TypeDescription::ReductionVariable : {
+                  case TypeDescription::Type::ReductionVariable : {
                     ReductionVariableBase* reductionVar = dynamic_cast<ReductionVariableBase*>(type_description->createInstance());
                     dw->get(*reductionVar, label, patch->getLevel(), matlIndx);
                     host_ptr = reductionVar->getBasePointer();
@@ -2849,13 +2849,13 @@ UnifiedScheduler::prepareTaskVarsIntoTaskDW( DetailedTask * dtask )
       // isStaging is flipped after the first iteration of the i for loop.
       if (it->second.m_staging == isStaging) {
         switch (it->second.m_dep->m_var->typeDescription()->getType()) {
-          case TypeDescription::PerPatch :
-          case TypeDescription::ReductionVariable :
-          case TypeDescription::CCVariable :
-          case TypeDescription::NCVariable :
-          case TypeDescription::SFCXVariable :
-          case TypeDescription::SFCYVariable :
-          case TypeDescription::SFCZVariable : {
+          case TypeDescription::Type::PerPatch :
+          case TypeDescription::Type::ReductionVariable :
+          case TypeDescription::Type::CCVariable :
+          case TypeDescription::Type::NCVariable :
+          case TypeDescription::Type::SFCXVariable :
+          case TypeDescription::Type::SFCYVariable :
+          case TypeDescription::Type::SFCZVariable : {
 
             int dwIndex = it->second.m_dep->mapDataWarehouse();
             GPUDataWarehouse* gpudw = m_dws[dwIndex]->getGPUDW(it->second.m_whichGPU);
@@ -3217,7 +3217,7 @@ UnifiedScheduler::allGPUVarsProcessingReady( DetailedTask * dtask )
       }
     }
     int levelID = level->getID();
-    if (curDependency->m_var->typeDescription()->getType() == TypeDescription::ReductionVariable) {
+    if (curDependency->m_var->typeDescription()->getType() == TypeDescription::Type::ReductionVariable) {
       levelID = -1;
     }
 
@@ -3509,11 +3509,11 @@ UnifiedScheduler::initiateD2HForHugeGhostCells( DetailedTask * dtask )
               const TypeDescription::Type type = comp->m_var->typeDescription()->getType();
               const TypeDescription::Type datatype = comp->m_var->typeDescription()->getSubType()->getType();
               switch (type) {
-                case TypeDescription::CCVariable:
-                case TypeDescription::NCVariable:
-                case TypeDescription::SFCXVariable:
-                case TypeDescription::SFCYVariable:
-                case TypeDescription::SFCZVariable: {
+                case TypeDescription::Type::CCVariable:
+                case TypeDescription::Type::NCVariable:
+                case TypeDescription::Type::SFCXVariable:
+                case TypeDescription::Type::SFCYVariable:
+                case TypeDescription::Type::SFCZVariable: {
 
                   if (gpu_stats.active()) {
                     cerrLock.lock();
@@ -3774,7 +3774,7 @@ UnifiedScheduler::initiateD2H( DetailedTask * dtask )
     }
 
     int levelID = level->getID();
-    if (dependantVar->m_var->typeDescription()->getType() == TypeDescription::ReductionVariable) {
+    if (dependantVar->m_var->typeDescription()->getType() == TypeDescription::Type::ReductionVariable) {
       levelID = -1;
     }
 
@@ -3811,11 +3811,11 @@ UnifiedScheduler::initiateD2H( DetailedTask * dtask )
         const TypeDescription::Type type = dependantVar->m_var->typeDescription()->getType();
         const TypeDescription::Type datatype = dependantVar->m_var->typeDescription()->getSubType()->getType();
         switch (type) {
-          case TypeDescription::CCVariable:
-          case TypeDescription::NCVariable:
-          case TypeDescription::SFCXVariable:
-          case TypeDescription::SFCYVariable:
-          case TypeDescription::SFCZVariable: {
+          case TypeDescription::Type::CCVariable:
+          case TypeDescription::Type::NCVariable:
+          case TypeDescription::Type::SFCXVariable:
+          case TypeDescription::Type::SFCYVariable:
+          case TypeDescription::Type::SFCZVariable: {
 
             if (gpu_stats.active()) {
               cerrLock.lock();
@@ -4093,7 +4093,7 @@ UnifiedScheduler::initiateD2H( DetailedTask * dtask )
 
             break;
           }
-          case TypeDescription::ReductionVariable: {
+          case TypeDescription::Type::ReductionVariable: {
             bool performCopy = gpudw->compareAndSwapCopyingIntoCPU(varName.c_str(), patchID, matlID, levelID);
             if (performCopy) {
               ReductionVariableBase* hostReductionVar = dynamic_cast<ReductionVariableBase*>(dependantVar->m_var->typeDescription()->createInstance());

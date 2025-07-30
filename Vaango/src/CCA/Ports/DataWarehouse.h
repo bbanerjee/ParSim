@@ -44,6 +44,13 @@
 #include <Core/Util/Handle.h>
 #include <Core/Util/RefCounted.h>
 
+#include <sci_defs/kokkos_defs.h>
+#include <sci_defs/cuda_defs.h>
+
+#if defined(HAVE_CUDA)
+#include <CCA/Components/Schedulers/GPUDataWarehouse.h>
+#endif
+
 #include <iosfwd>
 
 namespace Uintah {
