@@ -31,6 +31,7 @@ SET(Vaango_CCA_Components_Schedulers_SRCS
   DetailedTask.cc 
   DetailedTasks.cc 
   DynamicMPIScheduler.cc 
+  KokkosScheduler.cc
   KokkosOpenMPScheduler.cc
   MemoryLog.cc 
   MPIScheduler.cc 
@@ -47,19 +48,16 @@ SET(Vaango_CCA_Components_Schedulers_SRCS
 if (CUDA)
   set(Vaango_CCA_Components_Schedulers_SRCS
     ${Vaango_CCA_Components_Schedulers_SRCS}
-    GPUDataWarehouse.cu
+    GPUDataWarehouse.cc
     GPUGridVariableInfo.cc
     GPUGridVariableGhosts.cc
     GPUMemoryPool.cc
   )
-  set(CUDA_OBJECT
-      GPUDataWarehouse.o
-     )
 endif (CUDA)
 
 add_library(Vaango_CCA_Components_Schedulers ${Vaango_CCA_Components_Schedulers_SRCS})
 
-target_link_libraries(Vaango_CCA_Components_Schedulers
+set(Vaango_CCA_Components_Schedulers_LIBS
   Vaango_CCA_Components_ProblemSpecification
   Vaango_Core_Grid
   Vaango_Core_Util
@@ -67,14 +65,20 @@ target_link_libraries(Vaango_CCA_Components_Schedulers
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  LibXml2::LibXml2
   ${TAU_LIBRARY}
   ${VAMPIR_LIBRARY}
   ${PERFEX_LIBRARY}
-  ${CUDA_LIBRARY}
-  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
+)
+
+target_link_libraries(Vaango_CCA_Components_Schedulers PRIVATE
+  Vaango_CCA_Components_Schedulers_LIBS
+  LibXml2::LibXml2
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_CUDA}>:Kokkos::kokkos>
+  MPI::MPI_CXX
 )
 
 IF(BUILD_SHARED_LIBS)

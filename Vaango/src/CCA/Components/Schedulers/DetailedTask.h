@@ -30,14 +30,13 @@
 #include <CCA/Components/Schedulers/DetailedDependency.h>
 #include <CCA/Components/Schedulers/OnDemandDataWarehouseP.h>
 #include <CCA/Components/Schedulers/RuntimeStats.hpp>
-
-#ifdef HAVE_CUDA
-#include <CCA/Components/Schedulers/GPUGridVariableGhosts.h>
-#endif
-
 #include <Core/Grid/Task.h>
 
 #include <sci_defs/cuda_defs.h>
+#ifdef HAVE_CUDA
+#include <CCA/Components/Schedulers/GPUGridVariableInfo.h>
+#include <CCA/Components/Schedulers/GPUGridVariableGhosts.h>
+#endif
 
 #include <atomic>
 #include <list>
@@ -53,12 +52,10 @@ class DependencyBatch;
 class DetailedTasks;
 
 #ifdef HAVE_CUDA
-
 struct TaskGpuDataWarehouses
 {
   GPUDataWarehouse* TaskGpuDW[2];
 };
-
 #endif
 
 enum ProfileType

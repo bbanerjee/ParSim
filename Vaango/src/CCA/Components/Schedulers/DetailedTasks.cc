@@ -42,7 +42,7 @@
 #include <sci_defs/visit_defs.h>
 
 #ifdef HAVE_CUDA
-#include <Core/Parallel/CrowdMonitor.hpp>
+#include <Core/Parallel/CrowdMonitor.h>
 #endif
 
 #include <atomic>
