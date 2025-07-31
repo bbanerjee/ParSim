@@ -30,17 +30,24 @@
 
 #include <CCA/Components/PostProcessUda/PostProcessUda.h>
 
+#include <CCA/Components/Examples/AMRHeat.hpp>
 #include <CCA/Components/Examples/AMRWave.h>
 #include <CCA/Components/Examples/Benchmark.h>
 #include <CCA/Components/Examples/Burger.h>
+#include <CCA/Components/Examples/DOSweep.h>
+#include <CCA/Components/Examples/Heat.h>
 #include <CCA/Components/Examples/ParticleTest1.h>
 #include <CCA/Components/Examples/Poisson1.h>
 #include <CCA/Components/Examples/Poisson2.h>
 #include <CCA/Components/Examples/Poisson3.h>
 #include <CCA/Components/Examples/Poisson4.h>
+#include <CCA/Components/Examples/PortableDependencyTest.h>
+#include <CCA/Components/Examples/PortableDependencyTest1.h>
+#include <CCA/Components/Examples/GPUResizeTest1.h>
 #include <CCA/Components/Examples/RegridderTest.h>
 #include <CCA/Components/Examples/SolverTest1.h>
 #include <CCA/Components/Examples/Wave.h>
+
 #include <CCA/Components/ICE/AMRICE.h>
 #include <CCA/Components/ICE/ICE.h>
 #include <CCA/Components/ICE/impAMRICE.h>
@@ -64,12 +71,6 @@
 
 #ifdef HAVE_HYPRE
 #include <CCA/Components/Examples/SolverTest2.h>
-#endif
-
-#ifdef HAVE_CUDA
-#include <CCA/Components/Examples/GPUSchedulerTest.h>
-#include <CCA/Components/Examples/PoissonGPU1.h>
-#include <CCA/Components/Examples/UnifiedSchedulerTest.h>
 #endif
 
 #include <iosfwd>
@@ -202,19 +203,6 @@ ComponentFactory::create(ProblemSpecP& ps,
     return std::make_unique<Poisson1>(world, mat_manager);
   }
 
-#ifdef HAVE_CUDA
-  if (sim_comp == "poissongpu1" || sim_comp == "POISSONGPU1") {
-    return std::make_unique<PoissonGPU1>(world, mat_manager);
-  }
-  if (sim_comp == "gpuschedulertest" || sim_comp == "GPUSCHEDULERTEST") {
-    return std::make_unique<GPUSchedulerTest>(world, mat_manager);
-  }
-  if (sim_comp == "unifiedschedulertest" ||
-      sim_comp == "UNIFIEDSCHEDULERTEST") {
-    return std::make_unique<UnifiedSchedulerTest>(world, mat_manager);
-  }
-#endif
-
   if (sim_comp == "regriddertest" || sim_comp == "REGRIDDERTEST") {
     return std::make_unique<RegridderTest>(world, mat_manager);
   }
@@ -241,6 +229,26 @@ ComponentFactory::create(ProblemSpecP& ps,
     return std::make_unique<SolverTest2>(world, mat_manager);
   }
 #endif
+  if (sim_comp == "portabledependencytest" || sim_comp == "PORTABLEDEPENDENCYTEST") {
+    return std::make_unique<PortableDependencyTest>(world, mat_manager);
+  }
+  else {
+    turned_on_options += "portabledependencytest ";
+  }
+
+  if (sim_comp == "portabledependencytest1" || sim_comp == "PORTABLEDEPENDENCYTEST1") {
+    return std::make_unique<PortableDependencyTest1>(world, mat_manager);
+  }
+  else {
+    turned_on_options += "portabledependencytest1 ";
+  }
+if (sim_comp == "gpuresizetest1" || sim_comp == "GPURESIZETEST1") {
+    return std::make_unique<GPUResizeTest1>(world, mat_manager);
+  }
+  else {
+    turned_on_options += "gpuresizetest1 ";
+  }
+
   if (sim_comp == "switcher" || sim_comp == "SWITCHER") {
     return std::make_unique<Switcher>(world, mat_manager, ps, uda);
   }

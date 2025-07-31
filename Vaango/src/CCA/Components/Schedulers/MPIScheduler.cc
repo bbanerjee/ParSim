@@ -183,7 +183,7 @@ MPIScheduler::createSubScheduler()
   MPIScheduler * newsched = scinew MPIScheduler( d_myworld, this );
 
   newsched->setComponents( this );
-  newsched->m_materialManager = m_materialManager;
+  newsched->d_materialManager = d_materialManager;
   
   newsched->m_num_schedulers +=1;
   m_num_schedulers +=1;
@@ -977,7 +977,7 @@ MPIScheduler::execute( int tgnum     /* = 0 */
         
         // Go through all materials since getting an MPMMaterial
         // correctly would depend on MPM
-        for (unsigned int m = 0; m < m_materialManager->getNumMaterials(); m++) {
+        for (unsigned int m = 0; m < d_materialManager->getNumMaterials(); m++) {
           if (dw->haveParticleSubset(m, patch)) {
             numParticles += dw->getParticleSubset(m, patch)->numParticles();
           }

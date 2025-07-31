@@ -198,7 +198,7 @@ SchedulerCommon::releaseComponents()
   m_output       = nullptr;
   m_simulator  = nullptr;
 
-  m_materialManager = nullptr;
+  d_materialManager = nullptr;
 }
 
 //______________________________________________________________________
@@ -378,7 +378,7 @@ void
 SchedulerCommon::problemSetup(const ProblemSpecP& prob_spec,
                               const MaterialManagerP& materialManager)
 {
-  m_materialManager = materialManager;
+  d_materialManager = materialManager;
 
   m_tracking_vars_print_location = PRINT_AFTER_EXEC;
 
@@ -803,7 +803,7 @@ SchedulerCommon::printTrackedVars(DetailedTask* dtask, int when)
                           m_tracking_end_index);
 
       // Loop over matls too...
-      for (unsigned int m = 0; m < m_materialManager->getNumMaterials(); m++) {
+      for (unsigned int m = 0; m < d_materialManager->getNumMaterials(); m++) {
 
         if (!dw->exists(label, m, patch)) {
           std::ostringstream mesg;
@@ -1891,7 +1891,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid)
       }
       addTask(dataTasks.back(),
               copyPatchSets[L].get_rep(),
-              m_materialManager->allMaterials());
+              d_materialManager->allMaterials());
 
       // Monitoring tasks must be scheduled last!!
       scheduleTaskMonitoring(copyPatchSets[L].get_rep());
@@ -1926,7 +1926,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid)
       }
       addTask(dataTasks.back(),
               refinePatchSets[L].get_rep(),
-              m_materialManager->allMaterials());
+              d_materialManager->allMaterials());
 
       // Monitoring tasks must be scheduled last!!
       scheduleTaskMonitoring(refinePatchSets[L].get_rep());
@@ -2074,8 +2074,8 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup* /* pg */
 
     // to create once per matl instead of once per matl-var
     std::vector<ParticleSubset*> oldsubsets(
-      m_materialManager->getNumMaterials()),
-      newsubsets(m_materialManager->getNumMaterials());
+      d_materialManager->getNumMaterials()),
+      newsubsets(d_materialManager->getNumMaterials());
 
     // If there is a level that didn't exist, we don't need to copy it
     if (newLevel->getIndex() >= oldDataWarehouse->getGrid()->numLevels()) {
@@ -2478,7 +2478,7 @@ SchedulerCommon::scheduleTaskMonitoring(const LevelP& level)
     }
   }
 
-  addTask(t, level->eachPatch(), m_materialManager->allMaterials());
+  addTask(t, level->eachPatch(), d_materialManager->allMaterials());
 }
 
 //______________________________________________________________________
@@ -2510,7 +2510,7 @@ SchedulerCommon::scheduleTaskMonitoring(const PatchSet* patches)
     }
   }
 
-  addTask(t, patches, m_materialManager->allMaterials());
+  addTask(t, patches, d_materialManager->allMaterials());
 }
 
 //______________________________________________________________________

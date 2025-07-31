@@ -67,6 +67,8 @@ protected:
   auto
   doRegridding(bool initialTimestep) -> bool;
 
+  void collectGhostCells();
+
   void
   compileTaskGraph(int totalFine);
 

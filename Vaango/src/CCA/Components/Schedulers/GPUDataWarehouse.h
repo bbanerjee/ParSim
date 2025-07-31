@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2025 The University of Utah
+ * Copyright (c) 1997-2024 The University of Utah
+ * Copyright (c) 2024-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -741,14 +742,14 @@ __host__ void GPUDataWarehouse::syncto_device<Kokkos::DefaultExecutionSpace>(Kok
 #ifdef HAVE_KOKKOS
 template <>
 __host__ inline bool
-GPUDataWarehouse::transferFrom<UintahSpaces::CPU>( UintahSpaces::CPU instance
-                                                 , GPUGridVariableBase &var_source
-                                                 , GPUGridVariableBase &var_dest
-                                                 , GPUDataWarehouse * from
-                                                 , char const* label
-                                                 , int patchID
-                                                 , int matlIndx
-                                                 , int levelIndx)
+GPUDataWarehouse::transferFrom<UintahSpaces::CPU>( [[maybe_unused]] UintahSpaces::CPU instance
+                                                 , [[maybe_unused]] GPUGridVariableBase &var_source
+                                                 , [[maybe_unused]] GPUGridVariableBase &var_dest
+                                                 , [[maybe_unused]] GPUDataWarehouse * from
+                                                 , [[maybe_unused]] char const* label
+                                                 , [[maybe_unused]] int patchID
+                                                 , [[maybe_unused]] int matlIndx
+                                                 , [[maybe_unused]] int levelIndx)
 {
   // int status;
   // char *name = abi::__cxa_demangle(typeid(ExecSpace).name(), 0, 0, &status);

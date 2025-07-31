@@ -1241,7 +1241,7 @@ KokkosScheduler::runTasks( int thread_id )
           // desired but not sure of the effect of not calling it and doing
           // an out of sync output or checkpoint.
 
-          if ((m_output->isOutputTimeStep() || m_output->isCheckpointTimeStep())
+          if ((m_output->isOutputTimestep() || m_output->isCheckpointTimeStep())
               || ((readyTask->getTask()->getName() != "DataArchiver::outputVariables")
                   && (readyTask->getTask()->getName() != "DataArchiver::outputVariables(checkpoint)"))) {
             readyTask->initiateD2H(d_myworld, m_dws);
