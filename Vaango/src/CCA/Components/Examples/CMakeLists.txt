@@ -26,21 +26,26 @@
 #
 
 SET(Vaango_CCA_Components_Examples_SRCS
+  AMRHeat.cpp           
   AMRWave.cc           
-  Wave.cc              
+  Benchmark.cc         
+  Burger.cc            
+  DOSweep.cc
+  ExamplesLabel.cc     
+  Interpolator.cc      
+  GPUResizeTest1.cc
+  Heat.cc      
+  ParticleTest1.cc     
   Poisson1.cc          
   Poisson2.cc          
   Poisson3.cc          
   Poisson4.cc          
-  Burger.cc            
-  HeatEquation.cc      
-  ParticleTest1.cc     
-  Interpolator.cc      
-  ExamplesLabel.cc     
+  PortableDependencyTest.cc
+  PortableDependencyTest1.cc
+  RegionDB.cc          
   RegridderTest.cc     
   SolverTest1.cc       
-  RegionDB.cc          
-  Benchmark.cc         
+  Wave.cc              
 )
 
 set(Examples_LIBS
@@ -62,16 +67,12 @@ if (HAVE_HYPRE)
 endif (HAVE_HYPRE)
 
 
-if (CUDA)
+if (HAVE_CUDA)
   SET(Vaango_CCA_Components_Examples_SRCS
     ${Vaango_CCA_Components_Examples_SRCS}
-    PoissonGPU1.cc            
-    PoissonGPU1Kernel.cu      
-    GPUSchedulerTest.cc       
     UnifiedSchedulerTest.cc   
-    GPUSchedulerTestKernel.cu          
   )
-endif (CUDA)
+endif (HAVE_CUDA)
 
 add_library(Vaango_CCA_Components_Examples ${Vaango_CCA_Components_Examples_SRCS})
 if (HAVE_CUDA)
