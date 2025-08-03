@@ -41,12 +41,7 @@
 
 #include <Core/Lockfree/Lockfree_Pool.hpp>
 
-
-#ifdef HAVE_CUDA
-  #include <CCA/Components/Schedulers/GPUGridVariableGhosts.h>
-  #include <CCA/Components/Schedulers/GPUGridVariableInfo.h>
-#endif
-
+#include <sci_defs/kokkos_defs.h>
 #include <sci_defs/cuda_defs.h>
 
 #include <map>
@@ -271,10 +266,10 @@ public:
     return m_task_priority_alg;
   }
 
-#ifdef HAVE_CUDA
+#if defined(KOKKOS_USING_GPU)
 
   void
-  addDeviceValidateRequiresCopies(DetailedTask* dtask);
+  addDeviceValidateRequiresAndModifiesCopies(DetailedTask* dtask);
 
   void
   addDevicePerformGhostCopies(DetailedTask* dtask);
@@ -292,7 +287,7 @@ public:
   addDeviceExecutionPending(DetailedTask* dtask);
 
   void
-  addHostValidateRequiresCopies(DetailedTask* dtask);
+  addHostValidateRequiresAndModifiesCopies(DetailedTask* dtask);
 
   void
   addHostCheckIfExecutable(DetailedTask* dtask);
@@ -301,7 +296,7 @@ public:
   addHostReadyToExecute(DetailedTask* dtask);
 
   bool
-  getDeviceValidateRequiresCopiesTask(DetailedTask*& dtask);
+  getDeviceValidateRequiresAndModifiesCopiesTask(DetailedTask*& dtask);
 
   bool
   getDevicePerformGhostCopiesTask(DetailedTask*& dtask);
@@ -319,7 +314,7 @@ public:
   getDeviceExecutionPendingTask(DetailedTask*& dtask);
 
   bool
-  getHostValidateRequiresCopiesTask(DetailedTask*& dtask);
+  getHostValidateRequiresAndModifiesCopiesTask(DetailedTask*& dtask);
 
   bool
   getHostCheckIfExecutableTask(DetailedTask*& dtask);
@@ -430,6 +425,7 @@ private:
   TaskPQueue m_mpi_completed_tasks;
   std::atomic<int> m_atomic_initial_ready_tasks_size{ 0 };
   std::atomic<int> m_atomic_mpi_completed_tasks_size{ 0 };
+  std::atomic<int> atomic_task_to_debug_size { 0 };
 
   // This "generation" number is to keep track of which InternalDependency
   // links have been satisfied in the current timestep and avoids the
@@ -446,20 +442,20 @@ private:
            MapInfoMapper<unsigned int, CommunicationStatsEnum, unsigned int>>
     m_comm_info;
 
+#if defined(KOKKOS_USING_GPU)
 
-#ifdef HAVE_CUDA
+  // Use Lockfree::Pool with the template defaults.
+  using TaskPool = Lockfree::Pool< DetailedTask * >;
 
-  using TaskPool = Lockfree::Pool<DetailedTask*, uint64_t, 1, std::allocator>;
-
-  TaskPool device_validateRequiresCopies_pool{};
-  TaskPool device_performGhostCopies_pool{};
-  TaskPool device_validateGhostCopies_pool{};
-  TaskPool device_checkIfExecutable_pool{};
-  TaskPool device_readyToExecute_pool{};
-  TaskPool device_executionPending_pool{};
-  TaskPool host_validateRequiresCopies_pool{};
-  TaskPool host_checkIfExecutable_pool{};
-  TaskPool host_readyToExecute_pool{};
+  TaskPool             device_validateRequiresAndModifiesCopies_pool{};
+  TaskPool             device_performGhostCopies_pool{};
+  TaskPool             device_validateGhostCopies_pool{};
+  TaskPool             device_checkIfExecutable_pool{};
+  TaskPool             device_readyToExecute_pool{};
+  TaskPool             device_executionPending_pool{};
+  TaskPool             host_validateRequiresAndModifiesCopies_pool{};
+  TaskPool             host_checkIfExecutable_pool{};
+  TaskPool             host_readyToExecute_pool{};
 
 #endif
 

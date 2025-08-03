@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2021-2025 Biswajit Banerjee, Parresis Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -69,7 +70,7 @@ namespace {
 
   Uintah::MasterLock g_scheduler_mutex{}; // main scheduler lock for multi-threaded task selection
 
-  volatile int  g_num_tasks_done{0};
+  std::atomic<int>  g_num_tasks_done{0};
 
   bool g_have_hypre_task{false};
   DetailedTask* g_HypreTask;
@@ -350,24 +351,26 @@ KokkosOpenMPScheduler::execute( int tgnum       /* = 0 */
 //______________________________________________________________________
 //
 void
-KokkosOpenMPScheduler::markTaskConsumed( volatile int          * numTasksDone
-                                       ,          int          & currphase
-                                       ,          int            numPhases
-                                       ,          DetailedTask * dtask
-                                       )
+KokkosOpenMPScheduler::markTaskConsumed(std::atomic<int>& numTasksDone,
+                                        int& currphase,
+                                        int numPhases,
+                                        DetailedTask* dtask)
 {
 
   // Update the count of tasks consumed by the scheduler.
-  (*numTasksDone) += 1;
+  numTasksDone.fetch_add(1);
 
   // Update the count of this phase consumed.
   m_phase_tasks_done[dtask->getTask()->m_phase]++;
 
   // See if we've consumed all tasks on this phase, if so, go to the next phase.
-  while (m_phase_tasks[currphase] == m_phase_tasks_done[currphase] && currphase + 1 < numPhases) {
+  while (m_phase_tasks[currphase] == m_phase_tasks_done[currphase] &&
+         currphase + 1 < numPhases) {
     currphase++;
-    DOUT(g_task_dbg, myRankThread() << " switched to task phase " << currphase
-                                    << ", total phase " << currphase << " tasks = " << m_phase_tasks[currphase]);
+    DOUT(g_task_dbg,
+         myRankThread() << " switched to task phase " << currphase
+                        << ", total phase " << currphase
+                        << " tasks = " << m_phase_tasks[currphase]);
   }
 }
 
@@ -410,7 +413,7 @@ KokkosOpenMPScheduler::runTasks()
         if ((m_phase_sync_task[m_curr_phase] != nullptr) && (m_phase_tasks_done[m_curr_phase] == m_phase_tasks[m_curr_phase] - 1)) {
           readyTask = m_phase_sync_task[m_curr_phase];
           havework = true;
-          markTaskConsumed(&g_num_tasks_done, m_curr_phase, m_num_phases, readyTask);
+          markTaskConsumed(g_num_tasks_done, m_curr_phase, m_num_phases, readyTask);
           break;
         }
 
@@ -426,7 +429,7 @@ KokkosOpenMPScheduler::runTasks()
           readyTask = m_detailed_tasks->getNextExternalReadyTask();
           if (readyTask != nullptr) {
             havework = true;
-            markTaskConsumed(&g_num_tasks_done, m_curr_phase, m_num_phases, readyTask);
+            markTaskConsumed(g_num_tasks_done, m_curr_phase, m_num_phases, readyTask);
 
             if ( readyTask->getTask()->getType() == Task::Hypre ) {
               g_HypreTask = readyTask;

@@ -38,11 +38,12 @@
 #include <Core/Util/DOUT.hpp>
 #include <Core/Util/ProgressiveWarning.h>
 
+#include <sci_defs/kokkos_defs.h>
 #include <sci_defs/cuda_defs.h>
 #include <sci_defs/visit_defs.h>
 
-#ifdef HAVE_CUDA
-#include <Core/Parallel/CrowdMonitor.h>
+#if defined(KOKKOS_USING_GPU)
+  #include <Core/Parallel/CrowdMonitor.h>
 #endif
 
 #include <atomic>
@@ -97,17 +98,22 @@ Dout g_message_tags_task_stats_dbg("MessageTagTaskStats",
                                    false);
 #endif
 
-#ifdef HAVE_CUDA
+#if defined(KOKKOS_USING_GPU)
 struct device_transfer_complete_queue_tag
 {};
+
 struct device_finalize_prep_queue_tag
 {};
+
 struct device_ready_queue_tag
 {};
+
 struct device_completed_queue_tag
 {};
+
 struct host_finalize_prep_queue_tag
 {};
+
 struct host_ready_queue_tag
 {};
 
@@ -152,15 +158,13 @@ DetailedTasks::DetailedTasks(
 
   // Create a send-old-data detailed task for every processor in my
   // neighborhood.
-  for (auto iter = neighborhood_processors.begin();
-       iter != neighborhood_processors.end();
-       ++iter) {
+  for (const auto proc: neighborhood_processors) {
     DetailedTask* newtask =
       scinew DetailedTask(m_send_old_data, nullptr, nullptr, this);
-    newtask->assignResource(*iter);
+    newtask->assignResource(proc);
 
     // use a map because the processors in this map are likely to be sparse
-    m_send_old_map[*iter] = m_tasks.size();
+    m_send_old_map[proc] = m_tasks.size();
     m_tasks.push_back(newtask);
   }
 }
@@ -1343,10 +1347,13 @@ DetailedTaskPriorityComparison::operator()(DetailedTask*& ltask,
   //  }
 }
 
-#ifdef HAVE_CUDA
+#if defined(KOKKOS_USING_GPU)
 
+//_____________________________________________________________________________
+//
 bool
-DetailedTasks::getDeviceValidateRequiresCopiesTask(DetailedTask*& dtask)
+DetailedTasks::getDeviceValidateRequiresAndModifiesCopiesTask(
+  DetailedTask*& dtask)
 {
   // This function should ONLY be called within runTasks() part 1.
   // This is all done as one atomic unit as we're seeing if we should get an
@@ -1355,24 +1362,27 @@ DetailedTasks::getDeviceValidateRequiresCopiesTask(DetailedTask*& dtask)
   dtask       = nullptr;
 
   auto ready_request = [](DetailedTask*& dtask) -> bool {
-    return dtask->checkAllCudaStreamsDoneForThisTask();
+    return dtask->checkAllKokkosInstancesDoneForThisTask();
   };
-  TaskPool::iterator device_validateRequiresCopies_pool_iter =
-    device_validateRequiresCopies_pool.find_any(ready_request);
 
-  if (device_validateRequiresCopies_pool_iter) {
-    dtask = *device_validateRequiresCopies_pool_iter;
-    device_validateRequiresCopies_pool.erase(
-      device_validateRequiresCopies_pool_iter);
-    // printf("device_validateRequiresCopies_pool - Erased %s size of pool
-    // %lu\n", dtask->getName().c_str(),
-    // device_validateRequiresCopies_pool.size());
+  TaskPool::iterator device_validateRequiresAndModifiesCopies_pool_iter =
+    device_validateRequiresAndModifiesCopies_pool.find_any(ready_request);
+
+  if (device_validateRequiresAndModifiesCopies_pool_iter) {
+    dtask = *device_validateRequiresAndModifiesCopies_pool_iter;
+    device_validateRequiresAndModifiesCopies_pool.erase(
+      device_validateRequiresAndModifiesCopies_pool_iter);
+    // printf("device_validateRequiresAndModifiesCopies_pool - Erased %s size of
+    // pool %lu\n", dtask->getName().c_str(),
+    // device_validateRequiresAndModifiesCopies_pool.size());
     retVal = true;
   }
 
   return retVal;
 }
 
+//_____________________________________________________________________________
+//
 bool
 DetailedTasks::getDevicePerformGhostCopiesTask(DetailedTask*& dtask)
 {
@@ -1383,8 +1393,9 @@ DetailedTasks::getDevicePerformGhostCopiesTask(DetailedTask*& dtask)
   dtask       = nullptr;
 
   auto ready_request = [](DetailedTask*& dtask) -> bool {
-    return dtask->checkAllCudaStreamsDoneForThisTask();
+    return dtask->checkAllKokkosInstancesDoneForThisTask();
   };
+
   TaskPool::iterator device_performGhostCopies_pool_iter =
     device_performGhostCopies_pool.find_any(ready_request);
 
@@ -1399,6 +1410,8 @@ DetailedTasks::getDevicePerformGhostCopiesTask(DetailedTask*& dtask)
   return retVal;
 }
 
+//_____________________________________________________________________________
+//
 bool
 DetailedTasks::getDeviceValidateGhostCopiesTask(DetailedTask*& dtask)
 {
@@ -1409,8 +1422,9 @@ DetailedTasks::getDeviceValidateGhostCopiesTask(DetailedTask*& dtask)
   dtask       = nullptr;
 
   auto ready_request = [](DetailedTask*& dtask) -> bool {
-    return dtask->checkAllCudaStreamsDoneForThisTask();
+    return dtask->checkAllKokkosInstancesDoneForThisTask();
   };
+
   TaskPool::iterator device_validateGhostCopies_pool_iter =
     device_validateGhostCopies_pool.find_any(ready_request);
 
@@ -1425,6 +1439,8 @@ DetailedTasks::getDeviceValidateGhostCopiesTask(DetailedTask*& dtask)
   return retVal;
 }
 
+//______________________________________________________________________
+//
 bool
 DetailedTasks::getDeviceCheckIfExecutableTask(DetailedTask*& dtask)
 {
@@ -1435,8 +1451,9 @@ DetailedTasks::getDeviceCheckIfExecutableTask(DetailedTask*& dtask)
   dtask       = nullptr;
 
   auto ready_request = [](DetailedTask*& dtask) -> bool {
-    return dtask->checkAllCudaStreamsDoneForThisTask();
+    return dtask->checkAllKokkosInstancesDoneForThisTask();
   };
+
   TaskPool::iterator device_checkIfExecutable_pool_iter =
     device_checkIfExecutable_pool.find_any(ready_request);
   if (device_checkIfExecutable_pool_iter) {
@@ -1450,6 +1467,8 @@ DetailedTasks::getDeviceCheckIfExecutableTask(DetailedTask*& dtask)
   return retVal;
 }
 
+//______________________________________________________________________
+//
 bool
 DetailedTasks::getDeviceReadyToExecuteTask(DetailedTask*& dtask)
 {
@@ -1460,21 +1479,40 @@ DetailedTasks::getDeviceReadyToExecuteTask(DetailedTask*& dtask)
   dtask       = nullptr;
 
   auto ready_request = [](DetailedTask*& dtask) -> bool {
-    return dtask->checkAllCudaStreamsDoneForThisTask();
+    return dtask->checkAllKokkosInstancesDoneForThisTask();
   };
+
   TaskPool::iterator device_readyToExecute_pool_iter =
     device_readyToExecute_pool.find_any(ready_request);
   if (device_readyToExecute_pool_iter) {
     dtask = *device_readyToExecute_pool_iter;
-    device_readyToExecute_pool.erase(device_readyToExecute_pool_iter);
-    // printf("device_readyToExecute_pool - Erased %s size of pool %lu\n",
-    // dtask->getName().c_str(), device_readyToExecute_pool.size());
-    retVal = true;
-  }
+    int task_to_debug_threshold =
+      Uintah::Parallel::getAmountTaskNameExpectedToRun();
 
+    bool proceed{ true };
+    if (task_to_debug_threshold > 0) {
+      std::string task_to_debug_name = Uintah::Parallel::getTaskNameToTime();
+      std::string current_task       = dtask->getTask()->getName();
+      int task_to_debug_count =
+        atomic_task_to_debug_size.load(std::memory_order_relaxed);
+      if (current_task.size() >= task_to_debug_name.size() &&
+          dtask->getTask()->getName().substr(0, task_to_debug_name.size()) ==
+            task_to_debug_name) {
+        if (task_to_debug_count % task_to_debug_threshold != 0) {
+          proceed = false;
+        }
+      }
+    }
+    if (proceed) {
+      device_readyToExecute_pool.erase(device_readyToExecute_pool_iter);
+      retVal = true;
+    }
+  }
   return retVal;
 }
 
+//______________________________________________________________________
+//
 bool
 DetailedTasks::getDeviceExecutionPendingTask(DetailedTask*& dtask)
 {
@@ -1485,8 +1523,9 @@ DetailedTasks::getDeviceExecutionPendingTask(DetailedTask*& dtask)
   dtask       = nullptr;
 
   auto ready_request = [](DetailedTask*& dtask) -> bool {
-    return dtask->checkAllCudaStreamsDoneForThisTask();
+    return dtask->checkAllKokkosInstancesDoneForThisTask();
   };
+
   TaskPool::iterator device_executionPending_pool_iter =
     device_executionPending_pool.find_any(ready_request);
   if (device_executionPending_pool_iter) {
@@ -1500,8 +1539,11 @@ DetailedTasks::getDeviceExecutionPendingTask(DetailedTask*& dtask)
   return retVal;
 }
 
+//_____________________________________________________________________________
+//
 bool
-DetailedTasks::getHostValidateRequiresCopiesTask(DetailedTask*& dtask)
+DetailedTasks::getHostValidateRequiresAndModifiesCopiesTask(
+  DetailedTask*& dtask)
 {
   // This function should ONLY be called within runTasks() part 1.
   // This is all done as one atomic unit as we're seeing if we should get an
@@ -1510,23 +1552,27 @@ DetailedTasks::getHostValidateRequiresCopiesTask(DetailedTask*& dtask)
   dtask       = nullptr;
 
   auto ready_request = [](DetailedTask*& dtask) -> bool {
-    return dtask->checkAllCudaStreamsDoneForThisTask();
+    return dtask->checkAllKokkosInstancesDoneForThisTask();
   };
-  TaskPool::iterator host_validateRequiresCopies_pool_iter =
-    host_validateRequiresCopies_pool.find_any(ready_request);
 
-  if (host_validateRequiresCopies_pool_iter) {
-    dtask = *host_validateRequiresCopies_pool_iter;
-    host_validateRequiresCopies_pool.erase(
-      host_validateRequiresCopies_pool_iter);
-    // printf("host_validateRequiresCopies_pool - Erased %s size of pool %lu\n",
-    // dtask->getName().c_str(), host_validateRequiresCopies_pool.size());
+  TaskPool::iterator host_validateRequiresAndModifiesCopies_pool_iter =
+    host_validateRequiresAndModifiesCopies_pool.find_any(ready_request);
+
+  if (host_validateRequiresAndModifiesCopies_pool_iter) {
+    dtask = *host_validateRequiresAndModifiesCopies_pool_iter;
+    host_validateRequiresAndModifiesCopies_pool.erase(
+      host_validateRequiresAndModifiesCopies_pool_iter);
+    // printf("host_validateRequiresAndModifiesCopies_pool - Erased %s size of
+    // pool %lu\n", dtask->getName().c_str(),
+    // host_validateRequiresAndModifiesCopies_pool.size());
     retVal = true;
   }
 
   return retVal;
 }
 
+//_____________________________________________________________________________
+//
 bool
 DetailedTasks::getHostCheckIfExecutableTask(DetailedTask*& dtask)
 {
@@ -1537,8 +1583,9 @@ DetailedTasks::getHostCheckIfExecutableTask(DetailedTask*& dtask)
   dtask       = nullptr;
 
   auto ready_request = [](DetailedTask*& dtask) -> bool {
-    return dtask->checkAllCudaStreamsDoneForThisTask();
+    return dtask->checkAllKokkosInstancesDoneForThisTask();
   };
+
   TaskPool::iterator host_checkIfExecutable_pool_iter =
     host_checkIfExecutable_pool.find_any(ready_request);
   if (host_checkIfExecutable_pool_iter) {
@@ -1552,6 +1599,8 @@ DetailedTasks::getHostCheckIfExecutableTask(DetailedTask*& dtask)
   return retVal;
 }
 
+//______________________________________________________________________
+//
 bool
 DetailedTasks::getHostReadyToExecuteTask(DetailedTask*& dtask)
 {
@@ -1562,8 +1611,9 @@ DetailedTasks::getHostReadyToExecuteTask(DetailedTask*& dtask)
   dtask       = nullptr;
 
   auto ready_request = [](DetailedTask*& dtask) -> bool {
-    return dtask->checkAllCudaStreamsDoneForThisTask();
+    return dtask->checkAllKokkosInstancesDoneForThisTask();
   };
+
   TaskPool::iterator host_readyToExecute_pool_iter =
     host_readyToExecute_pool.find_any(ready_request);
   if (host_readyToExecute_pool_iter) {
@@ -1577,60 +1627,80 @@ DetailedTasks::getHostReadyToExecuteTask(DetailedTask*& dtask)
   return retVal;
 }
 
+//_____________________________________________________________________________
+//
 void
-DetailedTasks::addDeviceValidateRequiresCopies(DetailedTask* dtask)
+DetailedTasks::addDeviceValidateRequiresAndModifiesCopies(DetailedTask* dtask)
 {
-  device_validateRequiresCopies_pool.insert(dtask);
+  device_validateRequiresAndModifiesCopies_pool.insert(dtask);
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTasks::addDevicePerformGhostCopies(DetailedTask* dtask)
 {
   device_performGhostCopies_pool.insert(dtask);
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTasks::addDeviceValidateGhostCopies(DetailedTask* dtask)
 {
   device_validateGhostCopies_pool.insert(dtask);
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTasks::addDeviceCheckIfExecutable(DetailedTask* dtask)
 {
   device_checkIfExecutable_pool.insert(dtask);
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTasks::addDeviceReadyToExecute(DetailedTask* dtask)
 {
   device_readyToExecute_pool.insert(dtask);
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTasks::addDeviceExecutionPending(DetailedTask* dtask)
 {
   device_executionPending_pool.insert(dtask);
 }
 
+//_____________________________________________________________________________
+//
 void
-DetailedTasks::addHostValidateRequiresCopies(DetailedTask* dtask)
+DetailedTasks::addHostValidateRequiresAndModifiesCopies(DetailedTask* dtask)
 {
-  host_validateRequiresCopies_pool.insert(dtask);
+  host_validateRequiresAndModifiesCopies_pool.insert(dtask);
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTasks::addHostCheckIfExecutable(DetailedTask* dtask)
 {
   host_checkIfExecutable_pool.insert(dtask);
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTasks::addHostReadyToExecute(DetailedTask* dtask)
 {
   host_readyToExecute_pool.insert(dtask);
 }
 
+//_____________________________________________________________________________
+//
 void
 DetailedTasks::createInternalDependencyBatch(DetailedTask* from,
                                              Task::Dependency* comp,
@@ -1713,7 +1783,7 @@ DetailedTasks::createInternalDependencyBatch(DetailedTask* from,
   // then do not merge the two dependencies into one collection.
   // Instead, keep them separate.  If they will be on the same GPU
   // then we can merge the dependencies as normal.
-  // This means that no
+  //  This means that no
 
   // if we have matching dependencies we will extend the new dependency to
   // include the old one and delete the old one check if we should combine them.
@@ -1887,6 +1957,8 @@ DetailedTasks::createInternalDependencyBatch(DetailedTask* from,
   }
 }
 
+//_____________________________________________________________________________
+//
 DetailedDep*
 DetailedTasks::findMatchingInternalDetailedDep(DependencyBatch* batch,
                                                DetailedTask* toTask,
@@ -1907,7 +1979,7 @@ DetailedTasks::findMatchingInternalDetailedDep(DependencyBatch* batch,
   DetailedDep* last_dep  = nullptr;
   DetailedDep* valid_dep = nullptr;
 
-  // For now, turning off a feature that can combine ghost cells into larger
+  // for now, turning off a feature that can combine ghost cells into larger
   // vars for scenarios where one source ghost cell var can handle more than one
   // destination patch.
 
@@ -1923,9 +1995,9 @@ DetailedTasks::findMatchingInternalDetailedDep(DependencyBatch* batch,
     req->mapDataWarehouse() == dep->req->mapDataWarehouse()))) {
 
 
-      //For the GPUs, ensure that the destinations will be on the same device,
+      // for the GPUs, ensure that the destinations will be on the same device,
     and not another device
-      //This assumes that a GPU task will not be assigned to multiple patches
+      // This assumes that a GPU task will not be assigned to multiple patches
     belonging to more than one device. if
     (getGpuIndexForPatch(toTask->getPatches()->get(0)) == getGpuIndexForPatch(
     dep->toTasks.front()->getPatches()->get(0))) {
