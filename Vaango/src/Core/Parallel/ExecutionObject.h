@@ -49,6 +49,7 @@
 #include <sci_defs/kokkos_defs.h>
 #include <sci_defs/cuda_defs.h>
 
+#include <iostream>
 #include <vector>
 
 namespace Uintah {

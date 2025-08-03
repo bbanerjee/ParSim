@@ -29,15 +29,27 @@
 #include <CCA/Components/Schedulers/DWDatabase.h>
 #include <CCA/Components/Schedulers/OnDemandDataWarehouseP.h>
 #include <CCA/Components/Schedulers/SendState.h>
+#include <CCA/Components/Schedulers/SchedulerCommon.h>
 #include <CCA/Ports/DataWarehouse.h>
 
 #include <Core/Containers/FastHashTable.h>
 #include <Core/Grid/Grid.h>
+#include <Core/Grid/Variables/CCVariable.h>
+#include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/PSPatchMatlGhost.h>
 #include <Core/Grid/Variables/VarLabelMatl.h>
 #include <Core/Parallel/MasterLock.h>
 #include <Core/Parallel/UintahMPI.h>
 
+#include <sci_defs/kokkos_defs.h>
+#include <sci_defs/cuda_defs.h>
+
+#if defined(KOKKOS_USING_GPU)
+#include <Core/Grid/Variables/GPUPerPatch.h>
+#include <Core/Grid/Variables/GPUVariable.h>
+#include <Core/Grid/Variables/GPUGridVariable.h>
+#include <Core/Grid/Variables/GPUReductionVariable.h>
+#endif
 #include <iosfwd>
 #include <map>
 #include <vector>
@@ -68,6 +80,8 @@ class Patch;
 class ProcessorGroup;
 class SendState;
 class TypeDescription;
+
+template <class T> class constNCVariable;
 
 /**************************************
 
@@ -111,11 +125,6 @@ public:
   virtual bool
   exists(const VarLabel* label, int matlIndex, const Level* level) const;
 
-  virtual ReductionVariableBase*
-  getReductionVariable(const VarLabel* label,
-                       int matlIndex,
-                       const Level* level) const;
-
   void
   copyKeyDB(KeyDatabase<Patch>& varkeyDB, KeyDatabase<Level>& levekeyDB);
 
@@ -141,41 +150,12 @@ public:
       const VarLabel* label,
       const Level* level = nullptr,
       int matlIndex      = -1);
-  // get a map filled with reductionVars
-  // C++ doesn't allow templated Virtual method
-  template<class T>
-  std::map<int, T>
-  get_sum_vartypeT(const VarLabel* label, const MaterialSubset* matls);
-  virtual // double
-    std::map<int, double>
-    get_sum_vartypeD(const VarLabel* label, const MaterialSubset* matls);
-  // Vector
-  virtual std::map<int, Vector>
-  get_sum_vartypeV(const VarLabel* label, const MaterialSubset* matls);
 
   virtual void
   put(const ReductionVariableBase& var,
       const VarLabel* label,
       const Level* level = nullptr,
       int matlIndex      = -1);
-
-  // put a map filled with reductionVars
-  // C++ doesn't allow templated Virtual methods
-  template<class T>
-  void
-  put_sum_vartypeT(std::map<int, T> reductionVars,
-                   const VarLabel* label,
-                   const MaterialSubset* matls);
-  // Vector
-  virtual void
-  put_sum_vartype(std::map<int, Vector>& reductionVars,
-                  const VarLabel* label,
-                  const MaterialSubset* matls);
-  // double
-  virtual void
-  put_sum_vartype(std::map<int, double>& reductionVars,
-                  const VarLabel* label,
-                  const MaterialSubset* matls);
 
   virtual void
   override(const ReductionVariableBase& var,
@@ -188,6 +168,41 @@ public:
         const VarLabel* label,
         const Level* level,
         int matlIndex = -1);
+
+  // get a map filled with reductionVars
+  // C++ doesn't allow templated Virtual method
+  template<class T>
+  std::map<int, T>
+  get_sum_vartypeT(const VarLabel* label, const MaterialSubset* matls);
+
+  virtual // double
+    std::map<int, double>
+    get_sum_vartypeD(const VarLabel* label, const MaterialSubset* matls);
+
+  // Vector
+  virtual std::map<int, Vector>
+  get_sum_vartypeV(const VarLabel* label, const MaterialSubset* matls);
+
+  // put a map filled with reductionVars
+  // C++ doesn't allow templated Virtual methods
+  template<class T>
+  void
+  put_sum_vartypeT(std::map<int, T> reductionVars,
+                   const VarLabel* label,
+                   const MaterialSubset* matls);
+
+  // Vector
+  virtual void
+  put_sum_vartype(std::map<int, Vector>& reductionVars,
+                  const VarLabel* label,
+                  const MaterialSubset* matls);
+
+  // double
+  virtual void
+  put_sum_vartype(std::map<int, double>& reductionVars,
+                  const VarLabel* label,
+                  const MaterialSubset* matls);
+
 
   // Sole Variables
 
@@ -310,6 +325,7 @@ public:
 
   virtual ParticleVariableBase*
   getParticleVariable(const VarLabel* label, int matlIndex, const Patch* patch);
+
   void
   printParticleSubsets();
 
@@ -507,12 +523,13 @@ public:
                bool replace,
                const PatchSubset* newPatches);
 
-  virtual void
+  template<typename ExecSpace, typename MemSpace>
+  void
   transferFrom(DataWarehouse* from,
                const VarLabel* label,
                const PatchSubset* patches,
                const MaterialSubset* matls,
-               void* dtask,
+               ExecutionObject<ExecSpace, MemSpace>& execObj,
                bool replace,
                const PatchSubset* newPatches);
 
@@ -522,21 +539,21 @@ public:
   virtual void
   finalize();
 
-#ifdef HAVE_CUDA
-
+#if defined(KOKKOS_USING_GPU)
   static int
   getNumDevices();
-  static void
-  uintahSetCudaDevice(int deviceNum);
+
   static size_t
   getTypeDescriptionSize(const TypeDescription::Type& type);
+
   static GPUGridVariableBase*
   createGPUGridVariable(const TypeDescription::Type& type);
+
   static GPUPerPatchBase*
   createGPUPerPatch(const TypeDescription::Type& type);
+
   static GPUReductionVariableBase*
   createGPUReductionVariable(const TypeDescription::Type& type);
-
 #endif
 
   virtual void
@@ -610,6 +627,7 @@ public:
   // For time step abort/recompute
   virtual bool
   abortTimestep();
+
   virtual bool
   recomputeTimestep();
 
@@ -620,6 +638,7 @@ public:
     IntVector low{};
     IntVector high{};
   };
+
   void
   getNeighborPatches(const VarLabel* label,
                      const Patch* patch,
@@ -661,6 +680,311 @@ public:
   void
   checkTasksAccesses(const PatchSubset* patches, const MaterialSubset* matls);
 
+  template<typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, UintahSpaces::HostSpace>::value,
+    CCVariable<T>>::type
+  getCCVariable(const VarLabel* label,
+                int matlIndex,
+                const Patch* patch,
+                Ghost::GhostType gtype = Ghost::None,
+                int numGhostCells      = 0)
+  {
+    CCVariable<T> var;
+    if (matlIndex != -999) {
+      // Assumption: Modifies if it exists; Computes otherwise
+      if (this->exists(label, matlIndex, patch)) {
+        this->getModifiable(var, label, matlIndex, patch, gtype, numGhostCells);
+      } else {
+        this->allocateAndPut(
+          var, label, matlIndex, patch, gtype, numGhostCells);
+      }
+    }
+    return var;
+  }
+
+#if defined(KOKKOS_USING_GPU)
+  template<typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, Kokkos::DefaultExecutionSpace::memory_space>::value,
+    KokkosView3<T, Kokkos::DefaultExecutionSpace::memory_space>>::type
+  getCCVariable(const VarLabel* label,
+                int matlIndex,
+                const Patch* patch,
+                Ghost::GhostType gtype = Ghost::None,
+                int numGhostCells      = 0)
+  {
+    if (matlIndex != -999) {
+      return this->getGPUDW()->getKokkosView<T>(label->getName().c_str(),
+                                                patch->getID(),
+                                                matlIndex,
+                                                patch->getLevel()->getID());
+    } else {
+      return KokkosView3<T, Kokkos::DefaultExecutionSpace::memory_space>();
+    }
+  }
+#endif
+
+  template<typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, UintahSpaces::HostSpace>::value,
+    constCCVariable<T>>::type
+  getConstCCVariable(const VarLabel* label,
+                     int matlIndex,
+                     const Patch* patch,
+                     Ghost::GhostType gtype,
+                     int numGhostCells)
+  {
+    constCCVariable<T> constVar;
+    if (matlIndex != -999) {
+      this->get(constVar, label, matlIndex, patch, gtype, numGhostCells);
+    }
+    return constVar;
+  }
+
+#if defined(KOKKOS_USING_GPU)
+  template<typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, Kokkos::DefaultExecutionSpace::memory_space>::value,
+    KokkosView3<const T, Kokkos::DefaultExecutionSpace::memory_space>>::type
+  getConstCCVariable(const VarLabel* label,
+                     int matlIndex,
+                     const Patch* patch,
+                     Ghost::GhostType gtype,
+                     int numGhostCells)
+  {
+    if (matlIndex != -999) {
+      return this->getGPUDW()->getKokkosView<const T>(
+        label->getName().c_str(),
+        patch->getID(),
+        matlIndex,
+        patch->getLevel()->getID());
+    } else {
+      return KokkosView3<const T,
+                         Kokkos::DefaultExecutionSpace::memory_space>();
+    }
+  }
+#endif
+
+  template<typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, UintahSpaces::HostSpace>::value,
+    NCVariable<T>>::type
+  getNCVariable(const VarLabel* label,
+                int matlIndex,
+                const Patch* patch,
+                Ghost::GhostType gtype = Ghost::None,
+                int numGhostCells      = 0)
+  {
+    NCVariable<T> var;
+    if (matlIndex != -999) {
+      // Assumption: Modifies if it exists; Computes otherwise
+      if (this->exists(label, matlIndex, patch)) {
+        this->getModifiable(var, label, matlIndex, patch, gtype, numGhostCells);
+      } else {
+        this->allocateAndPut(
+          var, label, matlIndex, patch, gtype, numGhostCells);
+      }
+    }
+    return var;
+  }
+
+#if defined(KOKKOS_USING_GPU)
+  template<typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, Kokkos::DefaultExecutionSpace::memory_space>::value,
+    KokkosView3<T, Kokkos::DefaultExecutionSpace::memory_space>>::type
+  getNCVariable(const VarLabel* label,
+                int matlIndex,
+                const Patch* patch,
+                Ghost::GhostType gtype = Ghost::None,
+                int numGhostCells      = 0)
+  {
+    if (matlIndex != -999) {
+      return this->getGPUDW()->getKokkosView<T>(label->getName().c_str(),
+                                                patch->getID(),
+                                                matlIndex,
+                                                patch->getLevel()->getID());
+    } else {
+      return KokkosView3<T, Kokkos::DefaultExecutionSpace::memory_space>();
+    }
+  }
+#endif
+
+  template<typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, UintahSpaces::HostSpace>::value,
+    constNCVariable<T>>::type
+  getConstNCVariable(const VarLabel* label,
+                     int matlIndex,
+                     const Patch* patch,
+                     Ghost::GhostType gtype,
+                     int numGhostCells)
+  {
+    constNCVariable<T> constVar;
+    if (matlIndex != -999) {
+      this->get(constVar, label, matlIndex, patch, gtype, numGhostCells);
+    }
+    return constVar;
+  }
+
+#if defined(KOKKOS_USING_GPU)
+  template<typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, Kokkos::DefaultExecutionSpace::memory_space>::value,
+    KokkosView3<const T, Kokkos::DefaultExecutionSpace::memory_space>>::type
+  getConstNCVariable(const VarLabel* label,
+                     int matlIndex,
+                     const Patch* patch,
+                     Ghost::GhostType gtype,
+                     int numGhostCells)
+  {
+    if (matlIndex != -999) {
+      return this->getGPUDW()->getKokkosView<const T>(
+        label->getName().c_str(),
+        patch->getID(),
+        matlIndex,
+        patch->getLevel()->getID());
+    } else {
+      return KokkosView3<const T,
+                         Kokkos::DefaultExecutionSpace::memory_space>();
+    }
+  }
+#endif
+
+  template<typename grid_T, typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, UintahSpaces::HostSpace>::value,
+    grid_T>::type
+  getGridVariable(const VarLabel* label,
+                  int matlIndex,
+                  const Patch* patch,
+                  Ghost::GhostType gtype = Ghost::None,
+                  int numGhostCells      = 0,
+                  bool l_getModifiable   = false)
+  {
+    grid_T var;
+    if (matlIndex != -999) {
+      if (l_getModifiable) {
+        this->getModifiable(var, label, matlIndex, patch, gtype, numGhostCells);
+      } else {
+        this->allocateAndPut(
+          var, label, matlIndex, patch, gtype, numGhostCells);
+      }
+    }
+    return var;
+  }
+
+#if defined(KOKKOS_USING_GPU)
+  template<typename grid_T, typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, Kokkos::DefaultExecutionSpace::memory_space>::value,
+    KokkosView3<T, Kokkos::DefaultExecutionSpace::memory_space>>::type
+  getGridVariable(const VarLabel* label,
+                  int matlIndex,
+                  const Patch* patch,
+                  Ghost::GhostType gtype = Ghost::None,
+                  int numGhostCells      = 0,
+                  bool l_getModifiable   = false)
+  {
+    if (matlIndex != -999) {
+      return this->getGPUDW()->getKokkosView<T>(label->getName().c_str(),
+                                                patch->getID(),
+                                                matlIndex,
+                                                patch->getLevel()->getID());
+    } else {
+      return KokkosView3<T, Kokkos::DefaultExecutionSpace::memory_space>();
+    }
+  }
+#endif
+
+  template<typename grid_CT, typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, UintahSpaces::HostSpace>::value,
+    grid_CT>::type
+  getConstGridVariable(const VarLabel* label,
+                       int matlIndex,
+                       const Patch* patch,
+                       Ghost::GhostType gtype,
+                       int numGhostCells)
+  {
+    grid_CT constVar;
+    if (matlIndex != -999) {
+      this->get(constVar, label, matlIndex, patch, gtype, numGhostCells);
+    }
+    return constVar;
+  }
+
+#if defined(KOKKOS_USING_GPU)
+  template<typename grid_CT, typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, Kokkos::DefaultExecutionSpace::memory_space>::value,
+    KokkosView3<const T, Kokkos::DefaultExecutionSpace::memory_space>>::type
+  getConstGridVariable(const VarLabel* label,
+                       int matlIndex,
+                       const Patch* patch,
+                       Ghost::GhostType gtype,
+                       int numGhostCells)
+  {
+    if (matlIndex != -999) {
+      return this->getGPUDW()->getKokkosView<const T>(
+        label->getName().c_str(),
+        patch->getID(),
+        matlIndex,
+        patch->getLevel()->getID());
+    } else {
+      return KokkosView3<const T,
+                         Kokkos::DefaultExecutionSpace::memory_space>();
+    }
+  }
+#endif
+
+  template<typename grid_T, typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, UintahSpaces::HostSpace>::value,
+    void>::type
+  assignGridVariable(grid_T& var,
+                     const VarLabel* label,
+                     int matlIndex,
+                     const Patch* patch,
+                     Ghost::GhostType gtype = Ghost::None,
+                     int numGhostCells      = 0,
+                     bool l_getModifiable   = false)
+  {
+    if (matlIndex != -999) {
+      if (l_getModifiable) {
+        this->getModifiable(var, label, matlIndex, patch, gtype, numGhostCells);
+      } else {
+        this->allocateAndPut(
+          var, label, matlIndex, patch, gtype, numGhostCells);
+      }
+    }
+  }
+
+#if defined(KOKKOS_USING_GPU)
+  template<typename grid_T, typename T, typename MemSpace>
+  inline typename std::enable_if<
+    std::is_same<MemSpace, Kokkos::DefaultExecutionSpace::memory_space>::value,
+    void>::type
+  assignGridVariable(KokkosView3<T, MemSpace>& var,
+                     const VarLabel* label,
+                     int matlIndex,
+                     const Patch* patch,
+                     Ghost::GhostType gtype = Ghost::None,
+                     int numGhostCells      = 0,
+                     bool l_getModifiable   = false)
+  {
+    if (matlIndex != -999) {
+      var = this->getGPUDW()->getKokkosView<T>(label->getName().c_str(),
+                                               patch->getID(),
+                                               matlIndex,
+                                               patch->getLevel()->getID());
+    } else {
+      var = KokkosView3<T, Kokkos::DefaultExecutionSpace::memory_space>();
+    }
+  }
+#endif
+
   ScrubMode
   getScrubMode() const
   {
@@ -673,8 +997,56 @@ public:
 
   static bool s_combine_memory;
 
+  // DS: 01042020: fix for OnDemandDW race condition
+  bool
+  compareAndSwapSetValidOnCPU(char const* label,
+                              int patchID,
+                              int matlIndx,
+                              int levelIndx);
+
+  bool
+  compareAndSwapSetInvalidOnCPU(char const* label,
+                                int patchID,
+                                int matlIndx,
+                                int levelIndx);
+
+  bool
+  isValidOnCPU(char const* label, int patchID, int matlIndx, int levelIndx);
+
+  bool
+  compareAndSwapCopyingIntoCPU(char const* label,
+                               int patchID,
+                               int matlIndx,
+                               int levelIndx);
+
+  bool
+  compareAndSwapAwaitingGhostDataOnCPU(char const* label,
+                                       int patchID,
+                                       int matlIndx,
+                                       int levelIndx);
+
+  bool
+  isValidWithGhostsOnCPU(char const* label,
+                         int patchID,
+                         int matlIndx,
+                         int levelIndx);
+
+  void
+  setValidWithGhostsOnCPU(char const* label,
+                          int patchID,
+                          int matlIndx,
+                          int levelIndx);
+
+  bool
+  compareAndSwapSetInvalidWithGhostsOnCPU(char const* label,
+                                          int patchID,
+                                          int matlIndx,
+                                          int levelIndx);
+
   friend class SchedulerCommon;
   friend class UnifiedScheduler;
+  friend class KokkosScheduler;   // allow scheduler access
+  friend class DetailedTask;      // allow task access
 
 private:
   enum AccessType
@@ -743,13 +1115,18 @@ private:
   virtual DataWarehouse*
   getOtherDataWarehouse(Task::WhichDW dw, RunningTaskInfo* info);
 
+  /*
+    exactWindow=0 => reallocate even if existing window is larger than
+    requested. Exactly match dimensions
+  */
   void
   getGridVar(GridVariableBase& var,
              const VarLabel* label,
              int matlIndex,
              const Patch* patch,
              Ghost::GhostType gtype,
-             int numGhostCells);
+             int numGhostCells,
+             int exactWindow = 0);
 
   inline Task::WhichDW
   getWhichDW(RunningTaskInfo* info);
@@ -807,11 +1184,9 @@ private:
                         const Level* level,
                         int line);
 
-#ifdef HAVE_CUDA
-
-  std::map<Patch*, bool> assignedPatches; // indicates where a given patch
-                                          // should be stored in an accelerator
-
+#if defined(KOKKOS_USING_GPU)
+  // Indicates where a given patch should be stored in an accelerator
+  std::map<Patch*, bool> assignedPatches;
 #endif
 
   using psetDBType = std::multimap<PSPatchMatlGhost, ParticleSubset*>;
@@ -880,8 +1255,289 @@ private:
   // Is this the first DW -- created by the initialization timestep?
   bool m_is_initialization_DW{ false };
 
+  // using for D2H copies only as of now. ONLY values used as of now are:
+  // COPYING_IN, VALID (and reset ~VALID for invalid). other Operations are
+  // handled by OnDemandDataWarehouse. copied from GPUDataWH
+
+  Uintah::MasterLock* varLock;
+
+  struct labelPatchMatlLevel
+  {
+    std::string label;
+    int patchID;
+    int matlIndx;
+    int levelIndx;
+
+    labelPatchMatlLevel(const char* label,
+                        int patchID,
+                        int matlIndx,
+                        int levelIndx)
+    {
+      this->label     = label;
+      this->patchID   = patchID;
+      this->matlIndx  = matlIndx;
+      this->levelIndx = levelIndx;
+    }
+
+    // This so it can be used in an STL map
+    bool
+    operator<(const labelPatchMatlLevel& right) const
+    {
+      if (this->label < right.label) {
+        return true;
+      } else if (this->label == right.label &&
+                 (this->patchID < right.patchID)) {
+        return true;
+      } else if (this->label == right.label &&
+                 (this->patchID == right.patchID) &&
+                 (this->matlIndx < right.matlIndx)) {
+        return true;
+      } else if (this->label == right.label &&
+                 (this->patchID == right.patchID) &&
+                 (this->matlIndx == right.matlIndx) &&
+                 (this->levelIndx < right.levelIndx)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  };
+
+  enum status
+  {
+    UNALLOCATED = 0x00000000,
+    ALLOCATING  = 0x00000001,
+    ALLOCATED   = 0x00000002,
+    COPYING_IN  = 0x00000004,
+    VALID = 0x00000008, // For when a variable has its data, this excludes any
+                        // knowledge of ghost cells.
+    AWAITING_GHOST_COPY =
+      0x00000010, // For when when we know a variable is awaiting ghost cell
+                  // data It is possible for VALID bit set to 0 or 1 with this
+                  // bit set, meaning we can know a variable is awaiting ghost
+                  // copies but we don't know from this bit alone if the
+                  // variable is valid yet.
+    VALID_WITH_GHOSTS =
+      0x00000020, // For when a variable has its data and it has its ghost cells
+                  // Note: Change to just GHOST_VALID?  Meaning ghost cells
+                  // could be valid but the non ghost part is unknown?
+    DEALLOCATING =
+      0x00000040, // TODO: REMOVE THIS WHEN YOU CAN, IT'S NOT OPTIMAL DESIGN.
+    FORMING_SUPERPATCH =
+      0x00000080, // As the name suggests, when a number of individual patches
+                  // are being formed into a superpatch, there is a period of
+                  // time which other threads should wait until all patches have
+                  // been processed.
+    SUPERPATCH =
+      0x00000100, // Indicates this patch is allocated as part of a superpatch.
+                  // At the moment superpatches is only implemented for entire
+                  // domain levels.  But it seems to make the most sense to have
+                  // another set of logic in level.cc which subdivides a level
+                  // into superpatches. If this bit is set, you should find the
+                  // lowest numbered patch ID first and start with concurrency
+                  // reads/writes there.  (Doing this avoids the Dining
+                  // Philosopher's problem.
+    UNKNOWN = 0x00000200
+  }; // Remove this when you can, unknown can be dangerous.
+     // It's only here to help track some host variables
+
+  typedef volatile int atomicDataStatus;
+
+  std::map<labelPatchMatlLevel, atomicDataStatus>
+    atomicStatusInHostMemory; // maintain status of the variable in the host
+                              // memory
 }; // end class OnDemandDataWarehouse
 
+//______________________________________________________________________
+//
+// Copy a var from the parameter DW to this one.  If newPatches
+// is not null, then it associates the copy of the variable with
+// newPatches, and otherwise it uses patches (the same it finds
+// the variable with.
+
+// transferFrom() will perform a deep copy on the data if it's in the
+// CPU or GPU.  GPU transferFrom is not yet supported for GPU PerPatch
+// variables.  See the GPU's transferFrom() method for many more more
+// details.
+template<typename ExecSpace, typename MemSpace>
+void
+OnDemandDataWarehouse::transferFrom(
+  DataWarehouse* from,
+  const VarLabel* label,
+  const PatchSubset* patches,
+  const MaterialSubset* matls,
+  ExecutionObject<ExecSpace, MemSpace>& execObj,
+  bool replace,
+  const PatchSubset* newPatches)
+{
+  OnDemandDataWarehouse* fromDW = dynamic_cast<OnDemandDataWarehouse*>(from);
+  ASSERT(fromDW != nullptr);
+  ASSERT(!m_finalized);
+
+  for (auto p = 0; p < patches->size(); ++p) {
+    const Patch* patch     = patches->get(p);
+    const Patch* copyPatch = (newPatches ? newPatches->get(p) : patch);
+    for (auto m = 0; m < matls->size(); ++m) {
+      int matl = matls->get(m);
+      // checkPutAccess( label, matl, patch, replace );
+      switch (label->typeDescription()->getType()) {
+        case TypeDescription::Type::NCVariable:
+        case TypeDescription::Type::CCVariable:
+        case TypeDescription::Type::SFCXVariable:
+        case TypeDescription::Type::SFCYVariable:
+        case TypeDescription::Type::SFCZVariable: {
+          // See if it exists in the CPU or GPU
+          bool found = false;
+          if (fromDW->m_var_DB.exists(label, matl, patch)) {
+            found               = true;
+            GridVariableBase* v = dynamic_cast<GridVariableBase*>(
+                                    fromDW->m_var_DB.get(label, matl, patch))
+                                    ->clone();
+            m_var_DB.put(
+              label, matl, copyPatch, v, d_scheduler->copyTimestep(), replace);
+          }
+
+#if defined(KOKKOS_USING_GPU)
+          if (Uintah::Parallel::usingDevice()) {
+            // See if it's in the GPU.  Both the source and destination
+            // must be in the GPU data warehouse, both must be listed
+            // as "allocated", and both must have the same variable
+            // sizes.  If those conditions match, then it will do a
+            // device to device memcopy call.  hard coding it for the
+            // 0th GPU.
+            const Level* level = patch->getLevel();
+            const int levelID  = level->getID();
+            const int patchID  = patch->getID();
+            GPUGridVariableBase* device_var_source =
+              OnDemandDataWarehouse::createGPUGridVariable(
+                label->typeDescription()->getSubType()->getType());
+            GPUGridVariableBase* device_var_dest =
+              OnDemandDataWarehouse::createGPUGridVariable(
+                label->typeDescription()->getSubType()->getType());
+            bool foundGPU = getGPUDW(0)->transferFrom(execObj.getInstance(),
+                                                      *device_var_source,
+                                                      *device_var_dest,
+                                                      from->getGPUDW(0),
+                                                      label->getName().c_str(),
+                                                      patchID,
+                                                      matl,
+                                                      levelID);
+            if (!found && foundGPU) {
+              found = true;
+            }
+          }
+#endif
+          if (!found) {
+            SCI_THROW(UnknownVariable(label->getName(),
+                                      fromDW->getID(),
+                                      patch,
+                                      matl,
+                                      "in transferFrom",
+                                      __FILE__,
+                                      __LINE__));
+          }
+          break;
+        }
+
+        case TypeDescription::Type::ParticleVariable: {
+          if (!fromDW->m_var_DB.exists(label, matl, patch)) {
+            SCI_THROW(UnknownVariable(label->getName(),
+                                      getID(),
+                                      patch,
+                                      matl,
+                                      "in transferFrom",
+                                      __FILE__,
+                                      __LINE__));
+          }
+
+          ParticleSubset* subset;
+          if (!haveParticleSubset(matl, copyPatch)) {
+            ParticleSubset* oldsubset = fromDW->getParticleSubset(matl, patch);
+            subset =
+              createParticleSubset(oldsubset->numParticles(), matl, copyPatch);
+          } else {
+            subset = getParticleSubset(matl, copyPatch);
+          }
+
+          ParticleVariableBase* v = dynamic_cast<ParticleVariableBase*>(
+            fromDW->m_var_DB.get(label, matl, patch));
+          if (patch == copyPatch) {
+            m_var_DB.put(label,
+                         matl,
+                         copyPatch,
+                         v->clone(),
+                         d_scheduler->copyTimestep(),
+                         replace);
+          } else {
+            ParticleVariableBase* newv = v->cloneType();
+            newv->copyPointer(*v);
+            newv->setParticleSubset(subset);
+            m_var_DB.put(label,
+                         matl,
+                         copyPatch,
+                         newv,
+                         d_scheduler->copyTimestep(),
+                         replace);
+          }
+          break;
+        }
+        case TypeDescription::Type::PerPatch: {
+          if (!fromDW->m_var_DB.exists(label, matl, patch)) {
+            SCI_THROW(UnknownVariable(label->getName(),
+                                      getID(),
+                                      patch,
+                                      matl,
+                                      "in transferFrom",
+                                      __FILE__,
+                                      __LINE__));
+          }
+          PerPatchBase* v = dynamic_cast<PerPatchBase*>(
+            fromDW->m_var_DB.get(label, matl, patch));
+          m_var_DB.put(label,
+                       matl,
+                       copyPatch,
+                       v->clone(),
+                       d_scheduler->copyTimestep(),
+                       replace);
+          break;
+        }
+        case TypeDescription::Type::SoleVariable: {
+          if (!fromDW->m_var_DB.exists(label, matl, patch)) {
+            SCI_THROW(UnknownVariable(label->getName(),
+                                      getID(),
+                                      patch,
+                                      matl,
+                                      "in transferFrom",
+                                      __FILE__,
+                                      __LINE__));
+          }
+          SoleVariableBase* v = dynamic_cast<SoleVariableBase*>(
+            fromDW->m_var_DB.get(label, matl, patch));
+          m_var_DB.put(label,
+                       matl,
+                       copyPatch,
+                       v->clone(),
+                       d_scheduler->copyTimestep(),
+                       replace);
+          break;
+        }
+        case TypeDescription::Type::ReductionVariable: {
+          SCI_THROW(InternalError(
+            "transferFrom not implemented for reduction variables: " +
+              label->getName(),
+            __FILE__,
+            __LINE__));
+        }
+        default: {
+          SCI_THROW(InternalError("Unknown variable type in transferFrom: " +
+                                    label->getName(),
+                                  __FILE__,
+                                  __LINE__));
+        }
+      }
+    }
+  }
+}
 } // end namespace Uintah
 
 #endif // end #ifndef UINTAH_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H

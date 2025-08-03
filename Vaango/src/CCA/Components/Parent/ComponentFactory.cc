@@ -229,24 +229,17 @@ ComponentFactory::create(ProblemSpecP& ps,
     return std::make_unique<SolverTest2>(world, mat_manager);
   }
 #endif
-  if (sim_comp == "portabledependencytest" || sim_comp == "PORTABLEDEPENDENCYTEST") {
+  if (sim_comp == "portabledependencytest" ||
+      sim_comp == "PORTABLEDEPENDENCYTEST") {
     return std::make_unique<PortableDependencyTest>(world, mat_manager);
   }
-  else {
-    turned_on_options += "portabledependencytest ";
-  }
 
-  if (sim_comp == "portabledependencytest1" || sim_comp == "PORTABLEDEPENDENCYTEST1") {
+  if (sim_comp == "portabledependencytest1" ||
+      sim_comp == "PORTABLEDEPENDENCYTEST1") {
     return std::make_unique<PortableDependencyTest1>(world, mat_manager);
   }
-  else {
-    turned_on_options += "portabledependencytest1 ";
-  }
-if (sim_comp == "gpuresizetest1" || sim_comp == "GPURESIZETEST1") {
+  if (sim_comp == "gpuresizetest1" || sim_comp == "GPURESIZETEST1") {
     return std::make_unique<GPUResizeTest1>(world, mat_manager);
-  }
-  else {
-    turned_on_options += "gpuresizetest1 ";
   }
 
   if (sim_comp == "switcher" || sim_comp == "SWITCHER") {

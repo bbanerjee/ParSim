@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015-2023 Parresia Reaserch Limited, New Zealand
+# Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Reaserch Limited, NZ
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -93,6 +93,8 @@ target_link_libraries(MPM_ConstitutiveModel PRIVATE
   Vaango::Options
   Vaango::Warnings
 )
+
+target_compile_options(MPM_ConstitutiveModel PUBLIC -Wno-unknown-pragmas --expt-relaxed-constexpr)
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_ConstitutiveModel)

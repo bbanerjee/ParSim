@@ -41,7 +41,7 @@ class SimulationReductionVariable {
                               bool varActive = false) {
     // Construct the label.
     VarLabel* nonconstVar = VarLabel::create(name, varType);
-    nonconstVar->isReductionTask(false);
+    nonconstVar->schedReductionTask(false);
     d_label = nonconstVar;
 
     d_active = varActive;

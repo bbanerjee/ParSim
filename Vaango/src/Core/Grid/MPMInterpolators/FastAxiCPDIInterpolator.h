@@ -40,23 +40,55 @@ namespace Uintah {
     virtual ~FastAxiCPDIInterpolator();
     
     virtual std::unique_ptr<ParticleInterpolator> clone(const Patch*);
-    
-    virtual void findCellAndWeights(const Point& p,vector<IntVector>& ni, 
-                                    std::vector<double>& S, const Matrix3& size,
-                                    const Matrix3& defgrad);
 
-    virtual void findCellAndShapeDerivatives(const Point& pos,
-                                             std::vector<IntVector>& ni,
-                                             std::vector<Vector>& d_S,
-                                             const Matrix3& size,
-                                             const Matrix3& defgrad);
+    virtual void
+    findCellAndWeights(const Point& p,
+                       vector<IntVector>& ni,
+                       std::vector<double>& S,
+                       const Matrix3& size,
+                       const Matrix3& defgrad);
+    void
+    findCellAndWeights(const Point& pos,
+                       std::vector<IntVector>& ni,
+                       std::vector<double>& S,
+                       constNCVariable<Stencil7>& zoi,
+                       constNCVariable<Stencil7>& zoi_fine,
+                       const bool& getFiner,
+                       int& num_cur,
+                       int& num_fine,
+                       int& num_coarse,
+                       const Vector& size,
+                       bool coarse_part,
+                       const Patch* patch)
+    {
+      ParticleInterpolator::findCellAndWeights(pos,
+                                               ni,
+                                               S,
+                                               zoi,
+                                               zoi_fine,
+                                               getFiner,
+                                               num_cur,
+                                               num_fine,
+                                               num_coarse,
+                                               size,
+                                               coarse_part,
+                                               patch);
+    }
 
-    virtual void findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                       std::vector<IntVector>& ni,
-                                                       std::vector<double>& S,
-                                                       std::vector<Vector>& d_S,
-                                                       const Matrix3& size,
-                                                       const Matrix3& defgrad);
+    virtual void
+    findCellAndShapeDerivatives(const Point& pos,
+                                std::vector<IntVector>& ni,
+                                std::vector<Vector>& d_S,
+                                const Matrix3& size,
+                                const Matrix3& defgrad);
+
+    virtual void
+    findCellAndWeightsAndShapeDerivatives(const Point& pos,
+                                          std::vector<IntVector>& ni,
+                                          std::vector<double>& S,
+                                          std::vector<Vector>& d_S,
+                                          const Matrix3& size,
+                                          const Matrix3& defgrad);
     virtual int size();
     
   private:

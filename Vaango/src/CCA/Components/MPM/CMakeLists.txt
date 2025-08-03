@@ -100,6 +100,10 @@ IF (PETSC)
   target_link_petsc(Vaango_CCA_Components_MPM PRIVATE)
 ENDIF()
 
+if (HAVE_CUDA)
+  target_compile_options(Vaango_CCA_Components_MPM PUBLIC -Wno-unknown-pragmas --expt-relaxed-constexpr)
+endif()
+
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_CCA_Components_MPM)
 ENDIF(BUILD_SHARED_LIBS)

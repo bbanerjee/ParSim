@@ -49,7 +49,16 @@ class VarLabel;
 class SolverParameters
 {
 public:
-  SolverParameters()          = default;
+    SolverParameters() : d_use_stencil_4(false),
+                         d_symmetric(true),
+                         d_solve_on_extra_cells(false),
+                         d_residual_normalization_factor(1),
+                         d_recomputable_timestep(false),
+                         d_setup_frequency(1),
+                         d_update_coef_frequency(1),
+                         d_output_file_name("nullptr"),
+                         d_which_old_dw(Task::OldDW) {}
+
   virtual ~SolverParameters() = default;
 
   void

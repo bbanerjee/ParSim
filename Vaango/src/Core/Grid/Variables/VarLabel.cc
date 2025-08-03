@@ -27,10 +27,9 @@
 
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Grid/Patch.h>
+#include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/MasterLock.h>
 #include <Core/Util/DebugStream.h>
-
-//#include <Core/Util/DebugOutput.h>
 
 #include <iostream>
 #include <map>
@@ -142,14 +141,14 @@ VarLabel::VarLabel(const std::string& name, const Uintah::TypeDescription* td,
 void
 VarLabel::printAll()
 {
-  for (auto label : g_all_labels) {
-    std::cout << label.second->d_name << std::endl;
+  for (auto& label : g_all_labels) {
+    proc0cout << "VarLabel: " << std::setw(24) << label.second->d_name << "  "
+              << "Type description: " << std::setw(30)
+              << label.second->d_td->getName() << "  "
+              << "Var type: " << std::setw(0)
+              << (label.second->d_var_type == VarType:: PositionVariable? "PositionVariable" : "Normal")
+              << std::endl;
   }
-  //auto iter = g_all_labels.begin();
-
-  //for (; iter != g_all_labels.end(); iter++) {
-  //  std::cout << (*iter).second->d_name << std::endl;
-  //}
 }
 
 VarLabel*
@@ -203,7 +202,7 @@ VarLabel::getFullName(int matlIndex, const Patch* patch) const
 }
 
 void
-VarLabel::isReductionTask(bool input)
+VarLabel::schedReductionTask(bool input)
 {
   if (!d_td->isReductionVariable()) {
     std::ostringstream out;
@@ -212,7 +211,7 @@ VarLabel::isReductionTask(bool input)
     SCI_THROW(InternalError(out.str(), __FILE__, __LINE__));
   }
 
-  d_is_reduction_task = input;
+  d_sched_reduction_task = input;
 }
 
 std::ostream&

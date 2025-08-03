@@ -272,9 +272,9 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
     d_analysisModules =
       AnalysisModuleFactory::create(d_myworld, d_materialManager, prob_spec);
 
-    for (auto& module : d_analysisModules) {
-      module->setComponents(dynamic_cast<SimulationInterface*>(this));
-      module->problemSetup(prob_spec,
+    for (auto& module_name : d_analysisModules) {
+      module_name->setComponents(dynamic_cast<SimulationInterface*>(this));
+      module_name->problemSetup(prob_spec,
                            restart_prob_spec,
                            grid,
                            d_particleState,
@@ -1625,8 +1625,8 @@ SerialMPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
   //__________________________________
   //  on the fly analysis
   if (d_analysisModules.size() != 0) {
-    for (auto& module : d_analysisModules) {
-      module->scheduleDoAnalysis(sched, level);
+    for (auto& module_name : d_analysisModules) {
+      module_name->scheduleDoAnalysis(sched, level);
     }
   }
 }

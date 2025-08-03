@@ -29,6 +29,7 @@
 
 #include <Core/Geometry/IntVector.h>
 #include <Core/Util/RefCounted.h>
+#include <Core/Grid/Ghost.h>
 
 #include <iosfwd>
 #include <map>
@@ -76,16 +77,13 @@ class VarLabel : public RefCounted {
     return d_boundary_layer;
   }
 
-  // void allowMultipleComputes();
-
-  // bool allowsMultipleComputes() const { return d_allow_multiple_computes; }
-
   void
-  isReductionTask(bool input);
+  schedReductionTask(bool input);
 
   bool
-  isReductionTask() const {
-    return d_is_reduction_task;
+  doSchedReductionTask() const
+  {
+    return d_sched_reduction_task;
   }
 
   static VarLabel*
@@ -126,11 +124,6 @@ class VarLabel : public RefCounted {
   equals(const VarLabel* v2) const {
     // because of uniqueness, we can use pointer comparisons
     return this == v2;
-    /* old way
-       if(this == v2)
-       return true;
-       return getName() == v2->getName();
-    */
   }
 
   void
@@ -155,6 +148,33 @@ class VarLabel : public RefCounted {
   friend std::ostream&
   operator<<(std::ostream& out, const VarLabel& vl);
 
+  // DS 12062019: Store max ghost cell count for this variable across all GPU
+  // tasks. update it in dependencies of all gpu tasks before task graph
+  // compilation
+  inline int
+  getMaxDeviceGhost() const
+  {
+    return d_max_device_ghost;
+  }
+
+  inline void
+  setMaxDeviceGhost(int val) const
+  {
+    d_max_device_ghost = val;
+  }
+
+  inline Ghost::GhostType
+  getMaxDeviceGhostType() const
+  {
+    return d_max_device_ghost_type;
+  }
+
+  inline void
+  setMaxDeviceGhostType(Ghost::GhostType val) const
+  {
+    d_max_device_ghost_type = val;
+  }
+
  private:
   // You must use VarLabel::create.
   VarLabel(const std::string& label,
@@ -177,8 +197,13 @@ class VarLabel : public RefCounted {
 
   // Allow a variable of this label to be computed multiple times in a TaskGraph
   // without complaining.
-  // bool d_allow_multiple_computes{ false };
-  bool d_is_reduction_task{true};
+  bool d_sched_reduction_task{ false };
+
+  // DS 12062019: Store max ghost cell count for this variable across all GPU
+  // tasks. update it in dependencies of all gpu tasks before task graph
+  // compilation
+  mutable int d_max_device_ghost{ 0 };
+  mutable Ghost::GhostType d_max_device_ghost_type{ Ghost::None };
 
   // eliminate copy, assignment and move
   VarLabel(const VarLabel&) = delete;

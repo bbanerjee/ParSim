@@ -41,7 +41,7 @@ namespace Uintah {
     virtual ~AxiCPDIInterpolator();
     
     virtual std::unique_ptr<ParticleInterpolator> clone(const Patch*);
-    
+
     virtual void findCellAndWeights(const Point& p,vector<IntVector>& ni, 
                                     std::vector<double>& S, const Matrix3& size,
                                     const Matrix3& defgrad);
