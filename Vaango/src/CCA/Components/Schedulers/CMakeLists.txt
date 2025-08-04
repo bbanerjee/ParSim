@@ -45,7 +45,7 @@ SET(Vaango_CCA_Components_Schedulers_SRCS
   UnifiedScheduler.cc 
 )
 
-if (CUDA)
+if (HAVE_CUDA)
   set(Vaango_CCA_Components_Schedulers_SRCS
     ${Vaango_CCA_Components_Schedulers_SRCS}
     GPUDataWarehouse.cc
@@ -53,7 +53,7 @@ if (CUDA)
     GPUGridVariableGhosts.cc
     GPUMemoryPool.cc
   )
-endif (CUDA)
+endif (HAVE_CUDA)
 
 add_library(Vaango_CCA_Components_Schedulers ${Vaango_CCA_Components_Schedulers_SRCS})
 
@@ -65,15 +65,12 @@ set(Vaango_CCA_Components_Schedulers_LIBS
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  ${TAU_LIBRARY}
-  ${VAMPIR_LIBRARY}
-  ${PERFEX_LIBRARY}
   Vaango::Options
   Vaango::Warnings
 )
 
 target_link_libraries(Vaango_CCA_Components_Schedulers PRIVATE
-  Vaango_CCA_Components_Schedulers_LIBS
+  ${Vaango_CCA_Components_Schedulers_LIBS}
   LibXml2::LibXml2
   $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
   $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>

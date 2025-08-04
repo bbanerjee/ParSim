@@ -2244,7 +2244,7 @@ GPUDataWarehouse::getNumMaterials() const
 //______________________________________________________________________
 //
 GPU_FUNCTION materialType
-GPUDataWarehouse::getMaterial(int i) const
+GPUDataWarehouse::getMaterial([[maybe_unused]] int i) const
 {
 #if defined(DEVICE_COMPILE_ONLY)
   if (i >= d_numMaterials) {
@@ -2747,7 +2747,9 @@ GPUDataWarehouse::getDisplayableStatusCodes(atomicDataStatus& status)
     }
   }
   // trim whitespace
-  retval.erase(std::find_if(retval.rbegin(), retval.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), retval.end());
+  //retval.erase(std::find_if(retval.rbegin(), retval.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), retval.end());
+  retval.erase(std::ranges::find_if(retval.rbegin(), retval.rend(), [](unsigned char c){ return !std::isspace(c); }).base(), retval.end());
+
 
   return retval;
 }

@@ -101,7 +101,7 @@ namespace Uintah {
     private:
 
             double           m_delt{0.0};
-            EmptyMaterial * m_simple_material{nullptr};
+      std::shared_ptr<EmptyMaterial> m_simple_material{nullptr};
       const VarLabel       * m_phi_label{nullptr};
       const VarLabel       * m_residual_label{nullptr};
 

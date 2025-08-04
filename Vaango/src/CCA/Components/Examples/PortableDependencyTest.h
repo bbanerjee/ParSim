@@ -157,7 +157,7 @@ WARNING
                               );
 
     double delt_;
-    EmptyMaterial* mymat_;
+    std::shared_ptr<EmptyMaterial> mymat_;
     const VarLabel* phi_label;
     const VarLabel* residual_label;
 

@@ -64,7 +64,7 @@ void UnifiedSchedulerTest::problemSetup( const ProblemSpecP & params
 {
   ProblemSpecP ps = params->findBlock("UnifiedSchedulerTest");
   ps->require("delt", m_delt);
-  m_simple_material = scinew EmptyMaterial();
+  m_simple_material = std::make_shared<EmptyMaterial>();
   d_materialManager->registerEmptyMaterial(m_simple_material);
 }
 
@@ -157,13 +157,12 @@ void UnifiedSchedulerTest::initialize( const ProcessorGroup * pg
         int num_children = patch->getBCDataArray(face)->getNumberChildren(matl);
         for (int child = 0; child < num_children; ++child) {
           Iterator nbound_ptr, nu;
-          const BoundCondBase* bcb = patch->getArrayBCValues(face, matl, "Phi", nu, nbound_ptr, child);
-          const BoundCond<double>* bc = dynamic_cast<const BoundCond<double>*>(bcb);
+          auto bcb = patch->getArrayBCValues(face, matl, "Phi", nu, nbound_ptr, child);
+          const BoundCond<double>* bc = dynamic_cast<const BoundCond<double>*>(bcb.get());
           double value = bc->getValue();
           for (nbound_ptr.reset(); !nbound_ptr.done(); ++nbound_ptr) {
             phi[*nbound_ptr] = value;
           }
-          delete bcb;
         }
       }
     }

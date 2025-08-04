@@ -50,6 +50,7 @@
 #include <Core/Grid/Variables/GPUGridVariable.h>
 #include <Core/Grid/Variables/GPUReductionVariable.h>
 #endif
+
 #include <iosfwd>
 #include <map>
 #include <vector>

@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013 The University of Utah
+ * Copyright (c) 2013-2024 The University of Utah
+ * Copyright (c) 2024-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,6 +26,7 @@
 #ifndef UINTAH_GPUSTENCIL7_H
 #define UINTAH_GPUSTENCIL7_H
 
+#include <sci_defs/kokkos_defs.h>
 #include <sci_defs/cuda_defs.h>
 
 
@@ -40,15 +42,15 @@ namespace Uintah {
     // diagonal term
     double p;
 
-    HOST_DEVICE double& operator[](int index) {
+    GPU_INLINE_FUNCTION double& operator[](int index) {
       CHECK_RANGE(index, 0, 7);
       return (&w)[index];
     }
-    HOST_DEVICE const double& operator[](int index) const {
+    GPU_INLINE_FUNCTION const double& operator[](int index) const {
       CHECK_RANGE(index, 0, 7);
       return (&w)[index];
     }
-    HOST_DEVICE void initialize(double a){
+    GPU_INLINE_FUNCTION void initialize(double a){
       w = a;
       e = a;
       s = a;

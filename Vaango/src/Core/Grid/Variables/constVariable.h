@@ -173,6 +173,12 @@ public:
     return this->rep_.virtualGetTypeDescription();
   }
 
+  inline const T&
+  operator()(int i, int j, int k) const
+  {
+    return this->rep_(i, j, k);
+  }
+
   // used to get size info of the underlying data; this is for host-->device
   // variable copy
   virtual size_t

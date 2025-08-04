@@ -76,6 +76,12 @@ public:
     return Array3<T>::rewindow(low, high);
   }
 
+  virtual bool
+  rewindowExact(const IntVector& low, const IntVector& high)
+  {
+    return Array3<T>::rewindowExact(low, high);
+  }
+
   virtual void
   offset(const IntVector& offset) override
   {

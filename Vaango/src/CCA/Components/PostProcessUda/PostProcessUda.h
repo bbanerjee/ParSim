@@ -49,7 +49,7 @@ public:
   virtual ~PostProcessUda();
 
   void
-  problemSetup(const ProblemSpecP& prob_spec) {}
+  problemSetup([[maybe_unused]] const ProblemSpecP& prob_spec) {}
 
   virtual void
   problemSetup(const ProblemSpecP& params,

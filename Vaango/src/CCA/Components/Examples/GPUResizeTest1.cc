@@ -83,7 +83,7 @@ void GPUResizeTest1::problemSetup( const ProblemSpecP & params
 
   GPUResizeTest->require("delt", delt_);
 
-  mymat_ = scinew EmptyMaterial();
+  mymat_ = std::make_shared<EmptyMaterial>();
 
   d_materialManager->registerEmptyMaterial(mymat_);
 }
@@ -140,8 +140,7 @@ void GPUResizeTest1::scheduleTimeAdvance( const LevelP     & level
 
   create_portable_tasks(TaskDependencies, this,
                         "GPUResizeTest1::timeAdvance",
-                        &GPUResizeTest1::timeAdvance<UINTAH_CPU_TAG>,
-                        &GPUResizeTest1::timeAdvance<KOKKOS_OPENMP_TAG>,
+                        //&GPUResizeTest1::timeAdvance<UINTAH_CPU_TAG>,
                         &GPUResizeTest1::timeAdvance<KOKKOS_DEFAULT_DEVICE_TAG>,
                         sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
 
@@ -155,8 +154,7 @@ void GPUResizeTest1::scheduleTimeAdvance( const LevelP     & level
 
   create_portable_tasks(TaskDependencies1, this,
                         "GPUResizeTest1::timeRequires",
-                        &GPUResizeTest1::timeAdvance1<UINTAH_CPU_TAG>,
-                        &GPUResizeTest1::timeAdvance1<KOKKOS_OPENMP_TAG>,
+                        //&GPUResizeTest1::timeAdvance1<UINTAH_CPU_TAG>,
                         &GPUResizeTest1::timeAdvance1<KOKKOS_DEFAULT_DEVICE_TAG>,
                         sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
 
@@ -204,14 +202,13 @@ void GPUResizeTest1::initialize( const ProcessorGroup *
         for (int child = 0; child < numChildren; child++) {
           Iterator nbound_ptr, nu;
 
-          const BoundCondBase* bcb = patch->getArrayBCValues(face, matl, "Phi", nu, nbound_ptr, child);
+          const auto bcb = patch->getArrayBCValues(face, matl, "Phi", nu, nbound_ptr, child);
 
-          const BoundCond<double>* bc = dynamic_cast<const BoundCond<double>*>(bcb);
+          const BoundCond<double>* bc = dynamic_cast<const BoundCond<double>*>(bcb.get());
           double value = bc->getValue();
           for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
             phi[*nbound_ptr] = value;
           }
-          delete bcb;
         }
       }
     }

@@ -113,7 +113,7 @@ public:
 
   static TypeDescription::Register registerMe;
 
-protected:
+  NCVariable(NCVariable<T>&&);
   NCVariable(const NCVariable<T>&);
 
 private:
@@ -174,6 +174,14 @@ NCVariable<T>::clone() const
 template<class T>
 NCVariable<T>::NCVariable()
 {
+}
+
+template<class T>
+NCVariable<T>::NCVariable(NCVariable<T>&& other)
+  : GridVariable<T>(other)
+{
+  // Implementing this somehow turned on and properly supported Return Value
+  // Optimization (RVO).  I'm not entirely sure why -- Brad P June 2018
 }
 
 template<class T>

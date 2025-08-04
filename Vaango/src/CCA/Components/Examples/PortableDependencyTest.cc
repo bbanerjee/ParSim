@@ -76,7 +76,7 @@ void PortableDependencyTest::problemSetup( const ProblemSpecP & params
 
   poisson->require("delt", delt_);
 
-  mymat_ = scinew EmptyMaterial();
+  mymat_ = std::make_shared<EmptyMaterial>();
 
   d_materialManager->registerEmptyMaterial(mymat_);
 }
@@ -138,8 +138,7 @@ void PortableDependencyTest::scheduleTask1Computes( const LevelP     & level
 
   create_portable_tasks(TaskDependencies, this,
                         "PortableDependencyTest::task1Computes",
-                        &PortableDependencyTest::task1Computes<UINTAH_CPU_TAG>,
-                        &PortableDependencyTest::task1Computes<KOKKOS_OPENMP_TAG>,
+                        //&PortableDependencyTest::task1Computes<UINTAH_CPU_TAG>,
                         &PortableDependencyTest::task1Computes<KOKKOS_DEFAULT_DEVICE_TAG>,
                         sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
 }
@@ -156,8 +155,7 @@ void PortableDependencyTest::scheduleTask2Modifies( const LevelP     & level
 
   create_portable_tasks(TaskDependencies, this,
                         "PortableDependencyTest::task2Modifies",
-                        &PortableDependencyTest::task2Modifies<UINTAH_CPU_TAG>,
-                        &PortableDependencyTest::task2Modifies<KOKKOS_OPENMP_TAG>,
+                        //&PortableDependencyTest::task2Modifies<UINTAH_CPU_TAG>,
                         &PortableDependencyTest::task2Modifies<KOKKOS_DEFAULT_DEVICE_TAG>,
                         sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
 }
@@ -176,8 +174,7 @@ void PortableDependencyTest::scheduleTask3Modifies( const LevelP     & level
 
   create_portable_tasks(TaskDependencies, this,
                         "PortableDependencyTest::task3Modifies",
-                        &PortableDependencyTest::task3Modifies<UINTAH_CPU_TAG>,
-                        &PortableDependencyTest::task3Modifies<KOKKOS_OPENMP_TAG>,
+                        //&PortableDependencyTest::task3Modifies<UINTAH_CPU_TAG>,
                         &PortableDependencyTest::task3Modifies<KOKKOS_DEFAULT_DEVICE_TAG>,
                         sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
 }
@@ -192,8 +189,7 @@ void PortableDependencyTest::scheduleTask4Requires( const LevelP     & level
 
   create_portable_tasks(Task4Dependencies, this,
                         "PortableDependencyTest::task4Requires",
-                        &PortableDependencyTest::task4Requires<UINTAH_CPU_TAG>,
-                        &PortableDependencyTest::task4Requires<KOKKOS_OPENMP_TAG>,
+                        //&PortableDependencyTest::task4Requires<UINTAH_CPU_TAG>,
                         &PortableDependencyTest::task4Requires<KOKKOS_DEFAULT_DEVICE_TAG>,
                         sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
 }
@@ -238,14 +234,13 @@ void PortableDependencyTest::initialize( const ProcessorGroup *
         for (int child = 0; child < numChildren; child++) {
           Iterator nbound_ptr, nu;
 
-          const BoundCondBase* bcb = patch->getArrayBCValues(face, matl, "Phi", nu, nbound_ptr, child);
+          auto bcb = patch->getArrayBCValues(face, matl, "Phi", nu, nbound_ptr, child);
 
-          const BoundCond<double>* bc = dynamic_cast<const BoundCond<double>*>(bcb);
+          const BoundCond<double>* bc = dynamic_cast<const BoundCond<double>*>(bcb.get());
           double value = bc->getValue();
           for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
             phi[*nbound_ptr] = value;
           }
-          delete bcb;
         }
       }
     }

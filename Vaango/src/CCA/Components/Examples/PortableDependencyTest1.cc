@@ -37,7 +37,7 @@ void PortableDependencyTest1::problemSetup( const ProblemSpecP & params
         portabledependencytest1->require("delt", delt_);
         portabledependencytest1->require("task", tasks);
         portabledependencytest1->require("exespace", exespaces);
-        mymat_ = scinew EmptyMaterial();
+        mymat_ = std::make_shared<EmptyMaterial>();
         d_materialManager->registerEmptyMaterial(mymat_);
 }
 
@@ -76,71 +76,99 @@ void PortableDependencyTest1::scheduleRequireTask( const LevelP& level, Schedule
                         sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
 }
 
-void PortableDependencyTest1::scheduleTimeAdvance( const LevelP  & level, SchedulerP & sched){
-        for(size_t i=0; i<tasks.length(); i++){
-                char task = tasks[i];
-                char exespace = exespaces[i];
+void
+PortableDependencyTest1::scheduleTimeAdvance(const LevelP& level,
+                                             SchedulerP& sched)
+{
+  for (size_t i = 0; i < tasks.length(); i++) {
+    char task     = tasks[i];
+    char exespace = exespaces[i];
 
-                         if(task == 'c' && exespace=='c') scheduleComputeTask<UINTAH_CPU_TAG>(level, sched);
-                else if(task == 'c' && exespace=='g') scheduleComputeTask<KOKKOS_DEFAULT_DEVICE_TAG>(level, sched);
-                else if(task == 'm' && exespace=='c') scheduleModifyTask<UINTAH_CPU_TAG>(level, sched);
-                else if(task == 'm' && exespace=='g') scheduleModifyTask<KOKKOS_DEFAULT_DEVICE_TAG>(level, sched);
-                else if(task == 'r' && exespace=='c') scheduleRequireTask<UINTAH_CPU_TAG>(level, sched);
-                else if(task == 'r' && exespace=='g') scheduleRequireTask<KOKKOS_DEFAULT_DEVICE_TAG>(level, sched);
-                else {
-                        printf("wrong combination of tasks and exe spaces\n");
-                        exit(1);
-                }
-        }
+    if (task == 'c' && exespace == 'c') {
+      scheduleComputeTask<UINTAH_CPU_TAG>(level, sched);
+    } else if (task == 'c' && exespace == 'g') {
+      scheduleComputeTask<KOKKOS_DEFAULT_DEVICE_TAG>(level, sched);
+    } else if (task == 'm' && exespace == 'c') {
+      scheduleModifyTask<UINTAH_CPU_TAG>(level, sched);
+    } else if (task == 'm' && exespace == 'g') {
+      scheduleModifyTask<KOKKOS_DEFAULT_DEVICE_TAG>(level, sched);
+    } else if (task == 'r' && exespace == 'c') {
+      scheduleRequireTask<UINTAH_CPU_TAG>(level, sched);
+    } else if (task == 'r' && exespace == 'g') {
+      scheduleRequireTask<KOKKOS_DEFAULT_DEVICE_TAG>(level, sched);
+    } else {
+      printf("wrong combination of tasks and exe spaces\n");
+      exit(1);
+    }
+  }
 }
 
-
-template <typename ExecSpace, typename MemSpace>
-void PortableDependencyTest1::computeTask( task_parameters )
+template<typename ExecSpace, typename MemSpace>
+void
+PortableDependencyTest1::computeTask(task_parameters)
 {
-        for (int p = 0; p < patches->size(); p++) {
-                const Patch* patch = patches->get(p);
-                auto newphi = new_dw->getGridVariable<NCVariable<double>, double, MemSpace> (phi_label, 0, patch);      //getGridVariable should call allocateAndPut
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    auto newphi = new_dw->getGridVariable<NCVariable<double>, double, MemSpace>(
+      phi_label, 0, patch); // getGridVariable should call allocateAndPut
 
-                IntVector l = patch->getNodeLowIndex(), h = patch->getNodeHighIndex();
-                BlockRange range(l, h);
-                Uintah::parallel_for(execObj, range, KOKKOS_LAMBDA(int i, int j, int k){
-                        newphi(i, j, k) = 1.0;
-                });
-        }
+    IntVector l = patch->getNodeLowIndex(), h = patch->getNodeHighIndex();
+    BlockRange range(l, h);
+    Uintah::parallel_for(
+      execObj, range, KOKKOS_LAMBDA(int i, int j, int k) {
+        newphi(i, j, k) = 1.0;
+      });
+  }
 
-        g_expected = 1.0;
-        std::cout << "computeTask: " << typeid(ExecSpace).name() << ", expected value for the NEXT task: " << g_expected << "\n";
+  g_expected = 1.0;
+  std::cout << "computeTask: " << typeid(ExecSpace).name()
+            << ", expected value for the NEXT task: " << g_expected << "\n";
 }
 
-template <typename ExecSpace, typename MemSpace>
-void PortableDependencyTest1::modifyTask( task_parameters )
+template<typename ExecSpace, typename MemSpace>
+void
+PortableDependencyTest1::modifyTask(task_parameters)
 {
-        int wrong=0;
-        double expected = g_expected;
-        for (int p = 0; p < patches->size(); p++) {
-                const Patch* patch = patches->get(p);
-                auto newphi = new_dw->getGridVariable<NCVariable<double>, double, MemSpace> (phi_label, 0, patch, Ghost::None, 0, true);        //getGridVariable should call getModifiable
+  int wrong       = 0;
+  double expected = g_expected;
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    auto newphi = new_dw->getGridVariable<NCVariable<double>, double, MemSpace>(
+      phi_label,
+      0,
+      patch,
+      Ghost::None,
+      0,
+      true); // getGridVariable should call getModifiable
 
-                IntVector l = patch->getNodeLowIndex(), h = patch->getNodeHighIndex();
-                BlockRange range(l, h);
-                Uintah::parallel_reduce_sum(execObj, range, KOKKOS_LAMBDA(int i, int j, int k, int &wrong){
-                        if(newphi(i, j, k) != expected){        //verify expected value before updating
-                                wrong++;
+    IntVector l = patch->getNodeLowIndex(), h = patch->getNodeHighIndex();
+    BlockRange range(l, h);
+    Uintah::parallel_reduce_sum(
+      execObj,
+      range,
+      KOKKOS_LAMBDA(int i, int j, int k, int& wrong) {
+        if (newphi(i, j, k) !=
+            expected) { // verify expected value before updating
+          wrong++;
 #if !defined(KOKKOS_ENABLE_SYCL)
-                                printf("modifies: expected mismatch: %d %d %d %f %f\n", i, j, k, newphi(i,j,k), expected);
+          printf("modifies: expected mismatch: %d %d %d %f %f\n",
+                 i,
+                 j,
+                 k,
+                 newphi(i, j, k),
+                 expected);
 #endif
-                        }
-                        newphi(i, j, k) = newphi(i, j, k) + 0.5;
-                }, wrong);
         }
+        newphi(i, j, k) = newphi(i, j, k) + 0.5;
+      },
+      wrong);
+  }
 
-        printf("modifyTask. wrong values: %d\n", wrong);
+  printf("modifyTask. wrong values: %d\n", wrong);
 
-        g_expected+=0.5;
-        std::cout << "modifyTask: " << typeid(ExecSpace).name() << ", expected value for the NEXT task: " << g_expected << "\n";
-
-
+  g_expected += 0.5;
+  std::cout << "modifyTask: " << typeid(ExecSpace).name()
+            << ", expected value for the NEXT task: " << g_expected << "\n";
 }
 
 template <typename ExecSpace, typename MemSpace>

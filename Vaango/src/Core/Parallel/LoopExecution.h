@@ -108,9 +108,9 @@ enum TASKGRAPH {
   #define KOKKOS_DEFAULT_DEVICE_TAG   UintahSpaces::CPU COMMA UintahSpaces::HostSpace
 #endif
 
-// #pragma message "The value of UINTAH_CPU_TAG: "            STRVX(UINTAH_CPU_TAG)
-// #pragma message "The value of KOKKOS_DEFAULT_HOST_TAG: "   STRVX(KOKKOS_DEFAULT_HOST_TAG)
-// #pragma message "The value of KOKKOS_DEFAULT_DEVICE_TAG: " STRVX(KOKKOS_DEFAULT_DEVICE_TAG)
+//#pragma message "The value of UINTAH_CPU_TAG: "            STRVX(UINTAH_CPU_TAG)
+//#pragma message "The value of KOKKOS_DEFAULT_HOST_TAG: "   STRVX(KOKKOS_DEFAULT_HOST_TAG)
+//#pragma message "The value of KOKKOS_DEFAULT_DEVICE_TAG: " STRVX(KOKKOS_DEFAULT_DEVICE_TAG)
 
 namespace Uintah {
 
