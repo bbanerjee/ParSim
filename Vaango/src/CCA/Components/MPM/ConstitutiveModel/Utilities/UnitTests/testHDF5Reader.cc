@@ -131,8 +131,15 @@ TEST(HDF5Tests, readTest)
     //for (auto layer_name: layer_names) {
     //  std::cout << layer_name << std::endl;
     //}
-
+    // C++23 compliant version
+    /*
     for (const auto& [ii, layer_name]: std::views::enumerate(layer_names)) {
+      ...
+    }
+    */
+    // C++20 compliant version
+    for (std::size_t ii = 0; ii < layer_names.size(); ++ii) {
+      auto layer_name = layer_names[ii];
       //std::cout << "layer_name = " << layer_name << std::endl;
       switch(ii) {
         case 0:  ASSERT_EQ(layer_name, "dense_1"); break;
@@ -141,7 +148,7 @@ TEST(HDF5Tests, readTest)
         case 3:  ASSERT_EQ(layer_name, "dense_4"); break;
       };
 
-      auto weight_group = file.openGroup(std::format("/model_weights/{}", layer_name));
+      auto weight_group = file.openGroup(std::format("/model_weights/{}", layer_names[ii]));
       auto weight_attribute = weight_group.openAttribute("weight_names");
       auto weight_datatype = weight_attribute.getDataType();
       auto weight_dataspace = weight_attribute.getSpace();
@@ -178,9 +185,17 @@ TEST(HDF5Tests, readTest)
         weight_names.emplace_back(name_span.data(), actual_length);
       }
 
+      // C++23 compliant version
+      /*
       for (const auto& [jj, weights_name]: std::views::enumerate(weight_names)) {
+        ...
+      }
+      */
+      // C++20 compliant version
+      for (std::size_t jj = 0; jj < weight_names.size(); ++jj) {
+        auto weights_name = weight_names[jj];
 
-        auto wn_dataset = weight_group.openDataSet(weights_name);
+        auto wn_dataset = weight_group.openDataSet(weight_names[jj]);
         auto wn_datatype = wn_dataset.getDataType();
         auto wn_dataspace = wn_dataset.getSpace();
         rank = wn_dataspace.getSimpleExtentNdims();
@@ -194,9 +209,9 @@ TEST(HDF5Tests, readTest)
         //}
         
         // Remove extra \0 characters in the bias name
-        auto pos = weights_name.find_last_not_of('\0');
+        auto pos = weight_names[jj].find_last_not_of('\0');
         if (pos == std::string::npos) weights_name.clear();
-        else weights_name.resize(pos + 1);
+        else weight_names[jj].resize(pos + 1);
 
         switch(ii) {
           case 0:  switch(jj) {

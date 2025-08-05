@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  */
 
-//test GPU resizing variable case
+// test GPU resizing variable case
 
 #ifndef Packages_Uintah_CCA_Components_Examples_GPUResizeTest1_h
 #define Packages_Uintah_CCA_Components_Examples_GPUResizeTest1_h
@@ -34,14 +34,13 @@
 #include <Core/Grid/Variables/VarLabel.h>
 
 namespace Uintah {
-  class EmptyMaterial;
-
+class EmptyMaterial;
 
 /**************************************
 
 CLASS
    GPUResizeTest1
-   
+
    GPUResizeTest1 simulation
 
 GENERAL INFORMATION
@@ -53,81 +52,92 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-   
+
+
 KEYWORDS
    GPUResizeTest1
 
 DESCRIPTION
    Long description...
-  
+
 WARNING
-  
+
 ****************************************/
 
-  class GPUResizeTest1 : public SimulationCommon {
-  public:
-    GPUResizeTest1(const ProcessorGroup* myworld,
-             const MaterialManagerP materialManager);
-    
-    virtual ~GPUResizeTest1();
+class GPUResizeTest1 : public SimulationCommon
+{
+public:
+  GPUResizeTest1(const ProcessorGroup* myworld,
+                 const MaterialManagerP materialManager);
 
-    virtual void problemSetup(const ProblemSpecP& params, 
-                              const ProblemSpecP& restart_prob_spec, 
-                              GridP& grid);
-                              
-    virtual void scheduleInitialize(const LevelP& level,
-                                    SchedulerP& sched);
-                                    
-    virtual void scheduleRestartInitialize(const LevelP& level,
-                                           SchedulerP& sched);
-                                    
-    virtual void scheduleComputeStableTimeStep(const LevelP& level,
-                                               SchedulerP&);
-                                               
-    virtual void scheduleTimeAdvance( const LevelP& level, 
-                                          SchedulerP&);
+  virtual ~GPUResizeTest1();
 
-    template <typename ExecSpace, typename MemSpace>
-    void timeAdvance( const PatchSubset* patches,
-                      const MaterialSubset* matls,
-                      OnDemandDataWarehouse* old_dw,
-                      OnDemandDataWarehouse* new_dw,
-                      UintahParams& uintahParams,
-                      ExecutionObject<ExecSpace, MemSpace>& execObj );
+  virtual void
+  problemSetup(const ProblemSpecP& params,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid,
+               const std::string& input_ups_dir = "");
 
-    template <typename ExecSpace, typename MemSpace>
-    void timeAdvance1( const PatchSubset* patches,
-                      const MaterialSubset* matls,
-                      OnDemandDataWarehouse* old_dw,
-                      OnDemandDataWarehouse* new_dw,
-                      UintahParams& uintahParams,
-                      ExecutionObject<ExecSpace, MemSpace>& execObj );
+  void
+  outputProblemSpec([[maybe_unused]] ProblemSpecP& ps)
+  {
+  }
 
-  private:
-    void initialize(const ProcessorGroup*,
-                    const PatchSubset* patches, 
-                    const MaterialSubset* matls,
-                    DataWarehouse* old_dw, 
-                    DataWarehouse* new_dw);
-                    
-                    
-    void computeStableTimeStep(const ProcessorGroup*,
-                               const PatchSubset* patches,
-                               const MaterialSubset* matls,
-                               DataWarehouse* old_dw,
-                               DataWarehouse* new_dw);
-                     
-    double delt_;
-    std::shared_ptr<EmptyMaterial> mymat_;
-    const VarLabel* phi_label;
-    const VarLabel* density_label;
-    const VarLabel* residual_label;
+  virtual void
+  scheduleInitialize(const LevelP& level, SchedulerP& sched);
 
-    GPUResizeTest1(const GPUResizeTest1&);
-    GPUResizeTest1& operator=(const GPUResizeTest1&);
-         
-  };
-}
+  virtual void
+  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched);
+
+  virtual void
+  scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);
+
+  virtual void
+  scheduleTimeAdvance(const LevelP& level, SchedulerP&);
+
+  template<typename ExecSpace, typename MemSpace>
+  void
+  timeAdvance(const PatchSubset* patches,
+              const MaterialSubset* matls,
+              OnDemandDataWarehouse* old_dw,
+              OnDemandDataWarehouse* new_dw,
+              UintahParams& uintahParams,
+              ExecutionObject<ExecSpace, MemSpace>& execObj);
+
+  template<typename ExecSpace, typename MemSpace>
+  void
+  timeAdvance1(const PatchSubset* patches,
+               const MaterialSubset* matls,
+               OnDemandDataWarehouse* old_dw,
+               OnDemandDataWarehouse* new_dw,
+               UintahParams& uintahParams,
+               ExecutionObject<ExecSpace, MemSpace>& execObj);
+
+private:
+  void
+  initialize(const ProcessorGroup*,
+             const PatchSubset* patches,
+             const MaterialSubset* matls,
+             DataWarehouse* old_dw,
+             DataWarehouse* new_dw);
+
+  void
+  computeStableTimestep(const ProcessorGroup*,
+                        const PatchSubset* patches,
+                        const MaterialSubset* matls,
+                        DataWarehouse* old_dw,
+                        DataWarehouse* new_dw);
+
+  double delt_;
+  std::shared_ptr<EmptyMaterial> mymat_;
+  const VarLabel* phi_label;
+  const VarLabel* density_label;
+  const VarLabel* residual_label;
+
+  GPUResizeTest1(const GPUResizeTest1&);
+  GPUResizeTest1&
+  operator=(const GPUResizeTest1&);
+};
+} // namespace Uintah
 
 #endif

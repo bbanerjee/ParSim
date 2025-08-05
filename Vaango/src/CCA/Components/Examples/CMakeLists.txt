@@ -67,12 +67,12 @@ if (HAVE_HYPRE)
 endif (HAVE_HYPRE)
 
 
-if (HAVE_CUDA)
-  SET(Vaango_CCA_Components_Examples_SRCS
-    ${Vaango_CCA_Components_Examples_SRCS}
-    UnifiedSchedulerTest.cc   
-  )
-endif (HAVE_CUDA)
+#if (HAVE_CUDA)
+#  SET(Vaango_CCA_Components_Examples_SRCS
+#    ${Vaango_CCA_Components_Examples_SRCS}
+#    UnifiedSchedulerTest.cc   
+#  )
+#endif (HAVE_CUDA)
 
 add_library(Vaango_CCA_Components_Examples ${Vaango_CCA_Components_Examples_SRCS})
 if (HAVE_CUDA)
@@ -89,6 +89,7 @@ target_link_libraries(Vaango_CCA_Components_Examples PRIVATE
   Vaango::Warnings
   $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
   $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
 )
 

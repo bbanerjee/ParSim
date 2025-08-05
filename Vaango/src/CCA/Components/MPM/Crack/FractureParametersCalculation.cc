@@ -1502,9 +1502,9 @@ Crack::OutputCrackFrontResults(const int& m, double time, double timestep)
   constexpr std::array<int, 3> target_indices        = { 2, 4, 6 };
 
   std::array<std::ofstream, 3> additional_outputs;
-  for (auto&& [i, suffix] : std::views::enumerate(suffixes)) {
+  for (size_t i = 0; i < suffixes.size(); ++i) {
     additional_outputs[i] =
-      create_output_stream(std::format("{}{}", base_filename, suffix));
+      create_output_stream(std::format("{}{}", base_filename, suffixes[i]));
   }
 
   const auto num   = static_cast<int>(d_cfSegNodes[m].size());

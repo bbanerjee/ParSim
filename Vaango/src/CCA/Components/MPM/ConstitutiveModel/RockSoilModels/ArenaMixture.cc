@@ -1171,8 +1171,16 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
       constParticleVariable<double> yield_param_var;
 
       // Using std::views::zip and structured bindings (C++23)
+      /*
       for (const auto& [yield_param_label, yield_param_var] :
            std::views::zip(pYieldParamVarLabels, pYieldParamVars)) {
+        state_old.yieldParams[yield_param_label] = yield_param_var[idx];
+      }
+      */
+      // C++20 compliant version
+      for (size_t i = 0; i < pYieldParamVarLabels.size(); ++i) {
+        const auto& yield_param_label            = pYieldParamVarLabels[i];
+        const auto& yield_param_var              = pYieldParamVars[i];
         state_old.yieldParams[yield_param_label] = yield_param_var[idx];
       }
 

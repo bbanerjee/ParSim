@@ -23,44 +23,45 @@
  * IN THE SOFTWARE.
  */
 
-//Poisson1 modified with dummy tasks to test resizing problem on GPU: tasks with different ghost cells
-//density is a dummy label
+// Poisson1 modified with dummy tasks to test resizing problem on GPU: tasks
+// with different ghost cells density is a dummy label
 
-#include <CCA/Components/Examples/GPUResizeTest1.h>
 #include <CCA/Components/Examples/ExamplesLabel.h>
+#include <CCA/Components/Examples/GPUResizeTest1.h>
 #include <CCA/Components/Schedulers/DetailedTask.h>
 #include <CCA/Components/Schedulers/OnDemandDataWarehouse.h>
-#include <Core/Parallel/Portability.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
+#include <CCA/Ports/Scheduler.h>
+#include <Core/Grid/BoundaryConditions/BCDataArray.h>
+#include <Core/Grid/BoundaryConditions/BoundCond.h>
+#include <Core/Grid/EmptyMaterial.h>
+#include <Core/Grid/Level.h>
+#include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/KokkosViews.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
-#include <Core/Grid/MaterialManager.h>
-#include <Core/Grid/Task.h>
-#include <Core/Grid/Level.h>
-#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Parallel/ProcessorGroup.h>
-#include <CCA/Ports/Scheduler.h>
 #include <Core/Malloc/Allocator.h>
-#include <Core/Grid/BoundaryConditions/BCDataArray.h>
-#include <Core/Grid/BoundaryConditions/BoundCond.h>
+#include <Core/Parallel/Portability.h>
+#include <Core/Parallel/ProcessorGroup.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
 using namespace std;
 using namespace Uintah;
 
 class DetailedTask;
 
-//test GPU resizing variable case
+// test GPU resizing variable case
 
-GPUResizeTest1::GPUResizeTest1( const ProcessorGroup   * myworld
-                  , const MaterialManagerP   materialManager
-                  )
-  : SimulationCommon( myworld, materialManager )
+GPUResizeTest1::GPUResizeTest1(const ProcessorGroup* myworld,
+                               const MaterialManagerP materialManager)
+  : SimulationCommon(myworld, materialManager)
 {
   phi_label = VarLabel::create("phi", NCVariable<double>::getTypeDescription());
-  density_label = VarLabel::create("density", NCVariable<double>::getTypeDescription());
-  residual_label = VarLabel::create("residual", sum_vartype::getTypeDescription());
+  density_label =
+    VarLabel::create("density", NCVariable<double>::getTypeDescription());
+  residual_label =
+    VarLabel::create("residual", sum_vartype::getTypeDescription());
 }
 
 //______________________________________________________________________
@@ -74,12 +75,14 @@ GPUResizeTest1::~GPUResizeTest1()
 
 //______________________________________________________________________
 //
-void GPUResizeTest1::problemSetup( const ProblemSpecP & params
-                           , const ProblemSpecP & restart_prob_spec
-                           ,       GridP        & /*grid*/
-                           )
+void
+GPUResizeTest1::problemSetup(const ProblemSpecP& params,
+                             const ProblemSpecP& restart_prob_spec,
+                             [[maybe_unused]] GridP& grid,
+                             [[maybe_unused]] const std::string& input_ups_dir)
 {
-  ProblemSpecP GPUResizeTest = params->findBlock("Poisson");    //not chaning ups file format
+  ProblemSpecP GPUResizeTest =
+    params->findBlock("Poisson"); // not chaning ups file format
 
   GPUResizeTest->require("delt", delt_);
 
@@ -90,11 +93,11 @@ void GPUResizeTest1::problemSetup( const ProblemSpecP & params
 
 //______________________________________________________________________
 //
-void GPUResizeTest1::scheduleInitialize( const LevelP     & level
-                                 ,       SchedulerP & sched
-                                 )
+void
+GPUResizeTest1::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 {
-  Task* task = scinew Task("GPUResizeTest1::initialize", this, &GPUResizeTest1::initialize);
+  Task* task = scinew Task(
+    "GPUResizeTest1::initialize", this, &GPUResizeTest1::initialize);
 
   task->computes(phi_label, nullptr, Uintah::Task::NormalDomain);
   task->computes(density_label);
@@ -104,19 +107,21 @@ void GPUResizeTest1::scheduleInitialize( const LevelP     & level
 
 //______________________________________________________________________
 //
-void GPUResizeTest1::scheduleRestartInitialize( const LevelP     & level
-                                        ,       SchedulerP & sched
-                                        )
+void
+GPUResizeTest1::scheduleRestartInitialize(const LevelP& level,
+                                          SchedulerP& sched)
 {
 }
 
 //______________________________________________________________________
 //
-void GPUResizeTest1::scheduleComputeStableTimeStep( const LevelP     & level
-                                            ,       SchedulerP & sched
-                                            )
+void
+GPUResizeTest1::scheduleComputeStableTimestep(const LevelP& level,
+                                              SchedulerP& sched)
 {
-  Task* task = scinew Task("GPUResizeTest1::computeStableTimeStep", this, &GPUResizeTest1::computeStableTimeStep);
+  Task* task = scinew Task("GPUResizeTest1::computeStableTimestep",
+                           this,
+                           &GPUResizeTest1::computeStableTimestep);
 
   task->needs(Task::NewDW, residual_label);
   task->computes(getDelTLabel(), level.get_rep());
@@ -125,50 +130,56 @@ void GPUResizeTest1::scheduleComputeStableTimeStep( const LevelP     & level
 
 //______________________________________________________________________
 //
-void GPUResizeTest1::scheduleTimeAdvance( const LevelP     & level
-                                  ,       SchedulerP & sched
-                                  )
+void
+GPUResizeTest1::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
 {
-  //part 1
+  // part 1
 
   auto TaskDependencies = [&](Task* task) {
     task->needs(Task::OldDW, phi_label, Ghost::AroundNodes, 1);
     task->computes(phi_label, nullptr, Uintah::Task::NormalDomain);
-    //task->computesWithScratchGhost(phi_label, nullptr, Uintah::Task::NormalDomain, Ghost::AroundNodes, 2);
+    // task->computesWithScratchGhost(phi_label, nullptr,
+    // Uintah::Task::NormalDomain, Ghost::AroundNodes, 2);
     task->computes(residual_label);
   };
 
-  create_portable_tasks(TaskDependencies, this,
+  create_portable_tasks(TaskDependencies,
+                        this,
                         "GPUResizeTest1::timeAdvance",
                         //&GPUResizeTest1::timeAdvance<UINTAH_CPU_TAG>,
                         &GPUResizeTest1::timeAdvance<KOKKOS_DEFAULT_DEVICE_TAG>,
-                        sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
+                        sched,
+                        level->eachPatch(),
+                        d_materialManager->allMaterials(),
+                        TASKGRAPH::DEFAULT);
 
-
-
-   //part 2
+  // part 2
   auto TaskDependencies1 = [&](Task* task) {
     task->needs(Task::OldDW, phi_label, Ghost::AroundNodes, 2);
     task->computes(density_label, nullptr, Uintah::Task::NormalDomain);
   };
 
-  create_portable_tasks(TaskDependencies1, this,
-                        "GPUResizeTest1::timeRequires",
-                        //&GPUResizeTest1::timeAdvance1<UINTAH_CPU_TAG>,
-                        &GPUResizeTest1::timeAdvance1<KOKKOS_DEFAULT_DEVICE_TAG>,
-                        sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
-
-
+  create_portable_tasks(
+    TaskDependencies1,
+    this,
+    "GPUResizeTest1::timeRequires",
+    //&GPUResizeTest1::timeAdvance1<UINTAH_CPU_TAG>,
+    &GPUResizeTest1::timeAdvance1<KOKKOS_DEFAULT_DEVICE_TAG>,
+    sched,
+    level->eachPatch(),
+    d_materialManager->allMaterials(),
+    TASKGRAPH::DEFAULT);
 }
 
 //______________________________________________________________________
 //
-void GPUResizeTest1::computeStableTimeStep( const ProcessorGroup * pg
-                                    , const PatchSubset    * patches
-                                    , const MaterialSubset * /*matls*/
-                                    ,       DataWarehouse  *
-                                    ,       DataWarehouse  * new_dw
-                                    )
+void
+GPUResizeTest1::computeStableTimestep(const ProcessorGroup* pg,
+                                      const PatchSubset* patches,
+                                      const MaterialSubset* /*matls*/
+                                      ,
+                                      DataWarehouse*,
+                                      DataWarehouse* new_dw)
 {
   if (pg->myRank() == 0) {
     sum_vartype residual;
@@ -179,12 +190,13 @@ void GPUResizeTest1::computeStableTimeStep( const ProcessorGroup * pg
 
 //______________________________________________________________________
 //
-void GPUResizeTest1::initialize( const ProcessorGroup *
-                         , const PatchSubset    * patches
-                         , const MaterialSubset * matls
-                         ,       DataWarehouse  * /*old_dw*/
-                         ,       DataWarehouse  * new_dw
-                         )
+void
+GPUResizeTest1::initialize(const ProcessorGroup*,
+                           const PatchSubset* patches,
+                           const MaterialSubset* matls,
+                           DataWarehouse* /*old_dw*/
+                           ,
+                           DataWarehouse* new_dw)
 {
   int matl = 0;
   for (int p = 0; p < patches->size(); p++) {
@@ -195,16 +207,19 @@ void GPUResizeTest1::initialize( const ProcessorGroup *
     new_dw->allocateAndPut(phi, phi_label, matl, patch);
     new_dw->allocateAndPut(density, density_label, matl, patch);
     phi.initialize(0.);
-    for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace; face = Patch::nextFace(face)) {
+    for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
+         face                 = Patch::nextFace(face)) {
 
       if (patch->getBCType(face) == Patch::None) {
         int numChildren = patch->getBCDataArray(face)->getNumberChildren(matl);
         for (int child = 0; child < numChildren; child++) {
           Iterator nbound_ptr, nu;
 
-          const auto bcb = patch->getArrayBCValues(face, matl, "Phi", nu, nbound_ptr, child);
+          const auto bcb =
+            patch->getArrayBCValues(face, matl, "Phi", nu, nbound_ptr, child);
 
-          const BoundCond<double>* bc = dynamic_cast<const BoundCond<double>*>(bcb.get());
+          const BoundCond<double>* bc =
+            dynamic_cast<const BoundCond<double>*>(bcb.get());
           double value = bc->getValue();
           for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
             phi[*nbound_ptr] = value;
@@ -218,13 +233,14 @@ void GPUResizeTest1::initialize( const ProcessorGroup *
 
 //______________________________________________________________________
 //
-template <typename ExecSpace, typename MemSpace>
-void GPUResizeTest1::timeAdvance( const PatchSubset* patches,
+template<typename ExecSpace, typename MemSpace>
+void
+GPUResizeTest1::timeAdvance(const PatchSubset* patches,
                             const MaterialSubset* matls,
                             OnDemandDataWarehouse* old_dw,
                             OnDemandDataWarehouse* new_dw,
                             UintahParams& uintahParams,
-                            ExecutionObject<ExecSpace, MemSpace>& execObj )
+                            ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
 
   int matl = 0;
@@ -233,49 +249,58 @@ void GPUResizeTest1::timeAdvance( const PatchSubset* patches,
 
     // Prepare the ranges for both boundary conditions and main loop
     double residual = 0;
-    IntVector l = patch->getNodeLowIndex();
-    IntVector h = patch->getNodeHighIndex();
+    IntVector l     = patch->getNodeLowIndex();
+    IntVector h     = patch->getNodeHighIndex();
 
-    Uintah::BlockRange rangeBoundary( l, h);
+    Uintah::BlockRange rangeBoundary(l, h);
 
     l += IntVector(patch->getBCType(Patch::xminus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 1);
+                   patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 1,
+                   patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 1);
     h -= IntVector(patch->getBCType(Patch::xplus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 1);
+                   patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 1,
+                   patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 1);
 
-    Uintah::BlockRange range( l, h );
-    auto phi = old_dw->getConstNCVariable<double, MemSpace> (phi_label, matl, patch, Ghost::AroundNodes, 1);
-    auto newphi = new_dw->getNCVariable<double, MemSpace> (phi_label, matl, patch);
-    // Perform the boundary condition of copying over prior initialized values.  (TODO:  Replace with boundary condition)
-    //Uintah::parallel_for<ExecSpace, LaunchBounds< 640,1 > >( execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k){
-    Uintah::parallel_for(execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k){
-        newphi(i, j, k) = phi(i,j,k);
-    });
+    Uintah::BlockRange range(l, h);
+    auto phi = old_dw->getConstNCVariable<double, MemSpace>(
+      phi_label, matl, patch, Ghost::AroundNodes, 1);
+    auto newphi =
+      new_dw->getNCVariable<double, MemSpace>(phi_label, matl, patch);
+    // Perform the boundary condition of copying over prior initialized values.
+    // (TODO:  Replace with boundary condition)
+    // Uintah::parallel_for<ExecSpace, LaunchBounds< 640,1 > >( execObj,
+    // rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k){
+    Uintah::parallel_for(
+      execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k) {
+        newphi(i, j, k) = phi(i, j, k);
+      });
 
     // Perform the main loop
-    Uintah::parallel_reduce_sum(execObj, range, KOKKOS_LAMBDA (int i, int j, int k, double& residual){
-      newphi(i, j, k) = (1. / 6)
-          * (phi(i + 1, j, k) + phi(i - 1, j, k) + phi(i, j + 1, k) +
-              phi(i, j - 1, k) + phi(i, j, k + 1) + phi(i, j, k - 1));
+    Uintah::parallel_reduce_sum(
+      execObj,
+      range,
+      KOKKOS_LAMBDA(int i, int j, int k, double& residual) {
+        newphi(i, j, k) =
+          (1. / 6) * (phi(i + 1, j, k) + phi(i - 1, j, k) + phi(i, j + 1, k) +
+                      phi(i, j - 1, k) + phi(i, j, k + 1) + phi(i, j, k - 1));
 
-      double diff = newphi(i, j, k) - phi(i, j, k);
-      residual += diff * diff;
-    }, residual);
+        double diff = newphi(i, j, k) - phi(i, j, k);
+        residual += diff * diff;
+      },
+      residual);
   }
 }
 
-
 //______________________________________________________________________
 //
-template <typename ExecSpace, typename MemSpace>
-void GPUResizeTest1::timeAdvance1( const PatchSubset* patches,
-                            const MaterialSubset* matls,
-                            OnDemandDataWarehouse* old_dw,
-                            OnDemandDataWarehouse* new_dw,
-                            UintahParams& uintahParams,
-                            ExecutionObject<ExecSpace, MemSpace>& execObj )
+template<typename ExecSpace, typename MemSpace>
+void
+GPUResizeTest1::timeAdvance1(const PatchSubset* patches,
+                             const MaterialSubset* matls,
+                             OnDemandDataWarehouse* old_dw,
+                             OnDemandDataWarehouse* new_dw,
+                             UintahParams& uintahParams,
+                             ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
 
   int matl = 0;
@@ -284,37 +309,46 @@ void GPUResizeTest1::timeAdvance1( const PatchSubset* patches,
 
     // Prepare the ranges for both boundary conditions and main loop
     double residual = 0;
-    IntVector l = patch->getNodeLowIndex();
-    IntVector h = patch->getNodeHighIndex();
+    IntVector l     = patch->getNodeLowIndex();
+    IntVector h     = patch->getNodeHighIndex();
 
-    Uintah::BlockRange rangeBoundary( l, h);
+    Uintah::BlockRange rangeBoundary(l, h);
 
     l += IntVector(patch->getBCType(Patch::xminus) == Patch::Neighbor ? 0 : 2,
-                  patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 2,
-                  patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 2);
+                   patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 2,
+                   patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 2);
     h -= IntVector(patch->getBCType(Patch::xplus) == Patch::Neighbor ? 0 : 2,
-                  patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 2,
-                  patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 2);
+                   patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 2,
+                   patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 2);
 
-    Uintah::BlockRange range( l, h );
-    auto phi = old_dw->getConstNCVariable<double, MemSpace> (phi_label, matl, patch, Ghost::AroundNodes, 2);
-    auto newphi = new_dw->getNCVariable<double, MemSpace> (density_label, matl, patch);
-    // Perform the boundary condition of copying over prior initialized values.  (TODO:  Replace with boundary condition)
-    //Uintah::parallel_for<ExecSpace, LaunchBounds< 640,1 > >( execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k){
-    Uintah::parallel_for(execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k){
-        newphi(i, j, k) = phi(i,j,k);
-    });
+    Uintah::BlockRange range(l, h);
+    auto phi = old_dw->getConstNCVariable<double, MemSpace>(
+      phi_label, matl, patch, Ghost::AroundNodes, 2);
+    auto newphi =
+      new_dw->getNCVariable<double, MemSpace>(density_label, matl, patch);
+    // Perform the boundary condition of copying over prior initialized values.
+    // (TODO:  Replace with boundary condition)
+    // Uintah::parallel_for<ExecSpace, LaunchBounds< 640,1 > >( execObj,
+    // rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k){
+    Uintah::parallel_for(
+      execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k) {
+        newphi(i, j, k) = phi(i, j, k);
+      });
 
     // Perform the main loop
-    Uintah::parallel_reduce_sum(execObj, range, KOKKOS_LAMBDA (int i, int j, int k, double& residual){
-      newphi(i, j, k) = (1. / 6)
-          * ( phi(i + 1, j, k) + phi(i - 1, j, k) + phi(i, j + 1, k) +
-              phi(i, j - 1, k) + phi(i, j, k + 1) + phi(i, j, k - 1) +
-                          phi(i + 2, j, k) + phi(i - 2, j, k) + phi(i, j + 2, k) +
-                          phi(i, j - 2, k) + phi(i, j, k + 2) + phi(i, j, k - 2) );
+    Uintah::parallel_reduce_sum(
+      execObj,
+      range,
+      KOKKOS_LAMBDA(int i, int j, int k, double& residual) {
+        newphi(i, j, k) =
+          (1. / 6) * (phi(i + 1, j, k) + phi(i - 1, j, k) + phi(i, j + 1, k) +
+                      phi(i, j - 1, k) + phi(i, j, k + 1) + phi(i, j, k - 1) +
+                      phi(i + 2, j, k) + phi(i - 2, j, k) + phi(i, j + 2, k) +
+                      phi(i, j - 2, k) + phi(i, j, k + 2) + phi(i, j, k - 2));
 
-      double diff = newphi(i, j, k) - phi(i, j, k);
-      residual += diff * diff;
-    }, residual);
+        double diff = newphi(i, j, k) - phi(i, j, k);
+        residual += diff * diff;
+      },
+      residual);
   }
 }

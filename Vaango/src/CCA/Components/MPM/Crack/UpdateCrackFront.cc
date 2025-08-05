@@ -553,10 +553,17 @@ Crack::OutputCrackGeometry(const int& m, const int& timestep)
   }
 
   // Output crack-front nodes using views and structured bindings
+  /*
   auto segPairs = d_cfSegNodes[m] | std::views::chunk(2);
   for (const auto& pair : segPairs) {
     if (pair.size() >= 2) {
       outputCF << std::format("{} {}\n", pair[0], pair[1]);
     }
+  }
+  */
+  // Process elements in pairs without using ranges::views
+  for (size_t i = 0; i + 1 < d_cfSegNodes[m].size(); i += 2) {
+    outputCF << std::format(
+      "{} {}\n", d_cfSegNodes[m][i], d_cfSegNodes[m][i + 1]);
   }
 }

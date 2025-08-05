@@ -64,7 +64,7 @@ AnalysisModule::AnalysisModule(const ProcessorGroup* myworld,
   // Delta t
   VarLabel* nonconstDelT =
     VarLabel::create(delT_name, delt_vartype::getTypeDescription());
-  nonconstDelT->isReductionTask(false);
+  nonconstDelT->schedReductionTask(false);
   m_delTLabel = nonconstDelT;
 }
 //______________________________________________________________________

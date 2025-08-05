@@ -68,10 +68,20 @@ WARNING
 
     virtual ~PortableDependencyTest();
 
-    virtual void problemSetup( const ProblemSpecP & params
-                             , const ProblemSpecP & restart_prob_spec
-                             ,       GridP        & grid
-                             );
+    virtual void
+    problemSetup(const ProblemSpecP& params,
+                 const ProblemSpecP& restart_prob_spec,
+                 GridP& grid,
+                 const std::string& input_ups_dir = "");
+
+    void
+    outputProblemSpec([[maybe_unused]] ProblemSpecP& ps)
+    {
+    }
+
+    void
+    scheduleComputeStableTimestep([[maybe_unused]] const LevelP& level,
+                                  [[maybe_unused]] SchedulerP& scheduler);
 
     virtual void scheduleInitialize( const LevelP     & level
                                    ,       SchedulerP & sched
@@ -80,10 +90,6 @@ WARNING
     virtual void scheduleRestartInitialize( const LevelP     & level
                                           ,       SchedulerP & sched
                                           );
-
-    virtual void scheduleComputeStableTimeStep( const LevelP     & level
-                                              ,       SchedulerP &
-                                              );
 
     virtual void scheduleTimeAdvance( const LevelP     & level
                                     ,       SchedulerP &
@@ -149,7 +155,7 @@ WARNING
                    ,       DataWarehouse  * new_dw
                    );
 
-    void computeStableTimeStep( const ProcessorGroup *
+    void computeStableTimestep( const ProcessorGroup *
                               , const PatchSubset    * patches
                               , const MaterialSubset * matls
                               ,       DataWarehouse  * old_dw

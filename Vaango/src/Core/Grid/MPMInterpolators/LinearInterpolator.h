@@ -50,6 +50,14 @@ public:
   virtual std::unique_ptr<ParticleInterpolator>
   clone(const Patch*) override;
 
+  inline void
+  findCellAndWeights(const Patch* patch,
+                     const Point& pos,
+                     std::vector<IntVector>& ni,
+                     std::vector<double>& S)
+  {
+    ParticleInterpolator::findCellAndWeights(patch, pos, ni, S);
+  }
 
   virtual void
   findCellAndWeights(const Point& p,

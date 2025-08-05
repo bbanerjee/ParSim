@@ -23,38 +23,39 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/Examples/PortableDependencyTest.h>
 #include <CCA/Components/Examples/ExamplesLabel.h>
+#include <CCA/Components/Examples/PortableDependencyTest.h>
 #include <CCA/Components/Schedulers/DetailedTask.h>
 #include <CCA/Components/Schedulers/OnDemandDataWarehouse.h>
-#include <Core/Parallel/Portability.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
+#include <CCA/Ports/Scheduler.h>
+#include <Core/Grid/BoundaryConditions/BCDataArray.h>
+#include <Core/Grid/BoundaryConditions/BoundCond.h>
+#include <Core/Grid/EmptyMaterial.h>
+#include <Core/Grid/Level.h>
+#include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/KokkosViews.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
-#include <Core/Grid/MaterialManager.h>
-#include <Core/Grid/Task.h>
-#include <Core/Grid/Level.h>
-#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Parallel/ProcessorGroup.h>
-#include <CCA/Ports/Scheduler.h>
 #include <Core/Malloc/Allocator.h>
-#include <Core/Grid/BoundaryConditions/BCDataArray.h>
-#include <Core/Grid/BoundaryConditions/BoundCond.h>
+#include <Core/Parallel/Portability.h>
+#include <Core/Parallel/ProcessorGroup.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
 using namespace std;
 using namespace Uintah;
 
 class DetailedTask;
 
-PortableDependencyTest::PortableDependencyTest( const ProcessorGroup   * myworld
-                                              , const MaterialManagerP   materialManager
-                                              )
-  : SimulationCommon( myworld, materialManager )
+PortableDependencyTest::PortableDependencyTest(
+  const ProcessorGroup* myworld,
+  const MaterialManagerP materialManager)
+  : SimulationCommon(myworld, materialManager)
 {
-  phi_label      = VarLabel::create("phi", NCVariable<double>::getTypeDescription());
-  residual_label = VarLabel::create("residual", sum_vartype::getTypeDescription());
+  phi_label = VarLabel::create("phi", NCVariable<double>::getTypeDescription());
+  residual_label =
+    VarLabel::create("residual", sum_vartype::getTypeDescription());
 }
 
 //______________________________________________________________________
@@ -67,10 +68,12 @@ PortableDependencyTest::~PortableDependencyTest()
 
 //______________________________________________________________________
 //
-void PortableDependencyTest::problemSetup( const ProblemSpecP & params
-                                         , const ProblemSpecP & restart_prob_spec
-                                         ,       GridP        & /*grid*/
-                                         )
+void
+PortableDependencyTest::problemSetup(
+  const ProblemSpecP& params,
+  const ProblemSpecP& restart_prob_spec,
+  [[maybe_unused]] GridP& grid,
+  [[maybe_unused]] const std::string& input_ups_dir)
 {
   ProblemSpecP poisson = params->findBlock("Poisson");
 
@@ -83,11 +86,14 @@ void PortableDependencyTest::problemSetup( const ProblemSpecP & params
 
 //______________________________________________________________________
 //
-void PortableDependencyTest::scheduleInitialize( const LevelP     & level
-                                               ,       SchedulerP & sched
-                                               )
+void
+PortableDependencyTest::scheduleInitialize(const LevelP& level,
+                                           SchedulerP& sched)
 {
-  Task* task = scinew Task("PortableDependencyTest::initialize", this, &PortableDependencyTest::initialize);
+  Task* task = scinew Task("PortableDependencyTest::"
+                           "initialize",
+                           this,
+                           &PortableDependencyTest::initialize);
 
   task->computes(phi_label);
   task->computes(residual_label);
@@ -96,19 +102,22 @@ void PortableDependencyTest::scheduleInitialize( const LevelP     & level
 
 //______________________________________________________________________
 //
-void PortableDependencyTest::scheduleRestartInitialize( const LevelP     & level
-                                                      ,       SchedulerP & sched
-                                                      )
+void
+PortableDependencyTest::scheduleRestartInitialize(const LevelP& level,
+                                                  SchedulerP& sched)
 {
 }
 
 //______________________________________________________________________
 //
-void PortableDependencyTest::scheduleComputeStableTimeStep( const LevelP     & level
-                                                          ,       SchedulerP & sched
-                                                          )
+void
+PortableDependencyTest::scheduleComputeStableTimestep(const LevelP& level,
+                                                      SchedulerP& sched)
 {
-  Task* task = scinew Task("PortableDependencyTest::computeStableTimeStep", this, &PortableDependencyTest::computeStableTimeStep);
+  Task* task = scinew Task("PortableDependencyTest::"
+                           "computeStableTimestep",
+                           this,
+                           &PortableDependencyTest::computeStableTimestep);
 
   task->needs(Task::NewDW, residual_label);
   task->computes(getDelTLabel(), level.get_rep());
@@ -117,91 +126,131 @@ void PortableDependencyTest::scheduleComputeStableTimeStep( const LevelP     & l
 
 //______________________________________________________________________
 //
-void PortableDependencyTest::scheduleTimeAdvance( const LevelP     & level
-                                                ,       SchedulerP & sched
-                                                )
+void
+PortableDependencyTest::scheduleTimeAdvance(const LevelP& level,
+                                            SchedulerP& sched)
 {
-  scheduleTask1Computes( level, sched );
-  scheduleTask2Modifies( level, sched );
-  scheduleTask3Modifies( level, sched );
-  scheduleTask4Requires( level, sched );
+  scheduleTask1Computes(level, sched);
+  scheduleTask2Modifies(level, sched);
+  scheduleTask3Modifies(level, sched);
+  scheduleTask4Requires(level, sched);
 }
 
-void PortableDependencyTest::scheduleTask1Computes( const LevelP     & level
-                                                  ,       SchedulerP & sched
-                                                  )
+void
+PortableDependencyTest::scheduleTask1Computes(const LevelP& level,
+                                              SchedulerP& sched)
 {
   auto TaskDependencies = [&](Task* task) {
-        task->needs(Task::OldDW, phi_label, Ghost::AroundNodes, 1);
-    task->computesWithScratchGhost(phi_label, nullptr, Uintah::Task::NormalDomain, Ghost::AroundNodes, 1);
+    task->needs(Task::OldDW, phi_label, Ghost::AroundNodes, 1);
+    task->computesWithScratchGhost(
+      phi_label, nullptr, Uintah::Task::NormalDomain, Ghost::AroundNodes, 1);
   };
 
-  create_portable_tasks(TaskDependencies, this,
-                        "PortableDependencyTest::task1Computes",
-                        //&PortableDependencyTest::task1Computes<UINTAH_CPU_TAG>,
-                        &PortableDependencyTest::task1Computes<KOKKOS_DEFAULT_DEVICE_TAG>,
-                        sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
+  create_portable_tasks(
+    TaskDependencies,
+    this,
+    "PortableDependencyTest::"
+    "task1Computes",
+    //&PortableDependencyTest::task1Computes<UINTAH_CPU_TAG>,
+    &PortableDependencyTest::task1Computes<KOKKOS_DEFAULT_DEVICE_TAG>,
+    sched,
+    level->eachPatch(),
+    d_materialManager->allMaterials(),
+    TASKGRAPH::DEFAULT);
 }
 
-void PortableDependencyTest::scheduleTask2Modifies( const LevelP     & level
-                                                  ,       SchedulerP & sched
-                                                  )
+void
+PortableDependencyTest::scheduleTask2Modifies(const LevelP& level,
+                                              SchedulerP& sched)
 {
-  const Uintah::PatchSubset* const localPatches = level->allPatches()->getSubset( Uintah::Parallel::getMPIRank());
+  const Uintah::PatchSubset* const localPatches =
+    level->allPatches()->getSubset(Uintah::Parallel::getMPIRank());
 
   auto TaskDependencies = [&](Task* task) {
-    task->modifiesWithScratchGhost(phi_label, localPatches, Uintah::Task::ThisLevel, nullptr, Uintah::Task::NormalDomain, Ghost::AroundNodes, 1);
+    task->modifiesWithScratchGhost(phi_label,
+                                   localPatches,
+                                   Uintah::Task::ThisLevel,
+                                   nullptr,
+                                   Uintah::Task::NormalDomain,
+                                   Ghost::AroundNodes,
+                                   1);
   };
 
-  create_portable_tasks(TaskDependencies, this,
-                        "PortableDependencyTest::task2Modifies",
-                        //&PortableDependencyTest::task2Modifies<UINTAH_CPU_TAG>,
-                        &PortableDependencyTest::task2Modifies<KOKKOS_DEFAULT_DEVICE_TAG>,
-                        sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
+  create_portable_tasks(
+    TaskDependencies,
+    this,
+    "PortableDependencyTest::"
+    "task2Modifies",
+    //&PortableDependencyTest::task2Modifies<UINTAH_CPU_TAG>,
+    &PortableDependencyTest::task2Modifies<KOKKOS_DEFAULT_DEVICE_TAG>,
+    sched,
+    level->eachPatch(),
+    d_materialManager->allMaterials(),
+    TASKGRAPH::DEFAULT);
 }
 
-void PortableDependencyTest::scheduleTask3Modifies( const LevelP     & level
-                                                  ,       SchedulerP & sched
-                                                  )
+void
+PortableDependencyTest::scheduleTask3Modifies(const LevelP& level,
+                                              SchedulerP& sched)
 {
-  const Uintah::PatchSubset* const localPatches = level->allPatches()->getSubset( Uintah::Parallel::getMPIRank());
+  const Uintah::PatchSubset* const localPatches =
+    level->allPatches()->getSubset(Uintah::Parallel::getMPIRank());
 
   auto TaskDependencies = [&](Task* task) {
     task->needs(Task::OldDW, phi_label, Ghost::AroundNodes, 1);
-    task->modifiesWithScratchGhost(phi_label, localPatches, Uintah::Task::ThisLevel, nullptr, Uintah::Task::NormalDomain, Ghost::AroundNodes, 1);
+    task->modifiesWithScratchGhost(phi_label,
+                                   localPatches,
+                                   Uintah::Task::ThisLevel,
+                                   nullptr,
+                                   Uintah::Task::NormalDomain,
+                                   Ghost::AroundNodes,
+                                   1);
     task->computes(residual_label);
   };
 
-  create_portable_tasks(TaskDependencies, this,
-                        "PortableDependencyTest::task3Modifies",
-                        //&PortableDependencyTest::task3Modifies<UINTAH_CPU_TAG>,
-                        &PortableDependencyTest::task3Modifies<KOKKOS_DEFAULT_DEVICE_TAG>,
-                        sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
+  create_portable_tasks(
+    TaskDependencies,
+    this,
+    "PortableDependencyTest::"
+    "task3Modifies",
+    //&PortableDependencyTest::task3Modifies<UINTAH_CPU_TAG>,
+    &PortableDependencyTest::task3Modifies<KOKKOS_DEFAULT_DEVICE_TAG>,
+    sched,
+    level->eachPatch(),
+    d_materialManager->allMaterials(),
+    TASKGRAPH::DEFAULT);
 }
 
-void PortableDependencyTest::scheduleTask4Requires( const LevelP     & level
-                                                  ,       SchedulerP & sched
-                                                  )
+void
+PortableDependencyTest::scheduleTask4Requires(const LevelP& level,
+                                              SchedulerP& sched)
 {
   auto Task4Dependencies = [&](Task* task4) {
     task4->needs(Task::OldDW, phi_label, Ghost::AroundNodes, 1);
   };
 
-  create_portable_tasks(Task4Dependencies, this,
-                        "PortableDependencyTest::task4Requires",
-                        //&PortableDependencyTest::task4Requires<UINTAH_CPU_TAG>,
-                        &PortableDependencyTest::task4Requires<KOKKOS_DEFAULT_DEVICE_TAG>,
-                        sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
+  create_portable_tasks(
+    Task4Dependencies,
+    this,
+    "PortableDependencyTest::"
+    "task4Requires",
+    //&PortableDependencyTest::task4Requires<UINTAH_CPU_TAG>,
+    &PortableDependencyTest::task4Requires<KOKKOS_DEFAULT_DEVICE_TAG>,
+    sched,
+    level->eachPatch(),
+    d_materialManager->allMaterials(),
+    TASKGRAPH::DEFAULT);
 }
 
 //______________________________________________________________________
 //
-void PortableDependencyTest::computeStableTimeStep( const ProcessorGroup * pg
-                                                  , const PatchSubset    * patches
-                                                  , const MaterialSubset * /*matls*/
-                                                  ,       DataWarehouse  *
-                                                  ,       DataWarehouse  * new_dw
-                                                  )
+void
+PortableDependencyTest::computeStableTimestep(const ProcessorGroup* pg,
+                                              const PatchSubset* patches,
+                                              const MaterialSubset* /*matls*/
+                                              ,
+                                              DataWarehouse*,
+                                              DataWarehouse* new_dw)
 {
   if (pg->myRank() == 0) {
     sum_vartype residual;
@@ -212,12 +261,13 @@ void PortableDependencyTest::computeStableTimeStep( const ProcessorGroup * pg
 
 //______________________________________________________________________
 //
-void PortableDependencyTest::initialize( const ProcessorGroup *
-                                       , const PatchSubset    * patches
-                                       , const MaterialSubset * matls
-                                       ,       DataWarehouse  * /*old_dw*/
-                                       ,       DataWarehouse  * new_dw
-                                       )
+void
+PortableDependencyTest::initialize(const ProcessorGroup*,
+                                   const PatchSubset* patches,
+                                   const MaterialSubset* matls,
+                                   DataWarehouse* /*old_dw*/
+                                   ,
+                                   DataWarehouse* new_dw)
 {
   int matl = 0;
   for (int p = 0; p < patches->size(); p++) {
@@ -227,16 +277,19 @@ void PortableDependencyTest::initialize( const ProcessorGroup *
     new_dw->allocateAndPut(phi, phi_label, matl, patch);
     phi.initialize(0.);
 
-    for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace; face = Patch::nextFace(face)) {
+    for (Patch::FaceType face = Patch::startFace; face <= Patch::endFace;
+         face                 = Patch::nextFace(face)) {
 
       if (patch->getBCType(face) == Patch::None) {
         int numChildren = patch->getBCDataArray(face)->getNumberChildren(matl);
         for (int child = 0; child < numChildren; child++) {
           Iterator nbound_ptr, nu;
 
-          auto bcb = patch->getArrayBCValues(face, matl, "Phi", nu, nbound_ptr, child);
+          auto bcb =
+            patch->getArrayBCValues(face, matl, "Phi", nu, nbound_ptr, child);
 
-          const BoundCond<double>* bc = dynamic_cast<const BoundCond<double>*>(bcb.get());
+          const BoundCond<double>* bc =
+            dynamic_cast<const BoundCond<double>*>(bcb.get());
           double value = bc->getValue();
           for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
             phi[*nbound_ptr] = value;
@@ -250,193 +303,272 @@ void PortableDependencyTest::initialize( const ProcessorGroup *
 
 //______________________________________________________________________
 //
-template <typename ExecSpace, typename MemSpace>
-void PortableDependencyTest::task1Computes( const PatchSubset                          * patches
-                                          , const MaterialSubset                       * matls
-                                          ,       OnDemandDataWarehouse                * old_dw
-                                          ,       OnDemandDataWarehouse                * new_dw
-                                          ,       UintahParams                         & uintahParams
-                                          ,       ExecutionObject<ExecSpace, MemSpace> & execObj
-                                          )
+template<typename ExecSpace, typename MemSpace>
+void
+PortableDependencyTest::task1Computes(
+  const PatchSubset* patches,
+  const MaterialSubset* matls,
+  OnDemandDataWarehouse* old_dw,
+  OnDemandDataWarehouse* new_dw,
+  UintahParams& uintahParams,
+  ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
   int matl = 0;
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    // Prepare the ranges for both boundary conditions and main loop
+    // Prepare the ranges for both
+    // boundary conditions and main
+    // loop
     IntVector l = patch->getNodeLowIndex();
     IntVector h = patch->getNodeHighIndex();
 
-    Uintah::BlockRange rangeBoundary( l, h);
+    Uintah::BlockRange rangeBoundary(l, h);
 
     l += IntVector(patch->getBCType(Patch::xminus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 1);
+                   patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 1,
+                   patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 1);
     h -= IntVector(patch->getBCType(Patch::xplus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 1);
+                   patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 1,
+                   patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 1);
 
-    Uintah::BlockRange range( l, h );
-    auto phi = old_dw->getConstNCVariable<double, MemSpace> (phi_label, matl, patch, Ghost::AroundNodes, 1);
-    auto newphi = new_dw->getNCVariable<double, MemSpace> (phi_label, matl, patch);
-    // Perform the boundary condition of copying over prior initialized values.  (TODO:  Replace with boundary condition)
-    Uintah::parallel_for(execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k){
-      newphi(i, j, k) = phi(i,j,k);
-    });
+    Uintah::BlockRange range(l, h);
+    auto phi = old_dw->getConstNCVariable<double, MemSpace>(
+      phi_label, matl, patch, Ghost::AroundNodes, 1);
+    auto newphi =
+      new_dw->getNCVariable<double, MemSpace>(phi_label, matl, patch);
+    // Perform the boundary condition
+    // of copying over prior
+    // initialized values.  (TODO:
+    // Replace with boundary condition)
+    Uintah::parallel_for(
+      execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k) {
+        newphi(i, j, k) = phi(i, j, k);
+      });
 
     // Perform the main loop
-    Uintah::parallel_for(execObj, range, KOKKOS_LAMBDA(int i, int j, int k){
-      //newphi(i, j, k) = i + j * 0.17 + k * 0.42;
-      newphi(i, j, k) = phi(i,j,k);
-    });
+    Uintah::parallel_for(
+      execObj, range, KOKKOS_LAMBDA(int i, int j, int k) {
+        // newphi(i, j, k) = i + j *
+        // 0.17 + k * 0.42;
+        newphi(i, j, k) = phi(i, j, k);
+      });
   }
 }
 
 //______________________________________________________________________
 //
-template <typename ExecSpace, typename MemSpace>
-void PortableDependencyTest::task2Modifies( const PatchSubset                          * patches
-                                          , const MaterialSubset                       * matls
-                                          ,       OnDemandDataWarehouse                * old_dw
-                                          ,       OnDemandDataWarehouse                * new_dw
-                                          ,       UintahParams                         & uintahParams
-                                          ,       ExecutionObject<ExecSpace, MemSpace> & execObj
-                                          )
+template<typename ExecSpace, typename MemSpace>
+void
+PortableDependencyTest::task2Modifies(
+  const PatchSubset* patches,
+  const MaterialSubset* matls,
+  OnDemandDataWarehouse* old_dw,
+  OnDemandDataWarehouse* new_dw,
+  UintahParams& uintahParams,
+  ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
   int matl = 0;
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    // Prepare the ranges for both boundary conditions and main loop
+    // Prepare the ranges for both
+    // boundary conditions and main
+    // loop
     IntVector l = patch->getNodeLowIndex();
     IntVector h = patch->getNodeHighIndex();
 
-    Uintah::BlockRange rangeBoundary( l, h);
+    Uintah::BlockRange rangeBoundary(l, h);
 
     l += IntVector(patch->getBCType(Patch::xminus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 1);
+                   patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 1,
+                   patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 1);
     h -= IntVector(patch->getBCType(Patch::xplus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 1);
+                   patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 1,
+                   patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 1);
 
-    Uintah::BlockRange range( l, h );
-    auto newphi = new_dw->getNCVariable<double, MemSpace> (phi_label, matl, patch);
-    // Perform the boundary condition of copying over prior initialized values.  (TODO:  Replace with boundary condition)
-    Uintah::parallel_for(execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k){
-      //newphi(i, j, k) = newphi(i, j, k) - (i + j * 0.17 + k * 0.42);
-    });
+    Uintah::BlockRange range(l, h);
+    auto newphi =
+      new_dw->getNCVariable<double, MemSpace>(phi_label, matl, patch);
+    // Perform the boundary condition
+    // of copying over prior
+    // initialized values.  (TODO:
+    // Replace with boundary condition)
+    Uintah::parallel_for(execObj,
+                         rangeBoundary,
+                         KOKKOS_LAMBDA(int i, int j, int k){
+                           // newphi(i, j, k) = newphi(i,
+                           // j, k) - (i + j * 0.17 + k *
+                           // 0.42);
+                         });
 
     // Perform the main loop
-    Uintah::parallel_for(execObj, range, KOKKOS_LAMBDA(int i, int j, int k){
-      newphi(i, j, k) = newphi(i, j, k) - (i + j * 0.17 + k * 0.42);
-    });
+    Uintah::parallel_for(
+      execObj, range, KOKKOS_LAMBDA(int i, int j, int k) {
+        newphi(i, j, k) = newphi(i, j, k) - (i + j * 0.17 + k * 0.42);
+      });
   }
 }
 
 //______________________________________________________________________
 //
-template <typename ExecSpace, typename MemSpace>
-void PortableDependencyTest::task3Modifies( const PatchSubset                          * patches
-                                          , const MaterialSubset                       * matls
-                                          ,       OnDemandDataWarehouse                * old_dw
-                                          ,       OnDemandDataWarehouse                * new_dw
-                                          ,       UintahParams                         & uintahParams
-                                          ,       ExecutionObject<ExecSpace, MemSpace> & execObj
-                                          )
+template<typename ExecSpace, typename MemSpace>
+void
+PortableDependencyTest::task3Modifies(
+  const PatchSubset* patches,
+  const MaterialSubset* matls,
+  OnDemandDataWarehouse* old_dw,
+  OnDemandDataWarehouse* new_dw,
+  UintahParams& uintahParams,
+  ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
   int matl = 0;
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    // Prepare the ranges for both boundary conditions and main loop
+    // Prepare the ranges for both
+    // boundary conditions and main
+    // loop
     double residual = 0;
-    IntVector l = patch->getNodeLowIndex();
-    IntVector h = patch->getNodeHighIndex();
+    IntVector l     = patch->getNodeLowIndex();
+    IntVector h     = patch->getNodeHighIndex();
 
-    Uintah::BlockRange rangeBoundary( l, h);
+    Uintah::BlockRange rangeBoundary(l, h);
 
     l += IntVector(patch->getBCType(Patch::xminus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 1);
+                   patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 1,
+                   patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 1);
     h -= IntVector(patch->getBCType(Patch::xplus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 1);
+                   patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 1,
+                   patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 1);
 
-    Uintah::BlockRange range( l, h );
-    auto phi = old_dw->getConstNCVariable<double, MemSpace> (phi_label, matl, patch, Ghost::AroundNodes, 1);
-    auto newphi = new_dw->getNCVariable<double, MemSpace> (phi_label, matl, patch);
+    Uintah::BlockRange range(l, h);
+    auto phi = old_dw->getConstNCVariable<double, MemSpace>(
+      phi_label, matl, patch, Ghost::AroundNodes, 1);
+    auto newphi =
+      new_dw->getNCVariable<double, MemSpace>(phi_label, matl, patch);
 
-    // Perform the boundary condition of copying over prior initialized values.  (TODO:  Replace with boundary condition)
-    //Uintah::parallel_for<ExecSpace, LaunchBounds< 640,1 > >( execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k){
-    Uintah::parallel_for(execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k){
-      newphi(i, j, k) = phi(i,j,k);
-    });
+    // Perform the boundary condition
+    // of copying over prior
+    // initialized values.  (TODO:
+    // Replace with boundary condition)
+    // Uintah::parallel_for<ExecSpace,
+    // LaunchBounds< 640,1 > >(
+    // execObj, rangeBoundary,
+    // KOKKOS_LAMBDA(int i, int j, int
+    // k){
+    Uintah::parallel_for(
+      execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k) {
+        newphi(i, j, k) = phi(i, j, k);
+      });
 
     // Perform the main loop
-    Uintah::parallel_reduce_sum(execObj, range, KOKKOS_LAMBDA (int i, int j, int k, double& residual){
-      newphi(i, j, k) = (1. / 6)
-          * (phi(i + 1, j, k) + phi(i - 1, j, k) + phi(i, j + 1, k) +
-              phi(i, j - 1, k) + phi(i, j, k + 1) + phi(i, j, k - 1));
+    Uintah::parallel_reduce_sum(
+      execObj,
+      range,
+      KOKKOS_LAMBDA(int i, int j, int k, double& residual) {
+        newphi(i, j, k) =
+          (1. / 6) * (phi(i + 1, j, k) + phi(i - 1, j, k) + phi(i, j + 1, k) +
+                      phi(i, j - 1, k) + phi(i, j, k + 1) + phi(i, j, k - 1));
 
-//      printf("[task3Modifies] newphi[%d,%d,%d]: %f (%p) (%p) phi[%d,%d,%d] (%p): %f phi[%d,%d,%d] (%p): %f phi[%d,%d,%d] (%p): %f phi[%d,%d,%d] (%p): %f phi[%d,%d,%d]: %f phi[%d,%d,%d]: %f\n"
-//            , i, j, k, newphi(i,j,k), &(newphi(i,j,k)), &(newphi(2,0,0))
-//            , i + 1, j, k, &(phi(i + 1, j, k)), phi(i + 1, j, k)
-//            , i - 1, j, k, &(phi(i - 1, j, k)), phi(i - 1, j, k)
-//            , i, j + 1, k, &(phi(i, j + 1, k)), phi(i, j + 1, k)
-//            , i, j - 1, k, &(phi(i, j - 1, k)),  phi(i, j - 1, k)
-//            , i, j, k + 1, phi(i, j, k + 1)
-//            , i, j, k - 1, phi(i, j, k - 1)
-//            );
+        //      printf("[task3Modifies]
+        //      newphi[%d,%d,%d]: %f
+        //      (%p) (%p) phi[%d,%d,%d]
+        //      (%p): %f phi[%d,%d,%d]
+        //      (%p): %f phi[%d,%d,%d]
+        //      (%p): %f phi[%d,%d,%d]
+        //      (%p): %f phi[%d,%d,%d]:
+        //      %f phi[%d,%d,%d]: %f\n"
+        //            , i, j, k,
+        //            newphi(i,j,k),
+        //            &(newphi(i,j,k)),
+        //            &(newphi(2,0,0))
+        //            , i + 1, j, k,
+        //            &(phi(i + 1, j,
+        //            k)), phi(i + 1,
+        //            j, k) , i - 1, j,
+        //            k, &(phi(i - 1,
+        //            j, k)), phi(i -
+        //            1, j, k) , i, j +
+        //            1, k, &(phi(i, j
+        //            + 1, k)), phi(i,
+        //            j + 1, k) , i, j
+        //            - 1, k, &(phi(i,
+        //            j - 1, k)),
+        //            phi(i, j - 1, k)
+        //            , i, j, k + 1,
+        //            phi(i, j, k + 1)
+        //            , i, j, k - 1,
+        //            phi(i, j, k - 1)
+        //            );
 
-      //  printf("[task3Modifies] newphi[%d,%d,%d]: %g\n", i, j, k, newphi(i,j,k));
-      double diff = newphi(i, j, k) - phi(i, j, k);
-      residual += diff * diff;
-    }, residual);
+        //  printf("[task3Modifies]
+        //  newphi[%d,%d,%d]: %g\n", i,
+        //  j, k, newphi(i,j,k));
+        double diff = newphi(i, j, k) - phi(i, j, k);
+        residual += diff * diff;
+      },
+      residual);
   }
 }
 
 //______________________________________________________________________
 //
-template <typename ExecSpace, typename MemSpace>
-void PortableDependencyTest::task4Requires( const PatchSubset                          * patches
-                                          , const MaterialSubset                       * matls
-                                          ,       OnDemandDataWarehouse                * old_dw
-                                          ,       OnDemandDataWarehouse                * new_dw
-                                          ,       UintahParams                         & uintahParams
-                                          ,       ExecutionObject<ExecSpace, MemSpace> & execObj
-                                          )
+template<typename ExecSpace, typename MemSpace>
+void
+PortableDependencyTest::task4Requires(
+  const PatchSubset* patches,
+  const MaterialSubset* matls,
+  OnDemandDataWarehouse* old_dw,
+  OnDemandDataWarehouse* new_dw,
+  UintahParams& uintahParams,
+  ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
   int matl = 0;
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    // Prepare the ranges for both boundary conditions and main loop
+    // Prepare the ranges for both
+    // boundary conditions and main
+    // loop
     IntVector l = patch->getNodeLowIndex();
     IntVector h = patch->getNodeHighIndex();
 
-    Uintah::BlockRange rangeBoundary( l, h);
+    Uintah::BlockRange rangeBoundary(l, h);
 
     l += IntVector(patch->getBCType(Patch::xminus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 1);
+                   patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 1,
+                   patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 1);
     h -= IntVector(patch->getBCType(Patch::xplus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 1,
-                  patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 1);
+                   patch->getBCType(Patch::yplus) == Patch::Neighbor ? 0 : 1,
+                   patch->getBCType(Patch::zplus) == Patch::Neighbor ? 0 : 1);
 
-    Uintah::BlockRange range( l, h );
-    auto phi = old_dw->getConstNCVariable<double, MemSpace> (phi_label, matl, patch, Ghost::AroundNodes, 1);
+    Uintah::BlockRange range(l, h);
+    auto phi = old_dw->getConstNCVariable<double, MemSpace>(
+      phi_label, matl, patch, Ghost::AroundNodes, 1);
 
-    // Perform the boundary condition of copying over prior initialized values.  (TODO:  Replace with boundary condition)
-    Uintah::parallel_for(execObj, rangeBoundary, KOKKOS_LAMBDA(int i, int j, int k){
-      //printf("[task4Requires] newphi[%d,%d,%d]: %f\n", i, j, k, newphi(i,j,k));
-    });
+    // Perform the boundary condition
+    // of copying over prior
+    // initialized values.  (TODO:
+    // Replace with boundary condition)
+    Uintah::parallel_for(execObj,
+                         rangeBoundary,
+                         KOKKOS_LAMBDA(int i, int j, int k){
+                           // printf("[task4Requires]
+                           // newphi[%d,%d,%d]: %f\n", i,
+                           // j, k, newphi(i,j,k));
+                         });
 
     // Perform the main loop
-    Uintah::parallel_for(execObj, range, KOKKOS_LAMBDA(int i, int j, int k){
-      //if (i == 17 && j == 4 && k == 4) {
-      //  printf("[task4Requires] phi[%d,%d,%d]: %g\n", i, j, k, phi(i,j,k));
-      //}
-    });
+    Uintah::parallel_for(execObj,
+                         range,
+                         KOKKOS_LAMBDA(int i, int j, int k){
+                           // if (i == 17 && j == 4 && k
+                           // == 4) {
+                           //  printf("[task4Requires]
+                           //  phi[%d,%d,%d]: %g\n", i, j,
+                           //  k, phi(i,j,k));
+                           //}
+                         });
   }
 }

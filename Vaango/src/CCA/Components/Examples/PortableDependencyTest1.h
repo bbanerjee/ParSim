@@ -23,7 +23,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Packages_Uintah_CCA_Components_Examples_PortableDependencyTest1_h
 #define Packages_Uintah_CCA_Components_Examples_PortableDependencyTest1_h
 
@@ -35,28 +34,27 @@
 #include <CCA/Components/Examples/ExamplesLabel.h>
 #include <CCA/Components/Schedulers/DetailedTask.h>
 #include <CCA/Components/Schedulers/OnDemandDataWarehouse.h>
-#include <Core/Parallel/Portability.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
+#include <CCA/Ports/Scheduler.h>
+#include <Core/Grid/BoundaryConditions/BCDataArray.h>
+#include <Core/Grid/BoundaryConditions/BoundCond.h>
+#include <Core/Grid/EmptyMaterial.h>
+#include <Core/Grid/Level.h>
+#include <Core/Grid/MaterialManager.h>
+#include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/KokkosViews.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>
-#include <Core/Grid/MaterialManager.h>
-#include <Core/Grid/Task.h>
-#include <Core/Grid/Level.h>
-#include <Core/Grid/EmptyMaterial.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Parallel/ProcessorGroup.h>
-#include <CCA/Ports/Scheduler.h>
 #include <Core/Malloc/Allocator.h>
-#include <Core/Grid/BoundaryConditions/BCDataArray.h>
-#include <Core/Grid/BoundaryConditions/BoundCond.h>
+#include <Core/Parallel/Portability.h>
+#include <Core/Parallel/ProcessorGroup.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
 using namespace std;
 using namespace Uintah;
 
 namespace Uintah {
 class EmptyMaterial;
-
 
 /**************************************
 
@@ -85,93 +83,124 @@ DESCRIPTION
 WARNING
 
  ****************************************/
-#define task_parameters \
-                const PatchSubset* patches,     \
-                const MaterialSubset* matls,    \
-                OnDemandDataWarehouse* old_dw,  \
-                OnDemandDataWarehouse* new_dw,  \
-                UintahParams& uintahParams,             \
-                ExecutionObject<ExecSpace, MemSpace>& execObj
+#define task_parameters                                                        \
+  const PatchSubset *patches, const MaterialSubset *matls,                     \
+    OnDemandDataWarehouse *old_dw, OnDemandDataWarehouse *new_dw,              \
+    UintahParams &uintahParams, ExecutionObject<ExecSpace, MemSpace>&execObj
 
-class PortableDependencyTest1 : public SimulationCommon {
+class PortableDependencyTest1 : public SimulationCommon
+{
 public:
-        PortableDependencyTest1( const ProcessorGroup   * myworld, const MaterialManagerP   materialManager)
-: SimulationCommon( myworld, materialManager )   {
-                phi_label = VarLabel::create("phi", NCVariable<double>::getTypeDescription());
-        }
+  PortableDependencyTest1(const ProcessorGroup* myworld,
+                          const MaterialManagerP materialManager)
+    : SimulationCommon(myworld, materialManager)
+  {
+    phi_label =
+      VarLabel::create("phi", NCVariable<double>::getTypeDescription());
+  }
 
-        virtual ~PortableDependencyTest1(){
-                VarLabel::destroy(phi_label);
-        }
+  virtual ~PortableDependencyTest1() { VarLabel::destroy(phi_label); }
 
-        virtual void problemSetup(const ProblemSpecP& params, const ProblemSpecP& restart_prob_spec, GridP& grid);
+  virtual void
+  problemSetup(const ProblemSpecP& params,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid,
+               const std::string& input_ups_dir = "");
 
-        virtual void scheduleInitialize(const LevelP& level, SchedulerP& sched){
-                Task* task = scinew Task("PortableDependencyTest1::initialize", this, &PortableDependencyTest1::initialize);
-                task->computes(phi_label);
-                sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
-        }
+  void
+  outputProblemSpec([[maybe_unused]] ProblemSpecP& ps)
+  {
+  }
 
-        virtual void scheduleRestartInitialize(const LevelP& level, SchedulerP& sched){}
+  virtual void
+  scheduleInitialize(const LevelP& level, SchedulerP& sched)
+  {
+    Task* task = scinew Task("PortableDependencyTest1::initialize",
+                             this,
+                             &PortableDependencyTest1::initialize);
+    task->computes(phi_label);
+    sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
+  }
 
-        virtual void scheduleComputeStableTimeStep(const LevelP& level, SchedulerP& sched){
-                Task* task = scinew Task("PortableDependencyTest1::computeStableTimeStep", this, &PortableDependencyTest1::computeStableTimeStep);
-                task->computes(getDelTLabel(), level.get_rep());
-                sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
-        }
+  virtual void
+  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
+  {
+  }
 
-        //main tests start here. scheduleTimeAdvance will schedule tests as per environment variables set.
+  virtual void
+  scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
+  {
+    Task* task = scinew Task("PortableDependencyTest1::computeStableTimestep",
+                             this,
+                             &PortableDependencyTest1::computeStableTimestep);
+    task->computes(getDelTLabel(), level.get_rep());
+    sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
+  }
 
-        virtual void scheduleTimeAdvance( const LevelP& level, SchedulerP&);
-        template <typename ExecSpace, typename MemSpace>
-        void scheduleComputeTask( const LevelP& level, SchedulerP& sched);
-        template <typename ExecSpace, typename MemSpace>
-        void scheduleModifyTask( const LevelP& level, SchedulerP& sched);
-        template <typename ExecSpace, typename MemSpace>
-        void scheduleRequireTask( const LevelP& level, SchedulerP& sched);
-        //the first compute task - creates phi in the new dw.
-        template <typename ExecSpace, typename MemSpace>
-        void computeTask(task_parameters);
+  // main tests start here. scheduleTimeAdvance will schedule tests as per
+  // environment variables set.
 
-        template <typename ExecSpace, typename MemSpace>        //modifies phi after computeTask, if environment flag is set
-        void modifyTask( task_parameters );
+  virtual void
+  scheduleTimeAdvance(const LevelP& level, SchedulerP&);
+  template<typename ExecSpace, typename MemSpace>
+  void
+  scheduleComputeTask(const LevelP& level, SchedulerP& sched);
+  template<typename ExecSpace, typename MemSpace>
+  void
+  scheduleModifyTask(const LevelP& level, SchedulerP& sched);
+  template<typename ExecSpace, typename MemSpace>
+  void
+  scheduleRequireTask(const LevelP& level, SchedulerP& sched);
+  // the first compute task - creates phi in the new dw.
+  template<typename ExecSpace, typename MemSpace>
+  void computeTask(task_parameters);
 
-        template <typename ExecSpace, typename MemSpace>        //requires phi - verify values either after compute or after modify.
-        void requireTask ( task_parameters );
+  template<typename ExecSpace,
+           typename MemSpace> // modifies phi after computeTask, if environment
+                              // flag is set
+                              void modifyTask(task_parameters);
+
+  template<typename ExecSpace,
+           typename MemSpace> // requires phi - verify values either after
+                              // compute or after modify.
+                              void requireTask(task_parameters);
 
 private:
-        void initialize(const ProcessorGroup*,
+  void
+  initialize(const ProcessorGroup*,
+             const PatchSubset* patches,
+             const MaterialSubset* matls,
+             DataWarehouse* old_dw,
+             DataWarehouse* new_dw)
+  {
+    for (int p = 0; p < patches->size(); p++) {
+      const Patch* patch = patches->get(p);
+
+      NCVariable<double> phi;
+      new_dw->allocateAndPut(phi, phi_label, 0, patch);
+      phi.initialize(0.);
+    }
+  }
+
+  void
+  computeStableTimestep(const ProcessorGroup*,
                         const PatchSubset* patches,
                         const MaterialSubset* matls,
                         DataWarehouse* old_dw,
-                        DataWarehouse* new_dw){
-                for (int p = 0; p < patches->size(); p++) {
-                        const Patch* patch = patches->get(p);
+                        DataWarehouse* new_dw)
+  {
+    new_dw->put(delt_vartype(delt_), getDelTLabel(), getLevel(patches));
+  }
 
-                        NCVariable<double> phi;
-                        new_dw->allocateAndPut(phi, phi_label, 0, patch);
-                        phi.initialize(0.);
-                }
-        }
+  double delt_;
+  std::shared_ptr<EmptyMaterial> mymat_;
+  const VarLabel* phi_label;
+  std::string tasks, exespaces;
 
-
-        void computeStableTimeStep(const ProcessorGroup*,
-                        const PatchSubset* patches,
-                        const MaterialSubset* matls,
-                        DataWarehouse* old_dw,
-                        DataWarehouse* new_dw){
-                new_dw->put(delt_vartype(delt_), getDelTLabel(), getLevel(patches));
-        }
-
-        double delt_;
-        std::shared_ptr<EmptyMaterial> mymat_;
-        const VarLabel* phi_label;
-        std::string tasks, exespaces;
-
-        PortableDependencyTest1(const PortableDependencyTest1&);
-        PortableDependencyTest1& operator=(const PortableDependencyTest1&);
-
+  PortableDependencyTest1(const PortableDependencyTest1&);
+  PortableDependencyTest1&
+  operator=(const PortableDependencyTest1&);
 };
-}
+} // namespace Uintah
 
 #endif

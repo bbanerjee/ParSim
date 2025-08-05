@@ -4680,7 +4680,7 @@ SerialMPM::scheduleReduceVars(SchedulerP& sched,
   reduction_mss->addReference();
 
   // Tell the scheduler to reduce this variable
-  d_mpm_labels->SumTransmittedForceLabel->isReductionTask(true);
+  d_mpm_labels->SumTransmittedForceLabel->schedReductionTask(true);
   t->computes(
     d_mpm_labels->SumTransmittedForceLabel, reduction_mss, Task::OutOfDomain);
 

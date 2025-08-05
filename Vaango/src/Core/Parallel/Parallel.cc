@@ -43,6 +43,10 @@
 
 namespace Uintah {
 
+// Default to pthreads unless specified otherwise.
+Parallel::CpuThreadEnvironment Parallel::s_cpu_thread_environment =
+  Parallel::CpuThreadEnvironment::PTHREADS;
+
 bool Parallel::s_initialized = false;
 bool Parallel::s_using_device = false;
 int Parallel::s_num_threads = -1;

@@ -27,53 +27,80 @@
 
 double g_expected = 0.0;
 
-
-void PortableDependencyTest1::problemSetup( const ProblemSpecP & params
-                , const ProblemSpecP & restart_prob_spec
-                ,       GridP        & /*grid*/
-)
+void
+PortableDependencyTest1::problemSetup(
+  const ProblemSpecP& params,
+  const ProblemSpecP& restart_prob_spec,
+  [[maybe_unused]] GridP& grid,
+  [[maybe_unused]] const std::string& input_ups_dir)
 {
-        ProblemSpecP portabledependencytest1 = params->findBlock("portabledependencytest1");
-        portabledependencytest1->require("delt", delt_);
-        portabledependencytest1->require("task", tasks);
-        portabledependencytest1->require("exespace", exespaces);
-        mymat_ = std::make_shared<EmptyMaterial>();
-        d_materialManager->registerEmptyMaterial(mymat_);
+  ProblemSpecP portabledependencytest1 =
+    params->findBlock("portabledependencytest1");
+  portabledependencytest1->require("delt", delt_);
+  portabledependencytest1->require("task", tasks);
+  portabledependencytest1->require("exespace", exespaces);
+  mymat_ = std::make_shared<EmptyMaterial>();
+  d_materialManager->registerEmptyMaterial(mymat_);
 }
 
-int cid=0, mid=0, rid=0;
+int cid = 0, mid = 0, rid = 0;
 
-template <typename ExecSpace, typename MemSpace>
-void PortableDependencyTest1::scheduleComputeTask(const LevelP& level, SchedulerP& sched){
-        std::string name = "PortableDependencyTest1::computeTask" + to_string(cid++);
-        auto TaskDependencies = [&](Task* task) {
-                task->computes(phi_label, nullptr, Uintah::Task::NormalDomain);
-        };
-        create_portable_tasks(TaskDependencies, this, name.data(),
-                        &PortableDependencyTest1::computeTask<ExecSpace, MemSpace>,
-                        sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
+template<typename ExecSpace, typename MemSpace>
+void
+PortableDependencyTest1::scheduleComputeTask(const LevelP& level,
+                                             SchedulerP& sched)
+{
+  std::string name = "PortableDependencyTest1::computeTask" + to_string(cid++);
+  auto TaskDependencies = [&](Task* task) {
+    task->computes(phi_label, nullptr, Uintah::Task::NormalDomain);
+  };
+  create_portable_tasks(
+    TaskDependencies,
+    this,
+    name.data(),
+    &PortableDependencyTest1::computeTask<ExecSpace, MemSpace>,
+    sched,
+    level->eachPatch(),
+    d_materialManager->allMaterials(),
+    TASKGRAPH::DEFAULT);
 }
 
-template <typename ExecSpace, typename MemSpace>
-void PortableDependencyTest1::scheduleModifyTask( const LevelP& level, SchedulerP& sched){
-        std::string name = "PortableDependencyTest1::modifyTask" + to_string(mid++);
-        auto TaskDependencies = [&](Task* task) {
-                task->modifies(phi_label);
-        };
-        create_portable_tasks(TaskDependencies, this, name.data(),
-                        &PortableDependencyTest1::modifyTask<ExecSpace, MemSpace>,
-                        sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
+template<typename ExecSpace, typename MemSpace>
+void
+PortableDependencyTest1::scheduleModifyTask(const LevelP& level,
+                                            SchedulerP& sched)
+{
+  std::string name = "PortableDependencyTest1::modifyTask" + to_string(mid++);
+  auto TaskDependencies = [&](Task* task) { task->modifies(phi_label); };
+  create_portable_tasks(
+    TaskDependencies,
+    this,
+    name.data(),
+    &PortableDependencyTest1::modifyTask<ExecSpace, MemSpace>,
+    sched,
+    level->eachPatch(),
+    d_materialManager->allMaterials(),
+    TASKGRAPH::DEFAULT);
 }
 
-template <typename ExecSpace, typename MemSpace>
-void PortableDependencyTest1::scheduleRequireTask( const LevelP& level, SchedulerP& sched){
-        std::string name = "PortableDependencyTest1::requireTask" + to_string(rid++);
-        auto TaskDependencies = [&](Task* task) {
-                task->needs(Task::NewDW, phi_label, Ghost::None, 0);
-        };
-        create_portable_tasks(TaskDependencies, this, name.data(),
-                        &PortableDependencyTest1::requireTask<ExecSpace, MemSpace>,
-                        sched, level->eachPatch(), d_materialManager->allMaterials(), TASKGRAPH::DEFAULT);
+template<typename ExecSpace, typename MemSpace>
+void
+PortableDependencyTest1::scheduleRequireTask(const LevelP& level,
+                                             SchedulerP& sched)
+{
+  std::string name = "PortableDependencyTest1::requireTask" + to_string(rid++);
+  auto TaskDependencies = [&](Task* task) {
+    task->needs(Task::NewDW, phi_label, Ghost::None, 0);
+  };
+  create_portable_tasks(
+    TaskDependencies,
+    this,
+    name.data(),
+    &PortableDependencyTest1::requireTask<ExecSpace, MemSpace>,
+    sched,
+    level->eachPatch(),
+    d_materialManager->allMaterials(),
+    TASKGRAPH::DEFAULT);
 }
 
 void
@@ -171,29 +198,41 @@ PortableDependencyTest1::modifyTask(task_parameters)
             << ", expected value for the NEXT task: " << g_expected << "\n";
 }
 
-template <typename ExecSpace, typename MemSpace>
-void PortableDependencyTest1::requireTask( task_parameters )
+template<typename ExecSpace, typename MemSpace>
+void
+PortableDependencyTest1::requireTask(task_parameters)
 {
-        int wrong=0;
-        double expected = g_expected;
-        for (int p = 0; p < patches->size(); p++) {
-                const Patch* patch = patches->get(p);
-                auto newphi = new_dw->getConstGridVariable<constNCVariable<double>, double, MemSpace> (phi_label, 0, patch, Ghost::None, 0);
+  int wrong       = 0;
+  double expected = g_expected;
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    auto newphi =
+      new_dw->getConstGridVariable<constNCVariable<double>, double, MemSpace>(
+        phi_label, 0, patch, Ghost::None, 0);
 
-                IntVector l = patch->getNodeLowIndex(), h = patch->getNodeHighIndex();
-                BlockRange range(l, h);
-                Uintah::parallel_reduce_sum(execObj, range, KOKKOS_LAMBDA(int i, int j, int k, int &wrong){
-                        if(newphi(i, j, k) != expected){
-                                wrong++;
+    IntVector l = patch->getNodeLowIndex(), h = patch->getNodeHighIndex();
+    BlockRange range(l, h);
+    Uintah::parallel_reduce_sum(
+      execObj,
+      range,
+      KOKKOS_LAMBDA(int i, int j, int k, int& wrong) {
+        if (newphi(i, j, k) != expected) {
+          wrong++;
 #if !defined(KOKKOS_ENABLE_SYCL)
-                                printf("requires: expected mismatch: %d %d %d %f %f\n", i, j, k, newphi(i,j,k), expected);
+          printf("requires: expected mismatch: %d %d %d %f %f\n",
+                 i,
+                 j,
+                 k,
+                 newphi(i, j, k),
+                 expected);
 #endif
-                        }
-                }, wrong);
         }
+      },
+      wrong);
+  }
 
-        printf("requireTask. wrong values: %d\n", wrong);
+  printf("requireTask. wrong values: %d\n", wrong);
 
-        std::cout << "requireTask: " << typeid(ExecSpace).name() << ", expected value for the NEXT task: " << g_expected << "\n";
-
+  std::cout << "requireTask: " << typeid(ExecSpace).name()
+            << ", expected value for the NEXT task: " << g_expected << "\n";
 }

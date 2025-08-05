@@ -423,8 +423,8 @@ public:
                  const VarLabel* label,
                  int matlIndex,
                  const Patch* patch,
-                 Ghost::GhostType gtype,
-                 int numGhostCells);
+                 Ghost::GhostType gtype = Ghost::None,
+                 int numGhostCells = 0);
 
   void
   put(GridVariableBase& var,

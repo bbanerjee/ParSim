@@ -165,13 +165,27 @@ parse(int argc, char** argv)
       s_restart_from_scratch   = false;
       s_restart_remove_old_dir = true;
     } else if (arg == "-gpucheck") {
-      Vaango::Utils::check_gpus();
-    }
-#ifdef HAVE_CUDA
-    else if (arg == "-gpu") {
-      s_use_gpu = true;
-    }
+#if defined(KOKKOS_USING_GPU)
+      if (KokkosScheduler::verifyAnyGpuActive()) {
+        std::cout << "At least one GPU detected!" << std::endl;
+      } else {
+        std::cout << "No GPU detected!" << std::endl;
+      }
+      Uintah::Parallel::exitAll(1);
+#else
+      std::cout << "Not compiled for GPU support." << std::endl;
+      Uintah::Parallel::exitAll(0);
 #endif
+    }
+    else if (arg == "-gpu") {
+#if defined(KOKKOS_USING_GPU)
+      s_use_gpu = true;
+      Uintah::Parallel::setUsingDevice(true);
+#else
+      std::cout << "Not compiled for GPU support." << std::endl;
+      Uintah::Parallel::exitAll(0);
+#endif
+    }
     else if (arg == "-t") {
       if (i < argc - 1) {
         s_restart_checkpoint_index = atoi(argv[++i]);

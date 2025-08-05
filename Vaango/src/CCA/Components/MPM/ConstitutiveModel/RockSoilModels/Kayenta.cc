@@ -1197,8 +1197,14 @@ Kayenta::initializeLocalMPMLabels()
       ISVNames.emplace_back(token);
   }
 
-  // Print internal variable names
+  // Print internal variable names (C++23 + views)
+  /*
   for (auto [i, name] : ISVNames | std::views::enumerate) {
+    proc0cout << "ISV[" << i << "] is called " << ISVNames[i] << std::endl;
+  }
+  */
+  // C++20 compliant version
+  for (std::size_t i = 0; i < ISVNames.size(); ++i) {
     proc0cout << "ISV[" << i << "] is called " << ISVNames[i] << std::endl;
   }
 

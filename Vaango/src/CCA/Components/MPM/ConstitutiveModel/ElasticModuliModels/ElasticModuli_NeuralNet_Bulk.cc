@@ -312,8 +312,15 @@ ElasticModuli_NeuralNet_Bulk::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const
     std::cout << "Dims from hdf5 = " << dims << "\n";
     #endif
 
+    // C++23 compliant version
+    /*
     for (const auto& [ii, layer_name]: std::views::enumerate(layer_names)) {
-      auto ln_group = file.openGroup(std::format("/model_weights/{}", layer_name));
+        ...
+    }
+    */
+    // C++20 compliant version
+    for (std::size_t ii = 0; ii < layer_names.size(); ++ii) {
+      auto ln_group = file.openGroup(std::format("/model_weights/{}", layer_names[ii]));
       auto ln_attribute = ln_group.openAttribute("weight_names");
       auto ln_datatype = ln_attribute.getDataType();
       auto ln_dataspace = ln_attribute.getSpace();
@@ -350,8 +357,15 @@ ElasticModuli_NeuralNet_Bulk::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const
       std::cout << "Dims weights/bias from hdf5 = " << dims_weights_bias << "\n";
       #endif
 
+      // C++23 compliant version
+      /*
       for (const auto& [jj, weights_name]: std::views::enumerate(weight_names)) {
-        auto wn_dataset = ln_group.openDataSet(weights_name);
+        ...
+      }
+      */
+      // C++20 compliant version
+      for (std::size_t jj = 0; jj < weight_names.size(); ++jj) {
+        auto wn_dataset = ln_group.openDataSet(weight_names[jj]);
         auto wn_datatype = wn_dataset.getDataType();
         auto wn_dataspace = wn_dataset.getSpace();
         rank = wn_dataspace.getSimpleExtentNdims();
