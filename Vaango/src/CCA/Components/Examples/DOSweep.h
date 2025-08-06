@@ -73,9 +73,12 @@ WARNING
     
     virtual ~DOSweep();
 
+    virtual void
+    problemSetup(const ProblemSpecP& ) {};
     virtual void problemSetup(const ProblemSpecP& params,
                               const ProblemSpecP& restart_prob_spec,
-                              GridP& grid);
+                              GridP& grid,
+                              const std::string& name = "");
                               
     virtual void scheduleInitialize(const LevelP& level,
                                     SchedulerP& sched);

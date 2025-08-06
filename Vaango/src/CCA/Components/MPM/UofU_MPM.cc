@@ -113,7 +113,7 @@ UofU_MPM::~UofU_MPM() {}
 void
 UofU_MPM::problemSetup(const ProblemSpecP& prob_spec,
                        const ProblemSpecP& restart_prob_spec,
-                       GridP& grid)
+                       GridP& grid, const std::string&)
 {
   d_scheduler->setPositionVar(d_mpm_labels->pXLabel);
 

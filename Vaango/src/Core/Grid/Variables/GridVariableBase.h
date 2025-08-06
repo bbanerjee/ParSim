@@ -89,7 +89,7 @@ public:
   }
 
   virtual void
-  allocate(const Patch* patch, const IntVector& boundary) override = 0;
+  allocate(const Patch* patch, const IntVector& boundary) = 0;
 
   virtual void
   getMPIBuffer(BufferInfo& buffer, const IntVector& low, const IntVector& high);

@@ -45,6 +45,9 @@
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/Point.h>
 
+#include <sci_defs/kokkos_defs.h>
+#include <sci_defs/cuda_defs.h>
+
 #include <format>
 
 namespace Uintah {
@@ -53,16 +56,16 @@ namespace Uintah {
 
   class IntVector {
   public:
-    inline IntVector() {
+    GPU_INLINE_FUNCTION IntVector() {
       value_[0] = 0; value_[1] = 0; value_[2] = 0;
     }
-    inline ~IntVector() {
+    GPU_INLINE_FUNCTION ~IntVector() {
     }
-    inline IntVector(const IntVector& copy) {
+    GPU_INLINE_FUNCTION IntVector(const IntVector& copy) {
       for (int indx = 0; indx < 3; indx ++)
         value_[indx] = copy.value_[indx];
     }
-    inline IntVector& operator=(const IntVector& copy) {
+    GPU_INLINE_FUNCTION IntVector& operator=(const IntVector& copy) {
       for (int indx = 0; indx < 3; indx ++)
         value_[indx] = copy.value_[indx];
       return *this;
@@ -100,7 +103,7 @@ namespace Uintah {
       return value_[0] != a.value_[0] || value_[1] != a.value_[1] || value_[2] != a.value_[2];
     }
 
-    inline IntVector(int x, int y, int z) {
+    GPU_INLINE_FUNCTION IntVector(int x, int y, int z) {
       value_[0] = x;
       value_[1] = y;
       value_[2] = z;
@@ -148,19 +151,19 @@ namespace Uintah {
     //           i(1)=i.y()
     //           i(2)=i.z()
     //   --tan
-    inline int operator()(int i) const {
+    GPU_INLINE_FUNCTION int operator()(int i) const {
       return value_[i];
     }
 
-    inline int& operator()(int i) {
+    GPU_INLINE_FUNCTION int& operator()(int i) {
       return value_[i];
     }
 
-    inline int operator[](int i) const {
+    GPU_INLINE_FUNCTION int operator[](int i) const {
       return value_[i];
     }
 
-    inline int& operator[](int i) {
+    GPU_INLINE_FUNCTION int& operator[](int i) {
       return value_[i];
     }
 

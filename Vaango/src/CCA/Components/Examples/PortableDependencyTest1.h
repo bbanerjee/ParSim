@@ -105,6 +105,8 @@ public:
   virtual ~PortableDependencyTest1() { VarLabel::destroy(phi_label); }
 
   virtual void
+  problemSetup(const ProblemSpecP& ) {};
+  virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
                GridP& grid,

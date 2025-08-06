@@ -25,6 +25,7 @@
 #include <StandAlone/Utils/vaango_options.h>
 #include <StandAlone/Utils/vaango_utils.h>
 
+#include <CCA/Components/Schedulers/KokkosScheduler.h>
 #include <Core/Parallel/Parallel.h>
 
 #include <sci_defs/compile_defs.h>

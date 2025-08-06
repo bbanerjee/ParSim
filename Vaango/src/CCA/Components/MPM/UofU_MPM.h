@@ -50,6 +50,8 @@ public:
 
   virtual ~UofU_MPM();
 
+  virtual void
+  recomputeDelT() {}
   virtual double
   recomputeDelT(double delT)
   {
@@ -57,9 +59,11 @@ public:
   }
 
   virtual void
+  problemSetup(const ProblemSpecP& ) {};
+  virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
-               GridP& grid);
+               GridP& grid, const std::string& name = "");
 
   virtual void
   outputProblemSpec(ProblemSpecP& ps);
@@ -72,6 +76,13 @@ public:
 
   virtual void
   restartInitialize();
+
+  virtual void
+  restartInitialize(const ProcessorGroup*,
+                    const PatchSubset* ,
+                    const MaterialSubset*,
+                    DataWarehouse* ,
+                    DataWarehouse* ) {}
 
   void
   schedulePrintParticleCount(const LevelP& level, SchedulerP& sched);

@@ -56,7 +56,7 @@ namespace {
 // An ugly hack to get superpatches for host levels to work.
 Uintah::MasterLock g_GridVarSuperPatch_mutex{};
 
-extern DebugStream gpu_stats; // From KokkosScheduler
+[[maybe_unused]] extern DebugStream gpu_stats; // From KokkosScheduler
 } // namespace
 #endif
 
@@ -928,10 +928,10 @@ DetailedTask::deleteTemporaryTaskVars()
 //______________________________________________________________________
 //
 void
-DetailedTask::prepareGpuDependencies(DependencyBatch* batch,
-                                     const VarLabel* pos_var,
-                                     OnDemandDataWarehouse* dw,
-                                     OnDemandDataWarehouse* old_dw,
+DetailedTask::prepareGpuDependencies([[maybe_unused]] DependencyBatch* batch,
+                                     [[maybe_unused]] const VarLabel* pos_var,
+                                     [[maybe_unused]] OnDemandDataWarehouse* dw,
+                                     [[maybe_unused]] OnDemandDataWarehouse* old_dw,
                                      const DetailedDep* dep,
                                      DeviceVarDest dest)
 {
@@ -3167,7 +3167,7 @@ DetailedTask::allHostVarsProcessingReady(
   std::vector<DetailedTask::labelPatchMatlLevelDw> varsNeedOnHost =
     this->getVarsNeededOnHost();
 
-  for (int i = 0; i < varsNeedOnHost.size(); i++) {
+  for (size_t i = 0; i < varsNeedOnHost.size(); i++) {
     DetailedTask::labelPatchMatlLevelDw lpmld = varsNeedOnHost[i];
     OnDemandDataWarehouseP dw                 = m_dws[lpmld.dwIndex];
     if (!(dw->isValidOnCPU(lpmld.label.c_str(),
@@ -5050,7 +5050,7 @@ DetailedTask::findIntAndExtGpuDependencies(
   const VarLabel* m_reloc_new_pos_label,
   const VarLabel* m_parent_reloc_new_pos_label,
   int iteration,
-  int t_id)
+  [[maybe_unused]] int t_id)
 {
   this->clearPreparationCollections();
 

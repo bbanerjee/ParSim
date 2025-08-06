@@ -87,12 +87,16 @@ public:
   auto
   operator=(SerialMPM&&) -> SerialMPM& = delete;
 
+  virtual void
+  recomputeDelT() {}
   double
   recomputeDelT(double delT) override
   {
     return delT * 0.1;
   }
 
+  virtual void
+  problemSetup(const ProblemSpecP& ) {};
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,

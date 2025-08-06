@@ -1186,96 +1186,124 @@ GPUDataWarehouse::copyItemIntoTaskDW(GPUDataWarehouse *hostSideGPUDW,
 //______________________________________________________________________
 //
 __host__ void
-GPUDataWarehouse::putContiguous(GPUGridVariableBase &var, const char* indexID, char const* label, int patchID, int matlIndx, int levelIndx, bool staging, int3 low, int3 high, size_t sizeOfDataType, GridVariableBase* gridVar, bool stageOnHost)
+GPUDataWarehouse::putContiguous([[maybe_unused]] GPUGridVariableBase& var,
+                                [[maybe_unused]] const char* indexID,
+                                [[maybe_unused]] char const* label,
+                                [[maybe_unused]] int patchID,
+                                [[maybe_unused]] int matlIndx,
+                                [[maybe_unused]] int levelIndx,
+                                [[maybe_unused]] bool staging,
+                                [[maybe_unused]] int3 low,
+                                [[maybe_unused]] int3 high,
+                                [[maybe_unused]] size_t sizeOfDataType,
+                                [[maybe_unused]] GridVariableBase* gridVar,
+                                [[maybe_unused]] bool stageOnHost)
 {
-/*
-#if defined(DEVICE_COMPILE_ONLY)
-  //Should not called from device side as all memory allocation should be done on CPU side through Kokkos malloc()
-#else
+  /*
+  #if defined(DEVICE_COMPILE_ONLY)
+    //Should not called from device side as all memory allocation should be done
+  on CPU side through Kokkos malloc() #else
 
-  varLock->lock();
+    varLock->lock();
 
-  //first check if this patch/var/matl is in the process of loading in.
-  labelPatchMatlLevel lpml(label, patchID, matlIndx, levelIndx);
-  if (varPointers->find(lpml) != varPointers->end()) {
-    //Space for this patch already exists.  Use that and return.
-    if (d_debug){
-      printf("GPUDataWarehouse::putContiguous( %s ). This gpudw database has a variable for label %s patch %d matl %d level %d staging %s on device %d.  Reusing it.\n",
-          label, label, patchID, matlIndx, levelIndx, staging ? "true" : "false", d_device_id);
+    //first check if this patch/var/matl is in the process of loading in.
+    labelPatchMatlLevel lpml(label, patchID, matlIndx, levelIndx);
+    if (varPointers->find(lpml) != varPointers->end()) {
+      //Space for this patch already exists.  Use that and return.
+      if (d_debug){
+        printf("GPUDataWarehouse::putContiguous( %s ). This gpudw database has a
+  variable for label %s patch %d matl %d level %d staging %s on device %d.
+  Reusing it.\n", label, label, patchID, matlIndx, levelIndx, staging ? "true" :
+  "false", d_device_id);
 
+      }
+      var.setArray3(varPointers->at(lpml).device_offset,
+  varPointers->at(lpml).device_size, varPointers->at(lpml).device_ptr);
+      varLock->unlock();
+      return;
     }
-    var.setArray3(varPointers->at(lpml).device_offset, varPointers->at(lpml).device_size, varPointers->at(lpml).device_ptr);
-    varLock->unlock();
-    return;
-  }
 
-  int3 size=make_int3(high.x-low.x, high.y-low.y, high.z-low.z);
-  int3 offset=low;
-  void* device_ptr=nullptr;
-  var.setArray3(offset, size, device_ptr);
-  contiguousArrayInfo *ca = &(contiguousArrays->at(indexID));
-  if ( (ca->allocatedDeviceMemory == nullptr
-       || ca->sizeOfAllocatedMemory - ca->assignedOffset < var.getMemSize())
-      && stageOnHost) {
-    printf("ERROR: No room left on device to be assigned address space\n");
-    if (ca->allocatedDeviceMemory != nullptr) {
-      printf("There was %lu bytes allocated, %lu has been assigned, and %lu more bytes were attempted to be assigned for %s patch %d matl %d level %d staging %s\n",
-          ca->sizeOfAllocatedMemory,
-          ca->assignedOffset,
-          var.getMemSize(), label, patchID, matlIndx, levelIndx, staging ? "true" : "false");
-    }
-    varLock->unlock();
-    exit(-1);
-  } else {
-
-
-    //There is already pre-allocated contiguous memory chunks with room available on
-    //both the device and the host.  Just assign pointers for both the device and host contiguous arrays.
-
-
-    //This prepares the var with the offset and size.  The actual address will come next.
-
-    void* host_contiguousArrayPtr = nullptr;
-
-    int varMemSize = var.getMemSize();
-
-    device_ptr = (void*)((uint8_t*)ca->allocatedDeviceMemory + ca->assignedOffset);
+    int3 size=make_int3(high.x-low.x, high.y-low.y, high.z-low.z);
+    int3 offset=low;
+    void* device_ptr=nullptr;
     var.setArray3(offset, size, device_ptr);
-    host_contiguousArrayPtr = (void*)((uint8_t*)ca->allocatedHostMemory + ca->assignedOffset);
+    contiguousArrayInfo *ca = &(contiguousArrays->at(indexID));
+    if ( (ca->allocatedDeviceMemory == nullptr
+         || ca->sizeOfAllocatedMemory - ca->assignedOffset < var.getMemSize())
+        && stageOnHost) {
+      printf("ERROR: No room left on device to be assigned address space\n");
+      if (ca->allocatedDeviceMemory != nullptr) {
+        printf("There was %lu bytes allocated, %lu has been assigned, and %lu
+  more bytes were attempted to be assigned for %s patch %d matl %d level %d
+  staging %s\n", ca->sizeOfAllocatedMemory, ca->assignedOffset,
+            var.getMemSize(), label, patchID, matlIndx, levelIndx, staging ?
+  "true" : "false");
+      }
+      varLock->unlock();
+      exit(-1);
+    } else {
 
-    //We ran into misaligned errors previously when mixing different data types.  We suspect the ints at 4 bytes
-    //were the issue.  So the engine previously computes buffer room for each variable as a multiple of KokkosScheduler::bufferPadding.
-    //So the contiguous array has been sized with extra padding.  (For example, if a var holds 12 ints, then it would be 48 bytes in
-    //size.  But if KokkosScheduler::bufferPadding = 32, then it should add 16 bytes for padding, for a total of 64 bytes).
-    int memSizePlusPadding = ((KokkosScheduler::bufferPadding - varMemSize % KokkosScheduler::bufferPadding) % KokkosScheduler::bufferPadding) + varMemSize;
-    ca->assignedOffset += memSizePlusPadding;
+
+      //There is already pre-allocated contiguous memory chunks with room
+  available on
+      //both the device and the host.  Just assign pointers for both the device
+  and host contiguous arrays.
 
 
-    if (stageOnHost) {
-      //Some GPU grid variable data doesn't need to be copied from the host
-      //For example, computes vars are just uninitialized space.
-      //Others grid vars need to be copied.  This copies the data into a contiguous
-      //array on the host so that copyDataHostToDevice() can copy the contiguous
-      //host array to the device.
+      //This prepares the var with the offset and size.  The actual address will
+  come next.
 
-      //Data listed as required.  Or compute data that was initialized as a copy of something else.
-      ca->copiedOffset += memSizePlusPadding;
+      void* host_contiguousArrayPtr = nullptr;
 
-      memcpy(host_contiguousArrayPtr, gridVar->getBasePointer(), varMemSize);
+      int varMemSize = var.getMemSize();
 
+      device_ptr = (void*)((uint8_t*)ca->allocatedDeviceMemory +
+  ca->assignedOffset); var.setArray3(offset, size, device_ptr);
+      host_contiguousArrayPtr = (void*)((uint8_t*)ca->allocatedHostMemory +
+  ca->assignedOffset);
+
+      //We ran into misaligned errors previously when mixing different data
+  types.  We suspect the ints at 4 bytes
+      //were the issue.  So the engine previously computes buffer room for each
+  variable as a multiple of KokkosScheduler::bufferPadding.
+      //So the contiguous array has been sized with extra padding.  (For
+  example, if a var holds 12 ints, then it would be 48 bytes in
+      //size.  But if KokkosScheduler::bufferPadding = 32, then it should add 16
+  bytes for padding, for a total of 64 bytes). int memSizePlusPadding =
+  ((KokkosScheduler::bufferPadding - varMemSize %
+  KokkosScheduler::bufferPadding) % KokkosScheduler::bufferPadding) +
+  varMemSize; ca->assignedOffset += memSizePlusPadding;
+
+
+      if (stageOnHost) {
+        //Some GPU grid variable data doesn't need to be copied from the host
+        //For example, computes vars are just uninitialized space.
+        //Others grid vars need to be copied.  This copies the data into a
+  contiguous
+        //array on the host so that copyDataHostToDevice() can copy the
+  contiguous
+        //host array to the device.
+
+        //Data listed as required.  Or compute data that was initialized as a
+  copy of something else. ca->copiedOffset += memSizePlusPadding;
+
+        memcpy(host_contiguousArrayPtr, gridVar->getBasePointer(), varMemSize);
+
+      }
+      put(var, sizeOfDataType, label, patchID, matlIndx, levelIndx, staging,
+  None, 0, host_contiguousArrayPtr);
     }
-    put(var, sizeOfDataType, label, patchID, matlIndx, levelIndx, staging, None, 0, host_contiguousArrayPtr);
-  }
 
-  varLock->unlock();
-#endif
-*/
+    varLock->unlock();
+  #endif
+  */
 }
 
 //______________________________________________________________________
 //
 __host__ void
-GPUDataWarehouse::allocate(const char* indexID, size_t size)
+GPUDataWarehouse::allocate([[maybe_unused]] const char* indexID,
+                           [[maybe_unused]] size_t size)
 {
 /*
 #if defined(DEVICE_COMPILE_ONLY)
@@ -1326,41 +1354,53 @@ GPUDataWarehouse::allocate(const char* indexID, size_t size)
 //______________________________________________________________________
 //
 __host__ void
-GPUDataWarehouse::copyHostContiguousToHost(GPUGridVariableBase& device_var, GridVariableBase* host_var, char const* label, int patchID, int matlIndx, int levelIndx) {
-/*
-#if defined(DEVICE_COMPILE_ONLY)
-  //Should not called from device side as all memory allocation should be done on CPU side through Kokkos malloc()
-#else
-  //see if this datawarehouse has anything for this patchGroupID.
-  varLock->lock();
-  labelPatchMatlLevel lpml(label, patchID, matlIndx, levelIndx);
-  if (varPointers->find(lpml) != varPointers->end()) {
-    allVarPointersInfo info = varPointers->at(lpml);
+GPUDataWarehouse::copyHostContiguousToHost(
+  [[maybe_unused]] GPUGridVariableBase& device_var,
+  [[maybe_unused]] GridVariableBase* host_var,
+  [[maybe_unused]] char const* label,
+  [[maybe_unused]] int patchID,
+  [[maybe_unused]] int matlIndx,
+  [[maybe_unused]] int levelIndx)
+{
+  /*
+  #if defined(DEVICE_COMPILE_ONLY)
+    //Should not called from device side as all memory allocation should be done
+  on CPU side through Kokkos malloc() #else
+    //see if this datawarehouse has anything for this patchGroupID.
+    varLock->lock();
+    labelPatchMatlLevel lpml(label, patchID, matlIndx, levelIndx);
+    if (varPointers->find(lpml) != varPointers->end()) {
+      allVarPointersInfo info = varPointers->at(lpml);
 
-    device_var.setArray3(varPointers->at(lpml).device_offset, varPointers->at(lpml).device_offset, info.device_ptr);
-    varLock->unlock();
-   // size_t size = device_var.getMemSize();
+      device_var.setArray3(varPointers->at(lpml).device_offset,
+  varPointers->at(lpml).device_offset, info.device_ptr); varLock->unlock();
+     // size_t size = device_var.getMemSize();
 
-    //TODO: Instead of doing a memcpy, I bet the original host grid variable could just have its pointers updated
-    //to work with what we were sent back.  This would take some considerable work though to get all the details right
-    //TODO: This needs to be a memcpy async
-    memcpy(host_var->getBasePointer(), info.host_contiguousArrayPtr, device_var.getMemSize());
+      //TODO: Instead of doing a memcpy, I bet the original host grid variable
+  could just have its pointers updated
+      //to work with what we were sent back.  This would take some considerable
+  work though to get all the details right
+      //TODO: This needs to be a memcpy async
+      memcpy(host_var->getBasePointer(), info.host_contiguousArrayPtr,
+  device_var.getMemSize());
 
-    //Since we've moved it back into the host, lets mark it as being used.
-    //It's possible in the future there could be a scenario where we want to bring it
-    //back to the host but still retain it in the GPU.  One scenario is
-    //sending data to an output .ups file but not modifying it on the host.
-    remove(label, patchID, matlIndx, levelIndx);
+      //Since we've moved it back into the host, lets mark it as being used.
+      //It's possible in the future there could be a scenario where we want to
+  bring it
+      //back to the host but still retain it in the GPU.  One scenario is
+      //sending data to an output .ups file but not modifying it on the host.
+      remove(label, patchID, matlIndx, levelIndx);
 
-  } else {
-    printf("ERROR: host copyHostContiguoustoHost unknown variable on GPUDataWarehouse");
-    //for (std::map<labelPatchMatlLevel, allVarPointersInfo>::iterator it=varPointers->begin(); it!=varPointers->end(); ++it)
-    //  printf("%s %d %d => %d \n", it->first.label, it->first.patchID, it->first.matlIndx, it->second.varDB_index);
-    varLock->unlock();
-    exit(-1);
-  }
-#endif
-*/
+    } else {
+      printf("ERROR: host copyHostContiguoustoHost unknown variable on
+  GPUDataWarehouse");
+      //for (std::map<labelPatchMatlLevel, allVarPointersInfo>::iterator
+  it=varPointers->begin(); it!=varPointers->end(); ++it)
+      //  printf("%s %d %d => %d \n", it->first.label, it->first.patchID,
+  it->first.matlIndx, it->second.varDB_index); varLock->unlock(); exit(-1);
+    }
+  #endif
+  */
 }
 
 //______________________________________________________________________
@@ -1858,7 +1898,10 @@ GPUDataWarehouse::getItem(char const* label, const int patchID, const int8_t mat
 //______________________________________________________________________
 //
 __host__ bool
-GPUDataWarehouse::remove(char const* label, int patchID, int matlIndx, int levelIndx)
+GPUDataWarehouse::remove([[maybe_unused]] char const* label,
+                         [[maybe_unused]] int patchID,
+                         [[maybe_unused]] int matlIndx,
+                         [[maybe_unused]] int levelIndx)
 {
   // This is more of a stub.  Remove hasn't been needed up until yet.
   // If removing is needed, it would likely be best to deallocate
@@ -2430,7 +2473,7 @@ GPUDataWarehouse::copyGpuGhostCellsToGpuVarsInvoker<Kokkos::DefaultExecutionSpac
     // Give each ghost copying kernel 32x16 = 512 threads to copy
     // (32x32 was too large for a smaller laptop GPU and the Uintah
     // build server in debug mode)
-    const int BLOCKSIZE = 1;
+    [[maybe_unused]] const int BLOCKSIZE = 1;
     const int blockDimX = 32;
     const int blockDimY = 16;
     const int blockDimZ = 1;

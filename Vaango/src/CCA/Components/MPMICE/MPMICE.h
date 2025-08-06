@@ -81,9 +81,13 @@ public:
   MPMICE&
   operator=(MPMICE&&) = delete;
 
+  virtual void
+  recomputeDelT() {}
   double
   recomputeDelT(double delT) override;
 
+  virtual void
+  problemSetup(const ProblemSpecP& ) {};
   void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,

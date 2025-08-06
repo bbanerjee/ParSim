@@ -59,7 +59,7 @@ DOSweep::~DOSweep()
 //
 void DOSweep::problemSetup(const ProblemSpecP& prob_spec, 
                            [[maybe_unused]] const ProblemSpecP& restart_prob_spec, 
-                           GridP&)
+                           GridP&, const std::string&)
 {
   solver = dynamic_cast<SolverInterface*>(getPort("solver"));
   if(!solver) {

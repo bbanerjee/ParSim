@@ -1403,8 +1403,8 @@ template<typename ExecSpace, typename MemSpace>
 template<typename ES>
 typename std::enable_if<std::is_same<ES, UintahSpaces::CPU>::value, bool>::type
 Task::ActionPortableBase<ExecSpace, MemSpace>::
-  checkKokkosInstanceDoneForThisTask_impl(intptr_t dTask,
-                                          unsigned int device_id) const
+  checkKokkosInstanceDoneForThisTask_impl([[maybe_unused]] intptr_t dTask,
+                                          [[maybe_unused]] unsigned int device_id) const
 {
   return true;
 }
@@ -1415,7 +1415,7 @@ template<typename ExecSpace, typename MemSpace>
 template<typename ES>
 typename std::enable_if<!std::is_same<ES, UintahSpaces::CPU>::value, bool>::type
 Task::ActionPortableBase<ExecSpace, MemSpace>::
-  checkKokkosInstanceDoneForThisTask_impl(intptr_t dTask,
+  checkKokkosInstanceDoneForThisTask_impl([[maybe_unused]] intptr_t dTask,
                                           unsigned int device_id) const
 {
   // ARS - FIX ME - For now use the Kokkos fence but perhaps the direct
@@ -1565,12 +1565,12 @@ typename std::enable_if<std::is_same<ES, UintahSpaces::CPU>::value ||
                           std::is_same<ES, Kokkos::OpenMP>::value,
                         void>::type
 Task::ActionPortableBase<ExecSpace, MemSpace>::doKokkosDeepCopy_impl(
-  intptr_t dTask,
-  unsigned int deviceNum,
-  void* dst,
-  void* src,
-  size_t count,
-  GPUMemcpyKind kind)
+  [[maybe_unused]] intptr_t dTask,
+  [[maybe_unused]] unsigned int deviceNum,
+  [[maybe_unused]] void* dst,
+  [[maybe_unused]] void* src,
+  [[maybe_unused]] size_t count,
+  [[maybe_unused]] GPUMemcpyKind kind)
 {
   // Do nothing as all of the data is on the host.
 }
@@ -1617,11 +1617,11 @@ void
 Task::ActionPortableBase<ExecSpace, MemSpace>::doKokkosMemcpyPeerAsync(
   intptr_t dTask,
   unsigned int deviceNum,
-  void* dst,
-  int dstDevice,
-  const void* src,
-  int srcDevice,
-  size_t count)
+  [[maybe_unused]] void* dst,
+  [[maybe_unused]] int dstDevice,
+  [[maybe_unused]] const void* src,
+  [[maybe_unused]] int srcDevice,
+  [[maybe_unused]] size_t count)
 {
   ExecSpace instance = this->getKokkosInstanceForThisTask(dTask, deviceNum);
 

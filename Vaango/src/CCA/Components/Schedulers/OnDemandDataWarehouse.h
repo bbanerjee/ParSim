@@ -798,8 +798,8 @@ public:
   getNCVariable(const VarLabel* label,
                 int matlIndex,
                 const Patch* patch,
-                Ghost::GhostType gtype = Ghost::None,
-                int numGhostCells      = 0)
+                [[maybe_unused]] Ghost::GhostType gtype = Ghost::None,
+                [[maybe_unused]] int numGhostCells      = 0)
   {
     if (matlIndex != -999) {
       return this->getGPUDW()->getKokkosView<T>(label->getName().c_str(),
@@ -837,8 +837,8 @@ public:
   getConstNCVariable(const VarLabel* label,
                      int matlIndex,
                      const Patch* patch,
-                     Ghost::GhostType gtype,
-                     int numGhostCells)
+                     [[maybe_unused]] Ghost::GhostType gtype,
+                     [[maybe_unused]] int numGhostCells)
   {
     if (matlIndex != -999) {
       return this->getGPUDW()->getKokkosView<const T>(
@@ -884,9 +884,9 @@ public:
   getGridVariable(const VarLabel* label,
                   int matlIndex,
                   const Patch* patch,
-                  Ghost::GhostType gtype = Ghost::None,
-                  int numGhostCells      = 0,
-                  bool l_getModifiable   = false)
+                  [[maybe_unused]] Ghost::GhostType gtype = Ghost::None,
+                  [[maybe_unused]] int numGhostCells      = 0,
+                  [[maybe_unused]] bool l_getModifiable   = false)
   {
     if (matlIndex != -999) {
       return this->getGPUDW()->getKokkosView<T>(label->getName().c_str(),
@@ -924,8 +924,8 @@ public:
   getConstGridVariable(const VarLabel* label,
                        int matlIndex,
                        const Patch* patch,
-                       Ghost::GhostType gtype,
-                       int numGhostCells)
+                       [[maybe_unused]] Ghost::GhostType gtype,
+                       [[maybe_unused]] int numGhostCells)
   {
     if (matlIndex != -999) {
       return this->getGPUDW()->getKokkosView<const T>(

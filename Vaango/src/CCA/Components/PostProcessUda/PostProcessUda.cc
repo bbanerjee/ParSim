@@ -225,8 +225,8 @@ PostProcessUda::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 
   //__________________________________
   //    PostProcess modules
-  for (auto module : d_Modules) {
-    module->scheduleInitialize(sched, level);
+  for (auto module_name : d_Modules) {
+    module_name->scheduleInitialize(sched, level);
   }
 
   //__________________________________

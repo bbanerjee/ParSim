@@ -111,9 +111,13 @@ public:
   ICE&
   operator=(ICE&&) = delete;
 
+  virtual void
+  recomputeDelT() {}
   virtual double
   recomputeDelT(double delT);
 
+  virtual void
+  problemSetup(const ProblemSpecP& ) {};
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,

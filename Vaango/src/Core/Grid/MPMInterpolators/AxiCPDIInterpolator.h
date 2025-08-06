@@ -59,7 +59,24 @@ namespace Uintah {
                                                        const Matrix3& size,
                                                        const Matrix3& defgrad);
     virtual int size();
-    
+
+    /*! Needed for AMRMPM */
+    virtual void
+    findCellAndWeights([[maybe_unused]] const Point& pos,
+                       [[maybe_unused]] std::vector<IntVector>& ni,
+                       [[maybe_unused]] std::vector<double>& S,
+                       [[maybe_unused]] constNCVariable<Stencil7>& zoi,
+                       [[maybe_unused]] constNCVariable<Stencil7>& zoi_fine,
+                       [[maybe_unused]] const bool& getFiner,
+                       [[maybe_unused]] int& num_cur,
+                       [[maybe_unused]] int& num_fine,
+                       [[maybe_unused]] int& num_coarse,
+                       [[maybe_unused]] const Vector& size,
+                       [[maybe_unused]] bool coarse_part,
+                       [[maybe_unused]] const Patch* patch)
+    {
+    }
+
   private:
     const Patch* d_patch;
     int d_size;

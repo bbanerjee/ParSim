@@ -82,6 +82,8 @@ public:
   operator=(SolverTest1&&) = delete;
 
   virtual void
+  problemSetup(const ProblemSpecP& ) {};
+  virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
                GridP& grid,

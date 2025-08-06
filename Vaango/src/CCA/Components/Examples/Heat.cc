@@ -59,7 +59,8 @@ Heat::~Heat()
 void
 Heat::problemSetup(const ProblemSpecP& params,
                    [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
-                   [[maybe_unused]] GridP& grid)
+                   [[maybe_unused]] GridP& grid,
+                   [[maybe_unused]] const std::string& restart_file)
 {
   d_mat = std::make_shared<EmptyMaterial>();
 

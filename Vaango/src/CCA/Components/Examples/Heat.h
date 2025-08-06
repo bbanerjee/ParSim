@@ -41,9 +41,12 @@ namespace Uintah{
     
     virtual ~Heat();
 
+    virtual void
+    problemSetup(const ProblemSpecP& ) {};
     virtual void problemSetup(const ProblemSpecP&     ps,
                               const ProblemSpecP&     restart_ps,
-                                    GridP&            grid);
+                                    GridP&            grid,
+                              const std::string& restart_file = "");
 
     virtual void scheduleInitialize(const LevelP&     level,
                                           SchedulerP& sched);

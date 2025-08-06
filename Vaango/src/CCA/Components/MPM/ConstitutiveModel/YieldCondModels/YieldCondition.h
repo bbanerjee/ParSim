@@ -283,7 +283,7 @@ public:
   virtual std::array<double, 3>
   getYieldConditionRange([[maybe_unused]] const Polyline& yield_surface)
   {
-    std::array<double, 3> dummy;
+    std::array<double, 3> dummy{0.0, 0.0, 0.0};
     return dummy;
   }
 

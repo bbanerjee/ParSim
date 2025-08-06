@@ -51,7 +51,8 @@ AMRHeat::~AMRHeat()
 
 void AMRHeat::problemSetup(const ProblemSpecP&     ps,
                            const ProblemSpecP&     restart_ps,
-                                 GridP&            grid)
+                                 GridP&            grid,
+                              const std::string& )
 {
   Heat::problemSetup(ps, restart_ps, grid);
   ProblemSpecP heat_ps   = ps->findBlock("Heat");

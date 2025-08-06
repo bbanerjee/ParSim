@@ -42,6 +42,8 @@ IF(NOT WIN32)
     Vaango_Core_DataArchive   
     Vaango_Core_OS
     Vaango_Core_Grid
+    Vaango_CCA_Components_Schedulers
+    Vaango_CCA_Components_DataArchiver
     MPI::MPI_CXX
     Vaango::Options
     Vaango::Warnings

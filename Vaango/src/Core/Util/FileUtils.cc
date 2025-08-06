@@ -189,7 +189,7 @@ GetFilenamesStartingWith(const std::string& dirstr, const std::string& prefix)
 
   dirent* file = readdir(dir);
   while (file) {
-    ASSERT(file->d_name);
+    //ASSERT(file->d_name);
     std::string dname          = file->d_name;
     std::string::size_type pos = dname.find(prefix);
     if (pos == 0) {

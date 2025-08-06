@@ -87,6 +87,8 @@ public:
   operator=(ImpMPM&&) = delete;
 
   virtual void
+  problemSetup(const ProblemSpecP& ) {};
+  virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& mat_ps,
                GridP& grid,
@@ -132,6 +134,8 @@ public:
   void
   scheduleInitialErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched);
 
+  virtual void
+  recomputeDelT() {}
   virtual double
   recomputeDelT(double dt) {
     return dt * d_mpm_flags->d_delTDecreaseFactor;

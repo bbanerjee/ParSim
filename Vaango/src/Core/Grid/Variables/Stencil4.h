@@ -41,12 +41,12 @@ namespace Uintah {
     double  w, s, b;
     // diagonal term
     double p;
-    double& operator[](int index) {
-      ASSERTRANGE(index, 0, 3);
+    GPU_INLINE_FUNCTION double& operator[](int index) {
+      //ASSERTRANGE(index, 0, 3);
       return (&w)[index];
     }
-    const double& operator[](int index) const {
-      ASSERTRANGE(index, 0, 3);
+    GPU_INLINE_FUNCTION const double& operator[](int index) const {
+      //ASSERTRANGE(index, 0, 3);
       return (&w)[index];
     }
   };

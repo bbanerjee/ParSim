@@ -29,6 +29,10 @@
 
 #include <Core/Disclosure/TypeUtils.h>
 #include <Core/Util/FancyAssert.h>
+
+#include <sci_defs/kokkos_defs.h>
+#include <sci_defs/cuda_defs.h>
+
 #include <iostream>
 
 namespace Uintah {
@@ -41,16 +45,16 @@ namespace Uintah {
     double  w, e, s, n, b, t;
     // diagonal term
     double p;
-    double& operator[](int index) {
-      ASSERTRANGE(index, 0, 7);
+    GPU_INLINE_FUNCTION double& operator[](int index) {
+      //ASSERTRANGE(index, 0, 7);
       return (&w)[index];
     }
-    const double& operator[](int index) const {
-      ASSERTRANGE(index, 0, 7);
+    GPU_INLINE_FUNCTION const double& operator[](int index) const {
+      //ASSERTRANGE(index, 0, 7);
       return (&w)[index];
     }
     
-    void initialize(double a){
+    GPU_INLINE_FUNCTION void initialize(double a){
       w = a;
       e = a;
       s = a;

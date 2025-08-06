@@ -54,7 +54,6 @@
 
 namespace Uintah {
 
-  using Uintah::Vector;
   using TNT::Array2D;
 
 

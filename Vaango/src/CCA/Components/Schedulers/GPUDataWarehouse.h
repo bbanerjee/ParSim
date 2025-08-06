@@ -499,7 +499,7 @@ public:
   __host__ bool remove(char const* label, int patchID, int matlIndx, int levelIndx);
   __host__ void* getPlacementNewBuffer();
   template <typename ExecSpace>
-  __host__ void syncto_device(ExecSpace instance)
+  __host__ void syncto_device([[maybe_unused]] ExecSpace instance)
   {
     if (std::is_same<ExecSpace, UintahSpaces::CPU>::value)
     {
@@ -592,7 +592,7 @@ public:
   // array and copies data into the correct destination GPU var. This
   // step is the final step of a GPU ghost cell transfer.
   template <typename ExecSpace>
-  __host__ void copyGpuGhostCellsToGpuVarsInvoker(ExecSpace instance)
+  __host__ void copyGpuGhostCellsToGpuVarsInvoker([[maybe_unused]] ExecSpace instance)
   {
     int status;
     char *name = abi::__cxa_demangle(typeid(ExecSpace).name(), 0, 0, &status);
