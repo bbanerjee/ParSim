@@ -108,9 +108,9 @@ target_link_libraries(restart_merger PRIVATE
   
 target_link_libraries(slb PRIVATE
   Vaango_Core_GeometryPiece
-  Vaango_Core_Grid
   Vaango_Core_ProblemSpec
   Vaango_CCA_Components_ProblemSpecification
+  Vaango_Core_Grid
   Vaango::Options
   Vaango::Warnings
 )  

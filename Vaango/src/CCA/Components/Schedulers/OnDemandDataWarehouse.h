@@ -1367,7 +1367,7 @@ OnDemandDataWarehouse::transferFrom(
   const VarLabel* label,
   const PatchSubset* patches,
   const MaterialSubset* matls,
-  ExecutionObject<ExecSpace, MemSpace>& execObj,
+  [[maybe_unused]] ExecutionObject<ExecSpace, MemSpace>& execObj,
   bool replace,
   const PatchSubset* newPatches)
 {

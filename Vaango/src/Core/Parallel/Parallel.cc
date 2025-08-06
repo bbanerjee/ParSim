@@ -220,7 +220,7 @@ Parallel::getKokkosInstancesPerTask()
 }
 
 void
-Parallel::setKokkosLeaguesPerLoop(unsigned int num)
+Parallel::setKokkosLeaguesPerLoop([[maybe_unused]] unsigned int num)
 {
 #if defined(KOKKOS_USING_GPU)
   s_kokkos_leagues_per_loop = num;

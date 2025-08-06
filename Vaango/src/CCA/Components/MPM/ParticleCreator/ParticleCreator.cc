@@ -99,7 +99,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 
   ParticleVars pvars;
   int dwi = matl->getDWIndex();
-  ParticleSubset* pset = allocateVariables(numParticles, dwi, patch, new_dw, pvars);
+  [[maybe_unused]] ParticleSubset* pset =
+    allocateVariables(numParticles, dwi, patch, new_dw, pvars);
 
   particleIndex current_particle_index = 0;
 

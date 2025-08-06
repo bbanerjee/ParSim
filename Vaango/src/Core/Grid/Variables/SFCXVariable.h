@@ -81,7 +81,11 @@ WARNING
     { return scinew SFCXVariable<T>(); }
 
     // allocate(IntVector, IntVector) is hidden without this
-    using GridVariable<T>::allocate;
+    void allocate(const IntVector& low, const IntVector& hi) override
+    {
+      GridVariable<T>::allocate(low, hi);
+    }
+
     virtual void allocate(const Patch* patch, const IntVector& boundary) override
     {      
       IntVector l,h;

@@ -71,7 +71,7 @@ PortableDependencyTest::~PortableDependencyTest()
 void
 PortableDependencyTest::problemSetup(
   const ProblemSpecP& params,
-  const ProblemSpecP& restart_prob_spec,
+  [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
   [[maybe_unused]] GridP& grid,
   [[maybe_unused]] const std::string& input_ups_dir)
 {
@@ -103,8 +103,8 @@ PortableDependencyTest::scheduleInitialize(const LevelP& level,
 //______________________________________________________________________
 //
 void
-PortableDependencyTest::scheduleRestartInitialize(const LevelP& level,
-                                                  SchedulerP& sched)
+PortableDependencyTest::scheduleRestartInitialize([[maybe_unused]] const LevelP& level,
+                                                  [[maybe_unused]] SchedulerP& sched)
 {
 }
 
@@ -264,9 +264,8 @@ PortableDependencyTest::computeStableTimestep(const ProcessorGroup* pg,
 void
 PortableDependencyTest::initialize(const ProcessorGroup*,
                                    const PatchSubset* patches,
-                                   const MaterialSubset* matls,
-                                   DataWarehouse* /*old_dw*/
-                                   ,
+                                   [[maybe_unused]] const MaterialSubset* matls,
+                                   DataWarehouse* /*old_dw*/,
                                    DataWarehouse* new_dw)
 {
   int matl = 0;
@@ -307,10 +306,10 @@ template<typename ExecSpace, typename MemSpace>
 void
 PortableDependencyTest::task1Computes(
   const PatchSubset* patches,
-  const MaterialSubset* matls,
+  [[maybe_unused]] const MaterialSubset* matls,
   OnDemandDataWarehouse* old_dw,
   OnDemandDataWarehouse* new_dw,
-  UintahParams& uintahParams,
+  [[maybe_unused]] UintahParams& uintahParams,
   ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
   int matl = 0;
@@ -362,10 +361,10 @@ template<typename ExecSpace, typename MemSpace>
 void
 PortableDependencyTest::task2Modifies(
   const PatchSubset* patches,
-  const MaterialSubset* matls,
-  OnDemandDataWarehouse* old_dw,
+  [[maybe_unused]] const MaterialSubset* matls,
+  [[maybe_unused]] OnDemandDataWarehouse* old_dw,
   OnDemandDataWarehouse* new_dw,
-  UintahParams& uintahParams,
+  [[maybe_unused]] UintahParams& uintahParams,
   ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
   int matl = 0;
@@ -396,7 +395,9 @@ PortableDependencyTest::task2Modifies(
     // Replace with boundary condition)
     Uintah::parallel_for(execObj,
                          rangeBoundary,
-                         KOKKOS_LAMBDA(int i, int j, int k){
+                         KOKKOS_LAMBDA([[maybe_unused]] int i,
+                                       [[maybe_unused]] int j,
+                                       [[maybe_unused]] int k){
                            // newphi(i, j, k) = newphi(i,
                            // j, k) - (i + j * 0.17 + k *
                            // 0.42);
@@ -416,10 +417,10 @@ template<typename ExecSpace, typename MemSpace>
 void
 PortableDependencyTest::task3Modifies(
   const PatchSubset* patches,
-  const MaterialSubset* matls,
+  [[maybe_unused]] const MaterialSubset* matls,
   OnDemandDataWarehouse* old_dw,
   OnDemandDataWarehouse* new_dw,
-  UintahParams& uintahParams,
+  [[maybe_unused]] UintahParams& uintahParams,
   ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
   int matl = 0;
@@ -518,10 +519,10 @@ template<typename ExecSpace, typename MemSpace>
 void
 PortableDependencyTest::task4Requires(
   const PatchSubset* patches,
-  const MaterialSubset* matls,
+  [[maybe_unused]] const MaterialSubset* matls,
   OnDemandDataWarehouse* old_dw,
-  OnDemandDataWarehouse* new_dw,
-  UintahParams& uintahParams,
+  [[maybe_unused]] OnDemandDataWarehouse* new_dw,
+  [[maybe_unused]] UintahParams& uintahParams,
   ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
   int matl = 0;
@@ -553,7 +554,7 @@ PortableDependencyTest::task4Requires(
     // Replace with boundary condition)
     Uintah::parallel_for(execObj,
                          rangeBoundary,
-                         KOKKOS_LAMBDA(int i, int j, int k){
+                         KOKKOS_LAMBDA([[maybe_unused]] int i, [[maybe_unused]] int j, [[maybe_unused]] int k){
                            // printf("[task4Requires]
                            // newphi[%d,%d,%d]: %f\n", i,
                            // j, k, newphi(i,j,k));
@@ -562,7 +563,7 @@ PortableDependencyTest::task4Requires(
     // Perform the main loop
     Uintah::parallel_for(execObj,
                          range,
-                         KOKKOS_LAMBDA(int i, int j, int k){
+                         KOKKOS_LAMBDA([[maybe_unused]] int i, [[maybe_unused]] int j, [[maybe_unused]] int k){
                            // if (i == 17 && j == 4 && k
                            // == 4) {
                            //  printf("[task4Requires]

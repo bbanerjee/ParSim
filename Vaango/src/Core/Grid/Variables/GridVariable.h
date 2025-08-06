@@ -99,11 +99,13 @@ public:
   static const GridVariable<T>&
   castFromBase(const GridVariableBase* srcptr);
 
-  void
+  virtual void
   allocate(const IntVector& lowIndex, const IntVector& highIndex) override;
 
+  /*
   virtual void
   allocate(const Patch* patch, const IntVector& boundary) override;
+  */
 
   void
   copyPatch(const GridVariable<T>& src,

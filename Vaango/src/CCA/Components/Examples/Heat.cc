@@ -56,9 +56,10 @@ Heat::~Heat()
   delete d_lb;
 }
 
-void Heat::problemSetup(const ProblemSpecP&     params,
-                        const ProblemSpecP&     restart_prob_spec,
-                              GridP&            grid)
+void
+Heat::problemSetup(const ProblemSpecP& params,
+                   [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
+                   [[maybe_unused]] GridP& grid)
 {
   d_mat = std::make_shared<EmptyMaterial>();
 
@@ -79,11 +80,12 @@ void Heat::scheduleInitialize(const LevelP&     level,
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 
-void Heat::initialize(const ProcessorGroup* pg,
-                      const PatchSubset*    patches,
-                      const MaterialSubset* matls,
-                            DataWarehouse*  old_dw,
-                            DataWarehouse*  new_dw)
+void
+Heat::initialize([[maybe_unused]] const ProcessorGroup* pg,
+                 const PatchSubset* patches,
+                 [[maybe_unused]] const MaterialSubset* matls,
+                 [[maybe_unused]] DataWarehouse* old_dw,
+                 DataWarehouse* new_dw)
 {
   for(int p = 0; p < patches->size(); p++){
     const Patch* patch = patches->get(p);
@@ -117,10 +119,10 @@ void Heat::initialize(const ProcessorGroup* pg,
 
 }
 
-void Heat::scheduleRestartInitialize(const LevelP&     level,
-                                           SchedulerP& sched)
+void
+Heat::scheduleRestartInitialize([[maybe_unused]] const LevelP& level,
+                                [[maybe_unused]] SchedulerP& sched)
 {
-
 }
 
 void Heat::scheduleComputeStableTimeStep(const LevelP&     level,
@@ -132,11 +134,12 @@ void Heat::scheduleComputeStableTimeStep(const LevelP&     level,
   sched->addTask(task, level->eachPatch(), d_materialManager->allMaterials());
 }
 
-void Heat::computeStableTimeStep(const ProcessorGroup* pg,
-                                 const PatchSubset*    patches,
-                                 const MaterialSubset* matls,
-                                       DataWarehouse*  old_dw,
-                                       DataWarehouse*  new_dw)
+void
+Heat::computeStableTimeStep([[maybe_unused]] const ProcessorGroup* pg,
+                            const PatchSubset* patches,
+                            [[maybe_unused]] const MaterialSubset* matls,
+                            [[maybe_unused]] DataWarehouse* old_dw,
+                            DataWarehouse* new_dw)
 {
   new_dw->put(delt_vartype(d_delt), getDelTLabel(), getLevel(patches));
 }
@@ -151,11 +154,12 @@ void Heat::scheduleTimeAdvance( const LevelP&     level,
 
 }
 
-void Heat::timeAdvance(const ProcessorGroup* pg,
-                       const PatchSubset*    patches,
-                       const MaterialSubset* matls,
-                             DataWarehouse*  old_dw,
-                             DataWarehouse*  new_dw)
+void
+Heat::timeAdvance([[maybe_unused]] const ProcessorGroup* pg,
+                  const PatchSubset* patches,
+                  [[maybe_unused]] const MaterialSubset* matls,
+                  DataWarehouse* old_dw,
+                  DataWarehouse* new_dw)
 {
   IntVector xoffset(1,0,0);
   IntVector yoffset(0,1,0);

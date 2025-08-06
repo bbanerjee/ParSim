@@ -117,7 +117,7 @@ TEST(HDF5Tests, readTest)
     std::vector<std::string> layer_names;
     layer_names.reserve(dims);
 
-    for (const auto i : std::views::iota(0uz, dims)) {
+    for (std::size_t i = 0; i < dims; ++i) {
       const auto start_pos = i * size;
       std::span<const char> name_span{ flat_layers_buffer.data() + start_pos,
                                        size };
@@ -174,7 +174,7 @@ TEST(HDF5Tests, readTest)
       std::vector<std::string> weight_names;
       weight_names.reserve(dims_wn);
 
-      for (const auto i : std::views::iota(0uz, dims_wn)) {
+      for (std::size_t i = 0; i < dims_wn; ++i) {
         const auto start_pos = i * size_wn;
         std::span<const char> name_span{ flat_buffer.data() + start_pos,
                                          size_wn };

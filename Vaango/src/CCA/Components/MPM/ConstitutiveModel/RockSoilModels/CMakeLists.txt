@@ -33,7 +33,7 @@ if (NOT HAVE_CUDA)
       ${CMAKE_CURRENT_SOURCE_DIR}/Kayenta.cc                    
     )
   endif(FORTRAN)
-endif (HAVE_CUDA)
+endif (NOT HAVE_CUDA)
 
 SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}

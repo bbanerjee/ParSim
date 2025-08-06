@@ -100,6 +100,9 @@ public:
   scheduleRestartInitialize(const LevelP& level, SchedulerP& sched) override;
 
   void
+  restartInitialize() {};
+
+  void
   scheduleComputeStableTimestep(const LevelP& level, SchedulerP&) override;
 
   // scheduleTimeAdvance version called by the AMR simulation controller.

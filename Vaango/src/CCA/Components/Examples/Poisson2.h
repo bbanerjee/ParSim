@@ -81,6 +81,9 @@ public:
   }
 
   virtual void
+  restartInitialize() {};
+
+  virtual void
   outputProblemSpec(Uintah::ProblemSpecP&)
   {
   }

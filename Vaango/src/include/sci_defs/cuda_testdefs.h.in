@@ -38,23 +38,8 @@
 #ifdef __CUDACC__
   #define HOST_DEVICE __host__ __device__
 #endif
-
-#if !defined(HOST_DEVICE)
-  #define HOST_DEVICE
-#endif
-
-#if !defined(GPU_FUNCTION)
-  #define GPU_FUNCTION
-#endif
-
-#if !defined(GPU_INLINE_FUNCTION)
-  #define GPU_INLINE_FUNCTION inline
-#endif
-
-#if !defined(GPU_FORCEINLINE_FUNCTION)
-  #define GPU_FORCEINLINE_FUNCTION inline
-#endif
 */
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -136,6 +121,24 @@ extern "C" {
    }
 #else
   #define CHECK_RANGE( idx, low, high )
+#endif
+
+#else
+
+#if !defined(HOST_DEVICE)
+  #define HOST_DEVICE
+#endif
+
+#if !defined(GPU_FUNCTION)
+  #define GPU_FUNCTION
+#endif
+
+#if !defined(GPU_INLINE_FUNCTION)
+  #define GPU_INLINE_FUNCTION inline
+#endif
+
+#if !defined(GPU_FORCEINLINE_FUNCTION)
+  #define GPU_FORCEINLINE_FUNCTION inline
 #endif
 
 #endif // HAVE_CUDA

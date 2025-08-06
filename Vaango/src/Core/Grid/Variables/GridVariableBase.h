@@ -79,9 +79,6 @@ public:
   virtual GridVariableBase*
   cloneType() const = 0;
 
-  using Variable::allocate; // Quiets PGI compiler warning about hidden virtual
-                            // function...
-
   virtual void
   allocate(const IntVector& lowIndex, const IntVector& highIndex) = 0;
 

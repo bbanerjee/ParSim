@@ -77,7 +77,7 @@ GPUResizeTest1::~GPUResizeTest1()
 //
 void
 GPUResizeTest1::problemSetup(const ProblemSpecP& params,
-                             const ProblemSpecP& restart_prob_spec,
+                             [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
                              [[maybe_unused]] GridP& grid,
                              [[maybe_unused]] const std::string& input_ups_dir)
 {
@@ -108,8 +108,8 @@ GPUResizeTest1::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 //______________________________________________________________________
 //
 void
-GPUResizeTest1::scheduleRestartInitialize(const LevelP& level,
-                                          SchedulerP& sched)
+GPUResizeTest1::scheduleRestartInitialize([[maybe_unused]] const LevelP& level,
+                                          [[maybe_unused]] SchedulerP& sched)
 {
 }
 
@@ -193,9 +193,8 @@ GPUResizeTest1::computeStableTimestep(const ProcessorGroup* pg,
 void
 GPUResizeTest1::initialize(const ProcessorGroup*,
                            const PatchSubset* patches,
-                           const MaterialSubset* matls,
-                           DataWarehouse* /*old_dw*/
-                           ,
+                           [[maybe_unused]] const MaterialSubset* matls,
+                           DataWarehouse* /*old_dw*/,
                            DataWarehouse* new_dw)
 {
   int matl = 0;
@@ -236,10 +235,10 @@ GPUResizeTest1::initialize(const ProcessorGroup*,
 template<typename ExecSpace, typename MemSpace>
 void
 GPUResizeTest1::timeAdvance(const PatchSubset* patches,
-                            const MaterialSubset* matls,
+                            [[maybe_unused]] const MaterialSubset* matls,
                             OnDemandDataWarehouse* old_dw,
                             OnDemandDataWarehouse* new_dw,
-                            UintahParams& uintahParams,
+                            [[maybe_unused]] UintahParams& uintahParams,
                             ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
 
@@ -296,10 +295,10 @@ GPUResizeTest1::timeAdvance(const PatchSubset* patches,
 template<typename ExecSpace, typename MemSpace>
 void
 GPUResizeTest1::timeAdvance1(const PatchSubset* patches,
-                             const MaterialSubset* matls,
+                             [[maybe_unused]] const MaterialSubset* matls,
                              OnDemandDataWarehouse* old_dw,
                              OnDemandDataWarehouse* new_dw,
-                             UintahParams& uintahParams,
+                             [[maybe_unused]] UintahParams& uintahParams,
                              ExecutionObject<ExecSpace, MemSpace>& execObj)
 {
 

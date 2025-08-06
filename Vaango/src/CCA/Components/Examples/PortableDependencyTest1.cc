@@ -30,7 +30,7 @@ double g_expected = 0.0;
 void
 PortableDependencyTest1::problemSetup(
   const ProblemSpecP& params,
-  const ProblemSpecP& restart_prob_spec,
+  [[maybe_unused]] const ProblemSpecP& restart_prob_spec,
   [[maybe_unused]] GridP& grid,
   [[maybe_unused]] const std::string& input_ups_dir)
 {

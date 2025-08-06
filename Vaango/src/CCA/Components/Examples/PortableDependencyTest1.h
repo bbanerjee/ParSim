@@ -84,9 +84,12 @@ WARNING
 
  ****************************************/
 #define task_parameters                                                        \
-  const PatchSubset *patches, const MaterialSubset *matls,                     \
-    OnDemandDataWarehouse *old_dw, OnDemandDataWarehouse *new_dw,              \
-    UintahParams &uintahParams, ExecutionObject<ExecSpace, MemSpace>&execObj
+  [[maybe_unused]] const PatchSubset *patches,                                 \
+  [[maybe_unused]] const MaterialSubset *matls,                                \
+  [[maybe_unused]] OnDemandDataWarehouse *old_dw,                              \
+  [[maybe_unused]] OnDemandDataWarehouse *new_dw,                              \
+  [[maybe_unused]] UintahParams &uintahParams,                                 \
+  [[maybe_unused]] ExecutionObject<ExecSpace, MemSpace>&execObj
 
 class PortableDependencyTest1 : public SimulationCommon
 {
@@ -123,9 +126,13 @@ public:
   }
 
   virtual void
-  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
+  scheduleRestartInitialize([[maybe_unused]] const LevelP& level,
+                            [[maybe_unused]] SchedulerP& sched)
   {
   }
+
+  virtual void
+  restartInitialize() {};
 
   virtual void
   scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
@@ -169,8 +176,8 @@ private:
   void
   initialize(const ProcessorGroup*,
              const PatchSubset* patches,
-             const MaterialSubset* matls,
-             DataWarehouse* old_dw,
+             [[maybe_unused]] const MaterialSubset* matls,
+             [[maybe_unused]] DataWarehouse* old_dw,
              DataWarehouse* new_dw)
   {
     for (int p = 0; p < patches->size(); p++) {
@@ -185,8 +192,8 @@ private:
   void
   computeStableTimestep(const ProcessorGroup*,
                         const PatchSubset* patches,
-                        const MaterialSubset* matls,
-                        DataWarehouse* old_dw,
+                        [[maybe_unused]] const MaterialSubset* matls,
+                        [[maybe_unused]] DataWarehouse* old_dw,
                         DataWarehouse* new_dw)
   {
     new_dw->put(delt_vartype(delt_), getDelTLabel(), getLevel(patches));

@@ -282,9 +282,13 @@ getInstance(ExecutionObject<ExecSpace, MemSpace>& execObj, int index = 0)
 //----------------------------------------------------------------------------
 
 // CPU - parallel_for
-template <typename ExecSpace, typename MemSpace, typename Functor>
-inline typename std::enable_if<std::is_same<ExecSpace, UintahSpaces::CPU>::value, void>::type
-parallel_for(ExecutionObject<ExecSpace, MemSpace>& execObj, BlockRange const & r, const Functor & functor)
+template<typename ExecSpace, typename MemSpace, typename Functor>
+inline
+  typename std::enable_if<std::is_same<ExecSpace, UintahSpaces::CPU>::value,
+                          void>::type
+  parallel_for([[maybe_unused]] ExecutionObject<ExecSpace, MemSpace>& execObj,
+               BlockRange const& r,
+               const Functor& functor)
 {
   int status;
   char *name(abi::__cxa_demangle(typeid(Functor).name(), 0, 0, &status));
@@ -573,9 +577,18 @@ parallel_for(ExecutionObject<ExecSpace, MemSpace>& execObj, BlockRange const & r
 //----------------------------------------------------------------------------
 
 // CPU parallel_reduce_sum
-template <typename ExecSpace, typename MemSpace, typename Functor, typename ReductionType>
-inline typename std::enable_if<std::is_same<ExecSpace, UintahSpaces::CPU>::value, void>::type
-parallel_reduce_sum(ExecutionObject<ExecSpace, MemSpace>& execObj, BlockRange const & r, const Functor & functor, ReductionType & red)
+template<typename ExecSpace,
+         typename MemSpace,
+         typename Functor,
+         typename ReductionType>
+inline
+  typename std::enable_if<std::is_same<ExecSpace, UintahSpaces::CPU>::value,
+                          void>::type
+  parallel_reduce_sum(
+    [[maybe_unused]] ExecutionObject<ExecSpace, MemSpace>& execObj,
+    BlockRange const& r,
+    const Functor& functor,
+    ReductionType& red)
 {
   const int rbegin0 = r.begin(0);
   const int rbegin1 = r.begin(1);

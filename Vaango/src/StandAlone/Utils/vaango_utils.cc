@@ -129,7 +129,7 @@ check_gpus()
   std::cout << "This doesn't run" << std::endl;
 }
 
-#ifdef HAVE_CUDA
+
 // This function executes a shell command and returns its output.
 // It returns std::nullopt if the command fails to execute.
 // You should handle the error case where the command fails by checking if the
@@ -165,7 +165,8 @@ executeCommand(const std::string& command)
 
   return result;
 }
-#else
+
+/*
 std::expected<std::string, std::string>
 executeCommand(const std::string& command)
 {
@@ -196,7 +197,7 @@ executeCommand(const std::string& command)
 
   return result;
 }
-#endif
+*/
 
 struct LiveGitInfo
 {
@@ -209,7 +210,6 @@ LiveGitInfo
 getLiveGitInfo()
 {
 
-#ifdef HAVE_CUDA
   LiveGitInfo info;
   // Get git diff
   if (auto diff_result = executeCommand(
@@ -235,7 +235,8 @@ getLiveGitInfo()
   }
 
   return info;
-#else
+
+/*
   LiveGitInfo info;
   // Get git diff
   if (auto diff_result = executeCommand(
@@ -255,7 +256,7 @@ getLiveGitInfo()
     return info;
   }
   return info;
-#endif
+*/
 
 }
 

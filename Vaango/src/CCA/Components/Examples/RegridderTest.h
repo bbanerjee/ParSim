@@ -90,6 +90,9 @@ public:
   }
 
   virtual void
+  restartInitialize() {};
+
+  virtual void
   scheduleComputeStableTimestep(const LevelP& level, SchedulerP& scheduler);
 
   virtual void

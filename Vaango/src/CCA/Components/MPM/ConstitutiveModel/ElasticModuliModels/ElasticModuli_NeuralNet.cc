@@ -294,7 +294,7 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
     std::vector<std::string> layer_names;
     layer_names.reserve(dims);
 
-    for (const auto i : std::views::iota(0uz, dims)) {
+    for (std::size_t i = 0; i < dims; ++i) {
       const auto start_pos = i * size;
       std::span<const char> name_span{ flat_layers_buffer.data() + start_pos,
                                        size };
@@ -335,7 +335,7 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
       std::vector<std::string> weight_names;
       weight_names.reserve(dims_weights_bias);
 
-      for (const auto i : std::views::iota(0uz, dims_weights_bias)) {
+      for (std::size_t i = 0; i < dims_weights_bias; ++i) {
         const auto start_pos = i * size_weights_bias;
         std::span<const char> name_span{ flat_buffer.data() + start_pos,
                                          size_weights_bias };

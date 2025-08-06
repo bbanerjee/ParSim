@@ -58,7 +58,7 @@ DOSweep::~DOSweep()
 //__________________________________
 //
 void DOSweep::problemSetup(const ProblemSpecP& prob_spec, 
-                           const ProblemSpecP& restart_prob_spec, 
+                           [[maybe_unused]] const ProblemSpecP& restart_prob_spec, 
                            GridP&)
 {
   solver = dynamic_cast<SolverInterface*>(getPort("solver"));
@@ -147,18 +147,18 @@ void DOSweep::computeStableTimeStep(const ProcessorGroup*,
 //__________________________________
 //
 void DOSweep::initialize(const ProcessorGroup*,
-                         const PatchSubset* patches,
-                         const MaterialSubset* matls,
-                         DataWarehouse*, DataWarehouse* new_dw)
+                         [[maybe_unused]] const PatchSubset* patches,
+                         [[maybe_unused]] const MaterialSubset* matls,
+                         DataWarehouse*, [[maybe_unused]] DataWarehouse* new_dw)
 {
 }
 //______________________________________________________________________
 //
-void DOSweep::timeAdvance(const ProcessorGroup* pg,
+void DOSweep::timeAdvance([[maybe_unused]] const ProcessorGroup* pg,
                           const PatchSubset* patches,
                           const MaterialSubset* matls,
-                          DataWarehouse* old_dw, DataWarehouse* new_dw,
-                          LevelP level, Scheduler* sched)
+                          [[maybe_unused]] DataWarehouse* old_dw, DataWarehouse* new_dw,
+                          [[maybe_unused]] LevelP level, [[maybe_unused]] Scheduler* sched)
 {
   int center = 0;
   int n=0, s=0, e=0, w=0, t=0, b=0;

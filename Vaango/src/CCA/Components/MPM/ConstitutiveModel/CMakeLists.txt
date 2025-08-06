@@ -94,7 +94,9 @@ target_link_libraries(MPM_ConstitutiveModel PRIVATE
   Vaango::Warnings
 )
 
+if (HAVE_CUDA)
 target_compile_options(MPM_ConstitutiveModel PUBLIC -Wno-unknown-pragmas --expt-relaxed-constexpr)
+endif ()
 
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_ConstitutiveModel)

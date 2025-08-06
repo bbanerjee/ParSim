@@ -75,11 +75,12 @@ void AMRHeat::scheduleErrorEstimate(const LevelP&     coarseLevel,
   sched->addTask(task, coarseLevel->eachPatch(), d_materialManager->allMaterials());
 }
 
-void AMRHeat::errorEstimate(const ProcessorGroup* pg,
-                            const PatchSubset*    patches,
-                            const MaterialSubset* matls,
-                                  DataWarehouse*  old_dw,
-                                  DataWarehouse*  new_dw)
+void
+AMRHeat::errorEstimate([[maybe_unused]] const ProcessorGroup* pg,
+                       const PatchSubset* patches,
+                       [[maybe_unused]] const MaterialSubset* matls,
+                       [[maybe_unused]] DataWarehouse* old_dw,
+                       DataWarehouse* new_dw)
 {
   double error;
 
@@ -145,12 +146,12 @@ double AMRHeat::computeError(const IntVector& c,
 
 }
 
-void AMRHeat::scheduleRefineInterface(const LevelP&     fineLevel,
-                                            SchedulerP& scheduler,
-                                            bool        needCoarseOld,
-                                            bool        needCoarseNew)
+void
+AMRHeat::scheduleRefineInterface([[maybe_unused]] const LevelP& fineLevel,
+                                 [[maybe_unused]] SchedulerP& scheduler,
+                                 [[maybe_unused]] bool needCoarseOld,
+                                 [[maybe_unused]] bool needCoarseNew)
 {
-
 }
 
 void AMRHeat::scheduleRefine (const PatchSet*   patches,
@@ -165,11 +166,12 @@ void AMRHeat::scheduleRefine (const PatchSet*   patches,
   }
 }
 
-void AMRHeat::refine(const ProcessorGroup* pg,
-                     const PatchSubset*    patches,
-                     const MaterialSubset* matls,
-                           DataWarehouse* old_dw,
-                           DataWarehouse* new_dw)
+void
+AMRHeat::refine([[maybe_unused]] const ProcessorGroup* pg,
+                const PatchSubset* patches,
+                [[maybe_unused]] const MaterialSubset* matls,
+                [[maybe_unused]] DataWarehouse* old_dw,
+                DataWarehouse* new_dw)
 {
   const Level* fine_level = getLevel(patches);
   const Level* coarse_level = fine_level->getCoarserLevel().get_rep();
@@ -252,8 +254,8 @@ void AMRHeat::refineNode(NCVariable<double>& temp, constNCVariable<double>& coar
 
 }
 
-void AMRHeat::scheduleCoarsen(const LevelP&     coarseLevel,
-                                    SchedulerP& sched)
+void
+AMRHeat::scheduleCoarsen([[maybe_unused]] const LevelP& coarseLevel,
+                         [[maybe_unused]] SchedulerP& sched)
 {
-
 }

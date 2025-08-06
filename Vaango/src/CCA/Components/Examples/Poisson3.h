@@ -83,6 +83,9 @@ public:
   {
   }
 
+  virtual void
+  restartInitialize() {};
+
   // New functions
   virtual void
   scheduleRefine(const PatchSet*, [[maybe_unused]] SchedulerP& sched)

@@ -103,7 +103,7 @@ option(PETSC           "Build with PETSc" OFF)
 option(HYPRE           "Build with HYPRE" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(VISIT             "Build with Visit" OFF) 
-option(CUDA             "Build with CUDA" ON) 
+option(CUDA             "Build with CUDA" OFF) 
 
 # Explicitly setting VISIT ON if VISIT_DIR is defined,
 # but consider making VISIT an option if it's user-configurable.
@@ -774,6 +774,7 @@ endif()
 # CUDA and Kokkos (other architectures ignored)
 #----------------------------------------------------------------------------
 if (CUDA)
+  message(STATUS "Trying to find CUDA")
   find_package(CUDAToolkit REQUIRED)
   if (CUDAToolkit_FOUND)
     set(HAVE_CUDA TRUE)
@@ -782,6 +783,7 @@ if (CUDA)
     set(CMAKE_CUDA_STANDARD 20)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
+    message(STATUS "Trying to find Kokkos")
     find_package(Kokkos REQUIRED)
     if (Kokkos_FOUND)
       set(HAVE_KOKKOS TRUE)

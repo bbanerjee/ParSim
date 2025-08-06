@@ -78,7 +78,7 @@ target_link_libraries(Vaango_Core_Grid
   Vaango_Core_Math
   $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
   $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
-  $<$<BOOL:${HAVE_CUDA}>:Kokkos::kokkos>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   MPI::MPI_CXX
   ${Z_LIBRARY}
   Vaango::Options

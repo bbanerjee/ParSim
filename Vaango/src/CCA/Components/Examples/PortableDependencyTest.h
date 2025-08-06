@@ -23,7 +23,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Packages_Uintah_CCA_Components_Examples_PortableDependencyTest_h
 #define Packages_Uintah_CCA_Components_Examples_PortableDependencyTest_h
 
@@ -33,8 +32,7 @@
 #include <Core/Grid/Variables/VarLabel.h>
 
 namespace Uintah {
-  class EmptyMaterial;
-
+class EmptyMaterial;
 
 /**************************************
 
@@ -57,120 +55,115 @@ DESCRIPTION
    back-ends.
 
 WARNING
-  
+
 ****************************************/
 
-  class PortableDependencyTest : public SimulationCommon {
-  public:
-    PortableDependencyTest( const ProcessorGroup   * myworld
-                          , const MaterialManagerP   materialManager
-                          );
+class PortableDependencyTest : public SimulationCommon
+{
+public:
+  PortableDependencyTest(const ProcessorGroup* myworld,
+                         const MaterialManagerP materialManager);
 
-    virtual ~PortableDependencyTest();
+  virtual ~PortableDependencyTest();
 
-    virtual void
-    problemSetup(const ProblemSpecP& params,
-                 const ProblemSpecP& restart_prob_spec,
-                 GridP& grid,
-                 const std::string& input_ups_dir = "");
+  virtual void
+  problemSetup(const ProblemSpecP& params,
+               const ProblemSpecP& restart_prob_spec,
+               GridP& grid,
+               const std::string& input_ups_dir = "");
 
-    void
-    outputProblemSpec([[maybe_unused]] ProblemSpecP& ps)
-    {
-    }
+  void
+  outputProblemSpec([[maybe_unused]] ProblemSpecP& ps)
+  {
+  }
 
-    void
-    scheduleComputeStableTimestep([[maybe_unused]] const LevelP& level,
-                                  [[maybe_unused]] SchedulerP& scheduler);
+  void
+  scheduleComputeStableTimestep([[maybe_unused]] const LevelP& level,
+                                [[maybe_unused]] SchedulerP& scheduler);
 
-    virtual void scheduleInitialize( const LevelP     & level
-                                   ,       SchedulerP & sched
-                                   );
+  virtual void
+  scheduleInitialize(const LevelP& level, SchedulerP& sched);
 
-    virtual void scheduleRestartInitialize( const LevelP     & level
-                                          ,       SchedulerP & sched
-                                          );
+  virtual void
+  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched);
+  virtual void
+  restartInitialize() {};
 
-    virtual void scheduleTimeAdvance( const LevelP     & level
-                                    ,       SchedulerP &
-                                    );
+  virtual void
+  scheduleTimeAdvance(const LevelP& level, SchedulerP&);
 
-    virtual void scheduleTask1Computes( const LevelP     & level
-                                      ,       SchedulerP &
-                                      );
+  virtual void
+  scheduleTask1Computes(const LevelP& level, SchedulerP&);
 
-    virtual void scheduleTask2Modifies( const LevelP     & level
-                                      ,       SchedulerP &
-                                      );
+  virtual void
+  scheduleTask2Modifies(const LevelP& level, SchedulerP&);
 
-    virtual void scheduleTask3Modifies( const LevelP     & level
-                                      ,       SchedulerP &
-                                      );
+  virtual void
+  scheduleTask3Modifies(const LevelP& level, SchedulerP&);
 
-    virtual void scheduleTask4Requires( const LevelP     & level
-                                      ,       SchedulerP &
-                                      );
+  virtual void
+  scheduleTask4Requires(const LevelP& level, SchedulerP&);
 
-    template <typename ExecSpace, typename MemSpace>
-    void task1Computes( const PatchSubset                          * patches
-                      , const MaterialSubset                       * matls
-                      ,       OnDemandDataWarehouse                * old_dw
-                      ,       OnDemandDataWarehouse                * new_dw
-                      ,       UintahParams                         & uintahParams
-                      ,       ExecutionObject<ExecSpace, MemSpace> & execObj
-                      );
+  template<typename ExecSpace, typename MemSpace>
+  void
+  task1Computes(const PatchSubset* patches,
+                const MaterialSubset* matls,
+                OnDemandDataWarehouse* old_dw,
+                OnDemandDataWarehouse* new_dw,
+                UintahParams& uintahParams,
+                ExecutionObject<ExecSpace, MemSpace>& execObj);
 
-    template <typename ExecSpace, typename MemSpace>
-    void task2Modifies( const PatchSubset                          * patches
-                      , const MaterialSubset                       * matls
-                      ,       OnDemandDataWarehouse                * old_dw
-                      ,       OnDemandDataWarehouse                * new_dw
-                      ,       UintahParams                         & uintahParams
-                      ,       ExecutionObject<ExecSpace, MemSpace> & execObj
-                      );
+  template<typename ExecSpace, typename MemSpace>
+  void
+  task2Modifies(const PatchSubset* patches,
+                const MaterialSubset* matls,
+                OnDemandDataWarehouse* old_dw,
+                OnDemandDataWarehouse* new_dw,
+                UintahParams& uintahParams,
+                ExecutionObject<ExecSpace, MemSpace>& execObj);
 
-    template <typename ExecSpace, typename MemSpace>
-    void task3Modifies( const PatchSubset                          * patches
-                      , const MaterialSubset                       * matls
-                      ,       OnDemandDataWarehouse                * old_dw
-                      ,       OnDemandDataWarehouse                * new_dw
-                      ,       UintahParams                         & uintahParams
-                      ,       ExecutionObject<ExecSpace, MemSpace> & execObj
-                      );
+  template<typename ExecSpace, typename MemSpace>
+  void
+  task3Modifies(const PatchSubset* patches,
+                const MaterialSubset* matls,
+                OnDemandDataWarehouse* old_dw,
+                OnDemandDataWarehouse* new_dw,
+                UintahParams& uintahParams,
+                ExecutionObject<ExecSpace, MemSpace>& execObj);
 
-    template <typename ExecSpace, typename MemSpace>
-    void task4Requires( const PatchSubset                          * patches
-                      , const MaterialSubset                       * matls
-                      ,       OnDemandDataWarehouse                * old_dw
-                      ,       OnDemandDataWarehouse                * new_dw
-                      ,       UintahParams                         & uintahParams
-                      ,       ExecutionObject<ExecSpace, MemSpace> & execObj
-                      );
+  template<typename ExecSpace, typename MemSpace>
+  void
+  task4Requires(const PatchSubset* patches,
+                const MaterialSubset* matls,
+                OnDemandDataWarehouse* old_dw,
+                OnDemandDataWarehouse* new_dw,
+                UintahParams& uintahParams,
+                ExecutionObject<ExecSpace, MemSpace>& execObj);
 
-  private:
-    void initialize( const ProcessorGroup *
-                   , const PatchSubset    * patches
-                   , const MaterialSubset * matls
-                   ,       DataWarehouse  * old_dw
-                   ,       DataWarehouse  * new_dw
-                   );
+private:
+  void
+  initialize(const ProcessorGroup*,
+             const PatchSubset* patches,
+             const MaterialSubset* matls,
+             DataWarehouse* old_dw,
+             DataWarehouse* new_dw);
 
-    void computeStableTimestep( const ProcessorGroup *
-                              , const PatchSubset    * patches
-                              , const MaterialSubset * matls
-                              ,       DataWarehouse  * old_dw
-                              ,       DataWarehouse  * new_dw
-                              );
+  void
+  computeStableTimestep(const ProcessorGroup*,
+                        const PatchSubset* patches,
+                        const MaterialSubset* matls,
+                        DataWarehouse* old_dw,
+                        DataWarehouse* new_dw);
 
-    double delt_;
-    std::shared_ptr<EmptyMaterial> mymat_;
-    const VarLabel* phi_label;
-    const VarLabel* residual_label;
+  double delt_;
+  std::shared_ptr<EmptyMaterial> mymat_;
+  const VarLabel* phi_label;
+  const VarLabel* residual_label;
 
-    PortableDependencyTest(const PortableDependencyTest&);
-    PortableDependencyTest& operator=(const PortableDependencyTest&);
-
-  };
-}
+  PortableDependencyTest(const PortableDependencyTest&);
+  PortableDependencyTest&
+  operator=(const PortableDependencyTest&);
+};
+} // namespace Uintah
 
 #endif
