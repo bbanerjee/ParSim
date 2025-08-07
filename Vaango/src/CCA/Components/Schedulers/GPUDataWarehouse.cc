@@ -4258,3 +4258,13 @@ GPUDataWarehouse::printBlock()
           blockIdx.x, blockIdx.y, blockIdx.z, blockID);
 #endif
 }
+
+/*
+#if defined(HAVE_KOKKOS)
+// Explicit template instantiations
+namespace Uintah {
+  template<> void GPUDataWarehouse::copyGpuGhostCellsToGpuVarsInvoker<Kokkos::Cuda>(Kokkos::Cuda);
+  template<> void GPUDataWarehouse::syncto_device<Kokkos::Cuda>(Kokkos::Cuda);
+}
+#endif
+*/

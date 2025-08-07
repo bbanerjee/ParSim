@@ -88,9 +88,12 @@ target_link_libraries(compare_uda PRIVATE
   ${VAANGO_LIBS}
 )
 
-
-set(RESTART_LIBS
+target_link_libraries(restart_merger PRIVATE
   Vaango_Core_Grid  
+  Vaango_Core_Parallel  
+  Vaango_Core_ProblemSpec  
+  Vaango_Core_Util  
+  Vaango_Core_Exceptions  
   Vaango_Core_DataArchive
   Vaango_Core_OS  
   Vaango_CCA_Ports
@@ -98,14 +101,10 @@ set(RESTART_LIBS
   Vaango_CCA_Components_Schedulers           
   Vaango_CCA_Components_ProblemSpecification 
   Vaango_CCA_Components_DataArchiver
-  MPM_ParticleCreator
   $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
   MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
-)
-target_link_libraries(restart_merger PRIVATE
-  ${RESTART_LIBS}
 )
   
 target_link_libraries(slb PRIVATE

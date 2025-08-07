@@ -102,9 +102,9 @@ IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_MPM_ConstitutiveModel)
 ENDIF(BUILD_SHARED_LIBS)
 
-#IF(NOT CMAKE_COMPILER_IS_GNUCXX) 
+if(NOT DEFINED HAVE_KOKKOS) 
   add_subdirectory(UnitTests)
-#ENDIF()
+endif()
 
 install(TARGETS
   MPM_ConstitutiveModel

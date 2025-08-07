@@ -43,6 +43,8 @@
   #include <Core/Grid/Variables/KokkosViews.h>
 #endif
 
+// #define EXPORT __attribute__((visibility("default")))
+
 #include <cxxabi.h>
 
 #include <map> //for host code only.

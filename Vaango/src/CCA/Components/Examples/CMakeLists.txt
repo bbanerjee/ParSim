@@ -57,6 +57,7 @@ set(Examples_LIBS
   Vaango_Core_Exceptions
   Vaango_Core_Math
   Vaango_Core_Parallel
+  Vaango_CCA_Components_Schedulers
 )
 
 if (HAVE_HYPRE)
@@ -91,6 +92,12 @@ target_link_libraries(Vaango_CCA_Components_Examples PRIVATE
   $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
   $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
+)
+
+target_compile_options(Vaango_CCA_Components_Examples PRIVATE
+  $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
+  $<$<COMPILE_LANGUAGE:CUDA>:-diag-suppress=20011>
+  $<$<COMPILE_LANGUAGE:CUDA>:-diag-suppress=20015>
 )
 
 IF(BUILD_SHARED_LIBS)

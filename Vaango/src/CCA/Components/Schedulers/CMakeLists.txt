@@ -45,7 +45,7 @@ SET(Vaango_CCA_Components_Schedulers_SRCS
   UnifiedScheduler.cc 
 )
 
-if (HAVE_CUDA)
+if (HAVE_KOKKOS)
   set(Vaango_CCA_Components_Schedulers_SRCS
     ${Vaango_CCA_Components_Schedulers_SRCS}
     GPUDataWarehouse.cc
@@ -53,18 +53,18 @@ if (HAVE_CUDA)
     GPUGridVariableGhosts.cc
     GPUMemoryPool.cc
   )
-endif (HAVE_CUDA)
+endif (HAVE_KOKKOS)
 
 add_library(Vaango_CCA_Components_Schedulers ${Vaango_CCA_Components_Schedulers_SRCS})
 
 set(Vaango_CCA_Components_Schedulers_LIBS
-  Vaango_CCA_Components_ProblemSpecification
   Vaango_Core_Grid
   Vaango_Core_Util
   Vaango_Core_ProblemSpec
-  Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
+  Vaango_CCA_Ports
+  Vaango_CCA_Components_ProblemSpecification
   Vaango::Options
   Vaango::Warnings
 )

@@ -408,8 +408,8 @@ Tensor::build_eigens_from_mat()
   ten[4] = mat_[1][1];
   ten[5] = mat_[1][2];
   ten[6] = mat_[2][2];
-  float eval[3];
-  float evec[9];
+  float eval[3] = {0.0, 0.0, 0.0};
+  float evec[9] = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
   throw InternalError("Trying to eigensolve without Teem", __FILE__, __LINE__);
   e1_          = Vector(evec[0], evec[1], evec[2]);
   e2_          = Vector(evec[3], evec[4], evec[5]);

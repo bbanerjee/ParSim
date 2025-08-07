@@ -49,9 +49,8 @@ configure_file(mlp_regression_keras_total_scaled.h5
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-               
+        Vaango_Core_Grid 
         Vaango_Core_DataArchive 
-        Vaango_Core_Grid        
         Vaango_Core_Parallel    
         Vaango_Core_Util        
         Vaango_Core_Math        
@@ -62,9 +61,9 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_DataArchiver  
         Vaango_CCA_Components_LoadBalancers 
         Vaango_CCA_Components_Regridder     
+        Vaango_CCA_Components_Schedulers     
         Vaango_Core_ProblemSpec             
         Vaango_CCA_Components_SimulationController 
-        Vaango_CCA_Components_Schedulers           
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
         Vaango_CCA_Components_Models
@@ -85,6 +84,9 @@ target_link_libraries(testTabularData PRIVATE
   ${VAANGO_LIBS}
   MPM_ConstitutiveModel
   MPM_Diffusion
+  LibXml2::LibXml2
+  ${HDF5_TARGET}
+  $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
   Vaango::Options
   Vaango::Warnings
 )

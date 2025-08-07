@@ -94,6 +94,11 @@ target_link_libraries(Vaango_Core_Math PRIVATE
   Vaango::Warnings
 )
 
+target_compile_options(Vaango_Core_Math PRIVATE
+  $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
+  $<$<COMPILE_LANGUAGE:CUDA>:-diag-suppress=20015>
+)
+
 IF(BUILD_SHARED_LIBS)
   add_definitions(-DBUILD_Vaango_Core_Math)
 ENDIF(BUILD_SHARED_LIBS)
