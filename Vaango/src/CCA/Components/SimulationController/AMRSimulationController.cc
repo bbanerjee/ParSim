@@ -187,7 +187,7 @@ AMRSimulationController::run()
   finalSetup();
 
   // Once the grid is set up pass it on to the GPU.
-#ifdef HAVE_CUDA
+#if defined(KOKKOS_USING_GPU)
   GpuUtilities::assignPatchesToGpus(d_current_gridP);
 #endif
 

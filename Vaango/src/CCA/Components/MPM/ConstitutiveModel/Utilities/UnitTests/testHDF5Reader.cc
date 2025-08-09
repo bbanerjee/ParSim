@@ -5,7 +5,17 @@
 
 #include "H5Cpp.h"
 #include <submodules/json/single_include/nlohmann/json.hpp>
+#ifdef __NVCC__
+#pragma nv_diag_suppress 20011
+#pragma nv_diag_suppress 20013
+#pragma nv_diag_suppress 20015
+#endif
 #include <Eigen/Core>
+#ifdef __NVCC__
+#pragma nv_diag_default 20011
+#pragma nv_diag_default 20013
+#pragma nv_diag_default 20015
+#endif
 
 #include <gtest/gtest.h>
 

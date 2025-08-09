@@ -55,7 +55,7 @@ int Parallel::s_threads_per_partition = -1;
 int Parallel::s_world_rank = -1;
 int Parallel::s_world_size = -1;
 
-#if defined(HAVE_KOKKOS)
+#if defined(KOKKOS_USING_GPU)
 bool Parallel::s_using_cpu = false;
 #else
 bool Parallel::s_using_cpu = true;

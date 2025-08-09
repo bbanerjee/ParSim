@@ -33,7 +33,19 @@
 #include <iterator>
 #include <chrono>
 
+#ifdef __NVCC__
+#pragma nv_diag_suppress 20011
+#pragma nv_diag_suppress 20013
+#pragma nv_diag_suppress 20014
+#pragma nv_diag_suppress 20015
+#endif
 #include <Eigen/Dense>
+#ifdef __NVCC__
+#pragma nv_diag_default 20011
+#pragma nv_diag_default 20013
+#pragma nv_diag_default 20014
+#pragma nv_diag_default 20015
+#endif
 
 //#define DEBUG_INTERSECTION
 //#define TIME_KDTREE_INDEX
