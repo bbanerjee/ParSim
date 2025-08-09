@@ -774,6 +774,9 @@ endif()
 # CUDA and Kokkos (other architectures ignored)
 #----------------------------------------------------------------------------
 if (CUDA)
+  # Enable RPATH for build and install
+  set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
   message(STATUS "Trying to find CUDA")
   find_package(CUDAToolkit REQUIRED)
   if (CUDAToolkit_FOUND)

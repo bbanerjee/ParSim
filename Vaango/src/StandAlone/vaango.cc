@@ -42,8 +42,11 @@
 #include <CCA/Components/SimulationController/AMRSimulationController.h>
 #include <CCA/Components/Solvers/SolverFactory.h>
 
-#ifdef HAVE_CUDA
-#include <CCA/Components/Schedulers/UnifiedScheduler.h>
+#include <sci_defs/kokkos_defs.h>
+#include <sci_defs/cuda_defs.h>
+#if defined(KOKKOS_USING_GPU)
+#include <CCA/Components/Schedulers/KokkosScheduler.h>
+#include <Core/Parallel/KokkosTools.h>
 #endif
 
 #include <CCA/Ports/DataWarehouse.h>
@@ -63,7 +66,6 @@
 #include <Core/Util/StringUtil.h>
 #include <Core/Util/Timers/Timers.hpp>
 
-#include <sci_defs/cuda_defs.h>
 #include <sci_defs/hypre_defs.h>
 #include <sci_defs/malloc_defs.h>
 #include <sci_defs/uintah_defs.h>
@@ -128,11 +130,8 @@ main(int argc, char* argv[], char* env[])
 
   // Set threads
   Uintah::Parallel::setNumThreads(Vaango::Utils::Options::num_threads());
-  Uintah::Parallel::setNumPartitions(Vaango::Utils::Options::num_partitions());
-  Uintah::Parallel::setThreadsPerPartition(
-    Vaango::Utils::Options::threads_per_partition());
 
-#ifdef HAVE_CUDA
+#if defined(KOKKOS_USING_GPU)
   // Set gpus
   if (Vaango::Utils::Options::use_gpu()) {
     Uintah::Parallel::setUsingDevice(true);
@@ -267,6 +266,10 @@ main(int argc, char* argv[], char* env[])
     simController->attachPort("load balancer", loadBalancer.get());
     simComponent->attachPort("load balancer", loadBalancer.get());
 
+#if defined(KOKKOS_USING_GPU)
+    Kokkos::initialize();
+#endif
+
     // Scheduler
     Uintah::SchedulerCommon* scheduler =
       Uintah::SchedulerFactory::create(ups, world);
@@ -362,6 +365,12 @@ main(int argc, char* argv[], char* env[])
 
     scheduler->removeReference();
     delete scheduler;
+  
+#if defined(KOKKOS_USING_GPU)
+    Uintah::cleanupKokkosTools();
+    Kokkos::finalize();
+#endif
+
   } catch (const Uintah::ProblemSetupException& e) {
     // Don't show a stack trace in the case of ProblemSetupException.
     std::lock_guard<Uintah::MasterLock> cerr_guard(cerr_mutex);
