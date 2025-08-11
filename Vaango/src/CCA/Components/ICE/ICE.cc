@@ -188,6 +188,8 @@ ICE::problemSetup(const ProblemSpecP& prob_spec,
   d_press_matlSet->add(0);
   d_press_matlSet->addReference();
 
+  SimulationCommon::problemSetup(prob_spec);
+
   d_ref_press               = 0.0;
   ProblemSpecP phys_cons_ps = prob_spec->findBlock("PhysicalConstants");
   if (phys_cons_ps) {

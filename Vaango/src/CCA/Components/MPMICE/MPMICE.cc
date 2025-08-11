@@ -150,7 +150,7 @@ MPMICE::problemSetup(const ProblemSpecP& prob_spec,
 
   //  M P M
   d_mpm->setComponents(this);
-  dynamic_cast<SimulationCommon*>(d_mpm.get())->problemSetup(prob_spec);
+  //dynamic_cast<SimulationCommon*>(d_mpm.get())->problemSetup(prob_spec);
 
   d_mpm->setWithICE();
   d_mpm->problemSetup(prob_spec, restart_prob_spec, grid);
@@ -174,7 +174,7 @@ MPMICE::problemSetup(const ProblemSpecP& prob_spec,
 
   //  I C E
   d_ice->setComponents(this);
-  dynamic_cast<SimulationCommon*>(d_ice.get())->problemSetup(prob_spec);
+  //dynamic_cast<SimulationCommon*>(d_ice.get())->problemSetup(prob_spec);
 
   d_ice->setWithMPM();
 
