@@ -165,6 +165,8 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
              << "\n";
   d_scheduler->setPositionVar(d_mpm_labels->pXLabel);
 
+  SimulationCommon::problemSetup( prob_spec );
+
   ProblemSpecP restart_mat_ps = nullptr;
   ProblemSpecP prob_spec_mat_ps =
     prob_spec->findBlockWithOutAttribute("MaterialProperties");
