@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2021 The University of Utah
+ * Copyright (c) 2021-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -198,7 +199,7 @@ SchedulerCommon::releaseComponents()
   m_output       = nullptr;
   m_simulator  = nullptr;
 
-  m_materialManager = nullptr;
+  d_materialManager = nullptr;
 }
 
 //______________________________________________________________________
@@ -378,7 +379,7 @@ void
 SchedulerCommon::problemSetup(const ProblemSpecP& prob_spec,
                               const MaterialManagerP& materialManager)
 {
-  m_materialManager = materialManager;
+  d_materialManager = materialManager;
 
   m_tracking_vars_print_location = PRINT_AFTER_EXEC;
 
@@ -803,7 +804,7 @@ SchedulerCommon::printTrackedVars(DetailedTask* dtask, int when)
                           m_tracking_end_index);
 
       // Loop over matls too...
-      for (unsigned int m = 0; m < m_materialManager->getNumMaterials(); m++) {
+      for (unsigned int m = 0; m < d_materialManager->getNumMaterials(); m++) {
 
         if (!dw->exists(label, m, patch)) {
           std::ostringstream mesg;
@@ -931,10 +932,76 @@ SchedulerCommon::addTask(Task* task,
                          const int tg_num /* = -1 */
 )
 {
+  bool is_init = m_is_init_timestep || m_is_restart_init_timestep;
+
+#if defined(KOKKOS_USING_GPU)
+  // DS 12062019: Store max ghost cell count for this variable across
+  // all GPU tasks. update it in dependencies of all gpu tasks before
+  // task graph compilation in case modifieswithscratchghost is used.
+
+  // tg_num != 1 avoid updating max ghosts from RMCRT task graphs.
+  if ( tg_num != 1 /*&& (task->getType() == Task::Normal || task->getType() == Task::Hypre || task->getType() == Task::OncePerProc)*/) {
+    for (auto dep = task->getModifies(); dep != nullptr; dep = dep->m_next) {
+      // Avoid overwriting SHRT_MAX (set for RMCRT).
+      if (dep->m_num_ghost_cells != SHRT_MAX &&
+          dep->m_num_ghost_cells > dep->m_var->getMaxDeviceGhost()) {
+        dep->m_var->setMaxDeviceGhost(dep->m_num_ghost_cells);
+        dep->m_var->setMaxDeviceGhostType(dep->m_gtype);
+      }
+    }
+    for (auto dep = task->getRequires(); dep != nullptr; dep = dep->m_next) {
+      // Avoid overwriting SHRT_MAX (set for RMCRT).
+      if (dep->m_num_ghost_cells != SHRT_MAX &&
+          dep->m_num_ghost_cells > dep->m_var->getMaxDeviceGhost()) {
+        dep->m_var->setMaxDeviceGhost(dep->m_num_ghost_cells);
+        dep->m_var->setMaxDeviceGhostType(dep->m_gtype);
+      }
+    }
+  }
+
+  // Return without actually adding tasks to the taskgraph if its a
+  // ghost cells collection phase. Set in AMRSimulationController.
+  if (m_max_ghost_cell_collection_phase) {
+    if (task) {
+      // DOUTR(g_schedulercommon_dbg, " Ghost cells collection phase skippping
+      // Task: " << task->getName()
+      //       << ",  # patches: " << (patches ? patches->size() : 0)
+      //       << ",    # matls: " << (matls ? matls->size() : 0)
+      //       << ", task-graph: " << ((tg_num < 0) ? (is_init ? "init-tg" :
+      //       "all") : std::to_string(tg_num)));
+
+      delete task;
+    }
+
+    return;
+  }
+#endif
+
+  // DS 12102019: The commented code is useful to debug arches tasks
+  // by adding only few at a time into the graph.  Its easy to avoid
+  // adding tasks here at a single place than going over all Arches
+  // files and commenting (and uncommenting) different tasks.
+  // DO NOT DELETE PLEASE
+  //  gtask_num++;
+  //
+  //  printf("%d$%d$%d$%s$", d_myworld->myRank(), gtask_num, task->usesDevice(),
+  //  task->getName().c_str()); for (auto dep = task->getRequires(); dep !=
+  //  nullptr; dep = dep->m_next)
+  //    std::cout << dep->m_var->getName() << ",";
+  //  printf("$");
+  //  for (auto dep = task->getModifies(); dep != nullptr; dep = dep->m_next)
+  //    std::cout << dep->m_var->getName() << ",";
+  //  printf("$");
+  //  for (auto dep = task->getComputes(); dep != nullptr; dep = dep->m_next)
+  //    std::cout << dep->m_var->getName() << ",";
+  //  printf("\n");
+  //
+  //  if(gtask_num > 47 && gtask_num < 59)
+  //    return;
+
   // Save the DW map
   task->setMapping(m_dwmap);
 
-  bool is_init = m_is_init_timestep || m_is_restart_init_timestep;
 
   DOUTR(g_schedulercommon_dbg,
         " adding Task: " << task->getName()
@@ -1018,7 +1085,7 @@ SchedulerCommon::addTask(Task* task,
         dep->m_reduction_level ? dep->m_reduction_level->getIndex() : -1;
       int dw = dep->mapDataWarehouse();
 
-      if (!dep->m_var->isReductionTask()) {
+      if (!dep->m_var->doSchedReductionTask()) {
         DOUTR(g_schedulercommon_dbg,
               " Skipping Reduction task for multi compute variable: "
                 << dep->m_var->getName() << " on level " << levelidx << ", DW "
@@ -1152,8 +1219,7 @@ SchedulerCommon::addTask(std::shared_ptr<Task> task,
 //______________________________________________________________________
 //
 void
-SchedulerCommon::initialize(int numOldDW /* = 1 */
-                            ,
+SchedulerCommon::initialize(int numOldDW, /* = 1 */
                             int numNewDW /* = 1 */
 )
 {
@@ -1891,7 +1957,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid)
       }
       addTask(dataTasks.back(),
               copyPatchSets[L].get_rep(),
-              m_materialManager->allMaterials());
+              d_materialManager->allMaterials());
 
       // Monitoring tasks must be scheduled last!!
       scheduleTaskMonitoring(copyPatchSets[L].get_rep());
@@ -1926,7 +1992,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid)
       }
       addTask(dataTasks.back(),
               refinePatchSets[L].get_rep(),
-              m_materialManager->allMaterials());
+              d_materialManager->allMaterials());
 
       // Monitoring tasks must be scheduled last!!
       scheduleTaskMonitoring(refinePatchSets[L].get_rep());
@@ -2074,8 +2140,8 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup* /* pg */
 
     // to create once per matl instead of once per matl-var
     std::vector<ParticleSubset*> oldsubsets(
-      m_materialManager->getNumMaterials()),
-      newsubsets(m_materialManager->getNumMaterials());
+      d_materialManager->getNumMaterials()),
+      newsubsets(d_materialManager->getNumMaterials());
 
     // If there is a level that didn't exist, we don't need to copy it
     if (newLevel->getIndex() >= oldDataWarehouse->getGrid()->numLevels()) {
@@ -2478,7 +2544,7 @@ SchedulerCommon::scheduleTaskMonitoring(const LevelP& level)
     }
   }
 
-  addTask(t, level->eachPatch(), m_materialManager->allMaterials());
+  addTask(t, level->eachPatch(), d_materialManager->allMaterials());
 }
 
 //______________________________________________________________________
@@ -2510,7 +2576,7 @@ SchedulerCommon::scheduleTaskMonitoring(const PatchSet* patches)
     }
   }
 
-  addTask(t, patches, m_materialManager->allMaterials());
+  addTask(t, patches, d_materialManager->allMaterials());
 }
 
 //______________________________________________________________________

@@ -37,6 +37,9 @@
 #include <typeinfo>
 #include <vector>
 
+using std::vector;
+using Uintah::IntVector;
+using Uintah::Point;
 namespace Uintah {
 
 /*!
@@ -51,10 +54,6 @@ University of Utah \n
 Center for the Simulation of Accidental Fires and Explosions (C-SAFE) \n\n
 
 */
-
-using std::vector;
-using Uintah::IntVector;
-using Uintah::Point;
 
 class BCGeomBase
 {

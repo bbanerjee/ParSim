@@ -76,6 +76,12 @@ public:
     return Array3<T>::rewindow(low, high);
   }
 
+  virtual bool
+  rewindowExact(const IntVector& low, const IntVector& high)
+  {
+    return Array3<T>::rewindowExact(low, high);
+  }
+
   virtual void
   offset(const IntVector& offset) override
   {
@@ -95,6 +101,9 @@ public:
 
   virtual void
   allocate(const IntVector& lowIndex, const IntVector& highIndex) override;
+
+  virtual void
+  allocate(const Patch* patch, const IntVector& boundary) override;
 
   void
   copyPatch(const GridVariable<T>& src,
@@ -302,6 +311,17 @@ GridVariable<T>::allocate(const IntVector& lowIndex, const IntVector& highIndex)
                             __LINE__));
   }
   this->resize(lowIndex, highIndex);
+}
+
+template<class T>
+void
+GridVariable<T>::allocate([[maybe_unused]] const Patch* patch,
+                          [[maybe_unused]] const IntVector& boundary)
+{
+  SCI_THROW(InternalError("GridVariable<T>::allocate(patch, boundary)"
+                          "should not be called directly!",
+                          __FILE__,
+                          __LINE__));
 }
 
 template<class T>

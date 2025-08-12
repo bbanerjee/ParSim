@@ -79,6 +79,8 @@ public:
   operator=(ParticleTest1&&) = delete;
 
   virtual void
+  problemSetup(const ProblemSpecP& ) {};
+  virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
                GridP& grid,
@@ -97,6 +99,9 @@ public:
   scheduleRestartInitialize([[maybe_unused]] const LevelP& level, [[maybe_unused]] SchedulerP& sched)
   {
   }
+
+  virtual void
+  restartInitialize() {};
 
   virtual void
   outputProblemSpec(Uintah::ProblemSpecP&)

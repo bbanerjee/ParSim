@@ -69,8 +69,8 @@ private:
 
   enum modifiesComputes
   {
-    modifiesVar,
-    computesVar
+    modifies,
+    computes
   };
 
   //__________________________________

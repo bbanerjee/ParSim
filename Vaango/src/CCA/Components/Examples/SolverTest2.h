@@ -80,6 +80,8 @@ public:
   virtual void
   scheduleRestartInitialize(const LevelP& level, SchedulerP& sched);
 
+  void restartInitialize() {}
+
   virtual void
   scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);
   virtual void

@@ -56,8 +56,6 @@
 #include <vector>
 
 namespace Uintah {
-  using Uintah::Point;
-  using Uintah::IntVector;
 
 class CrackGeometry
 {

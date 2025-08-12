@@ -754,7 +754,7 @@ ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
         particleIndex idx = *iter;
         // Get the node indices that surround the cell
 
-        interpolator->findCellAndWeights(px[idx], ni, S);
+        interpolator->findCellAndWeights(patch, px[idx], ni, S);
 
         bool add = true;
 

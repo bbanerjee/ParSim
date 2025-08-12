@@ -32,8 +32,6 @@
 
 namespace Uintah {
 
-using Uintah::IntVector;
-
 class Patch;
 class RefCounted;
 
@@ -103,6 +101,7 @@ public:
              bool outputDoubleAsFloat) override;
   virtual void
   readNormal(std::istream& in, bool swapbytes) override;
+
   virtual void
   allocate(const Patch* patch, const Uintah::IntVector& boundary) override;
 

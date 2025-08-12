@@ -43,6 +43,10 @@ add_library(MPM_Core ${Vaango_MPM_Core_SRCS})
 target_link_libraries(MPM_Core PRIVATE
   ${LIBS}
   MPI::MPI_CXX
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
+  $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
   Vaango::Options
   Vaango::Warnings
 )

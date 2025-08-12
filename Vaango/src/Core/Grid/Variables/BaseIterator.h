@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,9 +33,9 @@
 
 #include <Core/Geometry/IntVector.h>
 
+using Uintah::IntVector;
 namespace Uintah {
 
-  using Uintah::IntVector;
 
   /**************************************
 

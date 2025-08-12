@@ -28,11 +28,10 @@
 #define UINTAH_HOMEBREW_ARRAY3_H
 
 #include <Core/Grid/Variables/Array3Window.h>
-
-#include <Core/Grid/Variables/BlockRange.hpp>
-
 #include <Core/Grid/Variables/Stencil4.h> // **WARNING** Needed for template instantiation
 #include <Core/Grid/Variables/Stencil7.h> // **WARNING** Needed for template instantiation
+
+#include <Core/Parallel/LoopExecution.h>
 
 #include <Core/Grid/Variables/NeighborBondEnergy.h> // **WARNING** Needed for template instantiation
 #include <Core/Grid/Variables/NeighborBondInternalForce.h> // **WARNING** Needed for template instantiation
@@ -52,6 +51,8 @@
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/MinMax.h>
 #include <Core/Util/Endian.h>
+
+#include <sci_defs/cuda_defs.h>
 
 #include <iosfwd>
 
@@ -382,22 +383,20 @@ public:
   // return true iff no reallocation is needed
   bool
   rewindow(const IntVector& lowIndex, const IntVector& highIndex);
+  bool
+  rewindowExact(const IntVector& lowIndex, const IntVector& highIndex);
 
-  inline const T&
+  inline const Array3Window<T>* getWindow() const {
+    return d_window;
+  }
+  inline Array3Window<T>* getWindow() {
+    return d_window;
+  }
+
+  inline T&
   operator[](const IntVector& idx) const
   {
     return d_window->get(idx);
-  }
-
-  inline const Array3Window<T>*
-  getWindow() const
-  {
-    return d_window;
-  }
-  inline Array3Window<T>*
-  getWindow()
-  {
-    return d_window;
   }
 
   inline T&
@@ -406,14 +405,32 @@ public:
     return d_window->get(idx);
   }
 
-  inline const T&
+  inline T&
   operator()(int i, int j, int k) const
   {
-    return (*this)[IntVector(i, j, k)];
+    return d_window->get(i, j, k);
   }
 
   inline T&
   operator()(int i, int j, int k)
+  {
+    return d_window->get(i, j, k);
+  }
+
+  inline T&
+  get(const IntVector& idx) const
+  {
+    return d_window->get(idx);
+  }
+
+  inline T&
+  get(int i, int j, int k) const
+  {
+    return d_window->get(i, j, k);
+  }
+
+  inline T&
+  get(int i, int j, int k)
   {
     return d_window->get(i, j, k);
   }
@@ -568,7 +585,13 @@ protected:
   operator=(const Array3& copy);
 
 private:
-  Array3Window<T>* d_window;
+
+  // These two data members are marked as mutable due to a need for
+  // lambdas.  When Grid Variables are lambda captured with [=], they
+  // are captured as *const*.  But we need to let grid variables be
+  // modified, and so we set these data members as mutable, which gets
+  // around the const.
+  mutable Array3Window<T>* d_window{nullptr};
 };
 
 template<class T>
@@ -650,6 +673,80 @@ Array3<T>::rewindow(const IntVector& lowIndex, const IntVector& highIndex)
     oldWindow = 0;
   }
 
+  return no_reallocation_needed;
+}
+
+// DS 06162020 Added logic to rewindowExact. Ensures the allocated
+// space has exactly same size as the requested. This is needed for
+// D2H copy.  Check comments in OnDemandDW::allocateAndPut,
+// OnDemandDW::getGridVar, Array3<T>::rewindowExact and
+// UnifiedScheduler::initiateD2H
+
+// TODO: Throwing error if allocated and requested spaces are not same
+// might be a problem for RMCRT. Fix can be to create a temporary
+// variable (buffer) in UnifiedScheduler for D2H copy and then copy
+// from buffer to actual variable. But lets try this solution first.
+template<class T>
+bool
+Array3<T>::rewindowExact(const IntVector& lowIndex, const IntVector& highIndex)
+{
+  if (!d_window) {
+    resize(lowIndex, highIndex);
+    return false; // reallocation needed
+  }
+  bool match             = true;
+  IntVector relLowIndex  = lowIndex - d_window->getOffset();
+  IntVector relHighIndex = highIndex - d_window->getOffset();
+  IntVector size         = d_window->getData()->size();
+  for (int i = 0; i < 3; i++) {
+    ASSERT(relLowIndex[i] < relHighIndex[i]);
+    if ((relLowIndex[i] != 0) || (relHighIndex[i] != size[i])) {
+      match = false;
+      break;
+    }
+  }
+  Array3Window<T>* oldWindow  = d_window;
+  bool no_reallocation_needed = false;
+  if (match) {
+    d_window = scinew Array3Window<T>(
+      oldWindow->getData(), oldWindow->getOffset(), lowIndex, highIndex);
+    no_reallocation_needed = true;
+  } else {
+    // will have to re-allocate and copy
+    IntVector offset  = oldWindow->getOffset();
+    IntVector oldHigh = oldWindow->getHighIndex();
+    printf("### Error. The allocated size does not exactly match "
+           "with the requested size allocated: "
+           "offset %d %d %d high: %d %d %d "
+           "requested: low %d %d %d high  %d %d %d\n",
+           offset[0],
+           offset[1],
+           offset[2],
+           oldHigh[0],
+           oldHigh[1],
+           oldHigh[2],
+           lowIndex[0],
+           lowIndex[1],
+           lowIndex[2],
+           highIndex[0],
+           highIndex[1],
+           highIndex[2]);
+  }
+
+  d_window->addReference();
+
+  if (oldWindow->removeReference()) {
+    delete oldWindow;
+    oldWindow = 0;
+  }
+
+#if defined(KOKKOS_ENABLE_OPENMP)
+  if (d_window) {
+    m_view = d_window->getKokkosView();
+  }
+#endif
+
+  // return true iff no reallocation is needed
   return no_reallocation_needed;
 }
 

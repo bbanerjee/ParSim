@@ -60,6 +60,10 @@
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/Timers/Timers.hpp>
 
+#if defined(KOKKOS_USING_GPU)
+  #include <CCA/Components/Schedulers/GPUGridVariableInfo.h>
+#endif
+
 #include <sci_defs/gperftools_defs.h>
 #include <sci_defs/malloc_defs.h>
 
@@ -183,7 +187,7 @@ AMRSimulationController::run()
   finalSetup();
 
   // Once the grid is set up pass it on to the GPU.
-#ifdef HAVE_CUDA
+#if defined(KOKKOS_USING_GPU)
   GpuUtilities::assignPatchesToGpus(d_current_gridP);
 #endif
 
@@ -608,6 +612,12 @@ AMRSimulationController::doInitialTimestep()
       // If compiled with VisIt check the in-situ status for work.
       // ScheduleCheckInSitu( true );
 
+      // DS 04222020: collect max ghost cells across tasks. Do not change 
+      // this place.
+#if defined(KOKKOS_USING_GPU)
+      collectGhostCells();
+#endif
+
       taskGraphTimer.reset(true);
       d_scheduler->compile();
       taskGraphTimer.stop();
@@ -863,6 +873,71 @@ AMRSimulationController::doRegridding(bool initialTimestep) -> bool
   return retVal;
 }
 
+//______________________________________________________________________
+//
+// DS 04202020: Resizing GPU variables is no longer a problem since
+// the fix in UnifiedScheduler allocates variables with max ghost cell
+// values.  The max ghost cells values for variables across tasks are
+// computed in SchedulerCommon::addTask, which is invoked during
+// schedulerInit, scheduleTimestep etc.  But still the problem occurs
+// sometimes especially while using multiple taskgraphs.  e.g.,
+// Consider two taskgraphs: init and main. A GPU task in init task
+// graph computes a variable on GPU, but is not use by any other task
+// in init.  So the max ghost cells computed during init task graph is
+// 0 and the GPU memory is allocated.
+
+// Now a GPU task in the main task graph uses the same variable with
+// ghost cell 1, but the allocation was already done with ghost cells
+// = 0 and we get this error.  Hence here we call scheduleTimeAdvance
+// etc.to look up future tasks and compute max ghost values across
+// init and main task graphs and seems to work for Arches
+//  **** Few possible problems: ****
+
+// 1. The fix seems to work for Arches, but still may fail while using
+//    sub scheduler such as Poisson2.
+
+// 2. The fix is not tested with components other than Arches and also
+//    for AMR problems and might fail. As of now calling only
+//    scheduleTimeAdvance, scheduleFinalizeTimestep and
+//    scheduleComputeStableTimeStep. We might have to call more
+//    functions depending on the need.
+
+// 3. collectGhostCells MUST be called AFTER init task graph in
+//    compiled, but BEFORE task graph is executed. Some tasks in main
+//    task graph of Arches are dependent on some setup done during
+//    compilation of init task graph (WBCHelper of Arches), so
+//    scheduleTimeAdvance must be called after scheduleInit.  But also
+//    we dont want to execute main tasks during initialization. So
+//    call collectGhostCells after init task graph is compiled. That
+//    way, even if new tasks are added in task graph, corresponding
+//    DetailedTasks are not created and not executed when
+//    scheduler->execute() is called. Also it is important to call
+//    collectGhostCells before executing init tasks so that the
+//    scheduler gets the up to date information about ghost cells. If
+//    the logic causes problem in future, we might have to explicitly
+//    delete extra tasks added.
+
+void
+AMRSimulationController::collectGhostCells()
+{
+  // Disable the scheduling of tasks by the scheduler.
+  d_scheduler->setMaxGhostCellsCollectionPhase(true);
+
+  for (int i = 0; i < d_current_gridP->numLevels(); i++) {
+    d_simulator->scheduleTimeAdvance(d_current_gridP->getLevel(i),
+                                       d_scheduler);
+
+    d_simulator->scheduleFinalizeTimestep(d_current_gridP->getLevel(i),
+                                            d_scheduler);
+  }
+
+  // Compute the next time step.
+  scheduleComputeStableTimestep();
+
+  // Re-enable the scheduling of tasks by the scheduler.
+  d_scheduler->setMaxGhostCellsCollectionPhase(false);
+}
+
 void
 AMRSimulationController::compileTaskGraph(int totalFine)
 {
@@ -973,17 +1048,16 @@ AMRSimulationController::compileTaskGraph(int totalFine)
     d_scheduler->scheduleTaskMonitoring(d_current_gridP->getLevel(i));
   }
 
-  // Output tasks
-  d_output->finalizeTimestep(d_current_gridP, d_scheduler, true);
-
-  d_output->sched_allOutputTasks(d_current_gridP, d_scheduler, true);
-
   // Update the system var (time step and simulation time). Must be
   // done after the output and after scheduleComputeStableTimestep.
   d_simulator->scheduleUpdateSystemVars(
     d_current_gridP,
     d_loadBalancer->getPerProcessorPatchSet(d_current_gridP),
     d_scheduler);
+
+  // Output tasks
+  d_output->finalizeTimestep(d_current_gridP, d_scheduler, true);
+  d_output->sched_allOutputTasks(d_current_gridP, d_scheduler, true);
 
   // Report all of the stats before doing any possible in-situ work
   // as that effects the lap timer for the time steps.

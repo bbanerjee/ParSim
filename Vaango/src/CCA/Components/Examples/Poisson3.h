@@ -60,6 +60,9 @@ public:
   Poisson3&
   operator=(Poisson3&&) = delete;
 
+  void
+  problemSetup(const ProblemSpecP& ) {};
+
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
@@ -79,6 +82,9 @@ public:
   scheduleRestartInitialize([[maybe_unused]] const LevelP& level, [[maybe_unused]] SchedulerP& sched)
   {
   }
+
+  virtual void
+  restartInitialize() {};
 
   // New functions
   virtual void

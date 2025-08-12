@@ -26,21 +26,26 @@
 #
 
 SET(Vaango_CCA_Components_Examples_SRCS
+  AMRHeat.cpp           
   AMRWave.cc           
-  Wave.cc              
+  Benchmark.cc         
+  Burger.cc            
+  DOSweep.cc
+  ExamplesLabel.cc     
+  Interpolator.cc      
+  GPUResizeTest1.cc
+  Heat.cc      
+  ParticleTest1.cc     
   Poisson1.cc          
   Poisson2.cc          
   Poisson3.cc          
   Poisson4.cc          
-  Burger.cc            
-  HeatEquation.cc      
-  ParticleTest1.cc     
-  Interpolator.cc      
-  ExamplesLabel.cc     
+  PortableDependencyTest.cc
+  PortableDependencyTest1.cc
+  RegionDB.cc          
   RegridderTest.cc     
   SolverTest1.cc       
-  RegionDB.cc          
-  Benchmark.cc         
+  Wave.cc              
 )
 
 set(Examples_LIBS
@@ -52,6 +57,7 @@ set(Examples_LIBS
   Vaango_Core_Exceptions
   Vaango_Core_Math
   Vaango_Core_Parallel
+  Vaango_CCA_Components_Schedulers
 )
 
 if (HAVE_HYPRE)
@@ -62,26 +68,36 @@ if (HAVE_HYPRE)
 endif (HAVE_HYPRE)
 
 
-if (CUDA)
-  SET(Vaango_CCA_Components_Examples_SRCS
-    ${Vaango_CCA_Components_Examples_SRCS}
-    PoissonGPU1.cc            
-    PoissonGPU1Kernel.cu      
-    GPUSchedulerTest.cc       
-    UnifiedSchedulerTest.cc   
-    GPUSchedulerTestKernel.cu          
-  )
-endif (CUDA)
+#if (HAVE_CUDA)
+#  SET(Vaango_CCA_Components_Examples_SRCS
+#    ${Vaango_CCA_Components_Examples_SRCS}
+#    UnifiedSchedulerTest.cc   
+#  )
+#endif (HAVE_CUDA)
 
 add_library(Vaango_CCA_Components_Examples ${Vaango_CCA_Components_Examples_SRCS})
+if (HAVE_CUDA)
+  set_target_properties(Vaango_CCA_Components_Examples PROPERTIES
+    CUDA_STANDARD 20
+    CUDA_STANDARD_REQUIRED ON
+  )
+endif ()
 
 target_link_libraries(Vaango_CCA_Components_Examples PRIVATE
   ${Examples_LIBS}
-  ${CUDA_LIBRARY}
   LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
+)
+
+target_compile_options(Vaango_CCA_Components_Examples PRIVATE
+  $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
+  $<$<COMPILE_LANGUAGE:CUDA>:-diag-suppress=20011>
+  $<$<COMPILE_LANGUAGE:CUDA>:-diag-suppress=20015>
 )
 
 IF(BUILD_SHARED_LIBS)

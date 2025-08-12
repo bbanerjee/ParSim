@@ -65,7 +65,7 @@ SteadyState::SteadyState(ProblemSpecP& ps)
   // delta t
   VarLabel* nonconstDelT =
     VarLabel::create(delT_name, delt_vartype::getTypeDescription());
-  nonconstDelT->isReductionTask(false);
+  nonconstDelT->schedReductionTask(false);
   d_delTLabel = nonconstDelT;
 }
 

@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2024 The University of Utah
+ * Copyright (c) 2024-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,13 +23,10 @@
  * IN THE SOFTWARE.
  */
 
-// GPU PerPatch base class: in host & device code (HOST_DEVICE == __host__ __device__)
-
 #ifndef UINTAH_CORE_GRID_VARIABLES_GPUPERPATCH_H
 #define UINTAH_CORE_GRID_VARIABLES_GPUPERPATCH_H
 
 #include <Core/Grid/Variables/GPUPerPatchBase.h>
-#include <sci_defs/cuda_defs.h>
 
 #include <string>
 
@@ -37,33 +35,38 @@ namespace Uintah {
 template<class T>
 class GPUPerPatch : public GPUPerPatchBase {
 
-  friend class UnifiedScheduler; // allow UnifiedScheduler access
+  friend class KokkosScheduler;   // allow scheduler access
+  friend class UnifiedScheduler;  // allow scheduler access
 
   public:
 
-    HOST_DEVICE GPUPerPatch()
+    GPU_INLINE_FUNCTION GPUPerPatch()
     {
       d_value = 0;
     }
 
-    HOST_DEVICE GPUPerPatch(T value)
+    GPU_INLINE_FUNCTION GPUPerPatch(T value)
           : d_value(value)
     {
     }
 
-    HOST_DEVICE virtual ~GPUPerPatch() {};
+    GPU_INLINE_FUNCTION virtual ~GPUPerPatch() {};
 
-    HOST_DEVICE virtual size_t getMemSize()
+    GPU_INLINE_FUNCTION virtual size_t getMemSize()
     {
       return sizeof(T);
     }
 
-    HOST_DEVICE T* getPointer() const
+    GPU_INLINE_FUNCTION T* getPointer() const
     {
       return d_value;
     }
 
-    HOST_DEVICE void getSizeInfo(std::string& elems, unsigned long& totsize, void* &ptr) const
+    GPU_INLINE_FUNCTION void* getVoidPointer() const {
+      return d_value;
+    }
+
+    GPU_INLINE_FUNCTION void getSizeInfo(std::string& elems, unsigned long& totsize, void* &ptr) const
     {
       elems = "1";
       totsize = sizeof(T);
@@ -75,18 +78,18 @@ class GPUPerPatch : public GPUPerPatchBase {
 
     mutable T* d_value;
 
-    HOST_DEVICE virtual void getData(void* &ptr) const
+    GPU_INLINE_FUNCTION virtual void getData(void* &ptr) const
     {
         ptr = (void*)d_value;
     }
 
-    HOST_DEVICE virtual void setData(void* &ptr) const
+    GPU_INLINE_FUNCTION virtual void setData(void* &ptr) const
     {
       d_value = (T*)ptr;
     }
 
-    HOST_DEVICE GPUPerPatch<T>& operator=(const GPUPerPatch<T>& copy);
-    HOST_DEVICE GPUPerPatch(const GPUPerPatch&);
+    GPU_INLINE_FUNCTION GPUPerPatch<T>& operator=(const GPUPerPatch<T>& copy);
+    GPU_INLINE_FUNCTION GPUPerPatch(const GPUPerPatch&);
 };
 
 

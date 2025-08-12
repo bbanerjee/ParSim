@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2024 The University of Utah
+ * Copyright (c) 2024-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,12 +23,11 @@
  * IN THE SOFTWARE.
  */
 
-// GPU PerPatch base class: in host & device code (HOST_DEVICE == __host__ __device__)
-
 #ifndef UINTAH_CORE_GRID_VARIABLES_GPUPERPATCHBASE_H
 #define UINTAH_CORE_GRID_VARIABLES_GPUPERPATCHBASE_H
 
 #include <Core/Grid/Variables/GPUVariable.h>
+#include <sci_defs/kokkos_defs.h>
 #include <sci_defs/cuda_defs.h>
 
 namespace Uintah {
@@ -37,17 +37,17 @@ class GPUPerPatchBase : public GPUVariable {
   friend class GPUDataWarehouse;  // allow DataWarehouse set/get data members
 
   public:
-    HOST_DEVICE virtual ~GPUPerPatchBase() {}
-    HOST_DEVICE virtual size_t getMemSize() = 0;
+    GPU_INLINE_FUNCTION virtual ~GPUPerPatchBase() {}
+    GPU_INLINE_FUNCTION virtual size_t getMemSize() = 0;
 
   protected:
-    HOST_DEVICE GPUPerPatchBase() {}
-    HOST_DEVICE GPUPerPatchBase(const GPUPerPatchBase&);
+    GPU_INLINE_FUNCTION GPUPerPatchBase() {}
+    GPU_INLINE_FUNCTION GPUPerPatchBase(const GPUPerPatchBase&);
 
   private:
-    HOST_DEVICE virtual void getData(void* &ptr) const = 0;
-    HOST_DEVICE virtual void setData(void* &ptr) const = 0;
-    HOST_DEVICE GPUPerPatchBase& operator=(const GPUPerPatchBase&);
+    GPU_INLINE_FUNCTION virtual void getData(void* &ptr) const = 0;
+    GPU_INLINE_FUNCTION virtual void setData(void* &ptr) const = 0;
+    GPU_INLINE_FUNCTION GPUPerPatchBase& operator=(const GPUPerPatchBase&);
 };
 
 }  // end namespace Uintah

@@ -5,7 +5,17 @@
 
 #include "H5Cpp.h"
 #include <submodules/json/single_include/nlohmann/json.hpp>
+#ifdef __NVCC__
+#pragma nv_diag_suppress 20011
+#pragma nv_diag_suppress 20013
+#pragma nv_diag_suppress 20015
+#endif
 #include <Eigen/Core>
+#ifdef __NVCC__
+#pragma nv_diag_default 20011
+#pragma nv_diag_default 20013
+#pragma nv_diag_default 20015
+#endif
 
 #include <gtest/gtest.h>
 
@@ -117,7 +127,7 @@ TEST(HDF5Tests, readTest)
     std::vector<std::string> layer_names;
     layer_names.reserve(dims);
 
-    for (const auto i : std::views::iota(0uz, dims)) {
+    for (std::size_t i = 0; i < dims; ++i) {
       const auto start_pos = i * size;
       std::span<const char> name_span{ flat_layers_buffer.data() + start_pos,
                                        size };
@@ -131,8 +141,15 @@ TEST(HDF5Tests, readTest)
     //for (auto layer_name: layer_names) {
     //  std::cout << layer_name << std::endl;
     //}
-
+    // C++23 compliant version
+    /*
     for (const auto& [ii, layer_name]: std::views::enumerate(layer_names)) {
+      ...
+    }
+    */
+    // C++20 compliant version
+    for (std::size_t ii = 0; ii < layer_names.size(); ++ii) {
+      auto layer_name = layer_names[ii];
       //std::cout << "layer_name = " << layer_name << std::endl;
       switch(ii) {
         case 0:  ASSERT_EQ(layer_name, "dense_1"); break;
@@ -141,7 +158,7 @@ TEST(HDF5Tests, readTest)
         case 3:  ASSERT_EQ(layer_name, "dense_4"); break;
       };
 
-      auto weight_group = file.openGroup(std::format("/model_weights/{}", layer_name));
+      auto weight_group = file.openGroup(std::format("/model_weights/{}", layer_names[ii]));
       auto weight_attribute = weight_group.openAttribute("weight_names");
       auto weight_datatype = weight_attribute.getDataType();
       auto weight_dataspace = weight_attribute.getSpace();
@@ -167,7 +184,7 @@ TEST(HDF5Tests, readTest)
       std::vector<std::string> weight_names;
       weight_names.reserve(dims_wn);
 
-      for (const auto i : std::views::iota(0uz, dims_wn)) {
+      for (std::size_t i = 0; i < dims_wn; ++i) {
         const auto start_pos = i * size_wn;
         std::span<const char> name_span{ flat_buffer.data() + start_pos,
                                          size_wn };
@@ -178,9 +195,17 @@ TEST(HDF5Tests, readTest)
         weight_names.emplace_back(name_span.data(), actual_length);
       }
 
+      // C++23 compliant version
+      /*
       for (const auto& [jj, weights_name]: std::views::enumerate(weight_names)) {
+        ...
+      }
+      */
+      // C++20 compliant version
+      for (std::size_t jj = 0; jj < weight_names.size(); ++jj) {
+        auto weights_name = weight_names[jj];
 
-        auto wn_dataset = weight_group.openDataSet(weights_name);
+        auto wn_dataset = weight_group.openDataSet(weight_names[jj]);
         auto wn_datatype = wn_dataset.getDataType();
         auto wn_dataspace = wn_dataset.getSpace();
         rank = wn_dataspace.getSimpleExtentNdims();
@@ -194,9 +219,9 @@ TEST(HDF5Tests, readTest)
         //}
         
         // Remove extra \0 characters in the bias name
-        auto pos = weights_name.find_last_not_of('\0');
+        auto pos = weight_names[jj].find_last_not_of('\0');
         if (pos == std::string::npos) weights_name.clear();
-        else weights_name.resize(pos + 1);
+        else weight_names[jj].resize(pos + 1);
 
         switch(ii) {
           case 0:  switch(jj) {

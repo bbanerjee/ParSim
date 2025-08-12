@@ -73,6 +73,8 @@ public:
   auto
   operator=(FractureMPM&&) -> FractureMPM& = delete;
 
+  virtual void
+  problemSetup(const ProblemSpecP& ) {};
   void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,

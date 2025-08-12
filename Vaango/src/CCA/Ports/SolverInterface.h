@@ -49,7 +49,16 @@ class VarLabel;
 class SolverParameters
 {
 public:
-  SolverParameters()          = default;
+    SolverParameters() : d_use_stencil_4(false),
+                         d_symmetric(true),
+                         d_solve_on_extra_cells(false),
+                         d_residual_normalization_factor(1),
+                         d_recomputable_timestep(false),
+                         d_setup_frequency(1),
+                         d_update_coef_frequency(1),
+                         d_output_file_name("nullptr"),
+                         d_which_old_dw(Task::OldDW) {}
+
   virtual ~SolverParameters() = default;
 
   void
@@ -171,11 +180,11 @@ private:
   bool d_solve_on_extra_cells{ false };
   double d_residual_normalization_factor{ 1.0 };
   bool d_recomputable_timestep{ false };
-  std::string d_output_file_name;
   int d_setup_frequency{ 1 };       // delete matrix and recreate it and update
                                     // coefficients. Needed if Stencil changes.
   int d_update_coef_frequency{ 1 }; // do not modify matrix stencil/sparsity -
                                     // only change values of coefficients
+  std::string d_output_file_name;
   // DataWarehouse either old_dw or parent_old_dw
   Task::WhichDW d_which_old_dw{ Task::OldDW };
 };

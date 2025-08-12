@@ -45,6 +45,9 @@ target_link_libraries(testDir PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
   ${CMAKE_DL_LIBS}
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   Vaango::Options
   Vaango::Warnings
   MPI::MPI_CXX

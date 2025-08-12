@@ -59,6 +59,7 @@ namespace Uintah {
     const VarLabel* pressure_rhs;
     const VarLabel* temperature_matrix;
     const VarLabel* temperature_rhs;
+    const VarLabel* temperature_nc;
 
     const VarLabel* ccvorticity;
     const VarLabel* ccvorticitymag;

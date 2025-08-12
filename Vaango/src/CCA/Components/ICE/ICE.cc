@@ -76,7 +76,17 @@
 
 #include <sci_defs/hypre_defs.h>
 
+#ifdef __NVCC__
+#pragma nv_diag_suppress 20011
+#pragma nv_diag_suppress 20013
+#pragma nv_diag_suppress 20015
+#endif
 #include <Eigen/Dense>
+#ifdef __NVCC__
+#pragma nv_diag_default 20011
+#pragma nv_diag_default 20013
+#pragma nv_diag_default 20015
+#endif
 
 #include <cfloat>
 #include <iostream>
@@ -177,6 +187,8 @@ ICE::problemSetup(const ProblemSpecP& prob_spec,
   d_press_matlSet = scinew MaterialSet();
   d_press_matlSet->add(0);
   d_press_matlSet->addReference();
+
+  SimulationCommon::problemSetup(prob_spec);
 
   d_ref_press               = 0.0;
   ProblemSpecP phys_cons_ps = prob_spec->findBlock("PhysicalConstants");

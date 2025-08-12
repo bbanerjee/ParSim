@@ -25,7 +25,18 @@
 #ifndef __SYMM_MATRIX6_H__
 #define __SYMM_MATRIX6_H__
 
+#ifdef __NVCC__
+#pragma nv_diag_suppress 20013
+#pragma nv_diag_suppress 20015
+#endif
+
 #include <Eigen/Dense>
+
+#ifdef __NVCC__
+#pragma nv_diag_default 20013
+#pragma nv_diag_default 20015
+#endif
+
 #include <Core/Math/Matrix3.h>
 
 #include <vector>

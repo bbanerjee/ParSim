@@ -29,7 +29,17 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+#ifdef __NVCC__
+#pragma nv_diag_suppress 20011
+#pragma nv_diag_suppress 20013
+#pragma nv_diag_suppress 20015
+#endif
 #include <Eigen/Core>
+#ifdef __NVCC__
+#pragma nv_diag_default 20011
+#pragma nv_diag_default 20013
+#pragma nv_diag_default 20015
+#endif
 #include <submodules/json/single_include/nlohmann/json.hpp>
 #include "H5Cpp.h"
 

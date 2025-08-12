@@ -27,7 +27,16 @@
 
 #include <Core/Geometry/Vector.h>
 #include <Core/Math/Matrix3.h>
+
+#ifdef __NVCC__
+#pragma nv_diag_suppress 20013
+#endif
+
 #include <Eigen/Dense>
+
+#ifdef __NVCC__
+#pragma nv_diag_default 20013
+#endif
 
 namespace Vaango {
 

@@ -942,7 +942,7 @@ TracerParticles::initializeScalarVars(ParticleSubset* pset,
                                       const modifiesComputes which)
 {
 
-  if (which == TracerParticles::computesVar) {
+  if (which == TracerParticles::computes) {
     //
     for (size_t i = 0; i < d_scalars.size(); i++) {
       std::shared_ptr<scalar> S = d_scalars[i];
@@ -997,7 +997,7 @@ TracerParticles::initializeScalarVars(ParticleSubset* pset,
 
   //__________________________________
   //        modify variables
-  if (which == TracerParticles::modifiesVar) {
+  if (which == TracerParticles::modifies) {
 
     const bool replace{ true };
 
@@ -1157,7 +1157,7 @@ TracerParticles::initializeTask(const ProcessorGroup*,
                             nPPC);
 
     initializeScalarVars(
-      pset, patch, indx, new_dw, TracerParticles::computesVar);
+      pset, patch, indx, new_dw, TracerParticles::computes);
 
     initializeCloneVars(pset, patch, indx, new_dw);
 
@@ -1266,7 +1266,7 @@ TracerParticles::restartInitializeTask(const ProcessorGroup*,
     //__________________________________
     //    Initialize all the scalar variables
     initializeScalarVars(
-      pset, patch, indx, new_dw, TracerParticles::modifiesVar);
+      pset, patch, indx, new_dw, TracerParticles::modifies);
 
   } // patches
 }

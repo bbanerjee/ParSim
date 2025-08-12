@@ -24,9 +24,12 @@
 
 add_executable(compare_mms compare_mms.cc ExpMMS.cc LinearMMS.cc SineMMS.cc)
 target_link_libraries(compare_mms PRIVATE
-  Vaango_Core_DataArchive 
-  Vaango_CCA_Components_ProblemSpecification
   Vaango_Core_Grid
+  Vaango_Core_DataArchive 
+  Vaango_Core_OS 
+  Vaango_CCA_Components_ProblemSpecification
+  Vaango_CCA_Components_Schedulers
+  Vaango_CCA_Components_DataArchiver
   MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings

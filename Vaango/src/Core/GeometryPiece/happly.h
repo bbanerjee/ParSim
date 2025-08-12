@@ -230,11 +230,16 @@ bool isLittleEndian() {
  */
 template <typename T>
 T swapEndian(T val) {
-  char* bytes = reinterpret_cast<char*>(&val);
-  for (unsigned int i = 0; i < sizeof(val) / 2; i++) {
-    std::swap(bytes[sizeof(val) - 1 - i], bytes[i]);
+  if constexpr (sizeof(T) == 1) {
+    return val;
+  } else {
+    char* bytes            = reinterpret_cast<char*>(&val);
+    const size_t num_bytes = sizeof(val);
+    for (size_t i = 0; i < num_bytes / 2; ++i) {
+      std::swap(bytes[num_bytes - 1 - i], bytes[i]);
+    }
+    return val;
   }
-  return val;
 }
 
 
@@ -942,7 +947,7 @@ public:
 
     // Find the property
     std::unique_ptr<Property>& prop = getPropertyPtr(propertyName);
-    TypedProperty<T>* castedProp = dynamic_cast<TypedProperty<T>*>(prop);
+    TypedProperty<T>* castedProp = dynamic_cast<TypedProperty<T>*>(prop.get());
     if (castedProp) {
       return castedProp->data;
     }
@@ -985,7 +990,7 @@ public:
 
     // Find the property
     std::unique_ptr<Property>& prop = getPropertyPtr(propertyName);
-    TypedListProperty<T>* castedProp = dynamic_cast<TypedListProperty<T>*>(prop);
+    TypedListProperty<T>* castedProp = dynamic_cast<TypedListProperty<T>*>(prop.get());
     if (castedProp) {
       return unflattenList(castedProp->flattenedData, castedProp->flattenedIndexStart);
     }

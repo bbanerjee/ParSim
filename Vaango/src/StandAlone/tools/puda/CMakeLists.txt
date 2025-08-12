@@ -51,6 +51,8 @@ target_link_libraries(puda
   Vaango_Core_Grid
   Vaango_Core_ProblemSpec
   Vaango_Core_Util
+  Vaango_CCA_Components_Schedulers
+  Vaango_CCA_Components_DataArchiver
   Vaango::Options
   Vaango::Warnings
 )

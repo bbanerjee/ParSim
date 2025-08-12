@@ -171,7 +171,7 @@ AMRMPM::~AMRMPM()
 void
 AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
                      const ProblemSpecP& restart_prob_spec,
-                     GridP& grid)
+                     GridP& grid, const std::string&)
 {
   cout_doing << "Doing problemSetup\t\t\t\t\t AMRMPM" << std::endl;
 

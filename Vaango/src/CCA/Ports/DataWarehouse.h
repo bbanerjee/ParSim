@@ -44,6 +44,13 @@
 #include <Core/Util/Handle.h>
 #include <Core/Util/RefCounted.h>
 
+#include <sci_defs/kokkos_defs.h>
+#include <sci_defs/cuda_defs.h>
+
+#if defined(KOKKOS_USING_GPU)
+#include <CCA/Components/Schedulers/GPUDataWarehouse.h>
+#endif
+
 #include <iosfwd>
 
 namespace Uintah {
@@ -90,6 +97,27 @@ using ParticleLabelVariableMap =
 using constParticleLabelVariableMap =
   std::map<const VarLabel*, constParticleVariableBase*>;
 using ParticleIDMap = std::map<long64, int>;
+
+using atomicDataStatus = int;
+//    0                   1                   2                   3
+//    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+//   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//   |    16-bit reference counter   |  unused     |U|S|D|V|A|V|C|A|A|
+//   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+//left sixteen bits is a 16-bit integer reference counter.
+
+//Not allocated/Invalid = If the value is 0x00000000
+
+//Allocating                = bit 31 - 0x00000001
+//Allocated                 = bit 30 - 0x00000002
+//Copying in                = bit 29 - 0x00000004
+//Valid                     = bit 28 - 0x00000008
+//Awaiting ghost data       = bit 27 - 0x00000010
+//Valid with ghost cells    = bit 26 - 0x00000020
+//Deallocating              = bit 25 - 0x00000040
+//Superpatch                = bit 24 - 0x00000080
+//Unknown                   = bit 23 - 0x00000100
 
 class DataWarehouse : public RefCounted
 {
@@ -454,17 +482,6 @@ public:
                bool replace,
                const PatchSubset* patchset) = 0;
 
-  // An overloaded version of transferFrom.  GPU transfers need a stream, and a
-  // stream is found in a detailedTask object.
-  virtual void
-  transferFrom(DataWarehouse*,
-               const VarLabel*,
-               const PatchSubset*,
-               const MaterialSubset*,
-               void* detailedTask,
-               bool replace,
-               const PatchSubset*) = 0;
-
   virtual size_t
   emit(OutputContext& out,
        const VarLabel* label,
@@ -533,7 +550,7 @@ public:
             const MaterialSubset* matls,
             int nComm) = 0;
 
-#ifdef HAVE_CUDA
+#if defined(KOKKOS_USING_GPU)
   GPUDataWarehouse*
   getGPUDW(int i) const
   {
@@ -542,9 +559,7 @@ public:
   GPUDataWarehouse*
   getGPUDW() const
   {
-    int i;
-    CUDA_RT_SAFE_CALL(cudaGetDevice(&i));
-    return d_gpuDWs[i];
+    return d_gpuDWs[0];
   }
 #endif
 
@@ -563,7 +578,7 @@ protected:
   // many previous time steps had taken place before the restart.
   int d_generation;
 
-#ifdef HAVE_CUDA
+#if defined(KOKKOS_USING_GPU)
   std::vector<GPUDataWarehouse*> d_gpuDWs;
 #endif
 

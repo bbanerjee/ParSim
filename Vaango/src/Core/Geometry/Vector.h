@@ -43,6 +43,9 @@
 #include <Core/Util/Assert.h>
 #include <Core/Math/Expon.h>
 
+#include <sci_defs/kokkos_defs.h>
+#include <sci_defs/cuda_defs.h>
+
 #include   <string>
 #include   <iosfwd>
 #include <format>
@@ -60,12 +63,12 @@ namespace Uintah {
   class Vector {
     double x_,y_,z_;
   public:
-    inline explicit Vector(const Point&);
-    inline Vector(double x, double y, double z): x_(x), y_(y), z_(z)
+    GPU_INLINE_FUNCTION explicit Vector(const Point&);
+    GPU_INLINE_FUNCTION Vector(double x, double y, double z): x_(x), y_(y), z_(z)
     { }
-    inline Vector(const Vector&);
-    inline Vector();
-    inline explicit Vector(double init) : x_(init), y_(init), z_(init) {}
+    GPU_INLINE_FUNCTION Vector(const Vector&);
+    GPU_INLINE_FUNCTION Vector();
+    GPU_INLINE_FUNCTION explicit Vector(double init) : x_(init), y_(init), z_(init) {}
     inline double length() const;
     inline double length2() const;
     friend inline double Dot(const Vector&, const Vector&);
@@ -97,13 +100,13 @@ namespace Uintah {
 #endif
 
     //Note vector[0]=vector.x();vector[1]=vector.y();vector[2]=vector.z()
-    inline double& operator[](int idx) {
+    GPU_INLINE_FUNCTION double& operator[](int idx) {
       // Ugly, but works
       return (&x_)[idx];
     }
 
     //Note vector[0]=vector.x();vector[1]=vector.y();vector[2]=vector.z()
-    inline double operator[](int idx) const {
+    GPU_INLINE_FUNCTION double operator[](int idx) const {
       // Ugly, but works
       return (&x_)[idx];
     }
@@ -132,18 +135,18 @@ namespace Uintah {
     friend inline Vector Cross(const Vector&, const Vector&);
     friend inline Vector Abs(const Vector&);
     inline void x(double);
-    inline double x() const;
+    GPU_INLINE_FUNCTION double x() const;
     inline void y(double);
-    inline double y() const;
+    GPU_INLINE_FUNCTION double y() const;
     inline void z(double);
-    inline double z() const;
+    GPU_INLINE_FUNCTION double z() const;
 
     inline void u(double);
-    inline double u() const;
+    GPU_INLINE_FUNCTION double u() const;
     inline void v(double);
-    inline double v() const;
+    GPU_INLINE_FUNCTION double v() const;
     inline void w(double);
-    inline double w() const;
+    GPU_INLINE_FUNCTION double w() const;
 
     void rotz90(const int);
     
@@ -221,17 +224,17 @@ namespace Uintah {
 namespace Uintah {
 
 
-  inline Vector::Vector(const Point& p)
+  GPU_INLINE_FUNCTION Vector::Vector(const Point& p)
     : x_(p.x_), y_(p.y_), z_(p.z_)
   {
   }
 
-  inline Vector::Vector()
+  GPU_INLINE_FUNCTION Vector::Vector()
     : x_(0), y_(0), z_(0)
   {
   }
 
-  inline Vector::Vector(const Vector& p)
+  GPU_INLINE_FUNCTION Vector::Vector(const Vector& p)
     : x_(p.x_), y_(p.y_), z_(p.z_)
   {
   }
@@ -416,7 +419,7 @@ namespace Uintah {
     x_=d;
   }
 
-  inline double Vector::x() const
+  GPU_INLINE_FUNCTION double Vector::x() const
   {
     return x_;
   }
@@ -426,7 +429,7 @@ namespace Uintah {
     y_=d;
   }
 
-  inline double Vector::y() const
+  GPU_INLINE_FUNCTION double Vector::y() const
   {
     return y_;
   }
@@ -436,7 +439,7 @@ namespace Uintah {
     z_=d;
   }
 
-  inline double Vector::z() const
+  GPU_INLINE_FUNCTION double Vector::z() const
   {
     return z_;
   }
@@ -448,7 +451,7 @@ namespace Uintah {
     x_=d;
   }
 
-  inline double Vector::u() const
+  GPU_INLINE_FUNCTION double Vector::u() const
   {
     return x_;
   }
@@ -458,7 +461,7 @@ namespace Uintah {
     y_=d;
   }
 
-  inline double Vector::v() const
+  GPU_INLINE_FUNCTION double Vector::v() const
   {
     return y_;
   }
@@ -468,7 +471,7 @@ namespace Uintah {
     z_=d;
   }
 
-  inline double Vector::w() const
+  GPU_INLINE_FUNCTION double Vector::w() const
   {
     return z_;
   }

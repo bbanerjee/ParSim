@@ -71,6 +71,9 @@ public:
   RegridderTest(const ProcessorGroup* myworld, const MaterialManagerP& mat_manager);
   virtual ~RegridderTest(void);
 
+  void
+  problemSetup(const ProblemSpecP& ) {};
+
   // Interface inherited from Simulation Interface
   virtual void
   problemSetup(const ProblemSpecP& params,
@@ -85,6 +88,9 @@ public:
   scheduleRestartInitialize([[maybe_unused]] const LevelP& level, [[maybe_unused]] SchedulerP& sched)
   {
   }
+
+  virtual void
+  restartInitialize() {};
 
   virtual void
   scheduleComputeStableTimestep(const LevelP& level, SchedulerP& scheduler);

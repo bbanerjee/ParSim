@@ -2999,6 +2999,63 @@ namespace exprtk
                return (match) ? 1 : -1;
             }
 
+            inline int
+            insert(const token&, token&)
+            {
+              return -1;
+            }
+
+            inline int
+            insert(const token&, const token&, const token&, token&)
+            {
+              return -1;
+            }
+
+            inline int
+            insert(const token&,
+                   const token&,
+                   const token&,
+                   const token&,
+                   token&)
+            {
+              return -1;
+            }
+
+            inline int
+            insert(const token&,
+                   const token&,
+                   const token&,
+                   const token&,
+                   const token&,
+                   token&)
+            {
+              return -1;
+            }
+
+            bool
+            operator()(const token&)
+            {
+              return false;
+            }
+
+            bool
+            operator()(const token&, const token&)
+            {
+              return false;
+            }
+
+            bool
+            operator()(const token&, const token&, const token&)
+            {
+              return false;
+            }
+
+            bool
+            operator()(const token&, const token&, const token&, const token&)
+            {
+              return false;
+            }
+
          private:
 
             std::set<std::string,details::ilesscompare> ignore_set_;
@@ -3238,6 +3295,24 @@ namespace exprtk
                return true;
             }
 
+            bool
+            operator()(const token&, const token&)
+            {
+              return false;
+            }
+
+            bool
+            operator()(const token&, const token&, const token&)
+            {
+              return false;
+            }
+
+            bool
+            operator()(const token&, const token&, const token&, const token&)
+            {
+              return false;
+            }
+
          private:
 
             bool state_;
@@ -3280,6 +3355,24 @@ namespace exprtk
                ++current_index_;
 
                return true;
+            }
+
+            bool
+            operator()(const token&, const token&)
+            {
+              return false;
+            }
+
+            bool
+            operator()(const token&, const token&, const token&)
+            {
+              return false;
+            }
+
+            bool
+            operator()(const token&, const token&, const token&, const token&)
+            {
+              return false;
             }
 
             std::size_t error_count() const
@@ -3429,6 +3522,24 @@ namespace exprtk
                }
 
                return true;
+            }
+
+            bool
+            operator()(const token&)
+            {
+              return false;
+            }
+
+            bool
+            operator()(const token&, const token&, const token&)
+            {
+              return false;
+            }
+
+            bool
+            operator()(const token&, const token&, const token&, const token&)
+            {
+              return false;
             }
 
             std::size_t error_count()

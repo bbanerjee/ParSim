@@ -63,9 +63,27 @@ public:
     Abort
   };
 
+  enum CpuThreadEnvironment
+  {
+    PTHREADS        = 0,
+    OPEN_MP_THREADS = 1
+  };
+
+  enum Kokkos_Policy
+  {
+    Kokkos_Team_Policy,
+    Kokkos_Range_Policy,
+    Kokkos_MDRange_Policy,
+    Kokkos_MDRange_Reverse_Policy
+  };
+
   // Initializes MPI if necessary.
   static void
   initializeManager(int& argc, char**& arg);
+
+  // Print the manager settings.
+  static void
+  printManagerSettings();
 
   // Check to see whether initializeManager has been called
   static bool
@@ -74,6 +92,10 @@ public:
   // Shut down MPI gracefully
   static void
   finalizeManager(Circumstances cirumstances = NormalShutdown);
+
+  // Passes the specified exit code to std::exit()
+  static void
+  exitAll(int code);
 
   // Return root context processorgroup
   static ProcessorGroup*
@@ -96,47 +118,105 @@ public:
     return true;
   }
 
-  // Return true if this process is to use GPUs, false otherwise
-  static bool
-  usingDevice();
+  // Sets/Returns the type of CPU scheduler threads
+  static void
+  setCpuThreadEnvironment(CpuThreadEnvironment threadType);
+  static CpuThreadEnvironment
+  getCpuThreadEnvironment();
 
+  // Sets/Returns whether or not to explicitly use CPU schedulers
+  // overridding all other defaults.
+  static void
+  setUsingCPU(bool state);
+  static bool
+  usingCPU();
+
+  // Return true if this process is to use GPUs, false otherwise
   // Set whether or not to use available GPUs
   static void
   setUsingDevice(bool state);
+  static bool
+  usingDevice();
+
+  // Sets/Gets the name of the task name to time
+  static void
+  setTaskNameToTime(const std::string& taskNameToTime);
+  static std::string
+  getTaskNameToTime();
+
+  // Sets/Gets the number of times the task name to time is
+  // expected to run
+  static void
+  setAmountTaskNameExpectedToRun(unsigned int num);
+  static unsigned int
+  getAmountTaskNameExpectedToRun();
 
   // Return the number of threads that a processing element is
   // allowed to use to compute its tasks.
   static int
   getNumThreads();
+  // Set the number of task runner threads to the value specified
+  static void
+  setNumThreads(int num);
 
   // Return the number of thread partitions that a processing element is
   // allowed to use to compute its tasks.
   static int
   getNumPartitions();
+  // Set the number of task runner OMP thread partitions to the value specified
+  static void
+  setNumPartitions(int num);
 
   // Return the number of threads per partition.
   static int
   getThreadsPerPartition();
+  // Set the number of threads per OMP partition
+  static void
+  setThreadsPerPartition(int num);
 
   // Return the ID of the main thread, via std::this_thread::get_id()
   static std::thread::id
   getMainThreadID();
 
-  // Set the number of task runner threads to the value specified
+  // Sets/Gets the number of Kokkos instances per task
   static void
-  setNumThreads(int num);
+  setKokkosInstancesPerTask(unsigned int num);
+  static unsigned int
+  getKokkosInstancesPerTask();
 
-  // Set the number of task runner OMP thread partitions to the value specified
+  // Sets/Gets the number of Kokkos leagues that should be used for each loop
   static void
-  setNumPartitions(int num);
+  setKokkosLeaguesPerLoop(unsigned int num);
+  static unsigned int
+  getKokkosLeaguesPerLoop();
 
-  // Set the number of threads per OMP partition
+  // Sets/Gets the number of Kokkos teams to use within an SM for a loop
   static void
-  setThreadsPerPartition(int num);
+  setKokkosTeamsPerLeague(unsigned int num);
+  static unsigned int
+  getKokkosTeamsPerLeague();
 
-  // Pass the specified exit code to std::exit()
+  //////////
+  // Sets/Gets the Kokkos execution policy
   static void
-  exitAll(int code);
+  setKokkosPolicy(Kokkos_Policy policy);
+  static Kokkos_Policy
+  getKokkosPolicy();
+
+  //////////
+  // Sets/Gets the Kokkos chuck size for Kokkos::RangePolicy &
+  // Kokkos::TeamPolicy
+  static void
+  setKokkosChunkSize(int size);
+  static int
+  getKokkosChunkSize();
+
+  //////////
+  // Sets/Gets the Kokkos chuck size for Kokkos::MDRangePolicy
+  static void
+  setKokkosTileSize(int isize, int jsize, int ksize);
+  static void
+  getKokkosTileSize(int& isize, int& jsize, int& ksize);
 
 public:
   Parallel(const Parallel&) = delete;
@@ -150,8 +230,14 @@ private:
   Parallel();
   ~Parallel();
 
+  static CpuThreadEnvironment s_cpu_thread_environment;
+
   static bool s_initialized;
+  static bool s_using_cpu;
   static bool s_using_device;
+
+  static std::string s_task_name_to_time;
+  static int s_amount_task_name_expected_to_run;
   static int s_num_threads;
   static int s_num_partitions;
   static int s_threads_per_partition;
@@ -159,6 +245,19 @@ private:
   static int s_world_size;
   static std::thread::id s_main_thread_id;
   static ProcessorGroup* s_root_context;
+
+  static int s_kokkos_instances_per_task;
+  static int s_kokkos_leagues_per_loop;
+  static int s_kokkos_teams_per_league;
+
+  static Kokkos_Policy s_kokkos_policy;
+  static int s_kokkos_chunk_size;
+  static int s_kokkos_tile_i_size;
+  static int s_kokkos_tile_j_size;
+  static int s_kokkos_tile_k_size;
+
+  static int s_provided;
+  static int s_required;
 };
 } // End namespace Uintah
 

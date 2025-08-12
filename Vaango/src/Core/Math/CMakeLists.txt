@@ -87,8 +87,16 @@ target_link_libraries(Vaango_Core_Math PRIVATE
   ${LIBS}
   LibXml2::LibXml2 
   MPI::MPI_CXX 
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   Vaango::Options
   Vaango::Warnings
+)
+
+target_compile_options(Vaango_Core_Math PRIVATE
+  $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
+  $<$<COMPILE_LANGUAGE:CUDA>:-diag-suppress=20015>
 )
 
 IF(BUILD_SHARED_LIBS)

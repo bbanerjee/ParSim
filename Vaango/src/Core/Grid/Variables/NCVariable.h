@@ -37,8 +37,6 @@
 
 namespace Uintah {
 
-using Uintah::InternalError;
-
 class TypeDescription;
 
 /**************************************
@@ -103,7 +101,11 @@ public:
   }
 
   // allocate(IntVector, IntVector) is hidden without this
-  using GridVariable<T>::allocate;
+  virtual void allocate(const IntVector& lo, const IntVector& hi) override
+  {
+    GridVariable<T>::allocate(lo, hi);
+  }
+
   virtual void
   allocate(const Patch* patch, const IntVector& boundary) override
   {
@@ -115,7 +117,7 @@ public:
 
   static TypeDescription::Register registerMe;
 
-protected:
+  NCVariable(NCVariable<T>&&);
   NCVariable(const NCVariable<T>&);
 
 private:
@@ -176,6 +178,14 @@ NCVariable<T>::clone() const
 template<class T>
 NCVariable<T>::NCVariable()
 {
+}
+
+template<class T>
+NCVariable<T>::NCVariable(NCVariable<T>&& other)
+  : GridVariable<T>(other)
+{
+  // Implementing this somehow turned on and properly supported Return Value
+  // Optimization (RVO).  I'm not entirely sure why -- Brad P June 2018
 }
 
 template<class T>

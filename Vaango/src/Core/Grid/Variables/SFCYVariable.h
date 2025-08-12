@@ -31,8 +31,6 @@
 #include <Core/Grid/Patch.h>
 namespace Uintah {
 
-  using Uintah::InternalError;
-
   class TypeDescription;
 
   /**************************************
@@ -83,7 +81,11 @@ WARNING
     { return scinew SFCYVariable<T>(); }
     
     // allocate(IntVector, IntVector) is hidden without this
-    using GridVariable<T>::allocate;
+    virtual void allocate(const IntVector& lo, const IntVector& hi) override
+    {
+      GridVariable<T>::allocate(lo, hi);
+    }
+
     virtual void allocate(const Patch* patch, const IntVector& boundary) override
     {      
       IntVector l,h;

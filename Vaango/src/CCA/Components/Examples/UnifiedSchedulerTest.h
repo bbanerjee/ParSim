@@ -1,9 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
+ * Copyright (c) 1997-2024 The University of Utah
+ * Copyright (c) 2024-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,149 +23,193 @@
  * IN THE SOFTWARE.
  */
 
-#define Packages_Uintah_CCA_Components_Examples_UnifiedSchedulerTest_h
+#ifndef CCA_COMPONENTS_EXAMPLES_UNIFIEDSCHDEDULERTEST_H
+#define CCA_COMPONENTS_EXAMPLES_UNIFIEDSCHDEDULERTEST_H
 
-#include <CCA/Ports/SimulationInterface.h>
+#include <CCA/Components/SimulationCommon/SimulationCommon.h>
+#include <CCA/Components/Schedulers/GPUDataWarehouse.h>
+
+#include <Core/Grid/Task.h>
+#include <Core/Grid/TaskStatus.h>
 #include <Core/Grid/Variables/ComputeSet.h>
+#include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
-#include <Core/Parallel/UintahParallelComponent.h>
 
+#include <sci_defs/kokkos_defs.h>
 #include <sci_defs/cuda_defs.h>
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-  void
-  launchUnifiedSchedulerTestKernel(dim3 dimGrid,
-                                   dim3 dimBlock,
-                                   cudaStream_t* stream,
-                                   uint3 domainLow,
-                                   uint3 domainHigh,
-                                   uint3 domainSize,
-                                   int numGhostCells,
-                                   double* d_phi,
-                                   double* d_newphi);
-#ifdef __cplusplus
-}
-#endif
 
 namespace Uintah {
 
-class EmptyMaterial;
+  class EmptyMaterial;
 
-/**************************************
+  /**************************************
 
- CLASS
- UnifiedSchedulerTest
-
-
- GENERAL INFORMATION
-
- UnifiedSchedulerTest.h
-
- Alan Humphrey
- Scientific Computing and Imaging Institute
- University of Utah
+   CLASS
+     UnifiedSchedulerTest
 
 
- KEYWORDS
- UnifiedSchedulerTestComponent, Unified Scheduler
+   GENERAL INFORMATION
 
- DESCRIPTION
- A simple material Poisson simulation used to test scheduling of GPU tasks
- via the UnifiedScheduler.
+     UnifiedSchedulerTest.h
 
- Warning
- None
+     Alan Humphrey
+     Scientific Computing and Imaging Institute
+     University of Utah
 
- ****************************************/
 
-class UnifiedSchedulerTest
-  : public UintahParallelComponent
-  , public SimulationInterface
+   KEYWORDS
+     UnifiedSchedulerTestComponent, Unified Scheduler, GPU tasks
+
+   DESCRIPTION
+     A simple material, Poisson simulation used to test scheduling of GPU tasks
+     via the UnifiedScheduler.
+
+   ****************************************/
+
+  class UnifiedSchedulerTest : public SimulationCommon {
+
+    public:
+
+      UnifiedSchedulerTest( const ProcessorGroup   * myworld
+                          , const MaterialManagerP   materialManager
+                          );
+
+      virtual ~UnifiedSchedulerTest();
+
+      virtual void problemSetup( const ProblemSpecP & params
+                               , const ProblemSpecP & restart_prob_spec
+                               ,       GridP        & grid
+                               );
+
+      virtual void scheduleInitialize( const LevelP     & level
+                                     ,       SchedulerP & sched
+                                     );
+
+      virtual void scheduleRestartInitialize( const LevelP     & level
+                                            ,       SchedulerP & sched
+                                            );
+
+      virtual void scheduleComputeStableTimeStep( const LevelP     & level
+                                                ,       SchedulerP & sched
+                                                );
+
+      virtual void scheduleTimeAdvance( const LevelP     & level
+                                      ,       SchedulerP & sched
+                                      );
+
+
+    private:
+
+            double           m_delt{0.0};
+      std::shared_ptr<EmptyMaterial> m_simple_material{nullptr};
+      const VarLabel       * m_phi_label{nullptr};
+      const VarLabel       * m_residual_label{nullptr};
+
+      void initialize( const ProcessorGroup * pg
+                     , const PatchSubset    * patches
+                     , const MaterialSubset * matls
+                     ,       DataWarehouse  * /*old_dw*/
+                     ,       DataWarehouse  * new_dw
+                     );
+
+      void computeStableTimeStep( const ProcessorGroup * pg
+                                , const PatchSubset    * patches
+                                , const MaterialSubset * matls
+                                ,       DataWarehouse  * old_dw
+                                ,       DataWarehouse  * new_dw
+                                );
+
+      template<typename ExecSpace, typename MemSpace>
+      void timeAdvance( const PatchSubset           * patches
+                      , const MaterialSubset        * matls
+                      ,       OnDemandDataWarehouse * old_dw
+                      ,       OnDemandDataWarehouse * new_dw
+                      ,       UintahParams          & uintahParams
+                      ,       ExecutionObject<ExecSpace, MemSpace>& execObj
+                      );
+
+      void timeAdvance1DP( const ProcessorGroup * pg
+                         , const PatchSubset    * patches
+                         , const MaterialSubset * matls
+                         ,       DataWarehouse  * old_dw
+                         ,       DataWarehouse  * new_dw
+                         );
+
+      void timeAdvance3DP( const ProcessorGroup * pg
+                         , const PatchSubset    * patches
+                         , const MaterialSubset * matls
+                         ,       DataWarehouse  * old_dw
+                         ,       DataWarehouse  * new_dw
+                         );
+
+      // disable copy, assignment and move
+      UnifiedSchedulerTest( const UnifiedSchedulerTest & )            = delete;
+      UnifiedSchedulerTest& operator=( const UnifiedSchedulerTest & ) = delete;
+      UnifiedSchedulerTest( UnifiedSchedulerTest && )                 = delete;
+      UnifiedSchedulerTest& operator=( UnifiedSchedulerTest && )      = delete;
+
+  };
+
+//______________________________________________________________________
+//
+template<typename ExecSpace, typename MemSpace>
+inline void UnifiedSchedulerTest::
+timeAdvance( const PatchSubset           * patches
+           , const MaterialSubset        * matls
+           ,       OnDemandDataWarehouse * old_dw
+           ,       OnDemandDataWarehouse * new_dw
+           ,       UintahParams          & uintahParams
+           ,       ExecutionObject<ExecSpace, MemSpace>& execObj
+           )
 {
 
-public:
-  UnifiedSchedulerTest(const ProcessorGroup* myworld);
+  CallBackEvent event = uintahParams.getCallBackEvent();
 
-  virtual ~UnifiedSchedulerTest();
+  //-----------------------------------------------------------------------------------------------
+  // When Task is scheduled to CPU
+  if (event == CallBackEvent::CPU) {
 
-  virtual void
-  problemSetup(const ProblemSpecP& params,
-               const ProblemSpecP& restart_prob_spec,
-               GridP& grid,
-               MaterialManagerP& simState);
+    int matl = 0;
 
-  virtual void
-  scheduleInitialize(const LevelP& level, SchedulerP& sched);
+    int num_patches = patches->size();
+    for (int p = 0; p < num_patches; ++p) {
+      const Patch* patch = patches->get(p);
+      constNCVariable<double> phi;
 
-  virtual void
-  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
-  {
-  }
+      old_dw->get(phi, m_phi_label, matl, patch, Ghost::AroundNodes, 1);
+      NCVariable<double> newphi;
 
-  virtual void
-  scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched);
+      new_dw->allocateAndPut(newphi, m_phi_label, matl, patch);
+      newphi.copyPatch(phi, newphi.getLowIndex(), newphi.getHighIndex());
+      double residual = 0.0;
+      IntVector l = patch->getNodeLowIndex();
+      IntVector h = patch->getNodeHighIndex();
 
-  virtual void
-  scheduleTimeAdvance(const LevelP& level, SchedulerP& sched);
+      l += IntVector(patch->getBCType(Patch::xminus) == Patch::Neighbor ? 0 : 1,
+                     patch->getBCType(Patch::yminus) == Patch::Neighbor ? 0 : 1,
+                     patch->getBCType(Patch::zminus) == Patch::Neighbor ? 0 : 1);
 
-private:
-  MaterialManagerP sharedState_;
-  double delt_;
-  EmptyMaterial* simpleMaterial_;
-  const VarLabel* phi_label;
-  const VarLabel* residual_label;
+      h -= IntVector(patch->getBCType(Patch::xplus)  == Patch::Neighbor ? 0 : 1,
+                     patch->getBCType(Patch::yplus)  == Patch::Neighbor ? 0 : 1,
+                     patch->getBCType(Patch::zplus)  == Patch::Neighbor ? 0 : 1);
 
-  void
-  initialize(const ProcessorGroup* pg,
-             const PatchSubset* patches,
-             const MaterialSubset* matls,
-             DataWarehouse* old_dw,
-             DataWarehouse* new_dw);
+      //__________________________________
+      //  Stencil
+      for (NodeIterator iter(l, h); !iter.done(); iter++) {
+        IntVector n = *iter;
 
-  void
-  computeStableTimestep(const ProcessorGroup* pg,
-                        const PatchSubset* patches,
-                        const MaterialSubset* matls,
-                        DataWarehouse* old_dw,
-                        DataWarehouse* new_dw);
+        newphi[n] = (1. / 6)
+                  * (phi[n + IntVector(1, 0, 0)] + phi[n + IntVector(-1, 0, 0)] + phi[n + IntVector(0, 1, 0)]
+                  + phi[n + IntVector(0, -1, 0)] + phi[n + IntVector(0, 0, 1)] + phi[n + IntVector(0, 0, -1)]);
+        double diff = newphi[n] - phi[n];
+        residual += diff * diff;
+      }
+      new_dw->put(sum_vartype(residual), m_residual_label);
+    }
+  }  // end CPU task execution
+  //-----------------------------------------------------------------------------------------------
+}
 
-  void
-  timeAdvanceCPU(const ProcessorGroup* pg,
-                 const PatchSubset* patches,
-                 const MaterialSubset* matls,
-                 DataWarehouse* old_dw,
-                 DataWarehouse* new_dw);
-
-  void
-  timeAdvance1DP(const ProcessorGroup*,
-                 const PatchSubset* patches,
-                 const MaterialSubset* matls,
-                 DataWarehouse* old_dw,
-                 DataWarehouse* new_dw);
-
-  void
-  timeAdvance3DP(const ProcessorGroup*,
-                 const PatchSubset* patches,
-                 const MaterialSubset* matls,
-                 DataWarehouse* old_dw,
-                 DataWarehouse* new_dw);
-
-  void
-  timeAdvanceGPU(const ProcessorGroup* pg,
-                 const PatchSubset* patches,
-                 const MaterialSubset* matls,
-                 DataWarehouse* old_dw,
-                 DataWarehouse* new_dw,
-                 int device);
-
-  UnifiedSchedulerTest(const UnifiedSchedulerTest& gst);
-
-  UnifiedSchedulerTest&
-  operator=(const UnifiedSchedulerTest& gst);
-};
 } // namespace Uintah
 
-#endif
+#endif // CCA_COMPONENTS_EXAMPLES_UNIFIEDSCHDEDULERTEST_H

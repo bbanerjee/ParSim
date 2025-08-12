@@ -81,8 +81,10 @@
 
 #if !defined(NO_FORTRAN)
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticFortran.h>
+#if !defined(HAVE_CUDA)
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Diamm.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Kayenta.h>
+#endif
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoElasticFortran.h>
 #endif
 
@@ -241,11 +243,13 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
   else if (mat_type == "hypo_elastic_fortran")
     return std::make_unique<HypoElasticFortran>(child, flags);
 
+#if !defined(HAVE_CUDA)
   else if (mat_type == "kayenta")
     return std::make_unique<Kayenta>(child, flags);
 
   else if (mat_type == "diamm")
     return std::make_unique<Diamm>(child, flags);
+#endif
 
   else if (mat_type == "viscoelastic_fortran")
     return std::make_unique<Vaango::ViscoElasticFortran>(child, flags);

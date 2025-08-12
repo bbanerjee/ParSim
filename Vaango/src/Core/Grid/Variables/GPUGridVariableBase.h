@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2024 The University of Utah
+ * Copyright (c) 2024-2025 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,34 +23,31 @@
  * IN THE SOFTWARE.
  */
 
-// GPU GridVariable base class: in host & device code (HOST_DEVICE == __host__ __device__)
-
 #ifndef UINTAH_CORE_GRID_VARIABLES_GPUGRIDVARIABLEBASE_H
 #define UINTAH_CORE_GRID_VARIABLES_GPUGRIDVARIABLEBASE_H
 
 #include <Core/Grid/Variables/GPUVariable.h>
-#include <sci_defs/cuda_defs.h>
 
 namespace Uintah {
 
 class GPUGridVariableBase : public GPUVariable {
 
-  friend class GPUDataWarehouse; // allow DataWarehouse set/get data members
+  friend class GPUDataWarehouse;  // allow DataWarehouse set/get data members
+  friend class KokkosScheduler;   // allow scheduler access
+  friend class UnifiedScheduler;  // allow scheduler access
+  friend class DetailedTask;      // allow task access
 
   public:
-    HOST_DEVICE virtual ~GPUGridVariableBase() {}
-    HOST_DEVICE virtual size_t getMemSize() = 0;
-    HOST_DEVICE virtual int3 getLowIndex()  = 0;
-    HOST_DEVICE virtual int3 getHighIndex() = 0;
-
+    GPU_INLINE_FUNCTION virtual ~GPUGridVariableBase() {}
+    GPU_INLINE_FUNCTION virtual size_t getMemSize() = 0;
   protected:
-    HOST_DEVICE GPUGridVariableBase() {}
-    HOST_DEVICE GPUGridVariableBase(const GPUGridVariableBase&);
+    GPU_INLINE_FUNCTION GPUGridVariableBase() {}
+    GPU_INLINE_FUNCTION GPUGridVariableBase(const GPUGridVariableBase&);
 
   private:
-    HOST_DEVICE virtual void getArray3(int3& offset, int3& size, void* &ptr) const = 0;
-    HOST_DEVICE virtual void setArray3(const int3& offset, const int3& size, void* &ptr) const = 0;
-    HOST_DEVICE GPUGridVariableBase& operator=(const GPUGridVariableBase&);
+    GPU_INLINE_FUNCTION virtual void getArray3(int3& offset, int3& size, void* &ptr) const = 0;
+    GPU_INLINE_FUNCTION virtual void setArray3(const int3& offset, const int3& size, void* &ptr) const = 0;
+    GPU_INLINE_FUNCTION GPUGridVariableBase& operator=(const GPUGridVariableBase&);
 };
 
 } // end namespace Uintah

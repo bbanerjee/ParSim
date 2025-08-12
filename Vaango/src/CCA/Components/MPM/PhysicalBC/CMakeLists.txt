@@ -45,6 +45,9 @@ add_library(MPM_PhysicalBC ${Vaango_CCA_Components_MPM_PhysicalBC_SRCS})
 target_link_libraries(MPM_PhysicalBC PRIVATE
   ${LIBS}
   MPI::MPI_CXX
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   Vaango::Options
   Vaango::Warnings
 )

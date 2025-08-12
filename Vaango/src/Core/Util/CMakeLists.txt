@@ -49,6 +49,12 @@ if (HAVE_CUDA)
 endif (HAVE_CUDA)
 
 add_library(Vaango_Core_Util ${Vaango_Core_Util_SRCS})
+if (HAVE_CUDA)
+  set_target_properties(Vaango_Core_Util PROPERTIES
+    CUDA_STANDARD 20
+    CUDA_STANDARD_REQUIRED ON
+  )
+endif ()
 
 set(LIBS 
   Vaango_Core_Containers
@@ -62,20 +68,15 @@ if (WIN32)
   )
 endif()
 
-if (HAVE_CUDA)
-  set(LIBS
-    ${LIBS}
-    GPU.o
-  )
-endif (HAVE_CUDA)
-
 # message(STATUS "Core/Util Linking to libraries ${LIBS} ${DL_LIBRARY} ${THREAD_LIBRARY} ${SOCKET_LIBRARY}")
 
 target_link_libraries(Vaango_Core_Util PRIVATE
   ${LIBS}
   ${DL_LIBRARY}
   ${Z_LIBRARY} 
-  ${CUDA_LIBRARY}
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings

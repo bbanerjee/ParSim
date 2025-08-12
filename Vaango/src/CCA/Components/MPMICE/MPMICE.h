@@ -81,9 +81,13 @@ public:
   MPMICE&
   operator=(MPMICE&&) = delete;
 
+  virtual void
+  recomputeDelT() {}
   double
   recomputeDelT(double delT) override;
 
+  virtual void
+  problemSetup(const ProblemSpecP& ) {};
   void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
@@ -98,6 +102,9 @@ public:
 
   void
   scheduleRestartInitialize(const LevelP& level, SchedulerP& sched) override;
+
+  void
+  restartInitialize() {};
 
   void
   scheduleComputeStableTimestep(const LevelP& level, SchedulerP&) override;

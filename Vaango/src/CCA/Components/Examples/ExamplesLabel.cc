@@ -81,6 +81,8 @@ ExamplesLabel::ExamplesLabel()
 					CCVariable<Stencil7>::getTypeDescription());
   temperature_rhs = VarLabel::create("temperature_rhs",
 				     CCVariable<double>::getTypeDescription());
+  temperature_nc = VarLabel::create("temperature_nc",
+				     NCVariable<double>::getTypeDescription());
 
   pressure_matrix = VarLabel::create("pressure_matrix",
 				     CCVariable<Stencil7>::getTypeDescription());
@@ -157,6 +159,7 @@ ExamplesLabel::~ExamplesLabel()
   VarLabel::destroy(density_rhs);
   VarLabel::destroy(temperature_matrix);
   VarLabel::destroy(temperature_rhs);
+  VarLabel::destroy(temperature_nc);
   VarLabel::destroy(pressure_matrix);
   VarLabel::destroy(pressure_rhs);
   VarLabel::destroy(pressure);

@@ -94,7 +94,19 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Util/DebugStream.h>
 
+#ifdef __NVCC__
+#pragma nv_diag_suppress 20011
+#pragma nv_diag_suppress 20013
+#pragma nv_diag_suppress 20014
+#pragma nv_diag_suppress 20015
+#endif
 #include <Eigen/Dense>
+#ifdef __NVCC__
+#pragma nv_diag_default 20011
+#pragma nv_diag_default 20013
+#pragma nv_diag_default 20014
+#pragma nv_diag_default 20015
+#endif
 
 #include <chrono>
 #include <fstream>
@@ -152,6 +164,8 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
   cout_doing << "Doing problemSetup\t\t\t\t\t MPM"
              << "\n";
   d_scheduler->setPositionVar(d_mpm_labels->pXLabel);
+
+  SimulationCommon::problemSetup( prob_spec );
 
   ProblemSpecP restart_mat_ps = nullptr;
   ProblemSpecP prob_spec_mat_ps =
@@ -272,9 +286,9 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
     d_analysisModules =
       AnalysisModuleFactory::create(d_myworld, d_materialManager, prob_spec);
 
-    for (auto& module : d_analysisModules) {
-      module->setComponents(dynamic_cast<SimulationInterface*>(this));
-      module->problemSetup(prob_spec,
+    for (auto& module_name : d_analysisModules) {
+      module_name->setComponents(dynamic_cast<SimulationInterface*>(this));
+      module_name->problemSetup(prob_spec,
                            restart_prob_spec,
                            grid,
                            d_particleState,
@@ -1625,8 +1639,8 @@ SerialMPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
   //__________________________________
   //  on the fly analysis
   if (d_analysisModules.size() != 0) {
-    for (auto& module : d_analysisModules) {
-      module->scheduleDoAnalysis(sched, level);
+    for (auto& module_name : d_analysisModules) {
+      module_name->scheduleDoAnalysis(sched, level);
     }
   }
 }
@@ -4680,7 +4694,7 @@ SerialMPM::scheduleReduceVars(SchedulerP& sched,
   reduction_mss->addReference();
 
   // Tell the scheduler to reduce this variable
-  d_mpm_labels->SumTransmittedForceLabel->isReductionTask(true);
+  d_mpm_labels->SumTransmittedForceLabel->schedReductionTask(true);
   t->computes(
     d_mpm_labels->SumTransmittedForceLabel, reduction_mss, Task::OutOfDomain);
 

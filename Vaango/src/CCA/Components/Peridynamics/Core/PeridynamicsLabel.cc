@@ -47,7 +47,7 @@ PeridynamicsLabel::PeridynamicsLabel()
   // delta t
   Uintah::VarLabel* nonconstDelt = Uintah::VarLabel::create(
     Uintah::delT_name, Uintah::delt_vartype::getTypeDescription());
-  nonconstDelt->isReductionTask(false);
+  nonconstDelt->schedReductionTask(false);
   delTLabel = nonconstDelt;
 
   // Particle Variables

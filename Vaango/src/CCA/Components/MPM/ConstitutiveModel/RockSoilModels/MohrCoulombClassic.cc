@@ -400,7 +400,7 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
     double p = I1 * third;
     Matrix3 stress_dev = stress - Identity * p;
     Matrix3 ss = stress_dev * stress_dev;
-    double J2 = ss.Trace() * half;
+    double J2 = ss.Trace() * Vaango::Tensor::half;
     double sqrt_J2 = std::max(std::sqrt(J2), TINY);
     double q = sqrt_three * sqrt_J2;
     double J3 = stress_dev.Determinant();
@@ -439,7 +439,7 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
 
     // Compute dq_dsigma and dtheta_dsigma
     double sin3theta_c = std::max(std::sin(3.0 * theta_c), 1.0e-6);
-    Matrix3 dq_dsigma = stress_dev * (sqrt_three * half / sqrt_J2);
+    Matrix3 dq_dsigma = stress_dev * (sqrt_three * Vaango::Tensor::half / sqrt_J2);
     Matrix3 dJ3_dsigma = ss - Identity * (two_third * J2);
     double q_cubed = std::max(q * q * q, TINY);
 
@@ -450,7 +450,7 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
     */
 
     Matrix3 dtheta_dsigma = 
-      (dJ3_dsigma - dq_dsigma * (3.0 * J3 / q)) * (- 9.0 * half / (sin3theta_c * q_cubed));
+      (dJ3_dsigma - dq_dsigma * (3.0 * J3 / q)) * (- 9.0 * Vaango::Tensor::half / (sin3theta_c * q_cubed));
 
 #ifdef DEBUG_MCCLASSIC
     dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)

@@ -59,6 +59,9 @@ public:
   Wave&
   operator=(Wave&&) = delete;
 
+  void
+  problemSetup(const ProblemSpecP& ) {};
+
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
@@ -72,6 +75,9 @@ public:
   scheduleRestartInitialize([[maybe_unused]] const LevelP& level, [[maybe_unused]] SchedulerP& sched) override
   {
   }
+
+  virtual void
+  restartInitialize() {};
 
   virtual void
   scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);

@@ -87,12 +87,16 @@ public:
   auto
   operator=(SerialMPM&&) -> SerialMPM& = delete;
 
+  virtual void
+  recomputeDelT() {}
   double
   recomputeDelT(double delT) override
   {
     return delT * 0.1;
   }
 
+  virtual void
+  problemSetup(const ProblemSpecP& ) {};
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
@@ -349,12 +353,13 @@ protected:
                      DataWarehouse* old_dw,
                      DataWarehouse* new_dw);
 
+  virtual void restartInitialize() {};
   virtual void
   restartInitialize(const ProcessorGroup*,
                     const PatchSubset* patches,
                     const MaterialSubset*,
                     DataWarehouse* old_dw,
-                    DataWarehouse* new_dw) override;
+                    DataWarehouse* new_dw);
 
   void
   deleteGeometryObjects(const ProcessorGroup*,

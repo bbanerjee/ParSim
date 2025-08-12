@@ -45,7 +45,6 @@ set(LIBS
     ${LIBS}
     Vaango_Core_OS
     MPM_Core
-    MPI::MPI_CXX
    )
 
 add_library(MPM_Contact 
@@ -53,6 +52,11 @@ add_library(MPM_Contact
 
 target_link_libraries(MPM_Contact 
   ${LIBS}
+  MPI::MPI_CXX
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
+  $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
   Vaango::Options
   Vaango::Warnings
 )

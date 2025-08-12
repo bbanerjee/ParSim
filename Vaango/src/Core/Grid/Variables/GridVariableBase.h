@@ -30,9 +30,9 @@
 #include <Core/Geometry/IntVector.h>
 #include <Core/Grid/Variables/Variable.h>
 #include <Core/Parallel/BufferInfo.h>
-namespace Uintah {
 
 using Uintah::IntVector;
+namespace Uintah {
 
 /**************************************
 
@@ -69,27 +69,27 @@ public:
 
   virtual bool
   rewindow(const IntVector& low, const IntVector& high) = 0;
-  
+
+  virtual bool
+  rewindowExact(const IntVector& lowIndex, const IntVector& highIndex) = 0;
+
   virtual void
   offset(const IntVector& offset) = 0;
 
   virtual GridVariableBase*
   cloneType() const = 0;
 
-  using Variable::allocate; // Quiets PGI compiler warning about hidden virtual
-                            // function...
-
   virtual void
   allocate(const IntVector& lowIndex, const IntVector& highIndex) = 0;
 
-  virtual void
+  void
   allocate(const GridVariableBase* src)
   {
     allocate(src->getLow(), src->getHigh());
   }
 
   virtual void
-  allocate(const Patch* patch, const IntVector& boundary) override = 0;
+  allocate(const Patch* patch, const IntVector& boundary) = 0;
 
   virtual void
   getMPIBuffer(BufferInfo& buffer, const IntVector& low, const IntVector& high);

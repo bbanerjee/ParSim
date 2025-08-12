@@ -28,21 +28,16 @@
 
 #include <sci_defs/kokkos_defs.h>
 
-#ifdef UINTAH_ENABLE_KOKKOS
+#ifdef HAVE_KOKKOS
 #include <Kokkos_Core.hpp>
-#endif // UINTAH_ENABLE_KOKKOS
+#endif // HAVE_KOKKOS
 
 #include <cstddef>
 #include <vector>
 
 namespace Uintah {
-
-// #if defined( UINTAH_ENABLE_KOKKOS )
-// typedef Kokkos::View<IntVector*> BC_List;
-// #else
 template<typename myIntVector>
 using BC_List = std::vector<myIntVector>&;
-// #endif
 
 class BlockRange
 {
@@ -122,7 +117,7 @@ parallel_for(BC_List<myIntVector> iterSpace,
   }
 }
 
-#if defined(UINTAH_ENABLE_KOKKOS)
+#if defined(HAVE_KOKKOS)
 
 template<typename Functor>
 void
@@ -304,7 +299,7 @@ parallel_reduce_min(BlockRange const& r, const Functor& f, ReductionType& red)
   red = tmp;
 };
 
-#endif
+#endif // HAVE_KOKKOS
 
 } // namespace Uintah
 

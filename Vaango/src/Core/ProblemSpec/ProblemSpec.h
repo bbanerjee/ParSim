@@ -42,13 +42,12 @@
 
 typedef struct _xmlNode xmlNode;
 
-namespace Uintah {
-
-class TypeDescription;
-
 using Uintah::IntVector;
 using Uintah::Point;
 using Uintah::Vector;
+namespace Uintah {
+
+class TypeDescription;
 
 /**************************************
 CLASS

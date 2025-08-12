@@ -26,12 +26,14 @@
 # The models
 #-----------------------------------------------------------------------------
 #message(STATUS "Compiling FORTRAN code? ${FORTRAN}")
-if (FORTRAN)
-  SET(MPM_Fortran_SRCS
-    ${CMAKE_CURRENT_SOURCE_DIR}/Diamm.cc                      
-    ${CMAKE_CURRENT_SOURCE_DIR}/Kayenta.cc                    
-  )
-endif(FORTRAN)
+if (NOT HAVE_CUDA)
+  if (FORTRAN)
+    SET(MPM_Fortran_SRCS
+      ${CMAKE_CURRENT_SOURCE_DIR}/Diamm.cc                      
+      ${CMAKE_CURRENT_SOURCE_DIR}/Kayenta.cc                    
+    )
+  endif(FORTRAN)
+endif (NOT HAVE_CUDA)
 
 SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}

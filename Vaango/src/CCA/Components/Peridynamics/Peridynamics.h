@@ -86,6 +86,8 @@ public:
 
   /*! Problem spec reader and particle creation */
   virtual void
+  problemSetup(const Uintah::ProblemSpecP& ) {};
+  virtual void
   problemSetup(const Uintah::ProblemSpecP& params,
                const Uintah::ProblemSpecP& restart_prob_spec,
                Uintah::GridP& grid,

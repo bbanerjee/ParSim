@@ -48,6 +48,9 @@ public:
 
   virtual ~PostProcessUda();
 
+  void
+  problemSetup([[maybe_unused]] const ProblemSpecP& prob_spec) {}
+
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
@@ -63,6 +66,15 @@ public:
 
   virtual void
   restartInitialize()
+  {
+  }
+
+  virtual void
+  restartInitialize(const ProcessorGroup*,
+                    const PatchSubset*,
+                    const MaterialSubset*,
+                    DataWarehouse*,
+                    DataWarehouse*)
   {
   }
 

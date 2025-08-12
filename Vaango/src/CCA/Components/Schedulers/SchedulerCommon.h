@@ -271,7 +271,17 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
 
     virtual bool useInternalDeps();
 
-    int getMaxGhost() { return m_max_ghost_cells; }
+    virtual void
+    setMaxGhostCellsCollectionPhase(bool val)
+    {
+      m_max_ghost_cell_collection_phase = val;
+    }
+
+    int
+    getMaxGhost()
+    {
+      return m_max_ghost_cells;
+    }
 
     int getMaxDistalGhost() { return m_max_distal_ghost_cells; }
 
@@ -338,7 +348,7 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
     LoadBalancer         * m_loadBalancer {nullptr};
     Output               * m_output       {nullptr};
   
-    MaterialManagerP                    m_materialManager{nullptr};
+    MaterialManagerP                    d_materialManager{nullptr};
     std::vector<OnDemandDataWarehouseP> m_dws;
     std::vector<TaskGraph*>             m_task_graphs;
 
@@ -440,6 +450,14 @@ class SchedulerCommon : public Scheduler, public UintahParallelComponent {
 
     // max level offset of all tasks - will be used for loadbalancer to create neighborhood
     int m_max_level_offset{0};
+
+    // DS 06012020: GPU resize problems require max ghost cells for variables
+    // should be collected across tasks. To do this, one has to call
+    // scheduleTimestep, scheduleInitialize etc to go through all tasks, but
+    // task should not be added into the task graph during this collection
+    // phase. So return from addTask if m_max_ghost_cell_collection_phase ==
+    // true
+    bool m_max_ghost_cell_collection_phase{ false };
 
     // task-graph needs access to reduction task map, etc
     friend class TaskGraph;

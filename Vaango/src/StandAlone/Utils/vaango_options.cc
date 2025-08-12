@@ -25,9 +25,12 @@
 #include <StandAlone/Utils/vaango_options.h>
 #include <StandAlone/Utils/vaango_utils.h>
 
+#include <CCA/Components/Schedulers/KokkosScheduler.h>
 #include <Core/Parallel/Parallel.h>
 
 #include <sci_defs/compile_defs.h>
+#include <sci_defs/kokkos_defs.h>
+#include <sci_defs/cuda_defs.h>
 
 #include <filesystem>
 #include <iostream>
@@ -51,10 +54,8 @@ static bool s_show_version{ false };
 static bool s_validate_ups{ true };
 static bool s_use_gpu{ false };
 
-static int s_num_partitions{ 0 };
 static int s_num_threads{ 0 };
 static int s_restart_checkpoint_index{ -1 };
-static int s_threads_per_partition{ 0 };
 static int s_uda_suffix{ -1 };
 
 static std::string s_uda_dir{ "" };      // for restart
@@ -96,47 +97,6 @@ parse(int argc, char** argv)
           arg,
           argv[0]);
       }
-    } else if (arg == "-npartitions") {
-      if (++i == argc) {
-        Vaango::Utils::Options::usage(
-          "You must provide a number of thread partitions for -npartitions",
-          arg,
-          argv[0]);
-      }
-      s_num_partitions = atoi(argv[i]);
-      if (s_num_partitions < 1) {
-        Vaango::Utils::Options::usage(
-          "Number of thread partitions is too small", arg, argv[0]);
-      } else if (s_num_partitions > MAX_THREADS) {
-        Vaango::Utils::Options::usage(
-          "Number of thread partitions is out of range. Specify fewer thread "
-          "partitions, "
-          "or increase MAX_THREADS (.../src/Core/Parallel/Parallel.h) and "
-          "recompile.",
-          arg,
-          argv[0]);
-      }
-    } else if (arg == "-nthreadsperpartition") {
-      if (++i == argc) {
-        Vaango::Utils::Options::usage(
-          "You must provide a number of threads per partition for "
-          "-nthreadsperpartition",
-          arg,
-          argv[0]);
-      }
-      s_threads_per_partition = atoi(argv[i]);
-      if (s_threads_per_partition < 1) {
-        Vaango::Utils::Options::usage(
-          "Number of threads per partition is too small", arg, argv[0]);
-      }
-#ifdef _OPENMP
-      if (s_threads_per_partition > omp_get_max_threads()) {
-        Vaango::Utils::Options::usage(
-          "Number of threads per partition must be <= omp_get_max_threads()",
-          arg,
-          argv[0]);
-      }
-#endif
     } else if (arg == "-solver") {
       if (++i == argc) {
         Vaango::Utils::Options::usage(
@@ -164,15 +124,207 @@ parse(int argc, char** argv)
     } else if (arg == "-move") {
       s_restart_from_scratch   = false;
       s_restart_remove_old_dir = true;
-    } else if (arg == "-gpucheck") {
-      Vaango::Utils::check_gpus();
-    }
-#ifdef HAVE_CUDA
-    else if (arg == "-gpu") {
-      s_use_gpu = true;
-    }
+    } else if (arg == "-cpu") {
+#if defined(KOKKOS_USING_GPU)
+      Uintah::Parallel::setUsingCPU(true);
 #endif
-    else if (arg == "-t") {
+    } else if (arg == "-gpucheck") {
+#if defined(KOKKOS_USING_GPU)
+      if (KokkosScheduler::verifyAnyGpuActive()) {
+        std::cout << "At least one GPU detected!" << std::endl;
+      } else {
+        std::cout << "No GPU detected!" << std::endl;
+      }
+      Uintah::Parallel::exitAll(1);
+#else
+      std::cout << "Not compiled for GPU support." << std::endl;
+      Uintah::Parallel::exitAll(0);
+#endif
+    } else if (arg == "-gpu") {
+#if defined(KOKKOS_USING_GPU)
+      s_use_gpu = true;
+      Uintah::Parallel::setUsingDevice(true);
+#else
+      std::cout << "Not compiled for GPU support." << std::endl;
+      Uintah::Parallel::exitAll(0);
+#endif
+    } else if (arg == "-kokkos_instances_per_task") {
+#if defined(KOKKOS_USING_GPU)
+      int kokkos_instances_per_task = 0;
+      if (++i == argc) {
+        usage("You must provide a number of Kokkos instances per task for "
+              "-kokkos_instances_per_task.",
+              arg,
+              argv[0]);
+      }
+      kokkos_instances_per_task = atoi(argv[i]);
+      if (kokkos_instances_per_task < 1) {
+        usage(
+          "Number of Kokkos Instances per task is too small.", arg, argv[0]);
+        Uintah::Parallel::exitAll(1);
+      }
+      Uintah::Parallel::setKokkosInstancesPerTask(kokkos_instances_per_task);
+#else
+      std::cout << "Not compiled for GPU support." << std::endl;
+      Uintah::Parallel::exitAll(0);
+#endif
+    } else if (arg == "-kokkos_policy") {
+#if defined(HAVE_KOKKOS)
+      Uintah::Parallel::Kokkos_Policy kokkos_policy = Uintah::Parallel::Kokkos_Team_Policy;
+      if (++i == argc) {
+        usage("You must provide the policy -kokkos_policy.", arg, argv[0]);
+      }
+
+      if (strcmp(argv[i], "team") == 0) {
+        kokkos_policy = Uintah::Parallel::Kokkos_Team_Policy;
+      } else if (strcmp(argv[i], "range") == 0) {
+        kokkos_policy = Uintah::Parallel::Kokkos_Range_Policy;
+      } else if (strcmp(argv[i], "mdrange") == 0) {
+        kokkos_policy = Uintah::Parallel::Kokkos_MDRange_Policy;
+      } else if (strcmp(argv[i], "mdrange_rev") == 0) {
+        kokkos_policy = Uintah::Parallel::Kokkos_MDRange_Reverse_Policy;
+      } else {
+        usage("Unknown Kokkos policy", arg, argv[0]);
+        Uintah::Parallel::exitAll(1);
+      }
+
+      Uintah::Parallel::setKokkosPolicy(kokkos_policy);
+#else
+      std::cout << "Not compiled for Kokkos Range Policy support." << std::endl;
+      Uintah::Parallel::exitAll(0);
+#endif
+    } else if (arg == "-kokkos_leagues_per_loop") {
+#if defined(HAVE_KOKKOS)
+      int kokkos_leagues_per_loop = 0;
+      if (++i == argc) {
+        usage("You must provide a number of Kokkos TeamPolicy leagues (work "
+              "items) per loop for -kokkos_leagues_per_loop.",
+              arg,
+              argv[0]);
+      }
+      kokkos_leagues_per_loop = atoi(argv[i]);
+      if (kokkos_leagues_per_loop < 1) {
+        usage("Number of Kokkos TeamPolicy leagues (work items) per loop is "
+              "too small.",
+              arg,
+              argv[0]);
+        Uintah::Parallel::exitAll(1);
+      }
+      Uintah::Parallel::setKokkosLeaguesPerLoop(kokkos_leagues_per_loop);
+#else
+      std::cout << "Not compiled for GPU support." << std::endl;
+      Uintah::Parallel::exitAll(0);
+#endif
+    } else if (arg == "-kokkos_teams_per_league") {
+#if defined(HAVE_KOKKOS)
+      int kokkos_teams_per_block = 0;
+      if (++i == argc) {
+        usage("You must provide a number of Kokkos TeamPolicy teams (threads) "
+              "per legaue for -kokkos_teams_per_block.",
+              arg,
+              argv[0]);
+      }
+      kokkos_teams_per_block = atoi(argv[i]);
+      if (kokkos_teams_per_block < 1) {
+        usage("Number of Kokkos TeamPolicy teams (threads) per legaue is too "
+              "small.",
+              arg,
+              argv[0]);
+        Uintah::Parallel::exitAll(1);
+      }
+      Uintah::Parallel::setKokkosTeamsPerLeague(kokkos_teams_per_block);
+#else
+      std::cout << "Not compiled for GPU support" << std::endl;
+      Uintah::Parallel::exitAll(0);
+#endif
+    } else if (arg == "-kokkos_chunk_size") {
+#if defined(HAVE_KOKKOS)
+      int kokkos_chunk_size = 0;
+      if (++i == argc) {
+        usage(
+          "You must provide the chunk size -kokkos_chunk_size.", arg, argv[0]);
+      }
+      kokkos_chunk_size = atoi(argv[i]);
+      if (kokkos_chunk_size < 1) {
+        usage("The Kokkos chunk size is too small.", arg, argv[0]);
+        Uintah::Parallel::exitAll(1);
+      }
+
+      if (Uintah::Parallel::getKokkosPolicy() != Uintah::Parallel::Kokkos_Team_Policy &&
+          Uintah::Parallel::getKokkosPolicy() != Uintah::Parallel::Kokkos_Range_Policy) {
+        Uintah::Parallel::setKokkosPolicy(Uintah::Parallel::Kokkos_Range_Policy);
+      }
+      Uintah::Parallel::setKokkosChunkSize(kokkos_chunk_size);
+#else
+      std::cout << "Not compiled for Kokkos GPU support." << std::endl;
+      Uintah::Parallel::exitAll(0);
+#endif
+    } else if (arg == "-kokkos_tile_size") {
+#if defined(HAVE_KOKKOS)
+      int kokkos_tile_isize = 0;
+      if (++i == argc) {
+        usage("You must provide the tile i index size -kokkos_tile_size.",
+              arg,
+              argv[0]);
+      }
+      kokkos_tile_isize = atoi(argv[i]);
+      if (kokkos_tile_isize < 1) {
+        usage("The Kokkos tile isize is too small.", arg, argv[0]);
+        Uintah::Parallel::exitAll(1);
+      }
+
+      int kokkos_tile_jsize = 0;
+      if (++i == argc) {
+        usage("You must provide the tile j index size -kokkos_tile_size.",
+              arg,
+              argv[0]);
+      }
+      kokkos_tile_jsize = atoi(argv[i]);
+      if (kokkos_tile_jsize < 1) {
+        usage("The Kokkos tile jsize is too small.", arg, argv[0]);
+        Uintah::Parallel::exitAll(0);
+      }
+
+      int kokkos_tile_ksize = 0;
+      if (++i == argc) {
+        usage("You must provide the tile k index size -kokkos_tile_size.",
+              arg,
+              argv[0]);
+      }
+      kokkos_tile_ksize = atoi(argv[i]);
+      if (kokkos_tile_ksize < 1) {
+        usage("The Kokkos tile ksize is too small.", arg, argv[0]);
+        Uintah::Parallel::exitAll(1);
+      }
+
+      if (Uintah::Parallel::getKokkosPolicy() != Uintah::Parallel::Kokkos_MDRange_Policy &&
+          Uintah::Parallel::getKokkosPolicy() !=
+            Uintah::Parallel::Kokkos_MDRange_Reverse_Policy) {
+        Uintah::Parallel::setKokkosPolicy(Uintah::Parallel::Kokkos_MDRange_Policy);
+      }
+
+      Uintah::Parallel::setKokkosTileSize(
+        kokkos_tile_isize, kokkos_tile_jsize, kokkos_tile_ksize);
+#else
+      std::cout << "Not compiled for Kokkos GPU support." << std::endl;
+      Uintah::Parallel::exitAll(0);
+#endif
+    } else if (arg == "-taskname_to_time") {
+      // A hidden command line option useful for timing GPU tasks by forcing
+      // this task name to wait until they can all be launched as a big group.
+      // This helps time by avoiding any interleaving of other tasks in the way.
+      // This command line option must be paired with two additional arguments.
+      // The first being the name of the task
+      // The second being the amount of times that task is expected to run in a
+      // timestep.
+      i++;
+      std::string taskName = argv[i];
+      i++;
+      unsigned int amountTaskNameExpectedToRun = atoi(argv[i]);
+      Uintah::Parallel::setTaskNameToTime(taskName);
+      Uintah::Parallel::setAmountTaskNameExpectedToRun(
+        amountTaskNameExpectedToRun);
+    } else if (arg == "-t") {
       if (i < argc - 1) {
         s_restart_checkpoint_index = atoi(argv[++i]);
       }
@@ -287,6 +439,10 @@ usage(const std::string& message,
       const std::string& badarg,
       const std::string& progname)
 {
+#if defined(KOKKOS_USING_GPU)
+  std::string kokkos_str{"KokkosCUDA"};
+#endif
+
   Vaango::Utils::start_mpi();
 
   if (Uintah::Parallel::getMPIRank() == 0) {
@@ -301,6 +457,34 @@ usage(const std::string& message,
     std::cerr << "Valid options are:\n";
     std::cerr << "-h[elp]              :"
               << " This usage information.\n";
+    std::cerr << "-d[ebug]             :"
+              << " Lists the available debug streams\n";
+#if defined(KOKKOS_USING_GPU)
+    std::cerr << "-cpu                            : "
+              << " Use the CPU based MPI or Unified scheduler instead of the " 
+              << kokkos_str << ".\n";
+    std::cerr << "-gpu                            : "
+              << " Use available GPU devices, requires multi-threaded "
+              << " Unified scheduler \n";
+    std::cerr << "-gpucheck                       : "
+              << " Checks if there is a GPU available for the " 
+              << kokkos_str << ".\n";
+    std::cerr << "-kokkos_instances_per_task <#>  : "
+              << " Number of Kokkos instances per task (default 1).\n";
+    std::cerr << "-kokkos_policy <policy>         : "
+              << " Kokkos Execution Policy - team, range, mdrange (default), "
+              << " or mdrange_rev.\n";
+    std::cerr << "-kokkos_leagues_per_loop <#>    : "
+              << " Kokkos TeamPolicy number of leagues (work items) per loop "
+              << " (default 1).\n";
+    std::cerr << "-kokkos_teams_per_league <#>    : "
+              << " Kokkos TeamPolicy number of teams (threads) per Kokkos "
+              << " TeamPolicy league (default 256/16).\n";
+    std::cerr << "-kokkos_chunk_size <#>          : "
+              << " Kokkos TeamPolicy and RangePolicy chunk size.\n";
+    std::cerr << "-kokkos_tile_size <# # #>       : "
+              << " Kokkos MDRangePolicy tile size.\n";
+#endif
     std::cerr << "-nthreads <#>        :"
               << " Number of threads per MPI process."
               << " Requires the multi-threaded Unified scheduler\n";
@@ -328,8 +512,6 @@ usage(const std::string& message,
     std::cerr << "-nocopy              :"
               << " Default: Don't copy or move old uda"
               << " timestep when restarting\n";
-    std::cerr << "-d[ebug]             :"
-              << " Lists the available debug streams\n";
     std::cerr << "-validate            :"
               << " Verifies the .ups file is valid and quits!\n";
     std::cerr << "-do_not_validate     :"
@@ -339,17 +521,6 @@ usage(const std::string& message,
               << " Display cmake command used to build Vaango\n";
     std::cerr << "-local_filesystem    :"
               << " If using MPI, use this flag if each node has a local disk\n";
-#ifdef HAVE_CUDA
-    std::cerr << "-gpu                 : "
-              << " Use available GPU devices, requires multi-threaded "
-              << " Unified scheduler \n";
-#endif
-    std::cerr << "-gpucheck            : "
-              << " Returns 1 if Vaango was compiled with "
-              << " CUDA and there is a GPU available. \n";
-    std::cerr << "                     : "
-              << " Returns 2 if Vaango was not compiled "
-              << " with CUDA or there are no GPUs available. \n";
     std::cerr << "-version             :"
               << " Display Vaango and git version\n";
     std::cerr << "-git_diff            :"
@@ -434,12 +605,6 @@ use_gpu()
 }
 
 int
-num_partitions()
-{
-  return s_num_partitions;
-}
-
-int
 num_threads()
 {
   return s_num_threads;
@@ -449,12 +614,6 @@ int
 restart_checkpoint_index()
 {
   return s_restart_checkpoint_index;
-}
-
-int
-threads_per_partition()
-{
-  return s_threads_per_partition;
 }
 
 int

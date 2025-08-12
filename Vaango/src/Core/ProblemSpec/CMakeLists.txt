@@ -38,6 +38,9 @@ target_link_libraries(Vaango_Core_ProblemSpec PRIVATE
   Vaango_Core_Math
   Vaango_Core_Util
   LibXml2::LibXml2
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   Vaango::Options
   Vaango::Warnings
 )

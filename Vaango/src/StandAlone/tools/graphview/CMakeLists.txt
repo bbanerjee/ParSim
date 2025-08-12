@@ -22,20 +22,36 @@
 # IN THE SOFTWARE.
 #
 
+if (NOT DEFINED HAVE_KOKKOS)
 IF(NOT WIN32)
   # doesn't build on windows....
-  add_executable(graphview graphview.cc DaVinci.cc GV_TaskGraph.cc)
+  add_executable(graphview 
+    graphview.cc 
+    DaVinci.cc 
+    GV_TaskGraph.cc
+  )
+
+  add_library(graphview_libs INTERFACE)
+  target_link_libraries(graphview_libs INTERFACE 
+    Vaango_Core_Grid
+    Vaango_CCA_Components_Schedulers
+  )
 
   target_link_libraries(graphview PRIVATE
-    Vaango_Core_DataArchive
-    Vaango_Core_ProblemSpec
-    Vaango_Core_Util
-    Vaango_CCA_Components_ProblemSpecification
-    Vaango_Core_Exceptions
+    graphview_libs
     Vaango_Core_Parallel
+    Vaango_Core_ProblemSpec
+    Vaango_Core_Math
+    Vaango_Core_Util
+    Vaango_Core_Containers
+    Vaango_Core_Exceptions
+    Vaango_Core_DataArchive
+    Vaango_CCA_Components_ProblemSpecification
     MPI::MPI_CXX
+    $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
     Vaango::Options
     Vaango::Warnings
   )
 
 ENDIF(NOT WIN32)
+endif()

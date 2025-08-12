@@ -43,7 +43,7 @@ ModuleFactory::create(const ProblemSpecP& prob_spec,
                       [[maybe_unused]] DataArchive* dataArchive)
 {
 
-  std::string module("");
+  std::string module_name("");
 
   ProblemSpecP PP_ps = prob_spec->findBlock("PostProcess");
 
@@ -69,11 +69,11 @@ ModuleFactory::create(const ProblemSpecP& prob_spec,
 
     std::map<std::string, std::string> attributes;
     module_ps->getAttributes(attributes);
-    module = attributes["name"];
+    module_name = attributes["name"];
 
 #if 0 // Needs to be filled in.
 
-    if ( module == "reduceUda" ) {
+    if ( module_name == "reduceUda" ) {
       // do nothing
     }
 #endif

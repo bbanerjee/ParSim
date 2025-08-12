@@ -39,6 +39,9 @@ target_link_libraries(MPM_GradientComputer PRIVATE
   MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
 )
 if (PETSC)
    target_link_petsc(MPM_GradientComputer PRIVATE)

@@ -54,6 +54,9 @@ public:
   Switcher&
   operator=(Switcher&&) = delete;
 
+  void
+  problemSetup(const ProblemSpecP& ) {};
+
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
@@ -68,6 +71,11 @@ public:
 
   virtual void
   scheduleRestartInitialize(const LevelP& level, SchedulerP& sched) override;
+
+  virtual void
+  restartInitialize()
+  {
+  }
 
   virtual void
   scheduleComputeStableTimestep(const LevelP& level,
@@ -93,6 +101,9 @@ public:
 
   virtual bool
   needRecompile(const GridP& grid);
+
+  void
+  recomputeDelT() {}
 
   virtual double
   recomputeDelT(double delT);

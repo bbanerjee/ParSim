@@ -28,6 +28,9 @@ include(GoogleTest)
 SET(VAANGO_LIBS
     Vaango_Core_Grid
     Vaango_Core_Util
+    Vaango_Core_OS
+    Vaango_CCA_Components_Schedulers
+    Vaango_CCA_Components_DataArchiver
     )
 
 #------------------------
@@ -40,6 +43,7 @@ include_directories(${GTEST_INCLUDE_DIR})
 add_executable(testMaterialManager testMaterialManager.cc)
 target_include_directories(testMaterialManager PRIVATE
                            ${CMAKE_SOURCE_DIR}/Core/Grid) 
+#target_link_options(testMaterialManager PRIVATE -Wl,--verbose)
 target_link_libraries(testMaterialManager PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}

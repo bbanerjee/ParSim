@@ -25,6 +25,7 @@
 #include <StandAlone/Utils/vaango_utils.h>
 
 #include <CCA/Components/Schedulers/UnifiedScheduler.h>
+#include <CCA/Components/Schedulers/KokkosScheduler.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Util/DOUT.hpp>
@@ -114,7 +115,7 @@ void
 check_gpus()
 {
 #ifdef HAVE_CUDA
-  int retVal = UnifiedScheduler::verifyAnyGpuActive();
+  int retVal = KokkosScheduler::verifyAnyGpuActive();
   if (retVal == 1) {
     std::cout << "At least one GPU detected!" << std::endl;
   } else {
@@ -128,6 +129,44 @@ check_gpus()
   std::cout << "This doesn't run" << std::endl;
 }
 
+
+// This function executes a shell command and returns its output.
+// It returns std::nullopt if the command fails to execute.
+// You should handle the error case where the command fails by checking if the
+// optional has a value.
+std::optional<std::string>
+executeCommand(const std::string& command)
+{
+  std::array<char, 128> buffer;
+  std::string result;
+
+  // Use a custom deleter to ensure pclose is called.
+  auto pipe_deleter = [](FILE* f) {
+    if (f) {
+      pclose(f);
+    }
+  };
+  std::unique_ptr<FILE, decltype(pipe_deleter)> pipe(
+    popen(command.c_str(), "r"), pipe_deleter);
+
+  if (!pipe) {
+    std::cerr << "Failed to execute command: " << command << std::endl;
+    return std::nullopt; // Use std::nullopt to signify an error.
+  }
+
+  while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    result += buffer.data();
+  }
+
+  // Remove the trailing newline character if one exists.
+  if (!result.empty() && result.back() == '\n') {
+    result.pop_back();
+  }
+
+  return result;
+}
+
+/*
 std::expected<std::string, std::string>
 executeCommand(const std::string& command)
 {
@@ -158,6 +197,7 @@ executeCommand(const std::string& command)
 
   return result;
 }
+*/
 
 struct LiveGitInfo
 {
@@ -169,8 +209,35 @@ struct LiveGitInfo
 LiveGitInfo
 getLiveGitInfo()
 {
-  LiveGitInfo info;
 
+  LiveGitInfo info;
+  // Get git diff
+  if (auto diff_result = executeCommand(
+        "git --no-pager diff --no-color --minimal 2>/dev/null")) {
+    info.diff = *diff_result;
+  } else {
+    // If the command fails, the optional will be empty.
+    // The previous `error` member variable is not updated here because
+    // the error is now handled within `executeCommand`.
+    // Instead, we just set a general error message and return.
+    info.error = "Failed to get git diff.";
+    return info;
+  }
+
+  // Get git status
+  if (auto status_result =
+        executeCommand("git status --branch --short 2>/dev/null")) {
+    info.status = *status_result;
+  } else {
+    // Similarly, handle the failure case for the status command.
+    info.error = "Failed to get git status.";
+    return info;
+  }
+
+  return info;
+
+/*
+  LiveGitInfo info;
   // Get git diff
   if (auto diff_result = executeCommand(
         "git --no-pager diff --no-color --minimal 2>/dev/null")) {
@@ -188,8 +255,9 @@ getLiveGitInfo()
     info.error = "Failed to get git status: " + status_result.error();
     return info;
   }
-
   return info;
+*/
+
 }
 
 void
