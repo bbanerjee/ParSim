@@ -37,7 +37,7 @@ cd dbg
 cmake -DCMAKE_BUILD_TYPE=Debug -DPETSC=On -DHYPRE=On ../src
 ```
 
-We typically use the Petsc and Hypre that is prebuilt for Ubuntu.
+We typically use the Petsc and Hypre that is built for Ubuntu via submodules.
 
 ### CUDA+Kokkos build
 For CUDA functionality, we use Kokkos.
