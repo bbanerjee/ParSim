@@ -12,3 +12,14 @@
 3) Run using
 
    LD_LIBRARY_PATH=<path_to_parsim>/ParSim/Vaango/src/StandAlone/UintahUI/ThirdParty/lib/amd64/ java -jar UintahUI.jar
+
+For Ubuntu 24.04:
+
+1) Install 3d library:
+    sudo apt update && sudo apt install libjava3d-java libjava3d-jni
+2) Address modularity issues:
+    java \
+      --add-exports=java.desktop/sun.awt=ALL-UNNAMED \
+      --add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED \
+      -Djava.library.path=/usr/lib/jni \
+      -jar UintahUI.jar
