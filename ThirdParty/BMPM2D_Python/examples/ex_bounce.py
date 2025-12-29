@@ -22,12 +22,18 @@
 # IN THE SOFTWARE.
 #
 
+import sys
+import os
+
+# Add the 'subdir' directory (where materialmodel2d.py lives) to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), '../src'))
+
 import numpy as np
 import numpy.linalg as la
 import time
 from copy import deepcopy as copy
-from itertools import izip, count
-from mpm_imports import *
+from itertools import count
+from .mpm_imports import *
 Shape = GIMP
 
 def zero(x): return 0.
@@ -130,7 +136,7 @@ def init( outputFile, useCython ):
     g_angle = 0. * np.pi/180.
     g = 9.8 * np.array( [np.sin(g_angle), -np.cos(g_angle)] )
     accs = [g, g, g, g, g, 0.]
-    for (mat,acc) in izip(mats,accs):
+    for (mat,acc) in zip(mats,accs):
         mat.setExternalAcceleration( dw,  acc )        
     
     #========================================
@@ -144,7 +150,7 @@ def init( outputFile, useCython ):
 
     #========================================
     # Output time interval and return
-    print 'dt = ' + str(patch.dt)        
+    print('dt = ' + str(patch.dt))
     return mpm
 
 
@@ -171,7 +177,7 @@ def stepTime( mpm, saveDWs ):
         #========================================        
         # Loop while t<dt and all particles remain in the domain
         while( (patch.t < patch.tf) and inPatch ):
-            if saveDWs and dw.checkSave(patch.dt): mpmData[daw.t] = copy(dw)
+            if saveDWs and dw.checkSave(patch.dt): mpmData[dw.t] = copy(dw)
             dw.dumpData( patch.dt, mats )            
 
             # Track cylinder center position
@@ -184,14 +190,14 @@ def stepTime( mpm, saveDWs ):
             for mat in mats:
                 if not patch.allInPatch(dw.get('px',mat.dwi)): inPatch = True
     except JacobianError:
-        print 'Negative Jacobian'
+        print('Negative Jacobian')
 
     if not saveDWs: mpmData[dw.t] = copy(dw)            # Save last dw
  
     #========================================
     # Print total time and number of iterations
     tend = time.time()    
-    print (str(dw.idx) + ' iterations in: ' + readTime(tend-tbegin) 
+    print(str(dw.idx) + ' iterations in: ' + readTime(tend-tbegin) 
             + ' t=' + str(patch.t) )
     t = np.array(t)
     pos = np.array(pos)

@@ -23,50 +23,61 @@
 #
 
 import numpy as np
-    
-def uSG( x, h ):
-    r = abs(x)
-    sgnx = cmp(x,-x)
-    
-    if ( r < h ):
-        S = 1. - r/h
-        G = -sgnx/h
-    else: 
-        S = G = 0.
-    return( S,G )
-	
+from numba import njit
 
-def getCell( patch, pos ):    
-    # Gets lower left node of 4-cell block
-    x_sc = (pos - patch.X0)/patch.dX + patch.nGhost
-    idx = np.floor(x_sc)
-    ii = idx[0] 
-    jj = idx[1] 
-	
-    return int(jj * patch.Nc[0] + ii)
+@njit(cache=True)
+def updateContribs(inpf, idxs, ng, th, px, gx, cIdx, cW, cGrad):
+    nParts = px.shape[0]
+    hh = np.array([inpf[0,0], inpf[0,1]])
     
+    for ii in range(nParts):
+        pp = np.zeros(2)
+        cix = np.zeros(2, dtype=np.int64)
+        
+        # Get Cell
+        for kk in range(2):
+            pp[kk] = px[ii,kk]
+            val = (pp[kk] - inpf[1,kk])/inpf[2,kk] + ng
+            cix[kk] = int(np.floor(val))
+            
+        cc = cix[1]*idxs[2] + cix[0]
+
+        for jj in range(4):
+            idx = cc + idxs[jj]
+            
+            S = np.zeros(2)
+            G = np.zeros(2)
+            
+            for kk in range(2):
+                x = pp[kk] - gx[idx,kk]
+                r = np.abs(x)
+                h = hh[kk]
+                if x >= 0: sgn = 1.0
+                else: sgn = -1.0
+                
+                if ( r < h ):
+                    S[kk] = 1.0 - r/h
+                    G[kk] = -sgn/h
+                else:
+                    S[kk] = 0.0
+                    G[kk] = 0.0
+            
+            cIdx[ii,jj] = idx
+            cW[ii,jj] = S[0]*S[1]
+            cGrad[ii,jj,0] = S[1]*G[0]
+            cGrad[ii,jj,1] = S[0]*G[1]
 
 def updateContribList( dw, patch, dwi ):
-    # Update node contribution list
     nx = patch.Nc[0]
+    th = patch.thick
     h = patch.dX
-    idxs = [0,1,nx,nx+1]
-    S = np.zeros(h.size)
-    G = np.zeros(h.size)	
+    ng = patch.nGhost
+    inpf = np.zeros((3,2))
+    inpf[0,:] = h
+    inpf[1,:] = patch.X0
+    inpf[2,:] = patch.dX
     
-    cIdx,cW,cGrad = dw.getMult( ['cIdx','cW','cGrad'], dwi )
-    px,gx = dw.getMult( ['px','gx'], dwi )
-
-    for ii in range(len(pVol)):
-        cc = getCell( patch, px[ii] )	           
-
-        for jj in range(4):	
-            idx = idxs[jj] + cc 
-            r = px[ii] - gx[idx]	
-		
-            for kk in range(len(r)):
-                S[kk],G[kk] = uSG( r[kk], h[kk] )
-		
-            cIdx[ii][jj] = idx
-            cW[ii][jj] = S[0]*S[1]
-            cGrad[ii][jj] = G * S[::-1] 
+    idxs = np.array([0,1,nx,nx+1], dtype=np.int64)
+    labels = ['px','gx','cIdx','cW','cGrad']
+    px,gx,cIdx,cW,cGrad = dw.getMult(labels,dwi)
+    updateContribs( inpf, idxs, int(ng), float(th), px, gx, cIdx, cW, cGrad )

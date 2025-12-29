@@ -27,16 +27,11 @@ import numpy.linalg as la
 from scipy.linalg import sqrtm
 import materialmodel2d as mmodel
 import cProfile
-from itertools import izip, count
+from itertools import count
 from inspect import isfunction
 import mpmutils as util
 
-try:
-    import materialmodel2d_c as mmodel_c
-    import mpmutils_c as util_c
-except Exception:
-    mmodel_c = mmodel
-    util_c = util
+
 
 
 #===============================================================================
@@ -63,12 +58,8 @@ class Material:
         except Exception:
             self.ignoreNegJ = False
             
-        if useCython:
-            self.util = util_c
-            self.mmodel = mmodel_c
-        else:
-            self.util = util
-            self.mmodel = mmodel
+        self.util = util
+        self.mmodel = mmodel
             
         self.mm = self.mmodel.MaterialModel( model, props )
 
@@ -85,7 +76,7 @@ class Material:
     def setVelocity( self, dw, v ):
         pw,pm,px = dw.getMult( ['pw','pm','px'], self.dwi )
         
-        for (ii,pxi,pmi) in izip(count(),px,pm):
+        for (ii,pxi,pmi) in zip(count(),px,pm):
             if isfunction(v):
                 pw[ii] = v(pxi) * pmi
             else:
@@ -100,7 +91,7 @@ class Material:
                 
     def setExternalAcceleration( self, dw, acc ):
         pfe,pm = dw.getMult( ['pfe','pm'], self.dwi )
-        for (ii,pmi) in izip(count(),pm):
+        for (ii,pmi) in zip(count(),pm):
             pfe[ii] = acc*pmi
         
 
@@ -131,7 +122,7 @@ class Material:
         pvs = dw.get( 'pVS', self.dwi )               # Volume * Stress
         pv  = dw.get( 'pVol', self.dwi )              # Volume        
         
-        for (ii,pfi,pvi) in izip(count(),pf,pv):
+        for (ii,pfi,pvi) in zip(count(),pf,pv):
             S,Ja = self.mm.getStress( pfi )           # Get stress and det(pf)
             pvs[ii] = S * pvi * Ja                    # Stress * deformed volume     
             if not self.ignoreNegJ:

@@ -22,11 +22,17 @@
 # IN THE SOFTWARE.
 #
 
+import sys
+import os
+
+# Add the 'subdir' directory (where materialmodel2d.py lives) to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), '../src'))
+
 import numpy as np
 import time
 from copy import deepcopy as copy
-from itertools import izip, count
-from mpm_imports import *
+from itertools import count
+from .mpm_imports import *
 Shape = Quad
 Contact = FrictionContact
 
@@ -106,12 +112,12 @@ def init( outputName, useCython ):
     contacts.append( Contact([dwis[1],dwis[2]], mu, dt, ppe) )
 
     # Initialize Data Warehouse and Object Velocities
-    mpm.updateMats( dw, patch, mats )
+    mpm2d.updateMats( dw, patch, mats )
     vels = [1., 0., 0.]    
-    for (mat,vel) in izip(mats,vels):
+    for (mat,vel) in zip(mats,vels):
         mat.setVelocity( dw,  vel*np.array([1.,1.]) )
     
-    print 'dt = ' + str(patch.dt)        
+    print('dt = ' + str(patch.dt))
     return (dw, patch, mats, contacts )
 
 
@@ -124,7 +130,7 @@ def stepTime( dw, patch, mats, contacts, useSave ):
         if not useSave: mpmData[dw.t] = copy(dw)
         inPatch = True
         while( (patch.t < patch.tf) and inPatch ):
-            mpm.timeAdvance( dw, patch, mats, contacts )
+            mpm2d.timeAdvance( dw, patch, mats, contacts )
             if useSave and dw.checkSave(patch.dt): mpmData[dw.t] = copy(dw)
             
             dw.saveData( patch.dt, mats )
@@ -132,12 +138,12 @@ def stepTime( dw, patch, mats, contacts, useSave ):
             for mat in mats:
                 if not patch.allInPatch(dw.get('px',mat.dwi)): inPatch = False
     except JacobianError:
-        print 'Negative Jacobian'
+        print('Negative Jacobian')
 
     if not useSave: mpmData[dw.t] = copy(dw)
     
     tend = time.time()
-    print (str(dw.idx) + ' iterations in: ' + readTime(tend-tbegin) 
+    print(str(dw.idx) + ' iterations in: ' + readTime(tend-tbegin) 
             + ' t=' + str(patch.t) )
             
     return mpmData

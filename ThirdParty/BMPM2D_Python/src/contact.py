@@ -26,10 +26,7 @@ import numpy as np
 import mpmutils as util
 import skfmm
 
-try:
-    import mpmutils_c as util_c
-except Exception:
-    util_c = util
+
 
 def vnorm( x ):
     return np.sqrt((x*x).sum(axis=1)[:,np.newaxis])
@@ -54,8 +51,7 @@ class Contact:
         self.patch = patch
         self.nodes = []
         self.mtol = 1.e-10;
-        if useCython:  self.util = util_c
-        else:          self.util = util        
+        self.util = util        
 
         
     def findIntersection( self, dw ):

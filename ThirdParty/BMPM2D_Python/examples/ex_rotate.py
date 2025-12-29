@@ -22,11 +22,17 @@
 # IN THE SOFTWARE.
 #
 
+import sys
+import os
+
+# Add the 'subdir' directory (where materialmodel2d.py lives) to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), '../src'))
+
 import numpy as np
 import time
 from copy import deepcopy as copy
-from itertools import izip, count
-from mpm_imports import *
+from itertools import count
+from .mpm_imports import *
 Shape = GIMP
 Contact = FrictionContact
 
@@ -86,16 +92,15 @@ def init( outputFile, useCython ):
     dwis = [1]
     r = 0.2
     cntr = np.array([0.2, 0.4])     # Cylinder center position
-    circ,circNml = gu.ellipseLvl( r, cntr ) # Level set defining the cylinder and normal
+    circ = gu.ellipseLvl( r, cntr ) # Level set defining the cylinder and normal
     lvls = [circ]
-    nmls = [circNml]
     for ii in range(len(dwis)):
         dens = matProps[ii]['density']
         dw.createGrid(dwis[ii],patch)
         mats.append(Material( matProps[ii], matModelName, dwis[ii], 
                               shape, useCython ))
-        px, vol, nml = gu.fillLvl( lvls[ii], nmls[ii], patch )
-        dw.addParticles( dwis[ii], px, vol, nml, dens, shape.nSupport )
+        px, vol = gu.fillLvl( lvls[ii], patch )
+        dw.addParticles( dwis[ii], px, vol, dens, shape.nSupport )
    
     contacts = []
 
@@ -120,7 +125,7 @@ def init( outputFile, useCython ):
 
     #========================================
     # Output time interval and return
-    print 'dt = ' + str(patch.dt)        
+    print('dt = ' + str(patch.dt))
     return mpm
 
 
@@ -149,7 +154,7 @@ def stepTime( mpm, saveDWs ):
         while( (patch.t < patch.tf) and inPatch ):
             mpm2d.timeAdvance( dw, patch, mats, contacts )
             
-            if saveDWs and dw.checkSave(patch.dt): mpmData[daw.t] = copy(dw)
+            if saveDWs and dw.checkSave(patch.dt): mpmData[dw.t] = copy(dw)
             dw.dumpData( patch.dt, mats )
 
             # Track cylinder center position
@@ -162,14 +167,14 @@ def stepTime( mpm, saveDWs ):
             for mat in mats:
                 if not patch.allInPatch(dw.get('px',mat.dwi)): inPatch = True
     except JacobianError:
-        print 'Negative Jacobian'
+        print('Negative Jacobian')
 
     if not saveDWs: mpmData[dw.t] = copy(dw)            # Save last dw
  
     #========================================
     # Print total time and number of iterations
     tend = time.time()    
-    print (str(dw.idx) + ' iterations in: ' + readTime(tend-tbegin) 
+    print(str(dw.idx) + ' iterations in: ' + readTime(tend-tbegin) 
             + ' t=' + str(patch.t) )
     t = np.array(t)
     pos = np.array(pos)

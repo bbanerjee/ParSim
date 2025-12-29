@@ -23,58 +23,92 @@
 #
 
 import numpy as np
+from numba import njit
 
+def makeArray( props, modelName ):
+    if( modelName == 'planeStrainNeoHookean' ):
+        arr = np.zeros(3)
+        arr[0] = props['modulus']
+        arr[1] = props['poisson']
+        arr[2] = props['density']
+    elif( modelName == 'planeStrainNeoHookeanMaxStress' ):        
+        arr = np.zeros(4)
+        arr[0] = props['modulus']
+        arr[1] = props['poisson']
+        arr[2] = props['density']
+        arr[3] = props['maxStress']
+    else:
+        arr = np.array([])
+    return arr
 
-#===============================================================================
+@njit(cache=True)
+def planeStrainNeoHookean( props, F ):
+    S = np.zeros((2,2))
+    v = props[1]
+    E = props[0]
+    l = E * v / ((1.+v)*(1.-2.*v))
+    m = 0.5 * E / (1.+v)
+    Ja = F[0,0]*F[1,1] - F[1,0]*F[0,1]
+    
+    FFT00 = F[0,0]*F[0,0] + F[0,1]*F[0,1] - 1.0
+    FFT01 = F[0,0]*F[1,0] + F[0,1]*F[1,1]
+    FFT10 = F[1,0]*F[0,0] + F[1,1]*F[0,1]
+    FFT11 = F[1,0]*F[1,0] + F[1,1]*F[1,1] - 1.0
+    
+    logJa = np.log(Ja)
+    
+    S[0,0] = l*logJa/Ja + m/Ja * FFT00
+    S[0,1] = m/Ja * FFT01
+    S[1,0] = m/Ja * FFT10
+    S[1,1] = l*logJa/Ja + m/Ja * FFT11
+    
+    return S, Ja
+
+@njit(cache=True)
+def planeStrainNeoHookeanMaxStress( props, F ):
+    S = np.zeros((2,2))
+    v = props[1]
+    E = props[0]
+    sMax = props[3]
+    l = E * v / ((1.+v)*(1.-2.*v))
+    m = 0.5 * E / (1.+v)
+    Ja = F[0,0]*F[1,1] - F[1,0]*F[0,1]
+    
+    FFT00 = F[0,0]*F[0,0] + F[0,1]*F[0,1] - 1.0
+    FFT01 = F[0,0]*F[1,0] + F[0,1]*F[1,1]
+    FFT10 = F[1,0]*F[0,0] + F[1,1]*F[0,1]
+    FFT11 = F[1,0]*F[1,0] + F[1,1]*F[1,1] - 1.0
+    
+    logJa = np.log(Ja)
+    
+    S[0,0] = l*logJa/Ja + m/Ja * FFT00
+    S[0,1] = m/Ja * FFT01
+    S[1,0] = m/Ja * FFT10
+    S[1,1] = l*logJa/Ja + m/Ja * FFT11
+    
+    vm = np.sqrt( S[0,0]*S[0,0] - S[0,0]*S[1,1] + S[1,1]*S[1,1] + 3.0*S[1,0]*S[0,1] )     
+    if vm > sMax:
+        S[0,0] = 0.
+        S[0,1] = 0.
+        S[1,0] = 0.
+        S[1,1] = 0.
+        Ja = 1.
+        
+    return S, Ja
+
 class MaterialModel:
-    # Defines material models - accessed using getStress 
-    #  - actual computation done in static methods   
-    # Returns stress tensor and jacobian of deformation
     def __init__(self, modelName, props):
-        self.modelName = modelName               # Selects Material Model
-        self.props = props
+        self.modelName = modelName
+        self.props = makeArray(props, modelName)
         
     def getStress( self, F ):
-        model = getattr( self, self.modelName )
-        S,Ja = model(self.props, F);    
-        return (S,Ja)
-    
+        if self.modelName == 'planeStrainNeoHookean':
+            return planeStrainNeoHookean(self.props, F)
+        elif self.modelName == 'planeStrainNeoHookeanMaxStress':
+            return planeStrainNeoHookeanMaxStress(self.props, F)
+        else:
+             # Just in case there are other models not covered here but present in legacy code
+            raise Exception("Model not supported in optimized version: " + self.modelName)
+
     def changeProps( self, props ):
-        self.props = props
-
-
-    @staticmethod
-    def planeStrainNeoHookean( props, F ):
-        # Props - poisson, E
-        I2 = F*0.
-        I2[0,0] = I2[1,1] = 1.
-        v = props['poisson']
-        E = props['modulus']
-        l = E * v / ((1.+v)*(1.-2.*v))
-        m = 0.5 * E / (1.+v)
-        Ja = F[0,0]*F[1,1] - F[1,0]*F[0,1]
-        S = I2*l*np.log(Ja)/Ja + m/Ja * (np.dot(F, F.T) - I2)
-        
-        return (S,Ja)
-    
-    @staticmethod
-    def planeStrainNeoHookeanMaxStress( props, F ):
-        # Props - poisson, E, maxStress
-        I2 = np.eye(2)
-        v = props['poisson']
-        E = props['modulus']
-        sMax = props['maxStress']
-        l = E * v / ((1.+v)*(1.-2.*v))
-        m = 0.5 * E / (1.+v)
-        Ja = np.linalg.det(F)
-        S = I2*l*np.log(Ja)/Ja + m/Ja * (np.dot(F, F.T) - I2)
-        if vonMises(S) > sMax: 
-            S = I2*0.
-            Ja = 1.
-        
-        return (S,Ja)
-    
-    @staticmethod
-    def vonMises( S ):
-        return np.sqrt( S[0,0]*S[0,0] - S[0,0]*S[1,1] + S[1,1]*S[1,1] +
-            3.*S[1,0]*S[0,1] )
+        self.props = makeArray(props, self.modelName)

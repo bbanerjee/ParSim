@@ -23,18 +23,13 @@
 #
 
 import numpy as np
-import Material
+from material import Material
 import cProfile
-from itertools import izip, count
+from itertools import count
 from inspect import isfunction
 import mpmutils as util
 
-try:
-    import materialmodel2d_c as mmodel_c
-    import mpmutils_c as util_c
-except Exception:
-    mmodel_c = mmodel
-    util_c = util
+import materialmodel2d as mmodel
 
 
 #===============================================================================
@@ -45,12 +40,8 @@ class Material_Stationary(Material):
         self.dwi = dwi
         self.shape = shape
                        
-        if useCython:
-            self.util = util_c
-            self.mmodel = mmodel_c
-        else:
-            self.util = util
-            self.mmodel = mmodel
+        self.util = util
+        self.mmodel = mmodel
     
     def getdwi( self ):
         return self.dwi

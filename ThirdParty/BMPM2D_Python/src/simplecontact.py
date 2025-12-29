@@ -25,10 +25,7 @@
 import numpy as np
 import mpmutils as util
 
-try:
-    import mpmutils_c as util_c
-except Exception:
-    util_c = util
+
 
 def vnorm( x ):
     return np.sqrt((x*x).sum(axis=1)[:,np.newaxis])
@@ -53,8 +50,7 @@ class SimpleContact:
         self.ppe = ppe
         self.nodes = []
         self.mtol = 1.e-15;
-        if useCython:  self.util = util_c
-        else:          self.util = util        
+        self.util = util        
 
     def findIntersection( self, dw ):
         lvl0 = 1. - 1./self.ppe

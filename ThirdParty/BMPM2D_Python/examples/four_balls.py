@@ -22,12 +22,18 @@
 # IN THE SOFTWARE.
 #
 
+import sys
+import os
+
+# Add the 'subdir' directory (where materialmodel2d.py lives) to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), '../src'))
+
 import numpy as np
 import numpy.linalg as la
 import time
 from copy import deepcopy as copy
-from itertools import izip, count
-from mpm_imports import *
+from itertools import count
+from .mpm_imports import *
 Shape = GIMP
 
 def zero(x): return 0.
@@ -136,7 +142,7 @@ def init( outputFile, useCython ):
 
     #========================================
     # Output time interval and return
-    print 'dt = ' + str(patch.dt)        
+    print('dt = ' + str(patch.dt))
     return mpm
 
 
@@ -166,13 +172,13 @@ def stepTime( mpm, saveDWs ):
             mpm2d.timeAdvance( dw, patch, mats, contacts )
             
     except JacobianError:
-        print 'Negative Jacobian'
+        print('Negative Jacobian')
 
     mpmData[dw.t] = copy(dw)            # Save last dw
  
     #===========================================================================
     # Print total time and number of iterations
     tend = time.time()    
-    print (str(dw.idx) + ' iterations in: ' + readTime(tend-tbegin) 
+    print(str(dw.idx) + ' iterations in: ' + readTime(tend-tbegin) 
             + ' t=' + str(patch.t) )
     return (mpmData)

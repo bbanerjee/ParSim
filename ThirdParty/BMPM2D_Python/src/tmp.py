@@ -44,7 +44,7 @@ def getquad(X):
             G = x/(h*h) - sgn*3./(2.*h)        
         else: 
             S = 0.
-            G = 0.	
+            G = 0.        
         s.append(S)
         g.append(G)
         
@@ -60,7 +60,7 @@ def getgimp(X):
         r = np.abs(x)
         l = .125
         h = 1.
-        sgn = np.copysign(1.,x)		    
+        sgn = np.copysign(1.,x)                    
         if (r < l):
             S = 1. - (r*r+l*l)/(2.*h*l)
             G = -x/(h*l)

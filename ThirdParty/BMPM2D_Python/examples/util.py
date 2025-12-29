@@ -25,7 +25,7 @@
 import numpy as np
 
 def getMomentum( data, dwi ):
-    t = data.keys()
+    t = list(data.keys())
     t.sort()
     dt = t[1]-t[0]
     pw = []
