@@ -66,11 +66,11 @@ HyperelasticPlastic::HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
   d_useModifiedEOS = false;
   ps->require("bulk_modulus", d_initialData.Bulk);
   ps->require("shear_modulus", d_initialData.tauDev);
-  ps->get("useModifiedEOS", d_useModifiedEOS);
+  ps->get("use_modified_eos", d_useModifiedEOS);
   d_8or27 = Mflag->d_8or27;
 
   // Plasticity
-  ps->getWithDefault("usePlasticity", d_usePlasticity, false);
+  ps->getWithDefault("use_plasticity", d_usePlasticity, false);
   if (d_usePlasticity) {
     ps->getWithDefault("alpha", d_initialData.Alpha, 0.0);
     ps->require("yield_stress", d_initialData.FlowStress);
@@ -93,7 +93,7 @@ HyperelasticPlastic::HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
   } // End Plasticity
 
   // Damage
-  ps->getWithDefault("useDamage", d_useDamage, false);
+  ps->getWithDefault("use_damage", d_useDamage, false);
   if (d_useDamage) {
     // Initialize local VarLabels
     initializeLocalMPMLabels();
@@ -113,7 +113,7 @@ HyperelasticPlastic::HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
   // Initial stress
   // Fix: Need to make it more general.  Add gravity turn-on option and
   //      read from file option etc.
-  ps->getWithDefault("useInitialStress", d_useInitialStress, false);
+  ps->getWithDefault("use_initial_stress", d_useInitialStress, false);
   d_init_pressure = 0.0;
   if (d_useInitialStress) {
     ps->getWithDefault("initial_pressure", d_init_pressure, 0.0);
@@ -150,11 +150,11 @@ HyperelasticPlastic::HyperelasticPlastic(ProblemSpecP& ps,
   d_useModifiedEOS = false;
   ps->require("bulk_modulus", d_initialData.Bulk);
   ps->require("shear_modulus", d_initialData.tauDev);
-  ps->get("useModifiedEOS", d_useModifiedEOS);
+  ps->get("use_modified_eos", d_useModifiedEOS);
   d_8or27 = Mflag->d_8or27;
 
   // Plasticity
-  ps->getWithDefault("usePlasticity", d_usePlasticity, plas);
+  ps->getWithDefault("use_plasticity", d_usePlasticity, plas);
   if (d_usePlasticity) {
     ps->getWithDefault("alpha", d_initialData.Alpha, 0.0);
     ps->require("yield_stress", d_initialData.FlowStress);
@@ -177,7 +177,7 @@ HyperelasticPlastic::HyperelasticPlastic(ProblemSpecP& ps,
   } // End Plasticity
 
   // Damage
-  ps->getWithDefault("useDamage", d_useDamage, dam);
+  ps->getWithDefault("use_damage", d_useDamage, dam);
   if (d_useDamage) {
     // Initialize local VarLabels
     initializeLocalMPMLabels();
@@ -270,7 +270,7 @@ HyperelasticPlastic::HyperelasticPlastic(const HyperelasticPlastic* cm)
       // Set the failure strain data
       setFailureStressOrStrainData(cm);
       d_failure_criteria = cm->d_failure_criteria;
-      if (d_failure_criteria == "MohrColoumb") {
+      if (d_failure_criteria == "mohr_coulomb") {
         d_tensile_cutoff = cm->d_tensile_cutoff;
         d_friction_angle = cm->d_friction_angle;
       }
@@ -363,18 +363,18 @@ HyperelasticPlastic::getFailureStressOrStrainData(ProblemSpecP& ps)
 
   ps->require("failure_criteria", d_failure_criteria);
 
-  if (d_failure_criteria != "MaximumPrincipalStress" &&
-      d_failure_criteria != "MaximumPrincipalStrain" &&
-      d_failure_criteria != "MohrColoumb") {
+  if (d_failure_criteria != "max_principal_stress" &&
+      d_failure_criteria != "max_principal_strain" &&
+      d_failure_criteria != "mohr_coulomb") {
     // The above are the only acceptable options.  If not one of them, bail.
     throw ProblemSetupException("<failure_criteria> must be either "
-                                "MaximumPrincipalStress, "
-                                "MaximumPrincipalStrain or MohrColoumb",
+                                "max_principal_stress, "
+                                "max_principal_strain or mohr_coulomb",
                                 __FILE__,
                                 __LINE__);
   }
 
-  if (d_failure_criteria == "MohrColoumb") {
+  if (d_failure_criteria == "mohr_coulomb") {
     // The cohesion value that MC needs is the "mean" value in the
     // FailureStressOrStrainData struct
     ps->require("friction_angle", d_friction_angle);
@@ -497,14 +497,14 @@ HyperelasticPlastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("constitutive_model");
-    cm_ps->setAttribute("type", "HyperelasticPlastic");
+    cm_ps->setAttribute("type", "hyperelastic_plastic");
   }
 
   cm_ps->appendElement("bulk_modulus", d_initialData.Bulk);
   cm_ps->appendElement("shear_modulus", d_initialData.tauDev);
-  cm_ps->appendElement("useModifiedEOS", d_useModifiedEOS);
-  cm_ps->appendElement("usePlasticity", d_usePlasticity);
-  cm_ps->appendElement("useDamage", d_useDamage);
+  cm_ps->appendElement("use_modified_eos", d_useModifiedEOS);
+  cm_ps->appendElement("use_plasticity", d_usePlasticity);
+  cm_ps->appendElement("use_damage", d_useDamage);
 
   // Plasticity
   if (d_usePlasticity) {
@@ -547,7 +547,7 @@ HyperelasticPlastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
       cm_ps->appendElement("reference_volume", d_epsf.refVol);
       cm_ps->appendElement("char_time", d_epsf.t_char);
 
-      if (d_failure_criteria == "MohrColoumb") {
+      if (d_failure_criteria == "mohr_coulomb") {
         cm_ps->appendElement("friction_angle", d_friction_angle);
         cm_ps->appendElement("tensile_cutoff_fraction_of_cohesion",
                              d_tensile_cutoff);
@@ -555,7 +555,7 @@ HyperelasticPlastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
     } // end if BrittleDamage
   }   // end if d_useDamage
 
-  cm_ps->appendElement("useInitialStress", d_useInitialStress);
+  cm_ps->appendElement("use_initial_stress", d_useInitialStress);
   if (d_useInitialStress) {
     cm_ps->appendElement("initial_pressure", d_init_pressure);
   }
@@ -1998,7 +1998,7 @@ HyperelasticPlastic::updateFailedParticlesAndModifyStress(
   pLocalized_new = pLocalized;
   pTimeOfLoc_new = pTimeOfLoc;
   if (pLocalized == 0) {
-    if (d_failure_criteria == "MaximumPrincipalStress") {
+    if (d_failure_criteria == "max_principal_stress") {
       double maxEigen = 0., medEigen = 0., minEigen = 0.;
       pStress.getEigenValues(maxEigen, medEigen, minEigen);
       // The first eigenvalue returned by "eigen" is always the largest
@@ -2011,7 +2011,7 @@ HyperelasticPlastic::updateFailedParticlesAndModifyStress(
                   << " eps_f = " << pFailureStr << "\n";
         pTimeOfLoc_new = time;
       }
-    } else if (d_failure_criteria == "MaximumPrincipalStrain") {
+    } else if (d_failure_criteria == "max_principal_strain") {
       // Compute Finger tensor (left Cauchy-Green)
       Matrix3 bb = defGrad * defGrad.Transpose();
       // Compute Eulerian strain tensor
@@ -2028,7 +2028,7 @@ HyperelasticPlastic::updateFailedParticlesAndModifyStress(
                   << " eps_f = " << pFailureStr << "\n";
         pTimeOfLoc_new = time;
       }
-    } else if (d_failure_criteria == "MohrColoumb") {
+    } else if (d_failure_criteria == "mohr_coulomb") {
       double maxEigen = 0., medEigen = 0., minEigen = 0.;
       pStress.getEigenValues(maxEigen, medEigen, minEigen);
 

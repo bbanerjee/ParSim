@@ -206,6 +206,7 @@ ViscoPlastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("remove_particles", d_removeParticles);
   cm_ps->appendElement("zero_stress_upon_failure", d_setStressToZero);
   cm_ps->appendElement("allow_no_tension", d_allowNoTension);
+  cm_ps->appendElement("check_failure", d_checkFailure);
   cm_ps->appendElement("use_polar_decomposition_RMB",
                        d_usePolarDecompositionRMB);
   //   cm_ps->appendElement("evolve_porosity",d_evolvePorosity);

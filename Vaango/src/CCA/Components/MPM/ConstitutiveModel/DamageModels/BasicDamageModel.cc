@@ -161,18 +161,18 @@ BasicDamageModel::getFailureStressOrStrainData(ProblemSpecP& ps)
 
   ps->require("failure_criterion", d_failure_criterion);
 
-  if (d_failure_criterion != "MaximumPrincipalStress" &&
-      d_failure_criterion != "MaximumPrincipalStrain" &&
-      d_failure_criterion != "MohrCoulomb") {
+  if (d_failure_criterion != "max_principal_stress" &&
+      d_failure_criterion != "max_principal_strain" &&
+      d_failure_criterion != "mohr_coulomb") {
     // The above are the only acceptable options.  If not one of them, bail.
     throw ProblemSetupException("<failure_criterion> must be either "
-                                "MaximumPrincipalStress, "
-                                "MaximumPrincipalStrain or MohrCoulomb",
+                                "max_principal_stress, "
+                                "max_principal_strain or mohr_coulomb",
                                 __FILE__,
                                 __LINE__);
   }
 
-  if (d_failure_criterion == "MohrCoulomb") {
+  if (d_failure_criterion == "mohr_coulomb") {
     // The cohesion value that MC needs is the "mean" value in the
     // FailureStressOrStrainData struct
     ps->require("friction_angle", d_friction_angle);
@@ -283,7 +283,7 @@ BasicDamageModel::setDamageModelData(const BasicDamageModel* bdm)
     // Set the failure strain data
     setFailureStressOrStrainData(bdm);
     d_failure_criterion = bdm->d_failure_criterion;
-    if (d_failure_criterion == "MohrCoulomb") {
+    if (d_failure_criterion == "mohr_coulomb") {
       d_tensile_cutoff = bdm->d_tensile_cutoff;
       d_friction_angle = bdm->d_friction_angle;
     }
@@ -382,7 +382,7 @@ BasicDamageModel::outputProblemSpecDamage(ProblemSpecP& cm_ps)
     cm_ps->appendElement("reference_volume", d_epsf.refVol);
     cm_ps->appendElement("char_time", d_epsf.t_char);
 
-    if (d_failure_criterion == "MohrCoulomb") {
+    if (d_failure_criterion == "mohr_coulomb") {
       cm_ps->appendElement("friction_angle", d_friction_angle);
       cm_ps->appendElement("tensile_cutoff_fraction_of_cohesion",
                            d_tensile_cutoff);
@@ -947,7 +947,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
   pLocalized_new = pLocalized;
   pTimeOfLoc_new = pTimeOfLoc;
   if (pLocalized == 0) {
-    if (d_failure_criterion == "MaximumPrincipalStress") {
+    if (d_failure_criterion == "max_principal_stress") {
       double maxEigen = 0., medEigen = 0., minEigen = 0.;
       pStress.getEigenValues(maxEigen, medEigen, minEigen);
       // The first eigenvalue returned by "eigen" is always the largest
@@ -962,7 +962,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
 #endif
         pTimeOfLoc_new = time;
       }
-    } else if (d_failure_criterion == "MaximumPrincipalStrain") {
+    } else if (d_failure_criterion == "max_principal_strain") {
       // Compute Finger tensor (left Cauchy-Green)
       Matrix3 bb = defGrad * defGrad.Transpose();
       // Compute Eulerian strain tensor
@@ -981,7 +981,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
 #endif
         pTimeOfLoc_new = time;
       }
-    } else if (d_failure_criterion == "MohrCoulomb") {
+    } else if (d_failure_criterion == "mohr_coulomb") {
 
       double maxEigen = 0., medEigen = 0., minEigen = 0.;
       pStress.getEigenValues(maxEigen, medEigen, minEigen);
@@ -1035,7 +1035,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
 #endif
         }
       }
-    } // MohrCoulomb
+    } // mohr_coulomb
   }   // pLocalized==0
 
   // If the particle has failed, apply various erosion algorithms

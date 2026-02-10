@@ -45,89 +45,275 @@
                                       camclay,
                                       polar_orthotropic_hypoelastic,
                                       viscoelastic_fortran'">
-    <A                             spec="OPTIONAL DOUBLE" />
-    <allow_no_tension              spec="OPTIONAL BOOLEAN" />
-    <alpha                         spec="OPTIONAL DOUBLE" />
-    <alpha0                        spec="OPTIONAL DOUBLE" />
-    <Pe                            spec="OPTIONAL DOUBLE" />
-    <Ps                            spec="OPTIONAL DOUBLE" />
-    <b                             spec="OPTIONAL DOUBLE" />
-    <B                             spec="OPTIONAL DOUBLE" />
-    <Beta                          spec="OPTIONAL DOUBLE" />
-    <bulk_modulus                  spec="OPTIONAL DOUBLE" />
-    <bulkPrime                     spec="OPTIONAL DOUBLE" />
-    <C                             spec="OPTIONAL DOUBLE" />
-    <Cv                            spec="OPTIONAL DOUBLE" />
-    <c1                            spec="OPTIONAL DOUBLE" />
-    <c2                            spec="OPTIONAL DOUBLE" />
-    <c3                            spec="OPTIONAL DOUBLE" />
-    <c4                            spec="OPTIONAL DOUBLE" />
-    <c5                            spec="OPTIONAL DOUBLE" />
-    <fiber_stretch                 spec="OPTIONAL DOUBLE" />
-    <max_fiber_strain              spec="OPTIONAL DOUBLE" />
-    <max_matrix_strain             spec="OPTIONAL DOUBLE" />
-    <failure_option                spec="OPTIONAL DOUBLE" />
-    <C1                            spec="OPTIONAL DOUBLE" />    <!-- FIXME: what is this? -->
-    <C2                            spec="OPTIONAL DOUBLE" />    <!-- FIXME: what is this? -->
-    <check_max_stress_failure      spec="OPTIONAL BOOLEAN" />
-    <check_TEPLA_failure_criterion spec="OPTIONAL BOOLEAN" />
-    <check_failure                 spec="OPTIONAL BOOLEAN" />
-    <failure_variable_mean         spec="OPTIONAL DOUBLE" />
-    <failure_variable_std          spec="OPTIONAL DOUBLE" />
-    <failure_variable_distrib      spec="OPTIONAL STRING" />
 
-    <Chi                           spec="OPTIONAL DOUBLE" /> <!-- FIXME: What is this? -->
-    <coeff_thermal_expansion       spec="OPTIONAL DOUBLE" />
-    <CoeffThermalExpansion         spec="OPTIONAL DOUBLE" />
-    <compute_specific_heat         spec="OPTIONAL BOOLEAN" />
-    <CrackFriction                 spec="OPTIONAL DOUBLE" />
-    <CrackParameterA               spec="OPTIONAL DOUBLE" />
-    <CrackGrowthRate               spec="OPTIONAL DOUBLE" />
-    <CrackMaxGrowthRate            spec="OPTIONAL DOUBLE" />
-    <CrackPowerValue               spec="OPTIONAL DOUBLE" />
-    <critical_porosity             spec="OPTIONAL DOUBLE" />
-    <critical_scalar_damage        spec="OPTIONAL DOUBLE" />
-    <critical_stress               spec="OPTIONAL DOUBLE" />
-    <damage_cutoff                 spec="OPTIONAL DOUBLE" />
-    <damage_model                  spec="OPTIONAL NO_DATA"
-                                     attribute1="type REQUIRED STRING 'hancock_mackenzie, johnson_cook'" >
-      <Dc                          spec="OPTIONAL DOUBLE" />  <!-- FIXME: what are these for? -->
-      <D0                          spec="OPTIONAL DOUBLE" />
-      <D1                          spec="OPTIONAL DOUBLE" />  <!-- FIXME: what is tihs?  is it really optional? -->
-      <D2                          spec="OPTIONAL DOUBLE" />
-      <D3                          spec="OPTIONAL DOUBLE" />
-      <D4                          spec="OPTIONAL DOUBLE" />
-      <D5                          spec="OPTIONAL DOUBLE" />
-    </damage_model>
-    
-    <deviatoric_stress_model       spec="OPTIONAL NO_DATA"
-                                        attribute1="type REQUIRED STRING 'hypoElastic, hypoViscoElastic'" 
-                                        need_applies_to="type elastic_plastic elastic_plastic_hp" >
-      <tau                         spec="REQUIRED MULTIPLE_DOUBLES" need_applies_to="type hypoViscoElastic" />
-      <mu                          spec="REQUIRED MULTIPLE_DOUBLES" need_applies_to="type hypoViscoElastic" /> 
-    </deviatoric_stress_model>
-        
-    <DCp_DTemperature              spec="OPTIONAL DOUBLE" />
-    <D                             spec="OPTIONAL DOUBLE" />  <!-- FIXME: what are these for? -->
-    <starting_location             spec="OPTIONAL VECTOR" />  <!-- FIXME: what are these for? -->
-    <direction_if_plane            spec="OPTIONAL VECTOR" />  <!-- FIXME: what are these for? -->
-    <delH                          spec="OPTIONAL DOUBLE" /> <!-- FIXME: what is this for? -->
-    <direction_of_symm             spec="OPTIONAL VECTOR" />
-    <do_melting                    spec="OPTIONAL BOOLEAN" />
-    <dynamic_coeff_friction        spec="OPTIONAL DOUBLE" />
-    <e_shear_modulus               spec="OPTIONAL DOUBLE" /> <!-- qwerty need_applies_to='type ALL' -->
-    <e_bulk_modulus                spec="OPTIONAL DOUBLE" /> <!-- qwerty need_applies_to='type ALL' -->
-    <ve_bulk_modulus               spec="OPTIONAL DOUBLE" /> <!-- qwerty need_applies_to='type ALL' -->
-    <ve_shear_modulus              spec="OPTIONAL DOUBLE" /> <!-- qwerty need_applies_to='type ALL' -->
-    <ve_volumetric_viscosity       spec="OPTIONAL DOUBLE" /> <!-- qwerty need_applies_to='type ALL' -->
-    <ve_deviatoric_viscosity       spec="OPTIONAL DOUBLE" /> <!-- qwerty need_applies_to='type ALL' -->
-    <EoverR                        spec="OPTIONAL DOUBLE" /> <!-- FIXME: what is this for? -->
-    <evolve_damage                 spec="OPTIONAL BOOLEAN" />
-    <evolve_porosity               spec="OPTIONAL BOOLEAN" />
-    <failure_by_stress             spec="OPTIONAL BOOLEAN" />
-    <scaling                       spec="OPTIONAL STRING 'none, kayenta'" />
-    <reference_volume              spec="OPTIONAL DOUBLE 'positive'" />
-    <failure_by_pressure           spec="OPTIONAL BOOLEAN" />
+    <!-- type = visco_scram -->
+    <PR                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <CoeffThermalExpansion         spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <CrackParameterA               spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <CrackPowerValue               spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <CrackMaxGrowthRate            spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <StressIntensityF              spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <CrackFriction                 spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <InitialCrackRadius            spec="OPTIONAL DOUBLE 'positive'" need_applies_to="type visco_scram" >
+    <CrackGrowthRate               spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <G1                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <G2                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <G3                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <G4                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <G5                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <RTau1                         spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <RTau2                         spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <RTau3                         spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <RTau4                         spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <RTau5                         spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <Beta                          spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <Gamma                         spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <DCp_DTemperature              spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <randomize_parameters          spec="OPTIONAL BOOLEAN" need_applies_to="type visco_scram" >
+    <use_time_temperature_equation spec="OPTIONAL BOOLEAN" need_applies_to="type visco_scram" >
+    <useObjectiveRate              spec="OPTIONAL BOOLEAN" need_applies_to="type visco_scram" >
+    <useMurnaghanEOS               spec="OPTIONAL BOOLEAN" need_applies_to="type visco_scram" >
+    <useBirchMurnaghanEOS          spec="OPTIONAL BOOLEAN" need_applies_to="type visco_scram" >
+    <P0                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <bulkPrime                     spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <useJWLEOS                     spec="OPTIONAL BOOLEAN" need_applies_to="type visco_scram" >
+    <useJWLCEOS                    spec="OPTIONAL BOOLEAN" need_applies_to="type visco_scram" >
+    <Cv                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <C1                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <C2                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+
+    <!-- type = visco_scram_hotspot -->
+    <Chi                           spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <delH                          spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <Z                             spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <EoverR                        spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <dynamic_coeff_friction        spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+    <volfracHE                     spec="OPTIONAL DOUBLE" need_applies_to="type visco_scram" >
+
+    <!-- type = visco_plastic -->
+    <remove_particles              spec="OPTIONAL BOOLEAN" need_applies_to="type visco_plastic" >
+    <zero_stress_upon_failure      spec="OPTIONAL BOOLEAN" need_applies_to="type visco_plastic" >
+    <allow_no_tension              spec="OPTIONAL BOOLEAN" need_applies_to="type visco_plastic" >
+    <check_failure                 spec="OPTIONAL BOOLEAN" need_applies_to="type visco_plastic" >
+    <use_polar_decomposition_RMB   spec="OPTIONAL BOOLEAN" need_applies_to="type visco_plastic" >
+    <failure_variable_mean         spec="OPTIONAL DOUBLE" need_applies_to="type visco_plastic" >
+    <failure_variable_std          spec="OPTIONAL DOUBLE" need_applies_to="type visco_plastic" >
+    <failure_variable_distrib      spec="OPTIONAL STRING" need_applies_to="type visco_plastic" >
+    <failure_by_stress             spec="OPTIONAL BOOLEAN" need_applies_to="type visco_plastic" >
+    <failure_by_pressure           spec="OPTIONAL BOOLEAN" need_applies_to="type visco_plastic" >
+
+    <!-- type = hyperelastic_plastic -->
+    <use_modified_eos              spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic" >
+    <use_damage                    spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic" >
+    <use_plasticity                spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic" >
+    <yield_stress                  spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic" >
+    <hardening_modulus             spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic" >
+    <alpha                         spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic" >
+    <yield_distrib                 spec="OPTIONAL STRING 'constant, uniform'" 
+                                     need_applies_to="type hyperelastic_plastic UCNH JWLppMPM" />
+    <yield_range                   spec="OPTIONAL DOUBLE"  
+                                     need_applies_to="type hyperelastic_plastic UCNH JWLppMPM"/>
+    <yield_seed                    spec="OPTIONAL INTEGER"  
+                                     need_applies_to="type hyperelastic_plastic UCNH JWLppMPM"/>
+    <brittle_damage_initial_threshold    spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_fracture_energy      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_constant_D           spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_max_damage_increment spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_allowRecovery        spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_recoveryCoeff        spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_printDamage          spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic "/>
+    <failure_mean                  spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <failure_std                   spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/> 
+    <failure_exponent              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/> 
+    <failure_seed                  spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/> 
+    <failure_distrib               spec="OPTIONAL STRING 'constant, weibull, gauss'" need_applies_to="type hyperelastic_plastic "/> 
+    <failure_criteria              spec="OPTIONAL STRING 'max_principal_stress, max_principal_strain, mohr_coulomb" need_applies_to="type hyperelastic_plastic "/> 
+    <scaling                       spec="OPTIONAL STRING 'none, kayenta'" need_applies_to="type hyperelastic_plastic "/> 
+    <exponent                      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <reference_volume              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <char_time                     spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <use_initial_stress            spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic "/>  
+    <initial_pressure              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <friction_angle                      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <tensile_cutoff_fraction_of_cohesion spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+
+    <!-- type = p_alpha -->
+    <Pe                            spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
+    <Ps                            spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
+    <rhoS                          spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
+    <K0                            spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
+    <Ks                            spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
+    <Ku                            spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
+    <T_0                           spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
+    <C_0                           spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
+    <Gamma_0                       spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
+    <S_alpha                       spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
+
+    <!-- type = trans_iso_hyper, visco_trans_iso_hyper -->
+    <c1                            spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type trans_iso_hyper visco_trans_iso_hyper" >
+    <c2                            spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type trans_iso_hyper visco_trans_iso_hyper" >
+    <c3                            spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type trans_iso_hyper visco_trans_iso_hyper" >
+    <c4                            spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type trans_iso_hyper visco_trans_iso_hyper" >
+    <c5                            spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type trans_iso_hyper visco_trans_iso_hyper" >
+    <direction_of_symm             spec="OPTIONAL VECTOR" 
+                                     need_applies_to="type trans_iso_hyper visco_trans_iso_hyper" >
+    <fiber_stretch                 spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type trans_iso_hyper visco_trans_iso_hyper" >
+    <failure_option                spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type trans_iso_hyper visco_trans_iso_hyper" >
+    <max_fiber_strain              spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type trans_iso_hyper visco_trans_iso_hyper" >
+    <max_matrix_strain             spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type trans_iso_hyper visco_trans_iso_hyper" >
+
+    <!-- type = visco_trans_iso_hyper -->
+    <y1                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <y2                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <y3                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <y4                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <y5                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <y6                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <t1                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <t2                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <t3                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <t4                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <t5                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <t6                            spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+    <StrainEnergy                  spec="OPTIONAL STRING 'MooneyRivlin, VerondaWestmann'" need_applies_to="type visco_trans_iso_hyper" >
+    <active                        spec="OPTIONAL DOUBLE" need_applies_to="type visco_trans_iso_hyper" >
+
+    <!-- type = elastic_plastic_hp, small_strain_plastic -->
+    <bulk_modulus                  spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_plastic hyperelastic_plastic trans_iso_hyper visco_trans_iso_hyper elastic_plastic_hp small_strain_plastic" >
+    <shear_modulus                 spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_plastic hyperelastic_plastic elastic_plastic_hp small_strain_plastic" >
+    <coeff_thermal_expansion       spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_plastic elastic_plastic_hp small_strain_plastic" >
+    <taylor_quinney_coeff          spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <critical_stress               spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <tolerance                     spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_plastic elastic_plastic_hp small_strain_plastic" >
+    <useModifiedEOS                spec="OPTIONAL BOOLEAN" 
+                                     need_applies_to="type visco_scram visco_plastic trans_iso_hyper visco_trans_iso_hyper elastic_plastic_hp small_strain_plastic" >
+    <initial_material_temperature  spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_plastic elastic_plastic_hp small_strain_plastic" >
+    <check_TEPLA_failure_criterion spec="OPTIONAL BOOLEAN"
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <do_melting                    spec="OPTIONAL BOOLEAN" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <check_max_stress_failure      spec="OPTIONAL BOOLEAN" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <compute_specific_heat         spec="OPTIONAL BOOLEAN" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <evolve_porosity               spec="OPTIONAL BOOLEAN" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <initial_mean_porosity         spec="OPTIONAL DOUBLE"
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <initial_std_porosity          spec="OPTIONAL DOUBLE"
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <critical_porosity             spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <frac_nucleation               spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <meanstrain_nucleation         spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <stddevstrain_nucleation       spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <initial_porosity_distrib      spec="OPTIONAL STRING 'constant, gauss'" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <porosity_seed                 spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <evolve_damage                 spec="OPTIONAL BOOLEAN" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <initial_mean_scalar_damage    spec="OPTIONAL DOUBLE"
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <initial_std_scalar_damage     spec="OPTIONAL DOUBLE"
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <critical_scalar_damage        spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <initial_scalar_damage_distrib spec="OPTIONAL STRING 'constant, gauss'" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <scalar_damage_seed            spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type elastic_plastic_hp small_strain_plastic" >
+    <isothermal                    spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type small_strain_plastic" >
+
+    <!-- type = program_burn + visco_scram EOS part -->
+    <n                             spec="OPTIONAL DOUBLE"
+                                     need_applies_to="type program_burn" >
+    <A                             spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_scram program_burn" >
+    <B                             spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_scram program_burn" >
+    <C                             spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_scram program_burn" >
+    <R1                            spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_scram program_burn" >
+    <R2                            spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_scram program_burn" >
+    <om                            spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_scram program_burn" >
+    <starting_location             spec="OPTIONAL VECTOR" 
+                                     need_applies_to="type program_burn" >
+    <direction_if_plane            spec="OPTIONAL VECTOR"
+                                     need_applies_to="type program_burn" >
+    <D                             spec="OPTIONAL DOUBLE"
+                                     need_applies_to="type program_burn" >
+    <T0                            spec="OPTIONAL DOUBLE" 
+                                     need_applies_to="type visco_scram program_burn" >
+
+    <!-- type = murnaghanMPM -->
+    <Kprime    spec="REQUIRED DOUBLE 'positive'" 
+                  need_applies_to="type murnaghanMPM"/>
+    <pressure  spec="REQUIRED DOUBLE 'positive'"
+                  need_applies_to="type murnaghanMPM" >
+    <rho0      spec="REQUIRED DOUBLE 'positive'"
+                  need_applies_to="type program_burn murnaghanMPM" >
+    <viscosity spec="REQUIRED DOUBLE 'positive'"
+                  need_applies_to="type murnaghanMPM" >
+
+    <!-- type = mw_visco_elastic -->
+    <e_shear_modulus          spec="REQUIRED DOUBLE 'positive'" need_applies_to="type mw_visco_elastic" >
+    <e_bulk_modulus           spec="REQUIRED DOUBLE 'positive'" need_applies_to="type mw_visco_elastic" >
+    <ve_bulk_modulus          spec="REQUIRED DOUBLE 'positive'" need_applies_to="type mw_visco_elastic" >
+    <ve_shear_modulus         spec="REQUIRED DOUBLE 'positive'" need_applies_to="type mw_visco_elastic" >
+    <ve_volumetric_viscosity  spec="REQUIRED DOUBLE 'positive'" need_applies_to="type mw_visco_elastic" >
+    <ve_deviatoric_viscosity  spec="REQUIRED DOUBLE 'positive'" need_applies_to="type mw_visco_elastic" >
+
+    <!-- type = ideal_gas -->
+    <gamma                  spec="REQUIRED DOUBLE" 
+                              need_applies_to="type visco_scram ideal_gas" >
+    <specific_heat          spec="REQUIRED DOUBLE"
+                              need_applies_to="type ideal_gas" >
+    <reference_pressure     spec="REQUIRED DOUBLE" 
+                              need_applies_to="type ideal_gas" >
+    <reference_temperature  spec="REQUIRED DOUBLE"
+                              need_applies_to="type ideal_gas" >
+
+    <!-- type = hypo_elastic -->
+    <K      spec="REQUIRED DOUBLE 'positive'"
+              need_applies_to="type hypo_elastic hypo_elastic_fortran viscelastic_fortran program_burn murnaghanMPM" >
+    <G      spec="REQUIRED DOUBLE" 
+              need_applies_to="type hypo_elastic hypo_elastic_fortran viscelastic_fortran" >
+    <alpha  spec="OPTIONAL DOUBLE" 
+              need_applies_to="type hypo_elastic hyperelastic_plastic UCNH nonlocal_drucker_prager" >
+
+    <!-- type = comp_mooney_rivlin -->
+    <he_constant_1  spec="REQUIRED DOUBLE 'positive'"
+              need_applies_to="type comp_mooney_rivlin" >
+    <he_constant_2  spec="REQUIRED DOUBLE 'positive'"
+              need_applies_to="type comp_mooney_rivlin" >
+    <he_PR          spec="REQUIRED DOUBLE 'positive'"
+              need_applies_to="type comp_mooney_rivlin" >
+
+    <!-- type = hypo_elastic_fracture -->
     <fracture_toughness_curve      spec="OPTIONAL NO_DATA" 
                                    need_applies_to="type hypo_elastic_fracture">
       <crack_propagation_criterion spec="REQUIRED STRING 'max_hoop_stress, empirical_criterion, max_principal_stress, max_energy_release_rate, strain_energy_density'" />
@@ -140,45 +326,133 @@
         <KIIc                      spec="OPTIONAL DOUBLE" />
       </point>
     </fracture_toughness_curve>
-    <G                             spec="OPTIONAL DOUBLE" />
-    <G1                            spec="OPTIONAL DOUBLE" />
-    <G2                            spec="OPTIONAL DOUBLE" />
-    <G3                            spec="OPTIONAL DOUBLE" />
-    <G4                            spec="OPTIONAL DOUBLE" />
-    <G5                            spec="OPTIONAL DOUBLE" />
-    <Gamma                         spec="OPTIONAL DOUBLE" />
-    <gamma                         spec="OPTIONAL DOUBLE" />
-    <reference_pressure            spec="OPTIONAL DOUBLE" />
-    <reference_temperature         spec="OPTIONAL DOUBLE" />
-    <hardening_modulus             spec="OPTIONAL DOUBLE" />
-    <he_constant_1                 spec="OPTIONAL DOUBLE 'positive'" />
-    <he_constant_2                 spec="OPTIONAL DOUBLE 'positive'" />
-    <he_PR                         spec="OPTIONAL DOUBLE 'positive'" />
-    <InitialCrackRadius            spec="OPTIONAL DOUBLE 'positive'" />
-    <initial_material_temperature  spec="OPTIONAL DOUBLE" />
-    <initial_mean_porosity         spec="OPTIONAL DOUBLE" />
-    <initial_mean_scalar_damage    spec="OPTIONAL DOUBLE" />
-    <initial_porosity_distrib      spec="OPTIONAL STRING 'constant, gauss'" />
-    <initial_scalar_damage_distrib spec="OPTIONAL STRING 'constant, gauss'" />
-    <initial_std_porosity          spec="OPTIONAL DOUBLE" />
-    <initial_std_scalar_damage     spec="OPTIONAL DOUBLE" />
-    <isothermal                    spec="OPTIONAL BOOLEAN" />
-    <K                             spec="OPTIONAL DOUBLE" />
-    <K0                            spec="OPTIONAL DOUBLE" />
-    <Ks                            spec="OPTIONAL DOUBLE" />
-    <Ku                            spec="OPTIONAL DOUBLE" />
-    <n                             spec="OPTIONAL DOUBLE" />
-    <melting_temp_model            spec="OPTIONAL NO_DATA"
-                                     attribute1="type REQUIRED STRING 'constant_Tm, linear_Tm, scg_Tm, bps_Tm'" >
-      <a                           spec="OPTIONAL DOUBLE" />
-      <b                           spec="OPTIONAL DOUBLE" />
-      <Gamma_0                     spec="OPTIONAL DOUBLE" />
-      <K_T                         spec="OPTIONAL DOUBLE" />
-      <T_m0                        spec="OPTIONAL DOUBLE" />
+
+    <!-- type = diamm -->
+    <B0  spec="OPTIONAL DOUBLE" 
+                need_applies_to="type diamm simplified_geo_model Arenisca Arenisca3 Arenisca4 soil_model_brannon" >
+    <B1  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <B2  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <G0  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <G1  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <G2  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <G3  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <A1  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <A2  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <A3  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <A4  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <A5  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <A6  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <AN  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <R0  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <T0  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <C0  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <S1  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <GP  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <CV  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <TM  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <T1  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <T2  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <T3  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <T4  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <XP  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <SC  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <IDK spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <IDG spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <A2PF spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <TQC  spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <F1   spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <TEST spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DEJAVU spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC1 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC2 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC3 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC4 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC5 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC6 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC7 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC8 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC9 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC10 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC11 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC12 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+    <DC13 spec="OPTIONAL DOUBLE"
+                need_applies_to="type diamm" >
+
+    <!-- Sub-models used by some of the other models -->
+    <damage_model spec="OPTIONAL NO_DATA"
+                    attribute1="type REQUIRED STRING 'hancock_mackenzie, johnson_cook'" >
+      <Dc spec="OPTIONAL DOUBLE" /> 
+      <D0 spec="OPTIONAL DOUBLE" />
+      <D1 spec="OPTIONAL DOUBLE" />
+      <D2 spec="OPTIONAL DOUBLE" />
+      <D3 spec="OPTIONAL DOUBLE" />
+      <D4 spec="OPTIONAL DOUBLE" />
+      <D5 spec="OPTIONAL DOUBLE" />
+    </damage_model>
+    
+    <deviatoric_stress_model  spec="OPTIONAL NO_DATA"
+                                attribute1="type REQUIRED STRING 'hypoElastic, hypoViscoElastic'" 
+                                need_applies_to="type elastic_plastic elastic_plastic_hp" >
+      <tau  spec="REQUIRED MULTIPLE_DOUBLES" need_applies_to="type hypoViscoElastic" />
+      <mu   spec="REQUIRED MULTIPLE_DOUBLES" need_applies_to="type hypoViscoElastic" /> 
+    </deviatoric_stress_model>
+        
+    <melting_temp_model  spec="OPTIONAL NO_DATA"
+                           attribute1="type REQUIRED STRING 'constant_Tm, linear_Tm, scg_Tm, bps_Tm'" >
+      <a        spec="OPTIONAL DOUBLE" />
+      <b        spec="OPTIONAL DOUBLE" />
+      <Gamma_0  spec="OPTIONAL DOUBLE" />
+      <K_T      spec="OPTIONAL DOUBLE" />
+      <T_m0     spec="OPTIONAL DOUBLE" />
     </melting_temp_model>
-    <om                            spec="OPTIONAL DOUBLE" />
+
     <flow_model spec="OPTIONAL NO_DATA"
-                attribute1="type REQUIRED STRING 'linear, johnson_cook, mechanical_threshold_stress,
+                  attribute1="type REQUIRED STRING 'linear, johnson_cook, mechanical_threshold_stress,
                                                   preston_tonks_wallace, steinberg_cochran_guinan,
                                                   zerilli_armstrong, zerilli_armstrong_polymer'" >
  
@@ -398,21 +672,7 @@
       <initial_yield               spec="OPTIONAL DOUBLE" />
       <integration_parameter_theta spec="OPTIONAL DOUBLE" />
     </viscoplastic_flow_model>
-    <pressure                      spec="OPTIONAL DOUBLE" />
-    <PR                            spec="OPTIONAL DOUBLE" />
-    <remove_particles              spec="OPTIONAL BOOLEAN" />
-    <randomize_parameters          spec="OPTIONAL BOOLEAN" />
-    <reduction_factor              spec="OPTIONAL DOUBLE" />
-    <rho0                          spec="OPTIONAL DOUBLE" />
-    <rhoS                          spec="OPTIONAL DOUBLE" />
-    <R1                            spec="OPTIONAL DOUBLE" />
-    <R2                            spec="OPTIONAL DOUBLE" />
-    <RTau1                         spec="OPTIONAL DOUBLE" />
-    <RTau2                         spec="OPTIONAL DOUBLE" />
-    <RTau3                         spec="OPTIONAL DOUBLE" />
-    <RTau4                         spec="OPTIONAL DOUBLE" />
-    <RTau5                         spec="OPTIONAL DOUBLE" />
-    <shear_modulus                 spec="OPTIONAL DOUBLE" />
+
     <equation_of_state             spec="OPTIONAL NO_DATA"
                                      attribute1="type REQUIRED STRING 'default_hyper, default_hypo, mie_gruneisen, mie_gruneisen_energy, borja_pressure, air, water, granite'" >
       <bulk_modulus                spec="REQUIRED DOUBLE" 
@@ -438,6 +698,7 @@
       <epse_v0                     spec="REQUIRED DOUBLE" 
                                      need_applies_to="type borja_pressure"/>
     </equation_of_state>
+
     <shear_modulus_model           spec="OPTIONAL NO_DATA"
                                      attribute1="type REQUIRED STRING 'borja_shear, constant_shear, mts_shear, np_shear, ptw_shear, scg_shear'" >
       <shear_modulus               spec="REQUIRED DOUBLE" 
@@ -456,7 +717,7 @@
       <mu0                         spec="REQUIRED DOUBLE 'positive'" 
                                      need_applies_to="type borja_shear"/>
     </shear_modulus_model>
-    <specific_heat                 spec="OPTIONAL DOUBLE" />
+
     <specific_heat_model           spec="OPTIONAL NO_DATA"
                                      attribute1="type REQUIRED STRING 'constant_Cp, cubic_Cp, copper_Cp, steel_Cp'">
       <T_transition                spec="OPTIONAL DOUBLE" />
@@ -476,98 +737,10 @@
       <c2                    spec="OPTIONAL DOUBLE" />
       <c3                    spec="OPTIONAL DOUBLE" />
     </specific_heat_model>
-    <stability_check               spec="OPTIONAL NO_DATA"
-                                     attribute1="type REQUIRED STRING 'acoustic, becker, drucker, drucker_becker, none'" />
-    <frac_nucleation               spec="OPTIONAL DOUBLE" />
-    <meanstrain_nucleation         spec="OPTIONAL DOUBLE" />
-    <stddevstrain_nucleation       spec="OPTIONAL DOUBLE" />
-    <strain_limit                  spec="OPTIONAL DOUBLE" />
-    <StressIntensityF              spec="OPTIONAL DOUBLE" />
-    <T0                            spec="OPTIONAL DOUBLE" />
-    <T_0                           spec="OPTIONAL DOUBLE" />
-    <C_0                           spec="OPTIONAL DOUBLE" />
-    <Gamma_0                       spec="OPTIONAL DOUBLE" />
-    <S_alpha                       spec="OPTIONAL DOUBLE" />
-    <t1                            spec="OPTIONAL DOUBLE" />
-    <t2                            spec="OPTIONAL DOUBLE" />
-    <t3                            spec="OPTIONAL DOUBLE" />
-    <t4                            spec="OPTIONAL DOUBLE" />
-    <t5                            spec="OPTIONAL DOUBLE" />
-    <t6                            spec="OPTIONAL DOUBLE" />
-    <taylor_quinney_coeff          spec="OPTIONAL DOUBLE" />
-    <tolerance                     spec="OPTIONAL DOUBLE" />
-    <useDamage                     spec="OPTIONAL BOOLEAN" />
-    <useJWLEOS                     spec="OPTIONAL BOOLEAN" />
-    <useJWLCEOS                    spec="OPTIONAL BOOLEAN" />
-    <useMurnaghanEOS               spec="OPTIONAL BOOLEAN" />
-    <useBirchMurnaghanEOS          spec="OPTIONAL BOOLEAN" />
-    <useModifiedEOS                spec="OPTIONAL BOOLEAN" />
-    <useObjectiveRate              spec="OPTIONAL BOOLEAN" />        <!-- FIXME: What is the default -->
-    <usePlasticity                 spec="OPTIONAL BOOLEAN" />
-    <UseArtificialViscosity        spec="OPTIONAL BOOLEAN" />        <!-- FIXME: What is the default -->
-    <use_polar_decomposition_RMB   spec="OPTIONAL BOOLEAN" />
-    <use_time_temperature_equation spec="OPTIONAL BOOLEAN" />   <!-- FIXME: What is the default -->
-    <viscosity                     spec="OPTIONAL DOUBLE" />
-    <volfracHE                     spec="OPTIONAL DOUBLE" />
-    <yield_stress                  spec="OPTIONAL DOUBLE" />
-    <y1                            spec="OPTIONAL DOUBLE" />
-    <y2                            spec="OPTIONAL DOUBLE" />
-    <y3                            spec="OPTIONAL DOUBLE" />
-    <y4                            spec="OPTIONAL DOUBLE" />
-    <y5                            spec="OPTIONAL DOUBLE" />
-    <y6                            spec="OPTIONAL DOUBLE" />
-    <StrainEnergy                  spec="OPTIONAL STRING" />
-    <Z                             spec="OPTIONAL DOUBLE" />   <!-- FIXME: what is this for? -->
-    <zero_stress_upon_failure      spec="OPTIONAL BOOLEAN" />  <!-- FIXME: what is this for? -->
 
-  <!-- The following are for the Diamm model -->
-    <B0       spec="OPTIONAL DOUBLE" />
-    <B1       spec="OPTIONAL DOUBLE" />
-    <B2       spec="OPTIONAL DOUBLE" />
-    <G0       spec="OPTIONAL DOUBLE" />
-    <G1       spec="OPTIONAL DOUBLE" />
-    <G2       spec="OPTIONAL DOUBLE" />
-    <G3       spec="OPTIONAL DOUBLE" />
-    <A1       spec="OPTIONAL DOUBLE" />
-    <A2       spec="OPTIONAL DOUBLE" />
-    <A3       spec="OPTIONAL DOUBLE" />
-    <A4       spec="OPTIONAL DOUBLE" />
-    <A5       spec="OPTIONAL DOUBLE" />
-    <A6       spec="OPTIONAL DOUBLE" />
-    <AN       spec="OPTIONAL DOUBLE" />
-    <R0       spec="OPTIONAL DOUBLE" />
-    <T0       spec="OPTIONAL DOUBLE" />
-    <C0       spec="OPTIONAL DOUBLE" />
-    <S1       spec="OPTIONAL DOUBLE" />
-    <GP       spec="OPTIONAL DOUBLE" />
-    <CV       spec="OPTIONAL DOUBLE" />
-    <TM       spec="OPTIONAL DOUBLE" />
-    <T1       spec="OPTIONAL DOUBLE" />
-    <T2       spec="OPTIONAL DOUBLE" />
-    <T3       spec="OPTIONAL DOUBLE" />
-    <T4       spec="OPTIONAL DOUBLE" />
-    <XP       spec="OPTIONAL DOUBLE" />
-    <SC       spec="OPTIONAL DOUBLE" />
-    <IDK      spec="OPTIONAL DOUBLE" />
-    <IDG      spec="OPTIONAL DOUBLE" />
-    <A2PF     spec="OPTIONAL DOUBLE" />
-    <TQC      spec="OPTIONAL DOUBLE" />
-    <F1       spec="OPTIONAL DOUBLE" />
-    <TEST     spec="OPTIONAL DOUBLE" />
-    <DEJAVU   spec="OPTIONAL DOUBLE" />
-    <DC1      spec="OPTIONAL DOUBLE" />
-    <DC2      spec="OPTIONAL DOUBLE" />
-    <DC3      spec="OPTIONAL DOUBLE" />
-    <DC4      spec="OPTIONAL DOUBLE" />
-    <DC5      spec="OPTIONAL DOUBLE" />
-    <DC6      spec="OPTIONAL DOUBLE" />
-    <DC7      spec="OPTIONAL DOUBLE" />
-    <DC8      spec="OPTIONAL DOUBLE" />
-    <DC9      spec="OPTIONAL DOUBLE" />
-    <DC10     spec="OPTIONAL DOUBLE" />
-    <DC11     spec="OPTIONAL DOUBLE" />
-    <DC12     spec="OPTIONAL DOUBLE" />
-    <DC13     spec="OPTIONAL DOUBLE" />
+    <stability_check spec="OPTIONAL NO_DATA"
+                     attribute1="type REQUIRED STRING 'acoustic, becker, drucker, drucker_becker, none'" />
+
   <!--__________________________________-->  
   <!-- The following are for the nonlocal_drucker_prager model -->
     <alpha                spec="OPTIONAL DOUBLE"  />
@@ -665,18 +838,8 @@
     <!-- The following are for the UCNH & JWLppMPM model initial stress -->
     <useInitialStress                 spec="OPTIONAL BOOLEAN" />
     <initial_pressure                 spec="OPTIONAL DOUBLE"  />
-    <yield_distrib                    spec="OPTIONAL STRING 'constant, uniform'" />
-    <yield_range                      spec="OPTIONAL DOUBLE"  />
-    <yield_seed                       spec="OPTIONAL INTEGER"  />
     <useEOSFactory                    spec="OPTIONAL BOOLEAN" />
 
-    <!--______________________________________________________________________ -->    
-    <!-- The following are for the MurnaghanMPM model -->
-    <Kprime    spec="REQUIRED DOUBLE 'positive'" need_applies_to="type murnaghanMPM"/>
-    <!-- <K         spec="REQUIRED DOUBLE 'positive'" need_applies_to="type murnaghanMPM"/> -->
-    <!-- <pressure  spec="REQUIRED DOUBLE 'positive'" need_applies_to="type murnaghanMPM"/> -->
-    <!-- <rho0      spec="REQUIRED DOUBLE 'positive'" need_applies_to="type murnaghanMPM"/> -->
-    <!-- <viscosity spec="REQUIRED DOUBLE 'positive'" need_applies_to="type murnaghanMPM"/> -->
 
     <!--______________________________________________________________________ -->    
     <!-- The following are for the JWLppMPM model -->

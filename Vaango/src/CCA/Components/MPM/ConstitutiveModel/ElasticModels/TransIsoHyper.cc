@@ -58,7 +58,7 @@ TransIsoHyper::TransIsoHyper(ProblemSpecP& ps, MPMFlags* Mflag)
 
   ps->require("bulk_modulus", d_param.bulkModulus);
   ps->require("direction_of_symm", d_param.a0);
-  ps->require("fiber_pStretch", d_param.lambdaStar);
+  ps->require("fiber_stretch", d_param.lambdaStar);
   ps->require("c1", d_param.c1); // Mooney Rivlin constant 1
   ps->require("c2", d_param.c2); // Mooney Rivlin constant 2
   ps->require("c3", d_param.c3); // scales exponential stresses
@@ -130,7 +130,7 @@ TransIsoHyper::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("c3", d_param.c3);
   cm_ps->appendElement("c4", d_param.c4);
   cm_ps->appendElement("c5", d_param.c5);
-  cm_ps->appendElement("fiber_pStretch", d_param.lambdaStar);
+  cm_ps->appendElement("fiber_stretch", d_param.lambdaStar);
   cm_ps->appendElement("direction_of_symm", d_param.a0);
   cm_ps->appendElement("failure_option", d_param.failure);
   cm_ps->appendElement("max_fiber_strain", d_param.critStretch);
