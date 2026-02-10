@@ -34,7 +34,6 @@ message(STATUS "Fortran definitions: ${FORTRAN_CM_DEFINITIONS}")
 
 set(FORTRAN_CM_SRC 
   ${CMAKE_CURRENT_SOURCE_DIR}/Hooke.F90  
-  ${CMAKE_CURRENT_SOURCE_DIR}/Kayenta_calcs.F  
   ${CMAKE_CURRENT_SOURCE_DIR}/MIGUtilsF.F  
   ${CMAKE_CURRENT_SOURCE_DIR}/diamm.F
   ${CMAKE_CURRENT_SOURCE_DIR}/visco.F90
@@ -71,3 +70,5 @@ SET(MPM_ConstitutiveModel_SRCS
 install(TARGETS
   MPM_ConstitutiveModel_FORTRAN
 )
+
+add_subdirectory(tests)

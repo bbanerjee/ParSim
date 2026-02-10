@@ -30,7 +30,6 @@ if (NOT HAVE_CUDA)
   if (FORTRAN)
     SET(MPM_Fortran_SRCS
       ${CMAKE_CURRENT_SOURCE_DIR}/Diamm.cc                      
-      ${CMAKE_CURRENT_SOURCE_DIR}/Kayenta.cc                    
     )
   endif(FORTRAN)
 endif (NOT HAVE_CUDA)
