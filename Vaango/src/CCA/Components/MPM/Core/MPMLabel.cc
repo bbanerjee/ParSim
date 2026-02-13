@@ -226,6 +226,32 @@ MPMLabel::MPMLabel()
   pSizeLabel_preReloc = VarLabel::create(
     "p.size+", ParticleVariable<Matrix3>::getTypeDescription());
 
+  // DEM labels
+  pAngularVelocityLabel = VarLabel::create(
+    "p.angularVelocity", ParticleVariable<Vector>::getTypeDescription());
+  pAngularVelocityLabel_preReloc = VarLabel::create(
+    "p.angularVelocity+", ParticleVariable<Vector>::getTypeDescription());
+  pTorqueLabel = VarLabel::create(
+    "p.torque", ParticleVariable<Vector>::getTypeDescription());
+  pTorqueLabel_preReloc = VarLabel::create(
+    "p.torque+", ParticleVariable<Vector>::getTypeDescription());
+  pOrientationLabel = VarLabel::create(
+    "p.orientation", ParticleVariable<Matrix3>::getTypeDescription());
+  pOrientationLabel_preReloc = VarLabel::create(
+    "p.orientation+", ParticleVariable<Matrix3>::getTypeDescription());
+  pRadiusLabel = VarLabel::create(
+    "p.radius", ParticleVariable<double>::getTypeDescription());
+  pRadiusLabel_preReloc = VarLabel::create(
+    "p.radius+", ParticleVariable<double>::getTypeDescription());
+  pInertiaTensorLabel = VarLabel::create(
+    "p.inertiaTensor", ParticleVariable<Matrix3>::getTypeDescription());
+  pInertiaTensorLabel_preReloc = VarLabel::create(
+    "p.inertiaTensor+", ParticleVariable<Matrix3>::getTypeDescription());
+  pRigidBodyIDLabel = VarLabel::create(
+    "p.rigidBodyID", ParticleVariable<long64>::getTypeDescription());
+  pRigidBodyIDLabel_preReloc = VarLabel::create(
+    "p.rigidBodyID+", ParticleVariable<long64>::getTypeDescription());
+
   pFiberDirLabel = VarLabel::create(
     "p.fiberdir", ParticleVariable<Vector>::getTypeDescription());
 
@@ -852,6 +878,20 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(p_qLabel);
   VarLabel::destroy(p_qLabel_preReloc);
   VarLabel::destroy(pPartitionUnityLabel);
+
+  // DEM labels
+  VarLabel::destroy(pAngularVelocityLabel);
+  VarLabel::destroy(pAngularVelocityLabel_preReloc);
+  VarLabel::destroy(pTorqueLabel);
+  VarLabel::destroy(pTorqueLabel_preReloc);
+  VarLabel::destroy(pOrientationLabel);
+  VarLabel::destroy(pOrientationLabel_preReloc);
+  VarLabel::destroy(pRadiusLabel);
+  VarLabel::destroy(pRadiusLabel_preReloc);
+  VarLabel::destroy(pInertiaTensorLabel);
+  VarLabel::destroy(pInertiaTensorLabel_preReloc);
+  VarLabel::destroy(pRigidBodyIDLabel);
+  VarLabel::destroy(pRigidBodyIDLabel_preReloc);
 
   VarLabel::destroy(gColorLabel);
   VarLabel::destroy(gMassLabel);

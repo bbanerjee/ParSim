@@ -206,6 +206,11 @@ protected:
                              const PatchSet* patches,
                              const MaterialSet* matls);
 
+  void
+  scheduleComputeDEMForces(SchedulerP& sched,
+                           const PatchSet* patches,
+                           const MaterialSet* matls);
+
   virtual void
   scheduleInterpolateParticlesToGrid(SchedulerP& sched,
                                      const PatchSet* patches,
@@ -245,6 +250,11 @@ protected:
   scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
                                           const PatchSet* patches,
                                           const MaterialSet* matls);
+
+  void
+  scheduleIntegrateDEMRotation(SchedulerP& sched,
+                               const PatchSet* patches,
+                               const MaterialSet* matls);
 
   virtual void
   scheduleMomentumExchangeIntegrated(SchedulerP& sched,
@@ -562,6 +572,13 @@ protected:
                                   DataWarehouse* new_dw);
 
   void
+  integrateDEMRotation(const ProcessorGroup*,
+                       const PatchSubset* patches,
+                       const MaterialSubset* matls,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw);
+
+  void
   setGridBoundaryConditions(const ProcessorGroup*,
                             const PatchSubset* patches,
                             const MaterialSubset*,
@@ -588,6 +605,13 @@ protected:
                      const MaterialSubset*,
                      DataWarehouse* old_dw,
                      DataWarehouse* new_dw);
+
+  void
+  computeDEMForces(const ProcessorGroup*,
+                   const PatchSubset* patches,
+                   const MaterialSubset*,
+                   DataWarehouse* old_dw,
+                   DataWarehouse* new_dw);
 
   void
   computeCurrentParticleSize(const ProcessorGroup*,

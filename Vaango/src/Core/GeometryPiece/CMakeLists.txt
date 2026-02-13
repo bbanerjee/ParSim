@@ -53,6 +53,8 @@ SET(Vaango_Core_GeometryPiece_SRCS
   CorrugEdgeGeomPiece.cc 
   EllipsoidGeometryPiece.cc 
   AbaqusMeshGeometryPiece.cc
+  LocalSDF.cc
+  DynamicSDFGeometry.cc
 )
 
 add_library(Vaango_Core_GeometryPiece ${Vaango_Core_GeometryPiece_SRCS})
@@ -73,5 +75,11 @@ IF(BUILD_SHARED_LIBS)
 ENDIF(BUILD_SHARED_LIBS)
 
 install(TARGETS
+
   Vaango_Core_GeometryPiece
+
 )
+
+
+
+add_subdirectory(UnitTests)

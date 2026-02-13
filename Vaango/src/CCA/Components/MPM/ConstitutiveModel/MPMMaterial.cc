@@ -45,6 +45,7 @@
 #include <Core/GeometryPiece/GeometryPieceFactory.h>
 #include <Core/GeometryPiece/NullGeometryPiece.h>
 #include <Core/GeometryPiece/TriGeometryPiece.h>
+#include <Core/GeometryPiece/DynamicSDFGeometry.h>
 #include <Core/GeometryPiece/UnionGeometryPiece.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/MaterialManager.h>
@@ -164,6 +165,22 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
   d_activation_time = 0.0;
   ps->get("activation_time", d_activation_time);
 
+  // For discrete element modeling
+  d_is_discrete = false;
+  ps->get("is_discrete", d_is_discrete);
+  d_is_sdf_based = false;
+  ps->get("is_sdf_based", d_is_sdf_based);
+  d_radius = 0.0;
+  ps->get("radius", d_radius);
+  d_kn = 1.0e7;
+  ps->get("kn", d_kn);
+  d_kt = 1.0e6;
+  ps->get("kt", d_kt);
+  d_mu = 0.5;
+  ps->get("mu", d_mu);
+  d_gamma = 0.1;
+  ps->get("gamma", d_gamma);
+
   // Material is force transmitting (moves according to sum of forces)
   d_is_force_transmitting_material = false;
   ps->get("is_force_transmitting_material", d_is_force_transmitting_material);
@@ -273,6 +290,13 @@ MPMMaterial::outputProblemSpec(ProblemSpecP& ps) -> ProblemSpecP
                         d_is_force_transmitting_material);
   mpm_ps->appendElement("is_active", d_is_active);
   mpm_ps->appendElement("activation_time", d_activation_time);
+  mpm_ps->appendElement("is_discrete", d_is_discrete);
+  mpm_ps->appendElement("is_sdf_based", d_is_sdf_based);
+  mpm_ps->appendElement("radius", d_radius);
+  mpm_ps->appendElement("kn", d_kn);
+  mpm_ps->appendElement("kt", d_kt);
+  mpm_ps->appendElement("mu", d_mu);
+  mpm_ps->appendElement("gamma", d_gamma);
 
   mpm_ps->appendElement("permeability", d_permeability);
 
@@ -322,6 +346,13 @@ MPMMaterial::copyWithoutGeom(ProblemSpecP& ps,
   d_is_force_transmitting_material = mat->d_is_force_transmitting_material;
   d_is_active                      = mat->d_is_active;
   d_activation_time                = mat->d_activation_time;
+  d_is_discrete                    = mat->d_is_discrete;
+  d_is_sdf_based                   = mat->d_is_sdf_based;
+  d_radius                         = mat->d_radius;
+  d_kn                             = mat->d_kn;
+  d_kt                             = mat->d_kt;
+  d_mu                             = mat->d_mu;
+  d_gamma                          = mat->d_gamma;
 
   d_permeability = mat->d_permeability;
   if (d_flags->d_coupledFlow) {
@@ -371,6 +402,30 @@ auto
 MPMMaterial::getParticleCreator() -> ParticleCreator*
 {
   return d_particle_creator.get();
+}
+
+auto
+MPMMaterial::getSDFGeometry() const -> const DynamicSDFGeometry*
+{
+  for (const auto& obj : d_geom_objs) {
+    auto piece = obj->getPiece();
+    auto sdf   = dynamic_cast<DynamicSDFGeometry*>(piece.get());
+    if (sdf) {
+      return sdf;
+    }
+  }
+  return nullptr;
+}
+
+auto
+MPMMaterial::getGeometryObjectIndex(const GeometryObject* obj) const -> int
+{
+  for (size_t i = 0; i < d_geom_objs.size(); i++) {
+    if (d_geom_objs[i].get() == obj) {
+      return static_cast<int>(i);
+    }
+  }
+  return -1;
 }
 
 auto

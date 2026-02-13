@@ -128,6 +128,7 @@ public:
   bool d_useLoadCurves; // Flag for using load curves
   bool d_useLoadCurvesVector{ false }; // Flag for using load curves
   bool d_withColor;                    // to turn on the color variable
+  bool d_enableDEM{ false };           // to turn on DEM
   bool d_AMR;                          // Do AMR?
   bool d_GEVelProj;                    // Flag for adaptive mesh refinement
   bool d_refineParticles;              // Flag for refinement

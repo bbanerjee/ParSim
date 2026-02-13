@@ -68,6 +68,7 @@ add_subdirectory(HeatConduction)
 add_subdirectory(MMS)
 add_subdirectory(GradientComputer)
 add_subdirectory(ReactionDiffusion)
+add_subdirectory(UnitTests)
 
 SET(LIBS
   ${LIBS}

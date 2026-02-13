@@ -54,6 +54,7 @@
 #include <Core/GeometryPiece/FileGeometryPiece.h>
 #include <Core/GeometryPiece/GeometryObject.h>
 #include <Core/GeometryPiece/GeometryPiece.h>
+#include <Core/GeometryPiece/DynamicSDFGeometry.h>
 
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Patch.h>
@@ -391,6 +392,20 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
     pvars.pTemperature, d_mpm_labels->pTemperatureLabel, subset);
   new_dw->allocateAndPut(
     pvars.pParticleID, d_mpm_labels->pParticleIDLabel, subset);
+
+  if (d_flags->d_enableDEM) {
+    new_dw->allocateAndPut(
+      pvars.pRigidBodyID, d_mpm_labels->pRigidBodyIDLabel, subset);
+    new_dw->allocateAndPut(
+      pvars.pAngularVelocity, d_mpm_labels->pAngularVelocityLabel, subset);
+    new_dw->allocateAndPut(pvars.pTorque, d_mpm_labels->pTorqueLabel, subset);
+    new_dw->allocateAndPut(
+      pvars.pOrientation, d_mpm_labels->pOrientationLabel, subset);
+    new_dw->allocateAndPut(pvars.pRadius, d_mpm_labels->pRadiusLabel, subset);
+    new_dw->allocateAndPut(
+      pvars.pInertiaTensor, d_mpm_labels->pInertiaTensorLabel, subset);
+  }
+
   new_dw->allocateAndPut(pvars.pSize, d_mpm_labels->pSizeLabel, subset);
   new_dw->allocateAndPut(pvars.pFiberDir, d_mpm_labels->pFiberDirLabel, subset);
   // for thermal stress
@@ -697,6 +712,33 @@ ParticleCreator::initializeParticle(const Patch* patch,
   GeometryPieceP piece = obj->getPiece();
   pvars.pSurface[i]    = checkForSurface2(piece, p, dxpp);
 
+  if (d_flags->d_enableDEM) {
+    // Rigid Body ID
+    int objIdx = matl->getGeometryObjectIndex(obj);
+    long64 rbID =
+      ((long64)matl->getDWIndex() << 32) | (long64)(objIdx >= 0 ? objIdx : 0);
+    pvars.pRigidBodyID[i] = rbID;
+
+    // Initialize other DEM variables
+    pvars.pAngularVelocity[i] = Vector(0, 0, 0);
+    pvars.pTorque[i]          = Vector(0, 0, 0);
+    pvars.pOrientation[i]     = Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    pvars.pRadius[i]          = matl->getParticleRadius();
+    double I = 0.4 * pvars.pMass[i] * pvars.pRadius[i] * pvars.pRadius[i];
+    pvars.pInertiaTensor[i] = Matrix3(I, 0, 0, 0, I, 0, 0, 0, I);
+
+    // For SDF geometry, check if Master or Slave
+    auto* sdf_piece = dynamic_cast<DynamicSDFGeometry*>(piece.get());
+    if (sdf_piece) {
+      Box box      = sdf_piece->getBoundingBox();
+      Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
+      if ((p - center).length2() > 1.0e-12) {
+        // Slave particle (corner)
+        pvars.pMass[i] = 0.0;
+      }
+    }
+  }
+
   // Cell ids
   ASSERT(cell_idx.x() <= 0xffff && cell_idx.y() <= 0xffff &&
          cell_idx.z() <= 0xffff);
@@ -737,6 +779,43 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
   auto vel_pair   = std::make_pair("p.velocity", obj);
   auto area_pair  = std::make_pair("p.area", obj);
   auto size_pair  = std::make_pair("p.size", obj);
+
+  // If the piece is a DynamicSDFGeometry, we want exactly one particle
+  // at the center of the object.
+  auto* sdf_piece = dynamic_cast<DynamicSDFGeometry*>(piece.get());
+  if (sdf_piece) {
+    Box box      = sdf_piece->getBoundingBox();
+    Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
+    
+    // Master particle at center
+    if (patch->containsPoint(center)) {
+      obj_vars.points[obj].push_back(center);
+    }
+
+    // Slave particles at corners
+    // We add them if they are in the patch.
+    // Note: This simple check implies that if a corner is in another patch,
+    // it will be created by THAT patch's ParticleCreator.
+    // However, DynamicSDFGeometry is global.
+    // So every patch sees the same box.
+    Point corners[8];
+    corners[0] = box.lower();
+    corners[1] = Point(box.upper().x(), box.lower().y(), box.lower().z());
+    corners[2] = Point(box.upper().x(), box.upper().y(), box.lower().z());
+    corners[3] = Point(box.lower().x(), box.upper().y(), box.lower().z());
+    corners[4] = Point(box.lower().x(), box.lower().y(), box.upper().z());
+    corners[5] = Point(box.upper().x(), box.lower().y(), box.upper().z());
+    corners[6] = box.upper();
+    corners[7] = Point(box.lower().x(), box.upper().y(), box.upper().z());
+
+    for (int k = 0; k < 8; ++k) {
+      if (patch->containsPoint(corners[k])) {
+        obj_vars.points[obj].push_back(corners[k]);
+      }
+    }
+
+    return static_cast<particleIndex>(obj_vars.points[obj].size());
+  }
 
   // If the object is a SpecialGeomPiece (e.g. FileGeometryPiece or
   // SmoothCylGeomPiece) then use the particle creators in that
@@ -947,9 +1026,30 @@ ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
     d_mpm_labels->pExternalHeatFluxLabel_preReloc);
   particle_state_preReloc.push_back(d_mpm_labels->pVelGradLabel_preReloc);
 
-  // For friction contact
   particle_state.push_back(d_mpm_labels->pSurfLabel);
   particle_state_preReloc.push_back(d_mpm_labels->pSurfLabel_preReloc);
+
+  // For DEM
+  if (d_flags->d_enableDEM) {
+    particle_state.push_back(d_mpm_labels->pRigidBodyIDLabel);
+    particle_state_preReloc.push_back(d_mpm_labels->pRigidBodyIDLabel_preReloc);
+
+    particle_state.push_back(d_mpm_labels->pAngularVelocityLabel);
+    particle_state_preReloc.push_back(
+      d_mpm_labels->pAngularVelocityLabel_preReloc);
+
+    particle_state.push_back(d_mpm_labels->pTorqueLabel);
+    particle_state_preReloc.push_back(d_mpm_labels->pTorqueLabel_preReloc);
+
+    particle_state.push_back(d_mpm_labels->pOrientationLabel);
+    particle_state_preReloc.push_back(d_mpm_labels->pOrientationLabel_preReloc);
+
+    particle_state.push_back(d_mpm_labels->pRadiusLabel);
+    particle_state_preReloc.push_back(d_mpm_labels->pRadiusLabel_preReloc);
+
+    particle_state.push_back(d_mpm_labels->pInertiaTensorLabel);
+    particle_state_preReloc.push_back(d_mpm_labels->pInertiaTensorLabel_preReloc);
+  }
 
   // For scalar diffusion
   if (d_doScalarDiffusion) {

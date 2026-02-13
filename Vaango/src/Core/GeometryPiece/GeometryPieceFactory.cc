@@ -31,6 +31,7 @@
 #include <Core/GeometryPiece/CorrugEdgeGeomPiece.h>
 #include <Core/GeometryPiece/CylinderGeometryPiece.h>
 #include <Core/GeometryPiece/DifferenceGeometryPiece.h>
+#include <Core/GeometryPiece/DynamicSDFGeometry.h>
 #include <Core/GeometryPiece/EllipsoidGeometryPiece.h>
 #include <Core/GeometryPiece/FileGeometryPiece.h>
 #include <Core/GeometryPiece/GeometryPieceFactory.h>
@@ -158,6 +159,8 @@ GeometryPieceFactory::create(const ProblemSpecP& ps,
       newGeomPiece = std::make_shared<SphereGeometryPiece>(child);
     } else if (go_type == CylinderGeometryPiece::TYPE_NAME) {
       newGeomPiece = std::make_shared<CylinderGeometryPiece>(child);
+    } else if (go_type == DynamicSDFGeometry::TYPE_NAME) {
+      newGeomPiece = std::make_shared<DynamicSDFGeometry>(child, input_ups_dir);
     } else if (go_type == ConeGeometryPiece::TYPE_NAME) {
       newGeomPiece = std::make_shared<ConeGeometryPiece>(child);
     } else if (go_type == EllipsoidGeometryPiece::TYPE_NAME) {

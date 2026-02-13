@@ -137,6 +137,20 @@ public:
   const VarLabel* pCurSizeLabel;
   const VarLabel* pSizeLabel_preReloc;
 
+  // DEM labels
+  const VarLabel* pAngularVelocityLabel;
+  const VarLabel* pAngularVelocityLabel_preReloc;
+  const VarLabel* pTorqueLabel;
+  const VarLabel* pTorqueLabel_preReloc;
+  const VarLabel* pOrientationLabel;
+  const VarLabel* pOrientationLabel_preReloc;
+  const VarLabel* pRadiusLabel;
+  const VarLabel* pRadiusLabel_preReloc;
+  const VarLabel* pInertiaTensorLabel;
+  const VarLabel* pInertiaTensorLabel_preReloc;
+  const VarLabel* pRigidBodyIDLabel;
+  const VarLabel* pRigidBodyIDLabel_preReloc;
+
   const VarLabel* pFiberDirLabel;
   const VarLabel* pFiberDirLabel_preReloc;
 

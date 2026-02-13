@@ -97,6 +97,7 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
   d_createNewParticles = false;
   d_addNewMaterial     = false;
   d_withColor          = false;
+  d_enableDEM          = false;
   d_canAddMPMMaterial  = false;
 
   d_erosionAlgorithm     = "none";
@@ -298,6 +299,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   mpm_flag_ps->get("maximum_particle_velocity", d_maxVel);
 
   mpm_flag_ps->get("with_color", d_withColor);
+  mpm_flag_ps->get("enable_dem", d_enableDEM);
   mpm_flag_ps->get("do_grid_reset", d_doGridReset);
 
   mpm_flag_ps->get("artificial_damping_coeff", d_artificialDampCoeff);
@@ -538,6 +540,7 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
   ps->appendElement("use_CBDI_boundary_condition", d_useCBDI);
   ps->appendElement("use_load_curves", d_useLoadCurves);
   ps->appendElement("with_color", d_withColor);
+  ps->appendElement("enable_dem", d_enableDEM);
   ps->appendElement("AMR", d_AMR);
   ps->appendElement("use_gradient_enhanced_velocity_projection", d_GEVelProj);
   ps->appendElement("refine_particles", d_refineParticles);

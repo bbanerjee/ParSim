@@ -104,6 +104,10 @@ public:
       pErosion;
     ParticleVariable<double> pColor, pTempPrevious, p_q;
     ParticleVariable<long64> pParticleID;
+    ParticleVariable<long64> pRigidBodyID;
+    ParticleVariable<Vector> pAngularVelocity, pTorque;
+    ParticleVariable<Matrix3> pOrientation, pInertiaTensor;
+    ParticleVariable<double> pRadius;
     ParticleVariable<Vector> pFiberDir;
     ParticleVariable<int> pLoadCurveID;
     ParticleVariable<IntVector> pLoadCurveIDVector;
