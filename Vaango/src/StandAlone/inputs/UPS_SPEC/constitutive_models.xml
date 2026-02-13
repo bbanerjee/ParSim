@@ -11,6 +11,8 @@
                                       hypo_elastic_fortran, 
                                       hypo_elastic_fracture, 
                                       hypo_elastic_mms, 
+                                      small_strain_plastic,
+                                      hyperelastic_plastic,
                                       elastic_plastic_hp,
                                       ideal_gas, 
                                       membrane, 
@@ -37,6 +39,7 @@
                                       arena, 
                                       arena_mixture, 
                                       Arenisca4, 
+                                      simplified_geo_model,
                                       soil_model_brannon, 
                                       tabular_eos, 
                                       tabular_plasticity, 
@@ -106,27 +109,27 @@
     <use_modified_eos              spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>
     <use_damage                    spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>
     <use_plasticity                spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>
-    <brittle_damage_initial_threshold    spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
-    <brittle_damage_fracture_energy      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
-    <brittle_damage_constant_D           spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
-    <brittle_damage_max_damage_increment spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
-    <brittle_damage_allowRecovery        spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic "/>
-    <brittle_damage_recoveryCoeff        spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
-    <brittle_damage_printDamage          spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic "/>
-    <failure_mean                  spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
-    <failure_std                   spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/> 
-    <failure_exponent              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/> 
-    <failure_seed                  spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/> 
-    <failure_distrib               spec="OPTIONAL STRING 'constant, weibull, gauss'" need_applies_to="type hyperelastic_plastic "/> 
-    <failure_criteria              spec="OPTIONAL STRING 'max_principal_stress, max_principal_strain, mohr_coulomb" need_applies_to="type hyperelastic_plastic "/> 
-    <scaling                       spec="OPTIONAL STRING 'none, kayenta'" need_applies_to="type hyperelastic_plastic "/> 
-    <exponent                      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
-    <reference_volume              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
-    <char_time                     spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
-    <use_initial_stress            spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic "/>  
-    <initial_pressure              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
-    <friction_angle                      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
-    <tensile_cutoff_fraction_of_cohesion spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <brittle_damage_initial_threshold    spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>
+    <brittle_damage_fracture_energy      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>
+    <brittle_damage_constant_D           spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>
+    <brittle_damage_max_damage_increment spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>
+    <brittle_damage_allowRecovery        spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>
+    <brittle_damage_recoveryCoeff        spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>
+    <brittle_damage_printDamage          spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>
+    <failure_mean                  spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
+    <failure_std                   spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/> 
+    <failure_exponent              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/> 
+    <failure_seed                  spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/> 
+    <failure_distrib               spec="OPTIONAL STRING 'constant, weibull, gauss'" need_applies_to="type hyperelastic_plastic"/> 
+    <failure_criteria              spec="OPTIONAL STRING 'max_principal_stress, max_principal_strain, mohr_coulomb'" need_applies_to="type hyperelastic_plastic"/> 
+    <scaling                       spec="OPTIONAL STRING 'none, kayenta'" need_applies_to="type hyperelastic_plastic"/> 
+    <exponent                      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
+    <reference_volume              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
+    <char_time                     spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
+    <use_initial_stress            spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>  
+    <initial_pressure              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
+    <friction_angle                      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
+    <tensile_cutoff_fraction_of_cohesion spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
 
     <!-- type = p_alpha -->
     <Pe                            spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
@@ -282,16 +285,16 @@
 
     <!-- type = hypo_elastic -->
     <K      spec="REQUIRED DOUBLE 'positive'"
-              need_applies_to="type hypo_elastic hypo_elastic_fortran viscelastic_fortran program_burn murnaghanMPM"/>
+              need_applies_to="type hypo_elastic hypo_elastic_fortran viscoelastic_fortran program_burn murnaghanMPM"/>
     <G      spec="REQUIRED DOUBLE" 
-              need_applies_to="type hypo_elastic hypo_elastic_fortran viscelastic_fortran"/>
+              need_applies_to="type hypo_elastic hypo_elastic_fortran viscoelastic_fortran"/>
 
     <!-- type = comp_mooney_rivlin -->
     <he_constant_1  spec="REQUIRED DOUBLE 'positive'" need_applies_to="type comp_mooney_rivlin"/>
     <he_constant_2  spec="REQUIRED DOUBLE 'positive'" need_applies_to="type comp_mooney_rivlin"/>
     <he_PR          spec="REQUIRED DOUBLE 'positive'" need_applies_to="type comp_mooney_rivlin"/>
 
-    <!-- type = UCNH & type = JWLppMPM -->
+    <!-- type = UCNH & type = jwlpp_mpm -->
     <bulk_modulus       spec="OPTIONAL DOUBLE" 
                           need_applies_to="type visco_plastic hyperelastic_plastic trans_iso_hyper visco_trans_iso_hyper elastic_plastic_hp small_strain_plastic UCNH"/>
     <shear_modulus      spec="OPTIONAL DOUBLE" 
@@ -305,17 +308,17 @@
     <hardening_modulus  spec="OPTIONAL DOUBLE" 
                           need_applies_to="type hyperelastic_plastic UCNH"/>
     <yield_distrib      spec="OPTIONAL STRING 'constant, uniform'" 
-                          need_applies_to="type hyperelastic_plastic UCNH JWLppMPM" />
+                          need_applies_to="type hyperelastic_plastic UCNH jwlpp_mpm" />
     <yield_range        spec="OPTIONAL DOUBLE"  
-                          need_applies_to="type hyperelastic_plastic UCNH JWLppMPM"/>
+                          need_applies_to="type hyperelastic_plastic UCNH jwlpp_mpm"/>
     <yield_seed         spec="OPTIONAL INTEGER"  
-                          need_applies_to="type hyperelastic_plastic UCNH JWLppMPM"/>
+                          need_applies_to="type hyperelastic_plastic UCNH jwlpp_mpm"/>
     <useInitialStress   spec="OPTIONAL BOOLEAN" 
-                          need_applies_to="type UCNH JWLppMPM"/>
+                          need_applies_to="type UCNH jwlpp_mpm"/>
     <initial_pressure   spec="OPTIONAL DOUBLE"
-                          need_applies_to="type UCNH JWLppMPM"/>
+                          need_applies_to="type UCNH jwlpp_mpm"/>
 
-    <!-- type = JWLppMPM -->
+    <!-- type = jwlpp_mpm -->
     <ignition_pressure  spec="REQUIRED DOUBLE 'positive'" need_applies_to="type jwlpp_mpm"/>
     <murnaghan_K        spec="REQUIRED DOUBLE 'positive'" need_applies_to="type jwlpp_mpm"/>
     <murnaghan_n        spec="REQUIRED DOUBLE 'positive'" need_applies_to="type jwlpp_mpm"/>

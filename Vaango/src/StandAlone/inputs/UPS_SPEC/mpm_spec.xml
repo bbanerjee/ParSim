@@ -60,6 +60,7 @@
       <insert_particles spec="OPTIONAL BOOLEAN"/>
       <insert_particles_file spec="OPTIONAL STRING"/>
       <with_color spec="OPTIONAL BOOLEAN"/>
+      <enable_dem spec="OPTIONAL BOOLEAN"/>
       <!-- FIXME:  THE FOLLOW APPLY ONLY TO THE IMPLICIT MPM CODE -->
       <dynamic spec="OPTIONAL BOOLEAN"/>
       <solver spec="OPTIONAL STRING 'petsc, simple'"/>
@@ -218,6 +219,13 @@
         <!--295.0 -->
         <room_temp spec="OPTIONAL DOUBLE"/>
         <!--294.0 -->
+        <is_discrete spec="OPTIONAL BOOLEAN"/>
+        <is_sdf_based spec="OPTIONAL BOOLEAN"/>
+        <radius spec="OPTIONAL DOUBLE"/>
+        <kn spec="OPTIONAL DOUBLE"/>
+        <kt spec="OPTIONAL DOUBLE"/>
+        <mu spec="OPTIONAL DOUBLE"/>
+        <gamma spec="OPTIONAL DOUBLE"/>
         <do_basic_damage spec="OPTIONAL BOOLEAN"/>
         <include href="damage_models.xml"/>
         <fracture spec="OPTIONAL NO_DATA" attribute1="type REQUIRED STRING 'normal'">

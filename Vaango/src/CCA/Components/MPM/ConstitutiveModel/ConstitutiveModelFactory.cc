@@ -209,6 +209,18 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
   else if (mat_type == "comp_neo_hook_plastic")
     return std::make_unique<UCNH>(child, flags, true, false);
 
+  else if (mat_type == "hyperelastic_plastic")
+    throw ProblemSetupException(
+      "Unintegrated Material Type R (" + mat_type + ")", __FILE__, __LINE__);
+
+  else if (mat_type == "small_strain_plastic")
+    throw ProblemSetupException(
+      "Unintegrated Material Type R (" + mat_type + ")", __FILE__, __LINE__);
+
+  else if (mat_type == "simplified_geo_model")
+    throw ProblemSetupException(
+      "Unintegrated Material Type R (" + mat_type + ")", __FILE__, __LINE__);
+
   else if (mat_type == "visco_scram") {
     if (flags->d_integratorType == "explicit" ||
         flags->d_integratorType == "fracture")

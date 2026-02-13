@@ -233,6 +233,12 @@
       <axis_sequence          spec="OPTIONAL VECTOR" />
     </tri>
 
+    <dynamic_sdf              spec="OPTIONAL NO_DATA"
+                                attribute1="label    OPTIONAL STRING" >
+      <res                    spec="REQUIRED VECTOR" />
+      <tri                    spec="REQUIRED" />
+    </dynamic_sdf>
+
     <abaqus_mesh              spec="OPTIONAL NO_DATA"
                                 attribute1="label    OPTIONAL STRING"
                                 children1="ALL_OR_NONE_OF( CHILD file_name )" >
@@ -267,6 +273,7 @@
       <cylinder_shell         spec="MULTIPLE" />
       <plane_shell            spec="MULTIPLE" />
       <tri                    spec="MULTIPLE" />
+      <dynamic_sdf            spec="MULTIPLE" />
       <union                  spec="MULTIPLE" />
       <parallelepiped         spec="MULTIPLE" />
     </union>
@@ -287,6 +294,7 @@
       <cylinder_shell         spec="MULTIPLE" />
       <plane_shell            spec="MULTIPLE" />
       <tri                    spec="MULTIPLE" />
+      <dynamic_sdf            spec="MULTIPLE" />
       <union                  spec="MULTIPLE" />
       <parallelepiped         spec="MULTIPLE" />
     </difference>
@@ -306,6 +314,7 @@
       <cylinder_shell         spec="MULTIPLE" />
       <plane_shell            spec="MULTIPLE" />
       <tri                    spec="MULTIPLE" />
+      <dynamic_sdf            spec="MULTIPLE" />
       <union                  spec="MULTIPLE" />
       <parallelepiped         spec="MULTIPLE" />
     </intersection>
@@ -327,6 +336,7 @@
       <smoothcyl              spec="MULTIPLE" />
       <smooth_sphere          spec="MULTIPLE" />
       <tri                    spec="MULTIPLE" />
+      <dynamic_sdf            spec="MULTIPLE" />
       <abaqus_mesh            spec="MULTIPLE" />
       <union                  spec="MULTIPLE" />
       <parallelepiped         spec="MULTIPLE" />
