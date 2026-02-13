@@ -1537,6 +1537,10 @@ SerialMPM::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
                         this,
                         &SerialMPM::actuallyComputeStableTimestep);
 
+  if (d_mpm_flags->d_enableDEM) {
+    t->needs(Task::NewDW, d_mpm_labels->pMassLabel, Ghost::None);
+  }
+
   t->computes(d_mpm_labels->delTLabel, level.get_rep());
   sched->addTask(t, level->eachPatch(), d_materialManager->allMaterials("MPM"));
 }
@@ -1588,17 +1592,17 @@ SerialMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
       }
 
       int matID = mpm_matl->getDWIndex();
-      if (!old_dw->haveParticleSubset(matID, patch)) {
+      if (!new_dw->haveParticleSubset(matID, patch)) {
+        std::cout << "[MPM:ComputeStableTimestep] New DW does not have DEM particle subset."
+                  << " for material " << matID
+                  << std::endl;
         continue;
       }
 
-      ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
-      if (!pset) {
-        continue;
-      }
+      ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
 
       constParticleVariable<double> pMass;
-      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
+      new_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
 
       double kn = mpm_matl->getDEMNormalStiffness();
 
@@ -5821,6 +5825,9 @@ SerialMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
 
     // Add requires and computes for vel grad/def grad
     d_defGradComputer->addComputesAndRequires(t, mpm_matl, patches);
+    if (d_mpm_flags->d_enableDEM) {
+      t->needs(Task::OldDW, d_mpm_labels->pRadiusLabel, Ghost::None);
+    }
   }
 
   sched->addTask(t, patches, matls);
