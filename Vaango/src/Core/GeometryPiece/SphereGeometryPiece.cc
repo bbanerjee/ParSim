@@ -84,6 +84,20 @@ SphereGeometryPiece::inside(const Point& p) const {
     return true;
 }
 
+double
+SphereGeometryPiece::getSDF(const Point& p) const {
+  Vector diff = p - d_origin;
+  return diff.length() - d_radius;
+}
+
+Vector
+SphereGeometryPiece::getSDFGradient(const Point& p) const {
+  Vector diff = p - d_origin;
+  double len = diff.length();
+  if (len > 1.0e-12) return diff / len;
+  return Vector(0, 0, 1);
+}
+
 Box
 SphereGeometryPiece::getBoundingBox() const {
   Point lo(d_origin.x() - d_radius,

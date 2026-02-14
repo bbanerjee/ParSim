@@ -98,6 +98,7 @@ public:
   struct ParticleVars
   {
     ParticleVariable<Point> position;
+    ParticleVariable<Point> pX0;
     ParticleVariable<Vector> pDisp, pVelocity, pAcc, pExternalForce;
     ParticleVariable<Matrix3> pSize;
     ParticleVariable<double> pMass, pVolume, pTemperature, pSpecificVolume,
@@ -211,6 +212,7 @@ protected:
   checkForSurface2(const GeometryPieceP piece, const Point p, const Vector dxpp)
     -> double;
 
+  MPMMaterial* d_matl{ nullptr };
   std::unique_ptr<MPMLabel> d_mpm_labels{ nullptr };
   std::unique_ptr<AMRMPMLabel> d_amrmpm_labels{ nullptr };
   std::unique_ptr<HydroMPMLabel> d_hydrompm_labels{ nullptr };

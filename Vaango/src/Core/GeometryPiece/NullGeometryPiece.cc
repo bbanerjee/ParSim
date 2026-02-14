@@ -58,6 +58,16 @@ NullGeometryPiece::inside(const Point& /*p*/) const {
   return true;
 }
 
+double
+NullGeometryPiece::getSDF(const Point& /*p*/) const {
+  return -1.0e30;
+}
+
+Vector
+NullGeometryPiece::getSDFGradient(const Point& /*p*/) const {
+  return Vector(0, 0, 0);
+}
+
 Box
 NullGeometryPiece::getBoundingBox() const {
   return d_box;

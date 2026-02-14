@@ -110,6 +110,12 @@ class NaaBoxGeometryPiece : public GeometryPiece {
   virtual bool
   inside(const Point& pt) const;
 
+  virtual double
+  getSDF(const Point& pt) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& pt) const override;
+
   //////////
   //  Returns the bounding box surrounding the NaaBox
   virtual Box

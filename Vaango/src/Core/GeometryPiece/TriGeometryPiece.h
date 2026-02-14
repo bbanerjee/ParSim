@@ -111,6 +111,12 @@ public:
   bool
   inside(const Point& p, int& crossings, bool allDirections) const;
 
+  virtual double
+  getSDF(const Point& p) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const override;
+
   virtual Box
   getBoundingBox() const override;
 

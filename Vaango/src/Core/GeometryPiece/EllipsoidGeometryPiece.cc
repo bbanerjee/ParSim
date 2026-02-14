@@ -32,6 +32,7 @@
 #include <Core/Math/Matrix3.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 
@@ -190,6 +191,35 @@ EllipsoidGeometryPiece::inside(const Point& p) const {
     return true;
   }
   return false;
+}
+
+double
+EllipsoidGeometryPiece::getSDF(const Point& p) const {
+  Vector pTransformed = p - d_origin;
+  pTransformed = d_rotation * pTransformed;
+  double d = std::sqrt(pTransformed.x() * pTransformed.x() / (d_r1 * d_r1) +
+                       pTransformed.y() * pTransformed.y() / (d_r2 * d_r2) +
+                       pTransformed.z() * pTransformed.z() / (d_r3 * d_r3));
+  return (d - 1.0) * std::min({d_r1, d_r2, d_r3});
+}
+
+Vector
+EllipsoidGeometryPiece::getSDFGradient(const Point& pt) const {
+  // Transform to axis-aligned space
+  Vector p_rel = pt - d_origin;
+  Vector p_rot(Dot(p_rel, d_v1) / d_r1, Dot(p_rel, d_v2) / d_r2, Dot(p_rel, d_v3) / d_r3);
+  
+  // Gradient of (x^2/a^2 + y^2/b^2 + z^2/c^2 - 1) is (2x/a^2, 2y/b^2, 2z/c^2)
+  Vector grad_rot(
+    p_rot.x() / d_r1,
+    p_rot.y() / d_r2,
+    p_rot.z() / d_r3
+  );
+  
+  // Transform back to world space
+  Vector grad = d_v1 * grad_rot.x() + d_v2 * grad_rot.y() + d_v3 * grad_rot.z();
+  if (grad.length2() > 1e-12) grad.normalize();
+  return grad;
 }
 
 Box

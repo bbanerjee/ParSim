@@ -146,6 +146,25 @@ TorusGeometryPiece::inside(const Point& p) const {
   return false;
 }
 
+double
+TorusGeometryPiece::getSDF(const Point& p) const {
+  Vector pTrans = p - d_center;
+  pTrans = d_rotation * pTrans;
+  double x = pTrans.x();
+  double y = pTrans.y();
+  double z = pTrans.z();
+  
+  double r_xy = std::sqrt(x*x + y*y);
+  double dist_q_x = r_xy - d_major_radius;
+  double dist_q_y = z;
+  return std::sqrt(dist_q_x*dist_q_x + dist_q_y*dist_q_y) - d_minor_radius;
+}
+
+Vector
+TorusGeometryPiece::getSDFGradient(const Point& p) const {
+  return GeometryPiece::getSDFGradient(p);
+}
+
 Box
 TorusGeometryPiece::getBoundingBox() const {
   // This is an overly generous bounding box.

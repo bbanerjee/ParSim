@@ -86,6 +86,29 @@ UnionGeometryPiece::inside(const Point& p) const {
   return false;
 }
 
+double
+UnionGeometryPiece::getSDF(const Point& p) const {
+  double min_sdf = 1.0e30;
+  for (const auto& child : d_children) {
+    min_sdf = std::min(min_sdf, child->getSDF(p));
+  }
+  return min_sdf;
+}
+
+Vector
+UnionGeometryPiece::getSDFGradient(const Point& p) const {
+  double min_sdf = 1.0e30;
+  size_t min_idx = 0;
+  for (size_t i = 0; i < d_children.size(); ++i) {
+    double s = d_children[i]->getSDF(p);
+    if (s < min_sdf) {
+      min_sdf = s;
+      min_idx = i;
+    }
+  }
+  return d_children[min_idx]->getSDFGradient(p);
+}
+
 Box
 UnionGeometryPiece::getBoundingBox() const {
   Point lo, hi;

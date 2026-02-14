@@ -135,6 +135,50 @@ CylinderGeometryPiece::inside(const Point& p) const {
   return true;
 }
 
+double
+CylinderGeometryPiece::getSDF(const Point& p) const {
+  Vector ba = d_top - d_bottom;
+  Vector pa = p - d_bottom;
+  double l_ba = ba.length();
+  double h = Dot(pa, ba) / (l_ba * l_ba);
+  Vector rel_proj = pa - ba * h;
+  double dist_x = rel_proj.length() - d_radius;
+  double dist_z = std::abs(h - 0.5) * l_ba - 0.5 * l_ba;
+  
+  double outside_dist = Vector(std::max(dist_x, 0.0), std::max(dist_z, 0.0), 0.0).length();
+  double inside_dist = std::min(std::max(dist_x, dist_z), 0.0);
+  
+  return outside_dist + inside_dist;
+}
+
+Vector
+CylinderGeometryPiece::getSDFGradient(const Point& p) const {
+  Vector ba = d_top - d_bottom;
+  Vector pa = p - d_bottom;
+  double l_ba = ba.length();
+  double h = Dot(pa, ba) / (l_ba * l_ba);
+  Vector rel_proj = pa - ba * h;
+  double r = rel_proj.length();
+  
+  double dist_x = r - d_radius;
+  double dist_z = std::abs(h - 0.5) * l_ba - 0.5 * l_ba;
+  
+  if (std::max(dist_x, dist_z) > 0) {
+    // Outside
+    Vector grad_radial = (r > 1e-12) ? (rel_proj / r) : Vector(1, 0, 0);
+    Vector grad_axial = (h > 0.5) ? (ba / l_ba) : (-ba / l_ba);
+    Vector total_grad(0, 0, 0);
+    if (dist_x > 0) total_grad = total_grad + grad_radial * dist_x;
+    if (dist_z > 0) total_grad = total_grad + grad_axial * dist_z;
+    if (total_grad.length2() > 1e-12) total_grad.normalize();
+    return total_grad;
+  } else {
+    // Inside
+    if (dist_x > dist_z) return (r > 1e-12) ? (rel_proj / r) : Vector(1, 0, 0);
+    return (h > 0.5) ? (ba / l_ba) : (-ba / l_ba);
+  }
+}
+
 Box
 CylinderGeometryPiece::getBoundingBox() const {
   Point minBB = Min(d_bottom, d_top);

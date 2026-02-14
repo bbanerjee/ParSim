@@ -94,6 +94,12 @@ public:
   virtual bool
   inside(const Point& p) const = 0;
 
+  virtual double
+  getSDF(const Point& p) const = 0;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const;
+
   bool
   inside(const Point& p, [[maybe_unused]] bool default_val) const 
   {

@@ -95,6 +95,12 @@ public:
   virtual bool
   inside(const Point& p) const = 0;
 
+  virtual double
+  getSDF(const Point& p) const override = 0;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const override = 0;
+
   //////////////////////////////////////////////////////////////////////
   /*! Returns the bounding box surrounding the box. */
   //////////////////////////////////////////////////////////////////////

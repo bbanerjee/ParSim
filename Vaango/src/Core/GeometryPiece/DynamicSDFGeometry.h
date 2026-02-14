@@ -44,6 +44,8 @@ public:
   virtual GeometryPieceP clone() const override;
 
   virtual bool inside(const Point& p) const override;
+  virtual double getSDF(const Point& p) const override;
+  virtual Vector getSDFGradient(const Point& p) const override;
   virtual Box getBoundingBox() const override;
 
   const LocalSDF& getSDF() const { return *d_sdf; }

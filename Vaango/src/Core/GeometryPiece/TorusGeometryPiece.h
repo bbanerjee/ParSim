@@ -109,6 +109,12 @@ class TorusGeometryPiece : public GeometryPiece {
   virtual bool
   inside(const Point& p) const;
 
+  virtual double
+  getSDF(const Point& p) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const override;
+
   //////////
   // Returns the bounding box surrounding the cylinder.
   virtual Box

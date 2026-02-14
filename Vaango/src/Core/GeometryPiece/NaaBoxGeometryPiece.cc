@@ -32,6 +32,7 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Util/DebugStream.h>
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 
@@ -178,6 +179,59 @@ NaaBoxGeometryPiece::inside(const Point& pt) const {
     return true;
   else
     return false;
+}
+
+double
+NaaBoxGeometryPiece::getSDF(const Point& pt) const {
+  Vector result = d_toUnitCube * (pt - p1_);
+  
+  // result is in [0,1]^3 if inside
+  double d_x = std::max(-result.x(), result.x() - 1.0);
+  double d_y = std::max(-result.y(), result.y() - 1.0);
+  double d_z = std::max(-result.z(), result.z() - 1.0);
+  
+  // This is in unit cube space. To get real distance, we'd need to scale by 
+  // the Jacobian or plane normals. 
+  // Simplified: use max of these as a rough indicator, 
+  // then multiply by a characteristic length.
+  double max_d = std::max({d_x, d_y, d_z});
+  Vector diag = d_boundingBox.upper() - d_boundingBox.lower();
+  double volume = diag.x() * diag.y() * diag.z();
+  double scale = std::pow(volume, 1.0/3.0);
+  return max_d * scale;
+}
+
+Vector
+NaaBoxGeometryPiece::getSDFGradient(const Point& pt) const {
+  Vector result = d_toUnitCube * (pt - p1_);
+  
+  double d_x_low = -result.x();
+  double d_x_high = result.x() - 1.0;
+  double d_y_low = -result.y();
+  double d_y_high = result.y() - 1.0;
+  double d_z_low = -result.z();
+  double d_z_high = result.z() - 1.0;
+
+  double d_x = std::max(d_x_low, d_x_high);
+  double d_y = std::max(d_y_low, d_y_high);
+  double d_z = std::max(d_z_low, d_z_high);
+
+  Vector grad_unit(0, 0, 0);
+  if (d_x > d_y && d_x > d_z) {
+    grad_unit = Vector(d_x_high > d_x_low ? 1 : -1, 0, 0);
+  } else if (d_y > d_z) {
+    grad_unit = Vector(0, d_y_high > d_y_low ? 1 : -1, 0);
+  } else {
+    grad_unit = Vector(0, 0, d_z_high > d_z_low ? 1 : -1);
+  }
+
+  // Transform unit normal back to world space
+  // This is a simplification; for a general parallelepiped, 
+  // the normal is the plane normal.
+  Matrix3 inv = d_toUnitCube.Inverse();
+  Vector grad = inv * grad_unit;
+  if (grad.length2() > 1e-12) grad.normalize();
+  return grad;
 }
 
 Box

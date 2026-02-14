@@ -99,6 +99,29 @@ CylinderShellPiece::inside(const Point& p) const {
   return true;
 }
 
+double
+CylinderShellPiece::getSDF(const Point& p) const {
+  Vector ba = d_top - d_bottom;
+  Vector pa = p - d_bottom;
+  double l_ba = ba.length();
+  double h = Dot(pa, ba) / (l_ba * l_ba);
+  Vector rel_proj = pa - ba * h;
+  double r = rel_proj.length();
+  
+  double dist_r = std::abs(r - d_radius) - 0.5 * d_thickness;
+  double dist_z = std::max(-h * l_ba, (h - 1.0) * l_ba);
+  
+  double outside_dist = Vector(std::max(dist_r, 0.0), std::max(dist_z, 0.0), 0.0).length();
+  double inside_dist = std::min(std::max(dist_r, dist_z), 0.0);
+  
+  return outside_dist + inside_dist;
+}
+
+Vector
+CylinderShellPiece::getSDFGradient(const Point& p) const {
+  return GeometryPiece::getSDFGradient(p);
+}
+
 ///////////
 // Bounding box
 Box

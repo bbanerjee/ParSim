@@ -69,7 +69,9 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
+#include <Core/Geometry/BBox.h>
 #include <Core/GeometryPiece/GeometryPieceFactory.h>
+#include <Core/GeometryPiece/GeometryObject.h>
 #include <Core/GeometryPiece/LocalSDF.h>
 #include <Core/GeometryPiece/DynamicSDFGeometry.h>
 #include <Core/Grid/AMR.h>
@@ -474,12 +476,15 @@ SerialMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   t->computes(d_mpm_labels->pRefinedLabel);
 
   // DEM labels
-  t->computes(d_mpm_labels->pRigidBodyIDLabel);
-  t->computes(d_mpm_labels->pAngularVelocityLabel);
-  t->computes(d_mpm_labels->pTorqueLabel);
-  t->computes(d_mpm_labels->pOrientationLabel);
-  t->computes(d_mpm_labels->pRadiusLabel);
-  t->computes(d_mpm_labels->pInertiaTensorLabel);
+  if (d_mpm_flags->d_enableDEM) {
+    t->computes(d_mpm_labels->pX0Label);
+    t->computes(d_mpm_labels->pRigidBodyIDLabel);
+    t->computes(d_mpm_labels->pAngularVelocityLabel);
+    t->computes(d_mpm_labels->pTorqueLabel);
+    t->computes(d_mpm_labels->pOrientationLabel);
+    t->computes(d_mpm_labels->pRadiusLabel);
+    t->computes(d_mpm_labels->pInertiaTensorLabel);
+  }
 
   t->computes(d_mpm_labels->delTLabel, level.get_rep());
   t->computes(d_mpm_labels->pCellNAPIDLabel, zeroth_matl);
@@ -723,12 +728,20 @@ SerialMPM::actuallyInitialize(const ProcessorGroup*,
           pAngularVelocity[idx] = Vector(0, 0, 0);
           pTorque[idx]          = Vector(0, 0, 0);
           pOrientation[idx]     = Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
-          pRadius[idx]          = radius;
-          double I              = 0.4 * pMass[idx] * radius * radius;
-          pInertiaTensor[idx]   = Matrix3(I, 0, 0, 0, I, 0, 0, 0, I);
-          // std::cout << "Init: pInertiaTensor[" << idx << "] = " 
-          //           << pInertiaTensor[idx] << " mass = " << pMass[idx]
-          //           << " radius = " << radius << std::endl;
+          if (pMass[idx] > 0) {
+            // Master particle
+            if (pRadius[idx] == 0) {
+              pRadius[idx] = radius;
+            }
+            if (pInertiaTensor[idx].Determinant() == 0) {
+              double I = 0.4 * pMass[idx] * pRadius[idx] * pRadius[idx];
+              pInertiaTensor[idx] = Matrix3(I, 0, 0, 0, I, 0, 0, 0, I);
+            }
+          } else {
+            // Slave particle
+            pRadius[idx] = 0.0;
+            pInertiaTensor[idx] = Matrix3(0.0);
+          }
         }
       }
     } // end matls loop
@@ -1617,6 +1630,8 @@ SerialMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
     }
   }
 
+  //std::cout << "[MPM:ComputeStableTimestep] DEM delt = " << dt_dem << std::endl;
+
   const Level* level = getLevel(patches);
   new_dw->put(delt_vartype(dt_dem), d_mpm_labels->delTLabel, level);
 }
@@ -2322,6 +2337,7 @@ SerialMPM::scheduleComputeDEMForces(SchedulerP& sched,
   t->needs(Task::OldDW, d_mpm_labels->pAngularVelocityLabel, gan, num_ghost);
   t->needs(Task::OldDW, d_mpm_labels->pOrientationLabel, gan, num_ghost);
   t->needs(Task::OldDW, d_mpm_labels->pRigidBodyIDLabel, gan, num_ghost);
+  t->needs(Task::OldDW, d_mpm_labels->pX0Label, gan, num_ghost);
 
   t->computes(d_mpm_labels->pTorqueLabel_preReloc);
   t->modifies(d_mpm_labels->pExtForceLabel_preReloc);
@@ -2348,6 +2364,8 @@ SerialMPM::computeDEMForces(const ProcessorGroup*,
 
     // Fetch all particle data for all materials (including ghosts)
     std::vector<constParticleVariable<Point>> pX_all(numMPMMatls);
+    std::vector<constParticleVariable<Point>> pX0_all(numMPMMatls);
+    std::vector<constParticleVariable<double>> pMass_all(numMPMMatls);
     std::vector<constParticleVariable<double>> pRadius_all(numMPMMatls);
     std::vector<constParticleVariable<Vector>> pVelocity_all(numMPMMatls);
     std::vector<constParticleVariable<Vector>> pAngVel_all(numMPMMatls);
@@ -2371,6 +2389,8 @@ SerialMPM::computeDEMForces(const ProcessorGroup*,
         matID, patch, gan, num_ghost, d_mpm_labels->pXLabel);
       if (psets_all[m]) {
         old_dw->get(pX_all[m], d_mpm_labels->pXLabel, psets_all[m]);
+        old_dw->get(pX0_all[m], d_mpm_labels->pX0Label, psets_all[m]);
+        old_dw->get(pMass_all[m], d_mpm_labels->pMassLabel, psets_all[m]);
         old_dw->get(pRadius_all[m], d_mpm_labels->pRadiusLabel, psets_all[m]);
         old_dw->get(
           pVelocity_all[m], d_mpm_labels->pVelocityLabel, psets_all[m]);
@@ -2406,7 +2426,6 @@ SerialMPM::computeDEMForces(const ProcessorGroup*,
       }
       MPMMaterial* matl_i =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m_i));
-      const DynamicSDFGeometry* sdfGeom_i = matl_i->getSDFGeometry();
 
       for (int m_j = m_i; m_j < numMPMMatls; m_j++) {
         if (!psets_all[m_j]) {
@@ -2414,7 +2433,6 @@ SerialMPM::computeDEMForces(const ProcessorGroup*,
         }
         MPMMaterial* matl_j =
           static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m_j));
-        const DynamicSDFGeometry* sdfGeom_j = matl_j->getSDFGeometry();
 
         // Effective contact parameters
         double kn    = 0.5 * (matl_i->getDEMNormalStiffness() +
@@ -2459,76 +2477,112 @@ SerialMPM::computeDEMForces(const ProcessorGroup*,
             Vector arm_j(0, 0, 0);
             bool collision = false;
 
-            if (matl_i->isSDFBased() && sdfGeom_i) {
-              // SDF (i) vs Particle (j)
-              const LocalSDF& sdf = sdfGeom_i->getSDF();
-              Point pos_j         = pX_all[m_j][idx_j];
-              Point localP_j      = sdf.worldToLocal(pos_j, pos_i, orient_i);
+            if (matl_i->isDiscrete() && pMass_all[m_i][idx_i] > 0) {
+              // Rigid body i vs Particle j
+              long64 rbID_i = pRigidBodyID_all[m_i][idx_i];
+              int objIdx_i = (int)(rbID_i & 0xFFFFFFFF);
+              const GeometryObject* obj_i = matl_i->getGeometryObject(objIdx_i);
+              
+              if (obj_i) {
+                const GeometryPieceP piece_i = obj_i->getPiece();
+                Point pos0_i = pX0_all[m_i][idx_i]; 
+                
+                Point pos_j = pX_all[m_j][idx_j];
+                double rad_j = pRadius_all[m_j][idx_j];
+                
+                // Transform pos_j to local space of piece_i
+                Matrix3 rotT = orient_i.Transpose();
+                Point localP_j = pos0_i + rotT * (pos_j - pos_i);
+                
+                double phi = piece_i->getSDF(localP_j);
+                // Contact if distance to surface is less than radius of j
+                if (phi < rad_j) {
+                   double overlap = rad_j - phi;
+                   Vector localGrad = piece_i->getSDFGradient(localP_j);
+                   Vector worldGrad = orient_i * localGrad;
+                   
+                   // arm_j is relative to body j center if j is discrete
+                   // but piece_i->getSDF treats j as a sphere of radius rad_j
+                   // so the contact point is at pos_j - worldGrad * rad_j
+                   Vector contact_p = pos_j.asVector() - worldGrad * rad_j;
+                   arm_i = contact_p - pos_i.asVector();
+                   arm_j = contact_p - pos_j.asVector();
 
-              if (sdf.getBoundingBox().contains(localP_j)) {
-                double phi = sdf.getDistance(localP_j);
-                if (phi < 0) {
-                  Vector localGrad = sdf.getGradient(localP_j);
-                  Vector worldGrad = sdf.localToWorld(localGrad, orient_i);
-                  totalForce       = worldGrad * (kn * (-phi));
-                  arm_i            = pos_j - pos_i;
-                  arm_j            = Vector(0, 0, 0); // Particle j is a point
-                  collision        = true;
+                   // Velocities at contact
+                   Vector omega_j = pAngVel_all[m_j][idx_j];
+                   Vector v_contact_i = vel_i + Cross(omega_i, arm_i);
+                   Vector v_contact_j = pVelocity_all[m_j][idx_j] + Cross(omega_j, arm_j);
+                   Vector v_rel = v_contact_j - v_contact_i;
+
+                   double v_rel_n = Dot(v_rel, worldGrad);
+                   double f_n_mag = kn * overlap - gamma * v_rel_n;
+                   if (f_n_mag < 0) f_n_mag = 0;
+                   
+                   Vector force_n = worldGrad * (-f_n_mag);
+
+                   // Tangential force (friction)
+                   Vector v_rel_t = v_rel - worldGrad * v_rel_n;
+                   Vector force_t = v_rel_t * kt * overlap;
+                   double ft_mag  = force_t.length();
+                   if (ft_mag > mu * f_n_mag) {
+                     force_t = force_t * (mu * f_n_mag / ft_mag);
+                   }
+
+                   totalForce = force_n + force_t;
+                   collision = true;
                 }
               }
-            } else if (matl_j->isSDFBased() && sdfGeom_j) {
-              // SDF (j) vs Particle (i)
-              const LocalSDF& sdf = sdfGeom_j->getSDF();
-              Point localP_i      = sdf.worldToLocal(
-                pos_i, pX_all[m_j][idx_j], pOrientation_all[m_j][idx_j]);
+            } else if (matl_j->isDiscrete() && pMass_all[m_j][idx_j] > 0) {
+               // Rigid body j vs Particle i
+               // (This case handled by symmetry if both are discrete, 
+               // but needed if only j is discrete and i is continuum)
+               long64 rbID_j = pRigidBodyID_all[m_j][idx_j];
+               int objIdx_j = (int)(rbID_j & 0xFFFFFFFF);
+               const GeometryObject* obj_j = matl_j->getGeometryObject(objIdx_j);
+               
+               if (obj_j) {
+                 const GeometryPieceP piece_j = obj_j->getPiece();
+                 Point pos0_j = pX0_all[m_j][idx_j];
+                 Point pos_j = pX_all[m_j][idx_j];
+                 Matrix3 orient_j = pOrientation_all[m_j][idx_j];
+                 
+                 // Transform pos_i to local space of piece_j
+                 Matrix3 rotT = orient_j.Transpose();
+                 Point localP_i = pos0_j + rotT * (pos_i - pos_j);
+                 
+                 double phi = piece_j->getSDF(localP_i);
+                 if (phi < rad_i) {
+                    double overlap = rad_i - phi;
+                    Vector localGrad = piece_j->getSDFGradient(localP_i);
+                    Vector worldGrad = orient_j * localGrad;
+                    
+                    Vector contact_p = pos_i.asVector() - worldGrad * rad_i;
+                    arm_j = contact_p - pos_j.asVector();
+                    arm_i = contact_p - pos_i.asVector();
 
-              if (sdf.getBoundingBox().contains(localP_i)) {
-                double phi = sdf.getDistance(localP_i);
-                if (phi < 0) {
-                  Vector localGrad = sdf.getGradient(localP_i);
-                  Vector worldGrad = sdf.localToWorld(
-                    localGrad, pOrientation_all[m_j][idx_j]);
-                  totalForce = worldGrad * (kn * phi); // Force on i is repulsive
-                  arm_i      = Vector(0, 0, 0);        // Particle i is a point
-                  arm_j      = pos_i - pX_all[m_j][idx_j];
-                  collision  = true;
-                }
-              }
-            } else if (matl_i->isDiscrete() || matl_j->isDiscrete()) {
-              // Spherical DEM contact
-              Vector relPos = pX_all[m_j][idx_j] - pos_i;
-              double distSq = relPos.length2();
-              double radSum = rad_i + pRadius_all[m_j][idx_j];
+                    Vector omega_j = pAngVel_all[m_j][idx_j];
+                    Vector v_contact_i = vel_i + Cross(omega_i, arm_i);
+                    Vector v_contact_j = pVelocity_all[m_j][idx_j] + Cross(omega_j, arm_j);
+                    Vector v_rel = v_contact_j - v_contact_i;
 
-              if (distSq < radSum * radSum) {
-                double dist    = std::sqrt(distSq);
-                Vector normal  = relPos / dist;
-                double overlap = radSum - dist;
+                    double v_rel_n = Dot(v_rel, worldGrad);
+                    double f_n_mag = kn * overlap - gamma * v_rel_n;
+                    if (f_n_mag < 0) f_n_mag = 0;
+                    
+                    // Force on i is in opposite direction of gradient of piece_j
+                    Vector force_n = worldGrad * (-f_n_mag); 
 
-                arm_i = normal * rad_i;
-                arm_j = normal * (-pRadius_all[m_j][idx_j]);
-                Vector v_contact_i = vel_i + Cross(omega_i, arm_i);
-                Vector v_contact_j = pVelocity_all[m_j][idx_j] +
-                                     Cross(pAngVel_all[m_j][idx_j], arm_j);
-                Vector v_rel = v_contact_j - v_contact_i;
+                    Vector v_rel_t = v_rel - worldGrad * v_rel_n;
+                    Vector force_t = v_rel_t * kt * overlap;
+                    double ft_mag  = force_t.length();
+                    if (ft_mag > mu * f_n_mag) {
+                      force_t = force_t * (mu * f_n_mag / ft_mag);
+                    }
 
-                double v_rel_n = Dot(v_rel, normal);
-                double f_n_mag = kn * overlap + gamma * v_rel_n;
-                if (f_n_mag < 0) {
-                  f_n_mag = 0;
-                }
-                Vector force_n = normal * (-f_n_mag);
-
-                Vector v_rel_t = v_rel - normal * v_rel_n;
-                Vector force_t = v_rel_t * kt * overlap;
-                double ft_mag  = force_t.length();
-                if (ft_mag > mu * f_n_mag) {
-                  force_t = force_t * (mu * f_n_mag / ft_mag);
-                }
-
-                totalForce = force_n + force_t;
-                collision  = true;
-              }
+                    totalForce = force_n + force_t;
+                    collision = true;
+                 }
+               }
             }
 
             if (collision) {
@@ -2631,22 +2685,35 @@ SerialMPM::integrateDEMRotation(const ProcessorGroup*,
       if (mpm_matl->getParticleRadius() > 0.0) {
         for (auto idx : *pset) {
           // Angular velocity update: omega_new = omega_old + I^-1 * torque * dt
-          //std::cout << "pInertiaTensor[" << idx << "] = " << pInertiaTensor[idx] << std::endl;
-          Matrix3 invI = pInertiaTensor[idx].Inverse();
-          Vector angAcc = invI * pTorque[idx];
-          pAngularVelocity_new[idx] = pAngularVelocity[idx] + angAcc * delT;
+          // std::cout << "pInertiaTensor[" << idx << "] = " << pInertiaTensor[idx]
+          //           << std::endl;
+          if (pInertiaTensor[idx].Determinant() > 0.0) {
+            Matrix3 invI              = pInertiaTensor[idx].Inverse();
+            Vector angAcc             = invI * pTorque[idx];
+            pAngularVelocity_new[idx] = pAngularVelocity[idx] + angAcc * delT;
 
-          // Orientation update (simplified for now, should use quaternions or
-          // exponential map)
-          // dR/dt = skew(omega) * R
-          Matrix3 omegaSkew(0.0, -pAngularVelocity[idx].z(),  pAngularVelocity[idx].y(),
-                            pAngularVelocity[idx].z(), 0.0, -pAngularVelocity[idx].x(),
-                          -pAngularVelocity[idx].y(),  pAngularVelocity[idx].x(), 0.0);
-          pOrientation_new[idx] = pOrientation[idx] + (omegaSkew * pOrientation[idx]) * delT;
+            // Orientation update (simplified for now, should use quaternions or
+            // exponential map)
+            // dR/dt = skew(omega) * R
+            Matrix3 omegaSkew(0.0,
+                              -pAngularVelocity[idx].z(),
+                              pAngularVelocity[idx].y(),
+                              pAngularVelocity[idx].z(),
+                              0.0,
+                              -pAngularVelocity[idx].x(),
+                              -pAngularVelocity[idx].y(),
+                              pAngularVelocity[idx].x(),
+                              0.0);
+            pOrientation_new[idx] =
+              pOrientation[idx] + (omegaSkew * pOrientation[idx]) * delT;
+          } else {
+            pAngularVelocity_new[idx] = pAngularVelocity[idx];
+            pOrientation_new[idx]     = pOrientation[idx];
+          }
 
           // Inertia tensor and radius are carried forward for now
           pInertiaTensor_new[idx] = pInertiaTensor[idx];
-          pRadius_new[idx] = pRadius[idx];
+          pRadius_new[idx]        = pRadius[idx];
         }
       } else {
         for (auto idx : *pset) {
@@ -2956,6 +3023,8 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
       // loop over all particles in the patch:
       for (int idx : *pset) {
+
+        if (pMass[idx] <= 0.0) continue;
 
         // std::cout << std::format("pidx = {}, volume = {}\n", idx, pVolume[idx]);
         interpolator->findCellAndWeights(
@@ -5233,6 +5302,10 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   }
   t->needs(Task::OldDW, d_mpm_labels->pDispLabel, gnone);
   t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, gnone);
+  if (d_mpm_flags->d_enableDEM) {
+    t->needs(Task::OldDW, d_mpm_labels->pRadiusLabel, gnone);
+    t->needs(Task::OldDW, d_mpm_labels->pX0Label, gnone);
+  }
   t->needs(Task::NewDW, d_mpm_labels->pdTdtLabel_preReloc, gnone);
   t->needs(Task::NewDW, d_mpm_labels->pLocalizedMPMLabel, gnone);
   t->needs(Task::NewDW, d_mpm_labels->pDefGradLabel_preReloc, gnone);
@@ -5252,6 +5325,9 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->computes(d_mpm_labels->pVelocityLabel_preReloc);
   t->computes(d_mpm_labels->pAccelerationLabel_preReloc);
   t->computes(d_mpm_labels->pXLabel_preReloc);
+  if (d_mpm_flags->d_enableDEM) {
+    t->computes(d_mpm_labels->pX0Label_preReloc);
+  }
   t->computes(d_mpm_labels->pParticleIDLabel_preReloc);
   t->computes(d_mpm_labels->pTemperatureLabel_preReloc);
   t->computes(d_mpm_labels->pTempPreviousLabel_preReloc); // for thermal stress
@@ -5345,8 +5421,15 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     Vector totalMom(0.0, 0.0, 0.0);
     double ke       = 0;
     int numMPMMatls = d_materialManager->getNumMaterials("MPM");
+    const Level* level = getLevel(patches);
     delt_vartype delT;
-    old_dw->get(delT, d_mpm_labels->delTLabel, getLevel(patches));
+    old_dw->get(delT, d_mpm_labels->delTLabel, level);
+
+    BBox domain;
+    level->getSpatialRange(domain);
+    Point domain_low  = domain.min();
+    Point domain_high = domain.max();
+
     // bool combustion_problem=false;
 
     // Material* reactant;
@@ -5369,6 +5452,9 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     new_dw->allocateAndPut(
       NC_CCweight_new, d_mpm_labels->NC_CCweightLabel, 0, patch);
     NC_CCweight_new.copyData(NC_CCweight);
+
+    std::vector<Patch::FaceType> bf;
+    patch->getBoundaryFaces(bf);
 
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
@@ -5414,6 +5500,11 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       old_dw->get(pVelocity, d_mpm_labels->pVelocityLabel, pset);
       old_dw->get(pDisp, d_mpm_labels->pDispLabel, pset);
 
+      constParticleVariable<double> pRadius;
+      if (d_mpm_flags->d_enableDEM) {
+        old_dw->get(pRadius, d_mpm_labels->pRadiusLabel, pset);
+      }
+
       constParticleVariable<Vector> pVelocityXPIC;
       if (d_mpm_flags->d_useXPIC) {
         new_dw->get(pVelocityXPIC, d_mpm_labels->pVelocityXPICLabel, pset);
@@ -5433,8 +5524,14 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->allocateAndPut(
         pTempPrev_new, d_mpm_labels->pTempPreviousLabel_preReloc, pset);
 
-      ParticleVariable<Point> pX_new, pXx;
+      ParticleVariable<Point> pX_new, pX0_new, pXx;
       new_dw->allocateAndPut(pX_new, d_mpm_labels->pXLabel_preReloc, pset);
+      if (d_mpm_flags->d_enableDEM) {
+        constParticleVariable<Point> pX0;
+        old_dw->get(pX0, d_mpm_labels->pX0Label, pset);
+        new_dw->allocateAndPut(pX0_new, d_mpm_labels->pX0Label_preReloc, pset);
+        pX0_new.copyData(pX0);
+      }
       new_dw->allocateAndPut(pXx, d_mpm_labels->pXXLabel, pset);
 
       ParticleVariable<Vector> pVelocity_new, pDisp_new, pAcc_new;
@@ -5583,6 +5680,80 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           pVelocity_new[idx] = pVelocity[idx] + acceleration * delT;
         }
 
+        // Explicit boundary enforcement for discrete particles
+        // In quasi-2D simulations, the domain thickness in one dimension (e.g., Y)
+        // might be much smaller than the physical radius of a discrete object.
+        // We only enforce symmetry boundary corrections if the domain is thick
+        // enough to contain at least one full particle diameter. Otherwise,
+        // the correction would push the particle outside the opposite boundary.
+        if (d_mpm_flags->d_enableDEM && mpm_matl->isDiscrete() && pMass[idx] > 0) {
+          double radius = pRadius[idx];
+          for (auto face : bf) {
+            if (patch->haveBC(face, matID, "symmetry", "Symmetric")) {
+              if (face == Patch::xminus &&
+                  (domain_high.x() - domain_low.x() > 2.0 * radius) &&
+                  pX_new[idx].x() - radius < domain_low.x()) {
+                pVelocity_new[idx] =
+                  Vector(0, pVelocity_new[idx].y(), pVelocity_new[idx].z());
+                pX_new[idx] = Point(domain_low.x() + radius,
+                                    pX_new[idx].y(),
+                                    pX_new[idx].z());
+                pDisp_new[idx] = pX_new[idx] - pX[idx];
+              }
+              if (face == Patch::xplus &&
+                  (domain_high.x() - domain_low.x() > 2.0 * radius) &&
+                  pX_new[idx].x() + radius > domain_high.x()) {
+                pVelocity_new[idx] =
+                  Vector(0, pVelocity_new[idx].y(), pVelocity_new[idx].z());
+                pX_new[idx] = Point(domain_high.x() - radius,
+                                    pX_new[idx].y(),
+                                    pX_new[idx].z());
+                pDisp_new[idx] = pX_new[idx] - pX[idx];
+              }
+              if (face == Patch::yminus &&
+                  (domain_high.y() - domain_low.y() > 2.0 * radius) &&
+                  pX_new[idx].y() - radius < domain_low.y()) {
+                pVelocity_new[idx] =
+                  Vector(pVelocity_new[idx].x(), 0, pVelocity_new[idx].z());
+                pX_new[idx] = Point(pX_new[idx].x(),
+                                    domain_low.y() + radius,
+                                    pX_new[idx].z());
+                pDisp_new[idx] = pX_new[idx] - pX[idx];
+              }
+              if (face == Patch::yplus &&
+                  (domain_high.y() - domain_low.y() > 2.0 * radius) &&
+                  pX_new[idx].y() + radius > domain_high.y()) {
+                pVelocity_new[idx] =
+                  Vector(pVelocity_new[idx].x(), 0, pVelocity_new[idx].z());
+                pX_new[idx] = Point(pX_new[idx].x(),
+                                    domain_high.y() - radius,
+                                    pX_new[idx].z());
+                pDisp_new[idx] = pX_new[idx] - pX[idx];
+              }
+              if (face == Patch::zminus &&
+                  (domain_high.z() - domain_low.z() > 2.0 * radius) &&
+                  pX_new[idx].z() - radius < domain_low.z()) {
+                pVelocity_new[idx] =
+                  Vector(pVelocity_new[idx].x(), pVelocity_new[idx].y(), 0);
+                pX_new[idx] = Point(pX_new[idx].x(),
+                                    pX_new[idx].y(),
+                                    domain_low.z() + radius);
+                pDisp_new[idx] = pX_new[idx] - pX[idx];
+              }
+              if (face == Patch::zplus &&
+                  (domain_high.z() - domain_low.z() > 2.0 * radius) &&
+                  pX_new[idx].z() + radius > domain_high.z()) {
+                pVelocity_new[idx] =
+                  Vector(pVelocity_new[idx].x(), pVelocity_new[idx].y(), 0);
+                pX_new[idx] = Point(pX_new[idx].x(),
+                                    pX_new[idx].y(),
+                                    domain_high.z() - radius);
+                pDisp_new[idx] = pX_new[idx] - pX[idx];
+              }
+            }
+          }
+        }
+
         pAcc_new[idx] = acceleration;
 
 #ifdef CHECK_ISFINITE
@@ -5697,10 +5868,16 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
         */
 
-        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass) ||
+        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass && !mpm_matl->isDiscrete()) ||
             (pTemp_new[idx] < 0.0) || (pLocalized_new[idx] == -999)) {
           if (d_mpm_flags->d_erosionAlgorithm != "none") {
             delset->addParticle(idx);
+          }
+          if (mpm_matl->isDiscrete()) {
+             std::cout << "  DEBUG: DELETING discrete particle ID: " << pParticleID[idx]
+                       << " in interpolateToParticlesAndUpdate"
+                       << " mass: " << pMass_new[idx] << " temp: " << pTemp_new[idx]
+                       << " localized: " << pLocalized_new[idx] << std::endl;
           }
           proc0cout
             << "\n Warning: particle " << pParticleID[idx]
@@ -5728,6 +5905,10 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           if (d_mpm_flags->d_deleteRogueParticles) {
             if (d_mpm_flags->d_erosionAlgorithm != "none") {
               delset->addParticle(idx);
+            }
+            if (mpm_matl->isDiscrete()) {
+               std::cout << "  DEBUG: DELETING discrete particle ID: " << pParticleID[idx]
+                         << " hit speed ceiling. Vel: " << pVelocity_new[idx].length() << std::endl;
             }
             std::cout << "\n Warning: particle " << pParticleID[idx]
                       << " hit speed ceiling #1. Deleting particle."
@@ -6626,10 +6807,7 @@ SerialMPM::finalParticleUpdate(const ProcessorGroup*,
       for (auto idx : *pset) {
         pTemp_new[idx] += pdTdt[idx] * delT;
 
-        // Delete particles whose mass is too small (due to combustion),
-        // whose pLocalized flag has been set to -999 or who have a negative
-        // temperature
-        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass) ||
+        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass && !mpm_matl->isDiscrete()) ||
             pTemp_new[idx] < 0. || (pLocalized[idx] == -999)) {
           if (d_mpm_flags->d_erosionAlgorithm != "none") {
             delset->addParticle(idx);
@@ -7183,12 +7361,15 @@ SerialMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
   t->computes(d_mpm_labels->pSizeLabel);
 
   // DEM labels
-  t->computes(d_mpm_labels->pRigidBodyIDLabel);
-  t->computes(d_mpm_labels->pAngularVelocityLabel);
-  t->computes(d_mpm_labels->pTorqueLabel);
-  t->computes(d_mpm_labels->pOrientationLabel);
-  t->computes(d_mpm_labels->pRadiusLabel);
-  t->computes(d_mpm_labels->pInertiaTensorLabel);
+  if (d_mpm_flags->d_enableDEM) {
+    t->computes(d_mpm_labels->pX0Label);
+    t->computes(d_mpm_labels->pRigidBodyIDLabel);
+    t->computes(d_mpm_labels->pAngularVelocityLabel);
+    t->computes(d_mpm_labels->pTorqueLabel);
+    t->computes(d_mpm_labels->pOrientationLabel);
+    t->computes(d_mpm_labels->pRadiusLabel);
+    t->computes(d_mpm_labels->pInertiaTensorLabel);
+  }
 
   t->computes(d_mpm_labels->NC_CCweightLabel);
   t->computes(d_mpm_labels->delTLabel, getLevel(patches));
@@ -7316,20 +7497,25 @@ SerialMPM::refine(const ProcessorGroup*,
         new_dw->allocateAndPut(pDisp, d_mpm_labels->pDispLabel, pset);
 
         // DEM labels
+        ParticleVariable<Point> pX0;
         ParticleVariable<long64> pRigidBodyID;
         ParticleVariable<Vector> pAngularVelocity, pTorque;
         ParticleVariable<Matrix3> pOrientation, pInertiaTensor;
         ParticleVariable<double> pRadius;
-        new_dw->allocateAndPut(
-          pRigidBodyID, d_mpm_labels->pRigidBodyIDLabel, pset);
-        new_dw->allocateAndPut(
-          pAngularVelocity, d_mpm_labels->pAngularVelocityLabel, pset);
-        new_dw->allocateAndPut(pTorque, d_mpm_labels->pTorqueLabel, pset);
-        new_dw->allocateAndPut(
-          pOrientation, d_mpm_labels->pOrientationLabel, pset);
-        new_dw->allocateAndPut(pRadius, d_mpm_labels->pRadiusLabel, pset);
-        new_dw->allocateAndPut(
-          pInertiaTensor, d_mpm_labels->pInertiaTensorLabel, pset);
+        if (d_mpm_flags->d_enableDEM) {
+          new_dw->allocateAndPut(pX0, d_mpm_labels->pX0Label, pset);
+          pX0.copyData(pX);
+          new_dw->allocateAndPut(
+            pRigidBodyID, d_mpm_labels->pRigidBodyIDLabel, pset);
+          new_dw->allocateAndPut(
+            pAngularVelocity, d_mpm_labels->pAngularVelocityLabel, pset);
+          new_dw->allocateAndPut(pTorque, d_mpm_labels->pTorqueLabel, pset);
+          new_dw->allocateAndPut(
+            pOrientation, d_mpm_labels->pOrientationLabel, pset);
+          new_dw->allocateAndPut(pRadius, d_mpm_labels->pRadiusLabel, pset);
+          new_dw->allocateAndPut(
+            pInertiaTensor, d_mpm_labels->pInertiaTensorLabel, pset);
+        }
 
         if (d_mpm_flags->d_useLoadCurves) {
           new_dw->allocateAndPut(

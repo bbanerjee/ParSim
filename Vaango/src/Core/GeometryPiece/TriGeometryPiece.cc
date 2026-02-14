@@ -367,6 +367,26 @@ TriGeometryPiece::getBoundingBox() const
   return d_box;
 }
 
+double
+TriGeometryPiece::getSDF(const Point& p) const {
+  // Rough estimate using rays if we don't have a fast distance query
+  int cross = 0;
+  double min_dist = 1.0e10;
+  
+  // Cast a ray towards a point far away to get some distance estimate
+  Point p_away = p + Vector(1.0e6, 1.0e6, 1.0e6);
+  d_grid->countIntersections(p, p_away, cross, min_dist);
+  
+  bool is_inside = inside(p);
+  return is_inside ? -min_dist : min_dist;
+}
+
+Vector
+TriGeometryPiece::getSDFGradient(const Point& p) const
+{
+  return GeometryPiece::getSDFGradient(p);
+}
+
 void
 TriGeometryPiece::readPoints(const string& file)
 {

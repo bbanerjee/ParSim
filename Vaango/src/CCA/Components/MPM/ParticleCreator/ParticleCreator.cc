@@ -55,6 +55,9 @@
 #include <Core/GeometryPiece/GeometryObject.h>
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/GeometryPiece/DynamicSDFGeometry.h>
+#include <Core/GeometryPiece/SphereGeometryPiece.h>
+#include <Core/GeometryPiece/BoxGeometryPiece.h>
+#include <Core/GeometryPiece/CylinderGeometryPiece.h>
 
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Patch.h>
@@ -69,6 +72,7 @@ namespace Uintah {
 
 ParticleCreator::ParticleCreator(MPMMaterial* matl, MPMFlags* flags)
 {
+  d_matl                 = matl;
   d_mpm_labels          = std::make_unique<MPMLabel>();
   d_amrmpm_labels       = std::make_unique<AMRMPMLabel>();
   d_hydrompm_labels     = std::make_unique<HydroMPMLabel>();
@@ -169,9 +173,15 @@ ParticleCreator::createParticles(MPMMaterial* matl,
                 << std::endl;
     }
 
+    Vector eps(1e-10, 1e-10, 1e-10);
     for (const auto& point : obj_vars.points.at(obj_ptr)) {
       IntVector cell_idx;
-      if (!patch->findCell(point, cell_idx) || !patch->containsPoint(point)) {
+      if (!patch->findCell(point, cell_idx)) {
+        if (!patch->findCell(point - eps, cell_idx)) {
+          continue;
+        }
+      }
+      if (!patch->containsPoint(point) && !patch->containsPoint(point - eps)) {
         continue;
       }
 
@@ -394,6 +404,7 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
     pvars.pParticleID, d_mpm_labels->pParticleIDLabel, subset);
 
   if (d_flags->d_enableDEM) {
+    new_dw->allocateAndPut(pvars.pX0, d_mpm_labels->pX0Label, subset);
     new_dw->allocateAndPut(
       pvars.pRigidBodyID, d_mpm_labels->pRigidBodyIDLabel, subset);
     new_dw->allocateAndPut(
@@ -642,6 +653,12 @@ ParticleCreator::initializeParticle(const Patch* patch,
                                        d_flags,
                                        i);
   } else {
+    if (std::isnan(p.x()) || std::isnan(p.y()) || std::isnan(p.z())) {
+      std::ostringstream err;
+      err << "**ERROR** Particle created with NaN position: " << p << "\n"
+          << "  Geometry Object index: " << matl->getGeometryObjectIndex(obj) << "\n";
+      throw InternalError(err.str(), __FILE__, __LINE__);
+    }
     pvars.position[i] = p;
     if (d_flags->d_axisymmetric) {
       // assume unit radian extent in the circumferential direction
@@ -713,6 +730,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
   pvars.pSurface[i]    = checkForSurface2(piece, p, dxpp);
 
   if (d_flags->d_enableDEM) {
+    pvars.pX0[i] = p;
     // Rigid Body ID
     int objIdx = matl->getGeometryObjectIndex(obj);
     long64 rbID =
@@ -723,20 +741,56 @@ ParticleCreator::initializeParticle(const Patch* patch,
     pvars.pAngularVelocity[i] = Vector(0, 0, 0);
     pvars.pTorque[i]          = Vector(0, 0, 0);
     pvars.pOrientation[i]     = Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
-    pvars.pRadius[i]          = matl->getParticleRadius();
-    double I = 0.4 * pvars.pMass[i] * pvars.pRadius[i] * pvars.pRadius[i];
-    pvars.pInertiaTensor[i] = Matrix3(I, 0, 0, 0, I, 0, 0, 0, I);
+    pvars.pRadius[i] = matl->getParticleRadius();
 
-    // For SDF geometry, check if Master or Slave
-    auto* sdf_piece = dynamic_cast<DynamicSDFGeometry*>(piece.get());
-    if (sdf_piece) {
-      Box box      = sdf_piece->getBoundingBox();
+    // For discrete material, check if Master or Slave
+    if (d_matl->isDiscrete()) {
+      Box box      = piece->getBoundingBox();
       Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
-      if ((p - center).length2() > 1.0e-12) {
+      double distSq = (p - center).length2();
+      if (distSq > 1.0e-6) {
         // Slave particle (corner)
-        pvars.pMass[i] = 0.0;
+        pvars.pMass[i]   = 0.0;
+        pvars.pVolume[i] = 0.0;
+        pvars.pRadius[i] = 0.0;
+      } else {
+        // Master particle: use total volume of geometry piece if available
+        double vol = 0;
+        if (auto* sphere = dynamic_cast<SphereGeometryPiece*>(piece.get())) {
+          vol              = sphere->volume();
+          pvars.pRadius[i] = sphere->radius();
+        } else if (auto* box_piece =
+                     dynamic_cast<BoxGeometryPiece*>(piece.get())) {
+          vol              = box_piece->volume();
+          pvars.pRadius[i] = 0.5 * box_piece->smallestSide();
+        } else if (auto* cyl =
+                     dynamic_cast<CylinderGeometryPiece*>(piece.get())) {
+          vol              = cyl->volume();
+          pvars.pRadius[i] = cyl->radius();
+        } else if (auto* sdf =
+                     dynamic_cast<DynamicSDFGeometry*>(piece.get())) {
+          Box b = sdf->getBoundingBox();
+          Vector diag = b.upper() - b.lower();
+          vol = diag.x() * diag.y() * diag.z();
+          pvars.pRadius[i] = 0.5 * std::min({diag.x(), diag.y(), diag.z()});
+        } else {
+          // Fallback for other geometry pieces
+          Box b = piece->getBoundingBox();
+          Vector diag = b.upper() - b.lower();
+          vol = diag.x() * diag.y() * diag.z();
+          if (pvars.pRadius[i] == 0) {
+            pvars.pRadius[i] = matl->getParticleRadius();
+          }
+        }
+        if (vol > 0) {
+          pvars.pVolume[i] = vol;
+          pvars.pMass[i]   = matl->getInitialDensity() * vol;
+        }
       }
     }
+
+    double I = 0.4 * pvars.pMass[i] * pvars.pRadius[i] * pvars.pRadius[i];
+    pvars.pInertiaTensor[i] = Matrix3(I, 0, 0, 0, I, 0, 0, 0, I);
   }
 
   // Cell ids
@@ -780,24 +834,30 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
   auto area_pair  = std::make_pair("p.area", obj);
   auto size_pair  = std::make_pair("p.size", obj);
 
-  // If the piece is a DynamicSDFGeometry, we want exactly one particle
-  // at the center of the object.
-  auto* sdf_piece = dynamic_cast<DynamicSDFGeometry*>(piece.get());
-  if (sdf_piece) {
-    Box box      = sdf_piece->getBoundingBox();
+  // If the material is discrete, we want exactly one master particle
+  // at the center of the object and several slave particles as geometric proxies.
+  if (d_matl->isDiscrete()) {
+    Box box      = piece->getBoundingBox();
     Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
-    
+
+    Vector eps(1e-10, 1e-10, 1e-10);
+
     // Master particle at center
-    if (patch->containsPoint(center)) {
-      obj_vars.points[obj].push_back(center);
+    Point m_center = center;
+    if (!patch->containsPoint(m_center)) {
+      if (patch->containsPoint(m_center - eps)) {
+        m_center = m_center - eps * 0.1;
+      } else if (patch->containsPoint(m_center + eps)) {
+        m_center = m_center + eps * 0.1;
+      }
     }
 
-    // Slave particles at corners
-    // We add them if they are in the patch.
-    // Note: This simple check implies that if a corner is in another patch,
-    // it will be created by THAT patch's ParticleCreator.
-    // However, DynamicSDFGeometry is global.
-    // So every patch sees the same box.
+    if (patch->containsPoint(m_center)) {
+      obj_vars.points[obj].push_back(m_center);
+    }
+
+    // Slave particles at corners (Geometric Proxies)
+    // These ensure the object is visible to neighbor patches.
     Point corners[8];
     corners[0] = box.lower();
     corners[1] = Point(box.upper().x(), box.lower().y(), box.lower().z());
@@ -809,8 +869,26 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
     corners[7] = Point(box.lower().x(), box.upper().y(), box.upper().z());
 
     for (int k = 0; k < 8; ++k) {
-      if (patch->containsPoint(corners[k])) {
-        obj_vars.points[obj].push_back(corners[k]);
+      Point p = corners[k];
+      Vector to_center = center - p;
+      if (to_center.length() > 1e-9) {
+        to_center.normalize();
+        p = p + to_center * 1e-9;
+      }
+
+      if (patch->containsPoint(p) || 
+          patch->containsPoint(p - eps)) {
+        // Ensure uniqueness (important for 2D where corners overlap)
+        bool exists = false;
+        for (const auto& existing_p : obj_vars.points[obj]) {
+          if ((existing_p - p).length2() < 1.0e-16) {
+            exists = true;
+            break;
+          }
+        }
+        if (!exists) {
+          obj_vars.points[obj].push_back(p);
+        }
       }
     }
 
@@ -1029,8 +1107,10 @@ ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
   particle_state.push_back(d_mpm_labels->pSurfLabel);
   particle_state_preReloc.push_back(d_mpm_labels->pSurfLabel_preReloc);
 
-  // For DEM
   if (d_flags->d_enableDEM) {
+    particle_state.push_back(d_mpm_labels->pX0Label);
+    particle_state_preReloc.push_back(d_mpm_labels->pX0Label_preReloc);
+
     particle_state.push_back(d_mpm_labels->pRigidBodyIDLabel);
     particle_state_preReloc.push_back(d_mpm_labels->pRigidBodyIDLabel_preReloc);
 

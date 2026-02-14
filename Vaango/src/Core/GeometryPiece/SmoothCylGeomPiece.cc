@@ -154,7 +154,7 @@ SmoothCylGeomPiece::inside(const Point& p) const {
   double z            = pTransformed.z();
 
   // a) Check is the point is outside the solid composite cylinder
-  if (z < d_capThick || z > d_height + d_capThick) {
+  if (z < -d_capThick || z > d_height + d_capThick) {
     return false;
   }
   double r_sq = x * x + y * y;
@@ -169,6 +169,39 @@ SmoothCylGeomPiece::inside(const Point& p) const {
   }
 
   return true;
+}
+
+double
+SmoothCylGeomPiece::getSDF(const Point& p) const {
+  Vector pTransformed = p - d_bottom;
+  pTransformed = d_rotation.Transpose() * pTransformed;
+  double x = pTransformed.x();
+  double y = pTransformed.y();
+  double z = pTransformed.z();
+  
+  double r = std::sqrt(x*x + y*y);
+  double dist_r = r - d_radius;
+  double dist_z = std::max(-d_capThick - z, z - (d_height + d_capThick));
+  
+  double outside_dist = Vector(std::max(dist_r, 0.0), std::max(dist_z, 0.0), 0.0).length();
+  double inside_dist = std::min(std::max(dist_r, dist_z), 0.0);
+  double sdf_solid = outside_dist + inside_dist;
+  
+  if (d_thickness < d_radius) {
+    double innerRad = d_radius - d_thickness;
+    double dist_r_inner = innerRad - r;
+    // For hollow cylinders, we take the max of solid cylinder SDF and the negative of inner cylinder SDF
+    // But we also need to consider the end caps.
+    // Simplified:
+    return std::max(sdf_solid, dist_r_inner);
+  }
+  
+  return sdf_solid;
+}
+
+Vector
+SmoothCylGeomPiece::getSDFGradient(const Point& p) const {
+  return GeometryPiece::getSDFGradient(p);
 }
 
 /////////////////////////////////////////////////////////////////////////////

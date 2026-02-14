@@ -129,6 +129,15 @@ public:
   getGeometryObjectIndex(const GeometryObject* obj) const -> int;
 
   [[nodiscard]] auto
+  getGeometryObject(int index) const -> const GeometryObject*
+  {
+    if (index >= 0 && index < static_cast<int>(d_geom_objs.size())) {
+      return d_geom_objs[index].get();
+    }
+    return nullptr;
+  }
+
+  [[nodiscard]] auto
   getInitialDensity() const -> double;
 
   // Get the specific heats at room temperature

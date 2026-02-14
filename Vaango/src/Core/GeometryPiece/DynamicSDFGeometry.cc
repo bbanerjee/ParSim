@@ -59,6 +59,10 @@ DynamicSDFGeometry::DynamicSDFGeometry(ProblemSpecP& ps,
   Box box = d_mesh->getBoundingBox();
   // Pad the box slightly to ensure SDF is defined outside
   Vector pad = (box.upper() - box.lower()) * 0.1;
+  // Ensure pad has some minimum thickness to avoid degenerate boxes in 2D
+  if (pad.x() < 1e-6) pad.x(1e-6);
+  if (pad.y() < 1e-6) pad.y(1e-6);
+  if (pad.z() < 1e-6) pad.z(1e-6);
   Box paddedBox(box.lower() - pad, box.upper() + pad);
 
   d_sdf = std::make_unique<LocalSDF>(paddedBox, d_res);
@@ -118,6 +122,14 @@ DynamicSDFGeometry::DynamicSDFGeometry(ProblemSpecP& ps,
 
 bool DynamicSDFGeometry::inside(const Point& p) const {
   return d_sdf->getDistance(p) < 0;
+}
+
+double DynamicSDFGeometry::getSDF(const Point& p) const {
+  return d_sdf->getDistance(p);
+}
+
+Vector DynamicSDFGeometry::getSDFGradient(const Point& p) const {
+  return d_sdf->getGradient(p);
 }
 
 Box DynamicSDFGeometry::getBoundingBox() const {

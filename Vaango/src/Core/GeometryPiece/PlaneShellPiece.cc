@@ -99,6 +99,25 @@ PlaneShellPiece::inside(const Point& p) const {
   return true;
 }
 
+double
+PlaneShellPiece::getSDF(const Point& p) const {
+  Vector pa = p - d_center;
+  double dist_normal = Dot(pa, d_normal);
+  Vector p_proj = pa - d_normal * dist_normal;
+  double dist_radial = p_proj.length() - d_radius;
+  double dist_axial = std::abs(dist_normal) - 0.5 * d_thickness;
+  
+  double outside_dist = Vector(std::max(dist_radial, 0.0), std::max(dist_axial, 0.0), 0.0).length();
+  double inside_dist = std::min(std::max(dist_radial, dist_axial), 0.0);
+  
+  return outside_dist + inside_dist;
+}
+
+Vector
+PlaneShellPiece::getSDFGradient(const Point& p) const {
+  return GeometryPiece::getSDFGradient(p);
+}
+
 //////////
 /*! Find the bounding box for the cylinder */
 Box

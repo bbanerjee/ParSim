@@ -519,12 +519,20 @@ DeformationGradientComputer::computeDeformationGradientExplicit(
   double J = 1.0;
   for (auto particle : *pset) {
 
-    // std::cout << "particle = " << particle
-    //           << " px = " << px[particle]
-    //           << " pSize = " << pSize[particle] << "\n";
     // Initialize variables
-    Matrix3 defGrad_new(0.0); defGrad_new.Identity();
-    Matrix3 defGrad_inc(0.0); defGrad_inc.Identity();
+    pDefGrad_new[particle]  = pDefGrad_old[particle];
+    pVelGrad_new[particle]  = Zero;
+    pDispGrad_new[particle] = Zero;
+    pVolume_new[particle]   = pMass[particle] / rho_orig;
+
+    if (!(pMass[particle] > 0.0)) {
+      continue;
+    }
+
+    Matrix3 defGrad_new(0.0);
+    defGrad_new.Identity();
+    Matrix3 defGrad_inc(0.0);
+    defGrad_inc.Identity();
 
     if (flag->d_doGridReset) {
       // Compute velocity gradient
@@ -882,6 +890,14 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
     new_dw->get(dispNew, lb->dispNewLabel, dwi, patch, gac, 1);
 
     for (auto particle : *pset) {
+      pVolume_new[particle]   = pVolume_old[particle];
+      pDefGrad_new[particle]  = pDefGrad_old[particle];
+      pVelGrad_new[particle]  = Zero;
+      pDispGrad_new[particle] = Zero;
+
+      if (!(pMass[particle] > 0.0)) {
+        continue;
+      }
 
       // Compute incremental displacement gradient
       DisplacementGradientComputer gradComp(flag);
@@ -932,6 +948,14 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
     new_dw->get(gDisp, lb->gDisplacementLabel, dwi, patch, gac, 1);
 
     for (auto particle : *pset) {
+      pVolume_new[particle]   = pVolume_old[particle];
+      pDefGrad_new[particle]  = pDefGrad_old[particle];
+      pVelGrad_new[particle]  = Zero;
+      pDispGrad_new[particle] = Zero;
+
+      if (!(pMass[particle] > 0.0)) {
+        continue;
+      }
 
       // Compute total displacement gradient
       DisplacementGradientComputer gradComp(flag);
@@ -1139,6 +1163,14 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
     constNCVariable<Vector> gDisp;
     old_dw->get(gDisp, lb->dispNewLabel, dwi, patch, gac, 1);
     for (auto particle : *pset) {
+      pVolume_new[particle]   = pVolume_old[particle];
+      pDefGrad_new[particle]  = pDefGrad_old[particle];
+      pVelGrad_new[particle]  = Zero;
+      pDispGrad_new[particle] = Zero;
+
+      if (!(pMass[particle] > 0.0)) {
+        continue;
+      }
 
       // Compute incremental displacement gradient
       DisplacementGradientComputer gradComp(flag);
@@ -1184,6 +1216,14 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
     constNCVariable<Vector> gDisp;
     old_dw->get(gDisp, lb->gDisplacementLabel, dwi, patch, gac, 1);
     for (auto particle : *pset) {
+      pVolume_new[particle]   = pVolume_old[particle];
+      pDefGrad_new[particle]  = pDefGrad_old[particle];
+      pVelGrad_new[particle]  = Zero;
+      pDispGrad_new[particle] = Zero;
+
+      if (!(pMass[particle] > 0.0)) {
+        continue;
+      }
 
       // Compute total displacement gradient
       DisplacementGradientComputer gradComp(flag);

@@ -111,6 +111,32 @@ SmoothSphereGeomPiece::inside(const Point& pt) const
   return false;
 }
 
+double
+SmoothSphereGeomPiece::getSDF(const Point& p) const {
+  Vector vec = p - d_center;
+  double dist = vec.length();
+  double sdf_outer = dist - d_outerRadius;
+  if (d_innerRadius > 0) {
+    double sdf_inner = d_innerRadius - dist;
+    return std::max(sdf_outer, sdf_inner);
+  }
+  return sdf_outer;
+}
+
+Vector
+SmoothSphereGeomPiece::getSDFGradient(const Point& p) const {
+  Vector vec = p - d_center;
+  double dist = vec.length();
+  if (dist < 1e-12) return Vector(0, 0, 1);
+  Vector grad = vec / dist;
+  if (d_innerRadius > 0) {
+    double sdf_outer = dist - d_outerRadius;
+    double sdf_inner = d_innerRadius - dist;
+    if (sdf_inner > sdf_outer) return -grad;
+  }
+  return grad;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 /*! Find the bounding box for the _sphere */
 /////////////////////////////////////////////////////////////////////////////

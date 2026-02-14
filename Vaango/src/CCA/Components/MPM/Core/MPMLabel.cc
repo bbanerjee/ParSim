@@ -195,6 +195,9 @@ MPMLabel::MPMLabel()
                              IntVector(0, 0, 0),
                              VarLabel::VarType::PositionVariable);
 
+  pX0Label = VarLabel::create("p.x0",
+                              ParticleVariable<Point>::getTypeDescription());
+
   pTemperatureLabel = VarLabel::create(
     "p.temperature", ParticleVariable<double>::getTypeDescription());
 
@@ -307,6 +310,9 @@ MPMLabel::MPMLabel()
                      ParticleVariable<Point>::getTypeDescription(),
                      IntVector(0, 0, 0),
                      VarLabel::VarType::PositionVariable);
+
+  pX0Label_preReloc =
+    VarLabel::create("p.x0+", ParticleVariable<Point>::getTypeDescription());
 
   pTemperatureLabel_preReloc = VarLabel::create(
     "p.temperature+", ParticleVariable<double>::getTypeDescription());
@@ -844,7 +850,9 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pBodyForceAccLabel_preReloc);
   VarLabel::destroy(pExtForceLabel_preReloc);
   VarLabel::destroy(pXLabel);
+  VarLabel::destroy(pX0Label);
   VarLabel::destroy(pXLabel_preReloc);
+  VarLabel::destroy(pX0Label_preReloc);
   VarLabel::destroy(pTemperatureLabel);
   VarLabel::destroy(pTemperatureLabel_preReloc);
   VarLabel::destroy(pTempPreviousLabel);          // for thermal stress

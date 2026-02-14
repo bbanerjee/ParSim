@@ -313,3 +313,29 @@ To maintain compatibility with standard MPM simulations and avoid task graph com
 ### Benefits:
 - **Zero Overhead**: Standard MPM simulations do not allocate memory for or communicate DEM-specific data.
 - **Robustness**: Fixes the "Failed to find comp for dep" error in the `Scheduler` by ensuring that only variables being produced by active tasks are requested for relocation.
+
+---
+
+## 14. Robust Discrete Object Handling and Stability
+
+Recent refinements ensure that the Slave Particles approach is robust against Vaango's internal stability mechanisms and numerical edge cases.
+
+### 1. Particle Deletion Protection
+Vaango typically deletes particles whose mass falls below a threshold (`d_minPartMass`) or whose temperature becomes unphysical. Since Slave particles are designed to have zero mass, they would normally be deleted.
+- **Fix**: Modified `SerialMPM.cc` to exempt materials flagged with `isDiscrete()` from mass-based deletion.
+- **Benefit**: Ensures that Slave particles persist as geometric proxies throughout the simulation, regardless of their mass.
+
+### 2. Isolated Grid Contributions
+To prevent zero-mass particles from interfering with the continuum phase calculations:
+- **Change**: Updated `interpolateParticlesToGrid` to skip any particle with $m \le 0$.
+- **Result**: Slave particles do not contribute to grid mass, volume, or momentum, while the Master particle (carrying the total object mass) provides the correct physical coupling.
+
+### 3. Singular Inertia Handling
+Numerical errors can occur if rotation integration is attempted on particles with zero mass or radius (resulting in a singular inertia matrix).
+- **Fix**: Added a determinant check in `integrateDEMRotation`. Integration is only performed if $\det(\mathbf{I}) > 0$.
+- **Fallback**: Slave particles skip rotation integration (as they are geometrically tied to the Master), preventing $NaN$ propagation.
+
+### 4. Geometry-Aware Initialization
+- **Cylinders/Spheres**: `ParticleCreator` now inherits the actual radius from the `GeometryPiece` rather than relying on global material defaults.
+- **Boxes**: A representative radius is calculated as $0.5 \times \text{smallestSide}$.
+- **Ordering**: Mass, volume, and radius are fully initialized *before* the inertia tensor is calculated, ensuring consistency.

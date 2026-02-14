@@ -96,6 +96,12 @@ class CylinderShellPiece : public ShellGeometryPiece {
   virtual bool
   inside(const Point& p) const;
 
+  virtual double
+  getSDF(const Point& p) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const override;
+
   //////////////////////////////////////////////////////////////////////
   /*! \brief Returns the bounding box surrounding the box. */
   //////////////////////////////////////////////////////////////////////

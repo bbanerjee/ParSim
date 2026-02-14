@@ -117,7 +117,9 @@ public:
   const VarLabel* pExtForceCorner3Label_preReloc;
   const VarLabel* pExtForceCorner4Label_preReloc;
   const VarLabel* pXLabel;
+  const VarLabel* pX0Label;
   const VarLabel* pXLabel_preReloc;
+  const VarLabel* pX0Label_preReloc;
   const VarLabel* pSurfLabel;
   const VarLabel* pSurfLabel_preReloc;
   const VarLabel* pTemperatureLabel;               // for heat conduction
