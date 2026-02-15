@@ -339,3 +339,33 @@ Numerical errors can occur if rotation integration is attempted on particles wit
 - **Cylinders/Spheres**: `ParticleCreator` now inherits the actual radius from the `GeometryPiece` rather than relying on global material defaults.
 - **Boxes**: A representative radius is calculated as $0.5 \times \text{smallestSide}$.
 - **Ordering**: Mass, volume, and radius are fully initialized *before* the inertia tensor is calculated, ensuring consistency.
+
+---
+
+## 15. Distributed Contact Model and Refined Collision Detection (February 2026)
+
+To resolve issues where large rigid bodies (DEM) only interacted with continuum particles at a single point, the contact logic and supporting math libraries were significantly updated.
+
+### 1. Distributed Contact Logic in `SerialMPM`
+The original "centroid-to-particle" contact model was replaced with a **Distributed Contact Model**:
+- **Mechanism**: For every continuum particle $i$, the code now identifies the **closest** discrete surface particle $j$ belonging to a rigid body.
+- **Surface Reaction Forces**: Reaction forces are applied directly to the surface particle $j$ rather than being concentrated at the rigid body's master particle (centroid).
+- **Physical Consistency**: While forces are applied at the surface to ensure correct momentum transfer at the grid level, they are also aggregated (along with torques) at the **Master particle** to drive the rigid body's global translation and rotation.
+- **Visualization**: This change ensures that UDA outputs for `p.externalforce` correctly show a distributed interaction across the entire contact surface.
+
+### 2. Direction-Dependent Effective Radius
+Continuum particles in MPM are typically treated as points in DEM contexts. To ensure contact is detected the moment a particle's volume overlaps with a DEM surface:
+- **Calculation**: An effective radius $R_{\text{eff}}$ is calculated based on the particle's size vectors ($\mathbf{V}_1, \mathbf{V}_2, \mathbf{V}_3$) from `p.size` and the contact normal $\mathbf{n}$:
+  $$R_{\text{eff}} = 0.5 \times (|\mathbf{V}_1 \cdot \mathbf{n}| + |\mathbf{V}_2 \cdot \mathbf{n}| + |\mathbf{V}_3 \cdot \mathbf{n}|)$$
+- **Impact**: This allows for accurate contact detection for non-spherical grid-aligned particles, resolving gaps between the "point" centers and the actual continuum surface.
+
+### 3. Math Library Extensions (`Matrix3`)
+To support the $R_{\text{eff}}$ calculation, the `Matrix3` class was extended:
+- **New Method**: `getColumn(int j)` was implemented as an inline method in `Matrix3.h`.
+- **Functionality**: Returns a `Vector` representing the $j$-th column of the matrix, enabling efficient access to the particle's basis vectors stored in the `p.size` tensor.
+
+### 4. Observability and Debugging
+- **`DEM` DebugStream**: A new `DebugStream` named `DEM` was added to `SerialMPM.cc`.
+- **Activation**: Users can enable detailed per-particle collision reports (including `phi`, `overlap`, and `totalForce`) by setting the environment variable `SCI_DEBUG="DEM:+"`.
+- **Task Requirements**: `scheduleComputeDEMForces` was updated to explicitly require `p.size` to support the new radius logic.
+
