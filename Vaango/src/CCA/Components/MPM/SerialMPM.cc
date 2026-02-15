@@ -1581,7 +1581,7 @@ SerialMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (!mpm_matl || !mpm_matl->isDiscrete()) {
+      if (!mpm_matl || (!mpm_matl->isDiscrete() && !mpm_matl->getIsRigid())) {
         continue;
       }
       double kn = mpm_matl->getDEMNormalStiffness();
@@ -1601,7 +1601,7 @@ SerialMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (!mpm_matl || !mpm_matl->isDiscrete()) {
+      if (!mpm_matl || (!mpm_matl->isDiscrete() && !mpm_matl->getIsRigid())) {
         continue;
       }
 
@@ -2718,9 +2718,9 @@ SerialMPM::integrateDEMRotation(const ProcessorGroup*,
       };
       std::map<long64, RotationState> master_rotations;
 
-      if (mpm_matl->isDiscrete()) {
+      if (mpm_matl->isDiscrete() || mpm_matl->getIsRigid()) {
         for (auto idx : *pset) {
-          if (pMass[idx] > 0.0 && pInertiaTensor[idx].Determinant() > 0.0) {
+          if (pRadius[idx] > 0.0 && pInertiaTensor[idx].Determinant() > 0.0) {
             Matrix3 invI              = pInertiaTensor[idx].Inverse();
             Vector angAcc             = invI * pTorque[idx];
             pAngularVelocity_new[idx] = pAngularVelocity[idx] + angAcc * delT;
@@ -2746,9 +2746,9 @@ SerialMPM::integrateDEMRotation(const ProcessorGroup*,
           pRadius_new[idx]        = pRadius[idx];
         }
 
-        // Second pass: Update dummy particles
+        // Second pass: Update dummy/slave particles
         for (auto idx : *pset) {
-          if (pMass[idx] <= 0.0) {
+          if (pRadius[idx] <= 0.0) {
             long64 rbID = pRigidBodyID[idx];
             if (master_rotations.count(rbID)) {
               pAngularVelocity_new[idx] = master_rotations[rbID].omega;
@@ -4636,41 +4636,90 @@ SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
       gAcceleration.initialize(Vector(0., 0., 0.));
       double damp_coef = d_mpm_flags->d_artificialDampCoeff;
 
-      for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
-           iter++) {
-        IntVector c = *iter;
-
-        Vector acc(0., 0., 0.);
-        if (gMass[c] > d_mpm_flags->d_minMassForAcceleration) {
-          acc =
-            (gInternalForce[c] + gExternalForce[c] + gBodyForce[c]) / gMass[c];
-          acc -= damp_coef * gVelocity[c];
+      if (mpm_matl->getIsRigid()) {
+        Vector total_force(0, 0, 0);
+        double total_mass = 0;
+        for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+          IntVector c = *iter;
+          if (gMass[c] > d_mpm_flags->d_minMassForAcceleration) {
+            total_force += gInternalForce[c] + gExternalForce[c] + gBodyForce[c];
+            total_mass += gMass[c];
+          }
         }
-        // gAcceleration[c] = acc +  gravity;
-        gAcceleration[c]  = acc;
-        gVelocity_star[c] = gVelocity[c] + gAcceleration[c] * delT;
+
+        Vector rigid_acc(0, 0, 0);
+        if (total_mass > 0) {
+          rigid_acc = total_force / total_mass;
+        }
+
+        for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+          IntVector c = *iter;
+          Vector acc(0., 0., 0.);
+          if (gMass[c] > d_mpm_flags->d_minMassForAcceleration) {
+            acc = rigid_acc - damp_coef * gVelocity[c];
+          }
+          gAcceleration[c]  = acc;
+          gVelocity_star[c] = gVelocity[c] + gAcceleration[c] * delT;
 // std::cout << "After acceleration: material = " << m << " node = " << c
 //           << " gMass = " << gMass[c]
 //           << " gAcceleration = " << gAcceleration[c] << "\n";
 #ifdef CHECK_ISFINITE
-        if (!std::isfinite(gAcceleration[c].x()) ||
-            !std::isfinite(gAcceleration[c].y()) ||
-            !std::isfinite(gAcceleration[c].z())) {
-          std::cout << " node = " << c << " f_i = " << gInternalForce[c]
-                    << " f_e = " << gExternalForce[c]
-                    << " f_b = " << gBodyForce[c] << " m = " << gMass[c]
-                    << " v = " << gVelocity[c] << "\n";
-        }
+          if (!std::isfinite(gAcceleration[c].x()) ||
+              !std::isfinite(gAcceleration[c].y()) ||
+              !std::isfinite(gAcceleration[c].z())) {
+            std::cout << " node = " << c << " f_i = " << gInternalForce[c]
+                      << " f_e = " << gExternalForce[c]
+                      << " f_b = " << gBodyForce[c] << " m = " << gMass[c]
+                      << " v = " << gVelocity[c] << "\n";
+          }
 #endif
 #ifdef DEBUG_WITH_PARTICLE_ID
-        IntVector node(3, 38, 0);
-        if (c == node) {
-          proc0cout << "Node = " << node << " fint_g = " << gInternalForce[node]
-                    << " fext_g = " << gExternalForce[node]
-                    << " fbod_g = " << gBodyForce[node]
-                    << " acc = " << gAcceleration[node] << "\n";
-        }
+          IntVector node(3, 38, 0);
+          if (c == node) {
+            proc0cout << "Node = " << node << " fint_g = " << gInternalForce[node]
+                      << " fext_g = " << gExternalForce[node]
+                      << " fbod_g = " << gBodyForce[node]
+                      << " acc = " << gAcceleration[node] << "\n";
+          }
 #endif
+        }
+      } else {
+        for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
+             iter++) {
+          IntVector c = *iter;
+
+          Vector acc(0., 0., 0.);
+          if (gMass[c] > d_mpm_flags->d_minMassForAcceleration) {
+            acc =
+              (gInternalForce[c] + gExternalForce[c] + gBodyForce[c]) / gMass[c];
+            acc -= damp_coef * gVelocity[c];
+          }
+          // gAcceleration[c] = acc +  gravity;
+          gAcceleration[c]  = acc;
+          gVelocity_star[c] = gVelocity[c] + gAcceleration[c] * delT;
+// std::cout << "After acceleration: material = " << m << " node = " << c
+//           << " gMass = " << gMass[c]
+//           << " gAcceleration = " << gAcceleration[c] << "\n";
+#ifdef CHECK_ISFINITE
+          if (!std::isfinite(gAcceleration[c].x()) ||
+              !std::isfinite(gAcceleration[c].y()) ||
+              !std::isfinite(gAcceleration[c].z())) {
+            std::cout << " node = " << c << " f_i = " << gInternalForce[c]
+                      << " f_e = " << gExternalForce[c]
+                      << " f_b = " << gBodyForce[c] << " m = " << gMass[c]
+                      << " v = " << gVelocity[c] << "\n";
+          }
+#endif
+#ifdef DEBUG_WITH_PARTICLE_ID
+          IntVector node(3, 38, 0);
+          if (c == node) {
+            proc0cout << "Node = " << node << " fint_g = " << gInternalForce[node]
+                      << " fext_g = " << gExternalForce[node]
+                      << " fbod_g = " << gBodyForce[node]
+                      << " acc = " << gAcceleration[node] << "\n";
+          }
+#endif
+        }
       }
     } // matls
   }
@@ -5736,8 +5785,8 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           pVelocity_new[idx] = pVelocity[idx] + acceleration * delT;
         }
 
-        // Collect master particle states for discrete materials
-        if (d_mpm_flags->d_enableDEM && mpm_matl->isDiscrete() && pMass[idx] > 0) {
+        // Collect master particle states for discrete or rigid materials
+        if (d_mpm_flags->d_enableDEM && (mpm_matl->isDiscrete() || mpm_matl->getIsRigid()) && pRadius[idx] > 0) {
           master_states[pRigidBodyID[idx]] = {pX_new[idx], pX[idx], pVelocity_new[idx], pAngularVelocity[idx]};
         }
 
@@ -5867,10 +5916,11 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
       } // End loop over particles
 
-      // Synchronize dummy particles with master particle for discrete materials
-      if (d_mpm_flags->d_enableDEM && mpm_matl->isDiscrete()) {
+      // Synchronize dummy particles with master particle for discrete or rigid materials
+      if (d_mpm_flags->d_enableDEM && (mpm_matl->isDiscrete() || mpm_matl->getIsRigid())) {
         for (auto idx : *pset) {
-          if (pMass[idx] <= 0) {
+          // If it's a dummy particle (discrete only) OR any particle in a rigid material (except the master)
+          if ((mpm_matl->isDiscrete() && pMass[idx] <= 0) || (mpm_matl->getIsRigid() && pRadius[idx] <= 0)) {
             long64 rbID = pRigidBodyID[idx];
             if (master_states.count(rbID)) {
               const auto& master = master_states[rbID];
@@ -5879,18 +5929,14 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
               
               if (master.omega.length2() > 1e-12) {
                  // Predict new position with explicit rotation
-                 pVelocity_new[idx] = master.vel + Cross(master.omega, arm);
                  Vector arm_new = arm + Cross(master.omega, arm) * delT;
                  
                  // Corrector: Enforce rigid body distance constraint
-                 // Normalize arm_new to the original arm length to prevent spiral drift
                  if (arm_new.length() > 1e-12) {
                     arm_new = arm_new * (arm_len / arm_new.length());
                  }
                  
                  pX_new[idx] = master.pos + arm_new;
-                 
-                 // Recalculate velocity to be consistent with the corrected position
                  pVelocity_new[idx] = (pX_new[idx] - pX[idx]) / delT;
               } else {
                  pX_new[idx] = master.pos + arm;

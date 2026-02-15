@@ -150,6 +150,9 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
   // be put to use in the explicit code as well.
   d_is_rigid = false;
   ps->get("is_rigid", d_is_rigid);
+  if (ps->findBlockWithAttributeValue("constitutive_model", "type", "rigid")) {
+    d_is_rigid = true;
+  }
 
   d_includeFlowWork = false;
   ps->get("includeFlowWork", d_includeFlowWork);

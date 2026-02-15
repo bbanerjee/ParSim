@@ -789,6 +789,21 @@ ParticleCreator::initializeParticle(const Patch* patch,
       }
     }
 
+    if (d_matl->getIsRigid()) {
+      // For rigid materials, all particles carry mass normally
+      // But we still track the master at center for global kinematics
+      // We already assigned mass above in standard initialization,
+      // just ensure radius is set for the master.
+      Box box      = piece->getBoundingBox();
+      Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
+      double distSq = (p - center).length2();
+      if (distSq < 1.0e-9) {
+        pvars.pRadius[i] = matl->getParticleRadius();
+      } else {
+        pvars.pRadius[i] = 0.0;
+      }
+    }
+
     double I = 0.4 * pvars.pMass[i] * pvars.pRadius[i] * pvars.pRadius[i];
     pvars.pInertiaTensor[i] = Matrix3(I, 0, 0, 0, I, 0, 0, 0, I);
   }
@@ -962,6 +977,28 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
       }
     }
 
+    return static_cast<particleIndex>(obj_vars.points[obj].size());
+  }
+
+  // If the material is rigid, we discretize normally but also add a master particle at center
+  if (d_matl->getIsRigid()) {
+    createPoints(patch, obj, obj_vars);
+    
+    Box box      = piece->getBoundingBox();
+    Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
+    if (patch->containsPoint(center)) {
+      // Check if center is already there
+      bool exists = false;
+      for (const auto& existing_p : obj_vars.points[obj]) {
+        if ((existing_p - center).length2() < 1.0e-16) {
+          exists = true;
+          break;
+        }
+      }
+      if (!exists) {
+        obj_vars.points[obj].push_back(center);
+      }
+    }
     return static_cast<particleIndex>(obj_vars.points[obj].size());
   }
 

@@ -392,21 +392,26 @@ To maintain physical accuracy, the `computeDEMForces` task was modified to expli
 
 ---
 
-## 17. Refinements and Bug Fixes (February 2026)
+## 18. Distinct Treatment of Rigid Materials (February 2026)
 
-Several critical issues were identified and resolved to ensure the physical validity and visual stability of hybrid DEM-MPM simulations.
+To align with the physical requirements of rigid-body MPM, the implementation was updated to distinguish between `is_discrete` and `is_rigid` materials.
 
-### 1. Correction of Rotational Drift
-- **Issue**: Explicit Euler integration of dummy particle rotation caused them to spiral outward over time, as the linear update $\mathbf{r}_{new} = \mathbf{r} + (\boldsymbol{\omega} \times \mathbf{r})dt$ increases the vector's magnitude at every step.
-- **Fix**: Implemented a **Rigid Body Constraint Corrector**. After the rotational update, the relative position vector is normalized and rescaled to its original length.
-- **Result**: Dummy particles now remain strictly on the object surface, providing a stable visual representation.
+### 1. Rigid Material Discretization
+- **Logic**: Materials flagged as `is_rigid` are discretized using the standard grid-based approach (multiple particles per cell).
+- **Master Reference**: A single master particle is maintained at the centroid to hold global kinematics, but all particles carry mass.
 
-### 2. Resolution of Unphysical Expansion (Repulsion Fix)
-- **Issue**: MPM particles were being attracted into DEM objects instead of repelled, and the simulation showed limited surface interaction.
-- **Fix (Force Sign)**: Corrected the signs for normal and damping forces in the Particle-to-Rigid collision case.
-- **Fix (Loop Structure)**: Implemented a unique-body mapping in the contact loop. This ensures that every continuum particle interacts with each rigid body exactly once, preventing overcounting while maintaining distributed surface awareness.
-- **Fix (Grid Interaction)**: Ensured that reaction forces are applied only to the **Master particle** (with mass) of the DEM body. Applying forces to massless slave/dummy particles was causing net force cancellation at the grid nodes, preventing the continuum material from resisting penetration.
-- **Result**: MPM materials now correctly compress and distort under DEM interaction, with momentum transfer occurring naturally through the grid.
+### 2. Grid-Based Contact
+- **MPM Rules**: Rigid materials are excluded from pairwise DEM contact checks. They interact via standard MPM grid-based contact (specified, penalty, or friction contact).
+- **Rigid Enforcement**: Particle velocities are updated from the grid normally and then "rigidified" by projecting them onto the translation/rotation of the body's centroid.
+
+### 3. Discrete vs. Rigid Summary
+| Feature | Discrete Material (`is_discrete`) | Rigid Material (`is_rigid`) |
+| :--- | :--- | :--- |
+| **Discretization** | 1 Master + N Surface Slaves | Full MPM Grid Discretization |
+| **Contact Model** | Pairwise DEM (Spring-Dashpot) | Standard MPM (Grid-Based) |
+| **Mass Handling** | Only Master carries mass | All particles carry mass |
+| **Internal Force** | N/A | Zero (handled by CM) |
+| **Kinematics** | Driven by pairwise forces | Driven by grid-contact forces |
 
 
 
