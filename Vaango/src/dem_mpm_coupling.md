@@ -413,5 +413,46 @@ To align with the physical requirements of rigid-body MPM, the implementation wa
 | **Internal Force** | N/A | Zero (handled by CM) |
 | **Kinematics** | Driven by pairwise forces | Driven by grid-contact forces |
 
+---
+
+## 19. Integration of Rigid-Standard MPM Contact (February 2026)
+
+To correctly handle contact between rigid MPM tools and standard MPM materials, the force extraction and kinematic enforcement were refined.
+
+### 1. Contact Force Extraction
+- **Logic**: In `interpolateToParticlesAndUpdate`, the total external force (including contact) is now explicitly calculated for all particles:
+  $$\mathbf{f}_{ext}^{total} = m \frac{\mathbf{v}_{new} - \mathbf{v}_{old}}{\Delta t} - \mathbf{f}_{body}$$
+- **Visualization**: This value is stored in `p.externalforce`, ensuring that UDA outputs show the correct interaction forces during both DEM and MPM-style contacts.
+- **Consistency**: By populating `p.externalforce` with the total resultant force, the subsequent timestep's `interpolateParticlesToGrid` naturally provides the correct `g.externalforce` for rigid body acceleration.
+
+### 2. Resultant Force Acceleration for Rigid Bodies
+- **Global Motion**: In `computeAndIntegrateAcceleration`, materials flagged as `is_rigid` now compute a single, uniform acceleration based on the sum of all nodal external, body, and internal forces.
+- **Kinematic Constraints**: The "rigidification" pass in `interpolateToParticlesAndUpdate` ensures that all particles in a rigid body follow the master centroid's translation and rotation, even when interacting via grid-based contact rules.
+
+### 3. Separation of Concerns
+- **DEM (`is_discrete`)**: Continues to use pairwise contact laws.
+- **Rigid MPM (`is_rigid`)**: Uses standard MPM grid contact but enforces rigid kinematics and aggregates resultant forces.
+
+---
+
+## 20. Corrected Physical Representation of Rigid Materials (February 2026)
+
+Following a review of the physical requirements for rigid bodies in hybrid simulations, the implementation was corrected to distinguish between point-proxy discrete bodies and grid-discretized rigid bodies.
+
+### 1. Unified Discretization
+- **Requirement**: Rigid materials must be discretized identically to deformable materials to ensure standard MPM contact rules are valid.
+- **Change**: Reverted the master/slave sparse discretization for `is_rigid` materials. They now generate a full cloud of particles.
+- **Mass Distribution**: Every particle in a rigid material carries mass, providing accurate momentum and volume contributions to the grid.
+
+### 2. Grid-Driven Resultant Kinematics
+- **Mechanism**: The rigid body's motion is now driven by the **resultant** of all grid-level forces (external, body, and contact).
+- **Consolidation**: In `computeAndIntegrateAcceleration`, a single uniform acceleration $\mathbf{a}_{rigid} = \sum \mathbf{F} / \sum M$ is calculated from all nodes associated with the rigid material.
+- **Enforcement**: This acceleration is used to update the master reference particle, and a subsequent pass in `interpolateToParticlesAndUpdate` synchronizes all associated particles to this rigid motion.
+
+### 3. Verification of Contact Force Output
+- **Explicit Population**: By extracting the contact force as the difference between the grid-interpolated momentum change and prescribed body forces, the `p.externalforce` variable now correctly visualizes the mechanical interaction between rigid tools and deformable media.
+- **Standard Contact Compatibility**: This approach ensures that standard contact models (Friction, Specified Body, Penalty) work out-of-the-box with rigid materials while maintaining non-deformability.
+
+
 
 
