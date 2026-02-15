@@ -160,8 +160,8 @@ namespace Uintah {
     
     friend inline Vector Interpolate(const Vector&, const Vector&, double);
     
-     void find_orthogonal(Vector&, Vector&) const;
-     bool check_find_orthogonal(Vector&, Vector&) const;
+     void findOrthogonal(Vector&, Vector&) const;
+     bool checkFindOrthogonal(Vector&, Vector&) const;
 
      friend void Pio( Piostream&, Vector& );
 

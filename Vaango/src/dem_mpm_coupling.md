@@ -369,3 +369,44 @@ To support the $R_{\text{eff}}$ calculation, the `Matrix3` class was extended:
 - **Activation**: Users can enable detailed per-particle collision reports (including `phi`, `overlap`, and `totalForce`) by setting the environment variable `SCI_DEBUG="DEM:+"`.
 - **Task Requirements**: `scheduleComputeDEMForces` was updated to explicitly require `p.size` to support the new radius logic.
 
+---
+
+## 16. Surface Dummy Particles for Visualization (February 2026)
+
+To provide a clearer visual representation of discrete objects during post-processing, a system for generating and synchronizing surface "dummy" particles was implemented.
+
+### 1. Geometry-Based Particle Generation
+The `ParticleCreator` was updated to generate a cloud of particles on the surface of discrete objects:
+- **Cylinders**: A mesh of particles is distributed along the side surface and on both end caps.
+- **Spheres**: A longitude/latitude grid of particles is generated on the surface.
+- **Properties**: All surface dummy particles are initialized with **zero mass**, **zero volume**, and **zero radius**. This ensures they remain purely visual and do not contribute to the system's mass, energy, or grid-level momentum.
+
+### 2. Kinematic Synchronization
+To ensure these particles accurately represent the rigid body's motion, they are synchronized with the master particle (centroid) at every timestep:
+- **Position Update**: Dummy particles are translated based on the master's position update.
+- **Rotational Mapping**: If the rigid body has angular velocity, the position of each dummy particle is updated using the rigid body rotation formula: $\mathbf{v}_p = \mathbf{v}_{master} + \boldsymbol{\omega} \times \mathbf{r}_{local}$.
+- **State Inheritance**: Orientation and angular velocity are carried forward from the master particle to all associated dummy particles in the `integrateDEMRotation` task.
+
+### 3. Contact Filtering
+To maintain physical accuracy, the `computeDEMForces` task was modified to explicitly ignore particles with $m \le 0$. This ensures that the dummy particles do not participate in contact detection or generate spurious reaction forces, while the distributed contact model correctly handles interactions via the legitimate surface-proxy particles.
+
+---
+
+## 17. Refinements and Bug Fixes (February 2026)
+
+Several critical issues were identified and resolved to ensure the physical validity and visual stability of hybrid DEM-MPM simulations.
+
+### 1. Correction of Rotational Drift
+- **Issue**: Explicit Euler integration of dummy particle rotation caused them to spiral outward over time, as the linear update $\mathbf{r}_{new} = \mathbf{r} + (\boldsymbol{\omega} \times \mathbf{r})dt$ increases the vector's magnitude at every step.
+- **Fix**: Implemented a **Rigid Body Constraint Corrector**. After the rotational update, the relative position vector is normalized and rescaled to its original length.
+- **Result**: Dummy particles now remain strictly on the object surface, providing a stable visual representation.
+
+### 2. Resolution of Unphysical Expansion (Repulsion Fix)
+- **Issue**: MPM particles were being attracted into DEM objects instead of repelled, and the simulation showed limited surface interaction.
+- **Fix (Force Sign)**: Corrected the signs for normal and damping forces in the Particle-to-Rigid collision case.
+- **Fix (Loop Structure)**: Implemented a unique-body mapping in the contact loop. This ensures that every continuum particle interacts with each rigid body exactly once, preventing overcounting while maintaining distributed surface awareness.
+- **Fix (Grid Interaction)**: Ensured that reaction forces are applied only to the **Master particle** (with mass) of the DEM body. Applying forces to massless slave/dummy particles was causing net force cancellation at the grid nodes, preventing the continuum material from resisting penetration.
+- **Result**: MPM materials now correctly compress and distort under DEM interaction, with momentum transfer occurring naturally through the grid.
+
+
+

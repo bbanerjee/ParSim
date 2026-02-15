@@ -748,8 +748,8 @@ ParticleCreator::initializeParticle(const Patch* patch,
       Box box      = piece->getBoundingBox();
       Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
       double distSq = (p - center).length2();
-      if (distSq > 1.0e-6) {
-        // Slave particle (corner)
+      if (distSq > 1.0e-9) {
+        // Slave/Dummy particle
         pvars.pMass[i]   = 0.0;
         pvars.pVolume[i] = 0.0;
         pvars.pRadius[i] = 0.0;
@@ -854,6 +854,76 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
 
     if (patch->containsPoint(m_center)) {
       obj_vars.points[obj].push_back(m_center);
+    }
+
+    // Add surface dummy particles for visualization.
+    // These particles have zero mass and do not participate in contact,
+    // but follow the rigid body's motion.
+    if (auto* cyl = dynamic_cast<CylinderGeometryPiece*>(piece.get())) {
+      Point bottom = cyl->bottom();
+      Point top    = cyl->top();
+      double rad   = cyl->radius();
+      Vector axis  = top - bottom;
+      double h     = axis.length();
+      axis.normalize();
+
+      // Find two vectors orthogonal to the axis
+      Vector v1, v2;
+      axis.findOrthogonal(v1, v2);
+
+      int n_theta = 16;
+      int n_z     = 8;
+      for (int i_z = 0; i_z <= n_z; ++i_z) {
+        double z = (double)i_z / (double)n_z * h;
+        Point p_z = bottom + axis * z;
+        for (int i_t = 0; i_t < n_theta; ++i_t) {
+          double theta = (double)i_t / (double)n_theta * 2.0 * M_PI;
+          Point p = p_z + (v1 * cos(theta) + v2 * sin(theta)) * rad;
+          if (patch->containsPoint(p)) {
+            obj_vars.points[obj].push_back(p);
+          }
+        }
+      }
+      // Caps
+      int n_r = 3;
+      for (int i_r = 1; i_r < n_r; ++i_r) {
+        double r = (double)i_r / (double)n_r * rad;
+        for (int i_t = 0; i_t < n_theta; ++i_t) {
+          double theta = (double)i_t / (double)n_theta * 2.0 * M_PI;
+          Vector radial = (v1 * cos(theta) + v2 * sin(theta)) * r;
+          Point p_bot = bottom + radial;
+          Point p_top = top + radial;
+          if (patch->containsPoint(p_bot)) obj_vars.points[obj].push_back(p_bot);
+          if (patch->containsPoint(p_top)) obj_vars.points[obj].push_back(p_top);
+        }
+      }
+    } else if (auto* sphere = dynamic_cast<SphereGeometryPiece*>(piece.get())) {
+      Point center = sphere->origin();
+      double rad   = sphere->radius();
+      int n_theta  = 16;
+      int n_phi    = 8;
+      for (int i_p = 1; i_p < n_phi; ++i_p) {
+        double phi = (double)i_p / (double)n_phi * M_PI;
+        double sin_phi = sin(phi);
+        double cos_phi = cos(phi);
+        for (int i_t = 0; i_t < n_theta; ++i_t) {
+          double theta = (double)i_t / (double)n_theta * 2.0 * M_PI;
+          Point p = center + Vector(rad * sin_phi * cos(theta),
+                                    rad * sin_phi * sin(theta),
+                                    rad * cos_phi);
+          if (patch->containsPoint(p)) {
+            obj_vars.points[obj].push_back(p);
+          }
+        }
+      }
+      // Poles
+      Point p_north = center + Vector(0, 0, rad);
+      Point p_south = center + Vector(0, 0, -rad);
+      if (patch->containsPoint(p_north)) obj_vars.points[obj].push_back(p_north);
+      if (patch->containsPoint(p_south)) obj_vars.points[obj].push_back(p_south);
+    } else {
+      // Fallback: Sparse grid points + Corners
+      // (Original slave particle logic already handled corners below)
     }
 
     // Slave particles at corners (Geometric Proxies)

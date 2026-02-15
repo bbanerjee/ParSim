@@ -2463,215 +2463,164 @@ SerialMPM::computeDEMForces(const ProcessorGroup*,
           Vector omega_i   = pAngVel_all[m_i][idx_i];
           Matrix3 orient_i = pOrientation_all[m_i][idx_i];
 
-          // For each continuum particle i, find the closest discrete particle j in matl j
-          int best_j = -1;
-          double min_dist_sq = 1e99;
-
-          // Loop over particles in material j (All, including ghosts)
+          // Identify unique rigid bodies in material j to interact with
+          // This avoids overcounting and ensures every MPM particle sees every DEM body
+          std::map<long64, int> unique_bodies;
           for (auto idx_j : *psets_all[m_j]) {
-            // Avoid self-contact (same particle)
-            if (m_i == m_j && idx_i == idx_j) {
-              continue;
-            }
+            if (m_i == m_j && idx_i == idx_j) continue;
+            if (m_i == m_j && pRigidBodyID_all[m_i][idx_i] == pRigidBodyID_all[m_j][idx_j]) continue;
+            if (m_i == m_j && idx_j <= idx_i) continue;
 
-            // Avoid self-contact (same rigid body)
-            if (m_i == m_j &&
-                pRigidBodyID_all[m_i][idx_i] == pRigidBodyID_all[m_j][idx_j]) {
-              continue;
-            }
-
-            // Symmetrical check: only process if m_j > m_i OR (m_i == m_j and
-            // idx_j > idx_i)
-            if (m_i == m_j && idx_j <= idx_i) {
-              continue;
-            }
-
-            // Find closest particle j to i
-            double d2 = (pos_i - pX_all[m_j][idx_j]).length2();
-            if (d2 < min_dist_sq) {
-              min_dist_sq = d2;
-              best_j = idx_j;
+            long64 rbID = pRigidBodyID_all[m_j][idx_j];
+            if (unique_bodies.find(rbID) == unique_bodies.end()) {
+              unique_bodies[rbID] = idx_j;
+            } else {
+              // For visualization/proxy, keep the one closest to pos_i
+              double d2_new = (pos_i - pX_all[m_j][idx_j]).length2();
+              double d2_old = (pos_i - pX_all[m_j][unique_bodies[rbID]]).length2();
+              if (d2_new < d2_old) unique_bodies[rbID] = idx_j;
             }
           }
 
-          if (best_j == -1) continue;
+          // Loop over each unique body in mat j
+          for (auto const& [rbID_j, idx_j] : unique_bodies) {
+            Vector totalForce(0, 0, 0);
+            Vector arm_i(0, 0, 0);
+            Vector arm_j_center(0, 0, 0);
+            bool collision = false;
 
-          // Now perform contact check between particle i and the rigid body containing best_j
-          Vector totalForce(0, 0, 0);
-          Vector arm_i(0, 0, 0);
-          Vector arm_j_center(0, 0, 0);
-          Vector arm_j_surface(0, 0, 0);
-          bool collision = false;
-
-          int idx_j = best_j;
-
-          if (matl_i->isDiscrete() && pMass_all[m_i][idx_i] > 0) {
-            // Rigid body i vs Particle j
-            long64 rbID_i = pRigidBodyID_all[m_i][idx_i];
-            int objIdx_i = (int)(rbID_i & 0xFFFFFFFF);
-            const GeometryObject* obj_i = matl_i->getGeometryObject(objIdx_i);
-            
-            if (obj_i) {
-              const GeometryPieceP piece_i = obj_i->getPiece();
-              Point pos0_i = pX0_all[m_i][idx_i]; 
+            if (matl_i->isDiscrete() && pMass_all[m_i][idx_i] > 0) {
+              // Case 1: Rigid body i vs Particle j
+              int objIdx_i = (int)(rbID_j & 0xFFFFFFFF); // Use object index from ID
+              const GeometryObject* obj_i = matl_i->getGeometryObject(objIdx_i);
               
-              Point pos_j = pX_all[m_j][idx_j];
-              double rad_j = pRadius_all[m_j][idx_j];
-              
-              // Transform pos_j to local space of piece_i
-              Matrix3 rotT = orient_i.Transpose();
-              Point localP_j = pos0_i + rotT * (pos_j - pos_i);
-              
-              double phi = piece_i->getSDF(localP_j);
+              if (obj_i) {
+                const GeometryPieceP piece_i = obj_i->getPiece();
+                Point pos0_i = pX0_all[m_i][idx_i]; 
+                Point pos_j = pX_all[m_j][idx_j];
+                double rad_j = pRadius_all[m_j][idx_j];
+                
+                Matrix3 rotT = orient_i.Transpose();
+                Point localP_j = pos0_i + rotT * (pos_j - pos_i);
+                double phi = piece_i->getSDF(localP_j);
 
-              // If rad_j is 0, use effective radius based on pSize and normal
-              if (rad_j == 0) {
-                Vector localGrad = piece_i->getSDFGradient(localP_j);
-                Vector worldGrad = orient_i * localGrad;
-                Matrix3 size_j = pSize_all[m_j][idx_j];
-                rad_j = 0.5 * (std::abs(Dot(size_j.getColumn(0), worldGrad)) +
-                               std::abs(Dot(size_j.getColumn(1), worldGrad)) +
-                               std::abs(Dot(size_j.getColumn(2), worldGrad)));
+                if (rad_j == 0) {
+                  Vector worldGrad = orient_i * piece_i->getSDFGradient(localP_j);
+                  Matrix3 size_j = pSize_all[m_j][idx_j];
+                  rad_j = 0.5 * (std::abs(Dot(size_j.getColumn(0), worldGrad)) +
+                                 std::abs(Dot(size_j.getColumn(1), worldGrad)) +
+                                 std::abs(Dot(size_j.getColumn(2), worldGrad)));
+                }
+
+                if (phi < rad_j) {
+                   double overlap = rad_j - phi;
+                   Vector worldGrad = orient_i * piece_i->getSDFGradient(localP_j);
+                   
+                   Vector contact_p = pos_j.asVector() - worldGrad * rad_j;
+                   arm_i = contact_p - pos_i.asVector();
+                   Vector arm_j = contact_p - pos_j.asVector();
+
+                   Vector omega_j = pAngVel_all[m_j][idx_j];
+                   Vector v_contact_i = vel_i + Cross(omega_i, arm_i);
+                   Vector v_contact_j = pVelocity_all[m_j][idx_j] + Cross(omega_j, arm_j);
+                   Vector v_rel = v_contact_j - v_contact_i;
+
+                   double v_rel_n = Dot(v_rel, worldGrad);
+                   double f_n_mag = kn * overlap - gamma * v_rel_n;
+                   if (f_n_mag < 0) f_n_mag = 0;
+                   
+                   Vector force_n = worldGrad * (-f_n_mag); // Force on Rigid i (Repulsion)
+
+                   Vector v_rel_t = v_rel - worldGrad * v_rel_n;
+                   Vector force_t = v_rel_t * kt * overlap;
+                   double ft_mag  = force_t.length();
+                   if (ft_mag > mu * f_n_mag) force_t = force_t * (mu * f_n_mag / ft_mag);
+
+                   totalForce = force_n + force_t;
+                   collision = true;
+                }
               }
-
-              // Contact if distance to surface is less than radius of j
-              if (phi < rad_j) {
-                 double overlap = rad_j - phi;
-                 if (cout_dem.active()) {
-                   cout_dem << "Rigid i (mat " << m_i << " part " << idx_i << ") vs Particle j (mat " << m_j << " part " << idx_j << ")" << std::endl;
-                   cout_dem << "  phi = " << phi << " rad_j = " << rad_j << " overlap = " << overlap << std::endl;
-                 }
-                 Vector localGrad = piece_i->getSDFGradient(localP_j);
-                 Vector worldGrad = orient_i * localGrad;
-                 
-                 Vector contact_p = pos_j.asVector() - worldGrad * rad_j;
-                 arm_i = contact_p - pos_i.asVector();
-                 arm_j_surface = contact_p - pos_j.asVector();
-
-                 // Velocities at contact
-                 Vector omega_j = pAngVel_all[m_j][idx_j];
-                 Vector v_contact_i = vel_i + Cross(omega_i, arm_i);
-                 Vector v_contact_j = pVelocity_all[m_j][idx_j] + Cross(omega_j, arm_j_surface);
-                 Vector v_rel = v_contact_j - v_contact_i;
-
-                 double v_rel_n = Dot(v_rel, worldGrad);
-                 double f_n_mag = kn * overlap - gamma * v_rel_n;
-                 if (f_n_mag < 0) f_n_mag = 0;
-                 
-                 Vector force_n = worldGrad * (-f_n_mag);
-
-                 // Tangential force (friction)
-                 Vector v_rel_t = v_rel - worldGrad * v_rel_n;
-                 Vector force_t = v_rel_t * kt * overlap;
-                 double ft_mag  = force_t.length();
-                 if (ft_mag > mu * f_n_mag) {
-                   force_t = force_t * (mu * f_n_mag / ft_mag);
-                 }
-
-                 totalForce = force_n + force_t;
-                 collision = true;
-              }
-            }
-          } else if (matl_j->isDiscrete()) {
-             // Rigid body j vs Particle i
-             // Note: We use the Master particle of rigid body j to define the center and rotation,
-             // but we apply the surface force to best_j.
-             long64 rbID_j = pRigidBodyID_all[m_j][idx_j];
-             int master_idx_j = master_particles.count(rbID_j) ? master_particles[rbID_j] : idx_j;
-
-             int objIdx_j = (int)(rbID_j & 0xFFFFFFFF);
-             const GeometryObject* obj_j = matl_j->getGeometryObject(objIdx_j);
-             
-             if (obj_j) {
-               const GeometryPieceP piece_j = obj_j->getPiece();
-               Point pos0_master_j = pX0_all[m_j][master_idx_j];
-               Point pos_master_j = pX_all[m_j][master_idx_j];
-               Matrix3 orient_master_j = pOrientation_all[m_j][master_idx_j];
-               Vector vel_master_j = pVelocity_all[m_j][master_idx_j];
-               Vector omega_master_j = pAngVel_all[m_j][master_idx_j];
+            } else if (matl_j->isDiscrete()) {
+               // Case 2: Particle i vs Rigid body j
+               int master_idx_j = master_particles.count(rbID_j) ? master_particles[rbID_j] : idx_j;
+               int objIdx_j = (int)(rbID_j & 0xFFFFFFFF);
+               const GeometryObject* obj_j = matl_j->getGeometryObject(objIdx_j);
                
-               // Transform pos_i to local space of piece_j (defined at master)
-               Matrix3 rotT = orient_master_j.Transpose();
-               Point localP_i = pos0_master_j + rotT * (pos_i - pos_master_j);
+               if (obj_j) {
+                 const GeometryPieceP piece_j = obj_j->getPiece();
+                 Point pos0_master_j = pX0_all[m_j][master_idx_j];
+                 Point pos_master_j = pX_all[m_j][master_idx_j];
+                 Matrix3 orient_master_j = pOrientation_all[m_j][master_idx_j];
+                 Vector vel_master_j = pVelocity_all[m_j][master_idx_j];
+                 Vector omega_master_j = pAngVel_all[m_j][master_idx_j];
+                 
+                 Matrix3 rotT = orient_master_j.Transpose();
+                 Point localP_i = pos0_master_j + rotT * (pos_i - pos_master_j);
+                 double phi = piece_j->getSDF(localP_i);
 
-               double phi = piece_j->getSDF(localP_i);
+                 double rad_eff_i = rad_i;
+                 if (rad_eff_i == 0) {
+                    Vector worldGrad = orient_master_j * piece_j->getSDFGradient(localP_i);
+                    Matrix3 size_i = pSize_all[m_i][idx_i];
+                    rad_eff_i = 0.5 * (std::abs(Dot(size_i.getColumn(0), worldGrad)) +
+                                       std::abs(Dot(size_i.getColumn(1), worldGrad)) +
+                                       std::abs(Dot(size_i.getColumn(2), worldGrad)));
+                 }
 
-               // If rad_i is 0, use effective radius based on pSize and normal
-               double rad_eff_i = rad_i;
-               if (rad_eff_i == 0) {
-                  Vector localGrad = piece_j->getSDFGradient(localP_i);
-                  Vector worldGrad = orient_master_j * localGrad;
-                  Matrix3 size_i = pSize_all[m_i][idx_i];
-                  rad_eff_i = 0.5 * (std::abs(Dot(size_i.getColumn(0), worldGrad)) +
-                                     std::abs(Dot(size_i.getColumn(1), worldGrad)) +
-                                     std::abs(Dot(size_i.getColumn(2), worldGrad)));
+                 if (phi < rad_eff_i) {
+                    double overlap = rad_eff_i - phi;
+                    Vector worldGrad = orient_master_j * piece_j->getSDFGradient(localP_i);
+                    
+                    Vector contact_p = pos_i.asVector() - worldGrad * rad_eff_i;
+                    arm_j_center = contact_p - pos_master_j.asVector();
+                    arm_i = contact_p - pos_i.asVector();
+
+                    Vector v_contact_i = vel_i + Cross(omega_i, arm_i);
+                    Vector v_contact_j = vel_master_j + Cross(omega_master_j, arm_j_center);
+                    Vector v_rel = v_contact_j - v_contact_i;
+
+                    double v_rel_n = Dot(v_rel, worldGrad);
+                    double f_n_mag = kn * overlap + gamma * v_rel_n; // Repulsion: overlap rate is +v_rel_n
+                    if (f_n_mag < 0) f_n_mag = 0;
+                    
+                    Vector force_n = worldGrad * (f_n_mag); // Force on Particle i (Repulsion)
+
+                    Vector v_rel_t = v_rel - worldGrad * v_rel_n;
+                    Vector force_t = v_rel_t * kt * overlap;
+                    double ft_mag  = force_t.length();
+                    if (ft_mag > mu * f_n_mag) force_t = force_t * (mu * f_n_mag / ft_mag);
+
+                    totalForce = force_n + force_t;
+                    collision = true;
+                 }
                }
-
-               if (phi < rad_eff_i) {
-                  double overlap = rad_eff_i - phi;
-                  if (cout_dem.active()) {
-                    cout_dem << "Particle i (mat " << m_i << " part " << idx_i << ") vs Rigid j (mat " << m_j << " part " << idx_j << ")" << std::endl;
-                    cout_dem << "  phi = " << phi << " rad_i = " << rad_eff_i << " overlap = " << overlap << std::endl;
-                  }
-                  Vector localGrad = piece_j->getSDFGradient(localP_i);
-                  Vector worldGrad = orient_master_j * localGrad;
-                  
-                  Vector contact_p = pos_i.asVector() - worldGrad * rad_eff_i;
-                  arm_j_center = contact_p - pos_master_j.asVector();
-                  arm_j_surface = contact_p - pX_all[m_j][idx_j].asVector();
-                  arm_i = contact_p - pos_i.asVector();
-
-                  Vector v_contact_i = vel_i + Cross(omega_i, arm_i);
-                  Vector v_contact_j = vel_master_j + Cross(omega_master_j, arm_j_center);
-                  Vector v_rel = v_contact_j - v_contact_i;
-
-                  double v_rel_n = Dot(v_rel, worldGrad);
-                  double f_n_mag = kn * overlap - gamma * v_rel_n;
-                  if (f_n_mag < 0) f_n_mag = 0;
-                  
-                  // Force on i is in opposite direction of gradient of piece_j
-                  Vector force_n = worldGrad * (-f_n_mag); 
-
-                  Vector v_rel_t = v_rel - worldGrad * v_rel_n;
-                  Vector force_t = v_rel_t * kt * overlap;
-                  double ft_mag  = force_t.length();
-                  if (ft_mag > mu * f_n_mag) {
-                    force_t = force_t * (mu * f_n_mag / ft_mag);
-                  }
-
-                  totalForce = force_n + force_t;
-                  collision = true;
-               }
-             }
-          }
-
-          if (collision) {
-            if (cout_dem.active()) {
-              cout_dem << "Collision detected between mat " << m_i << " particle " << idx_i 
-                       << " and mat " << m_j << " particle " << idx_j << std::endl;
-              cout_dem << "  totalForce = " << totalForce << " arm_i = " << arm_i << std::endl;
-            }
-            // Apply to particle i (always real in this loop)
-            pExtForce_new[m_i][idx_i] += totalForce;
-            pTorque_new[m_i][idx_i] += Cross(arm_i, totalForce);
-
-            // Apply equal and opposite to the surface particle best_j 
-            // This ensures the grid sees the reaction force at the contact location.
-            if (patch->containsPoint(pX_all[m_j][idx_j])) {
-              pExtForce_new[m_j][idx_j] -= totalForce;
-              // Torque is only relevant for the rigid body as a whole, 
-              // but we can apply local torque if j were not rigid.
-              pTorque_new[m_j][idx_j] -= Cross(arm_j_surface, totalForce);
             }
 
-            // Also apply to the master particle for correct rigid body dynamics
-            long64 rbID_j = pRigidBodyID_all[m_j][idx_j];
-            if (master_particles.count(rbID_j)) {
-               int master_idx = master_particles[rbID_j];
-               if (master_idx != idx_j) {
-                  pExtForce_new[m_j][master_idx] -= totalForce;
-                  pTorque_new[m_j][master_idx] -= Cross(arm_j_center, totalForce);
-               }
+            if (collision) {
+              if (cout_dem.active()) {
+                cout_dem << "Collision detected between mat " << m_i << " particle " << idx_i 
+                         << " and mat " << m_j << " body " << rbID_j << std::endl;
+                cout_dem << "  totalForce = " << totalForce << " arm_i = " << arm_i << std::endl;
+              }
+              // Apply to particle i (always real in this loop)
+              pExtForce_new[m_i][idx_i] += totalForce;
+              pTorque_new[m_i][idx_i] += Cross(arm_i, totalForce);
+
+              // Apply reaction to the Master of Body j for global dynamics
+              if (matl_j->isDiscrete()) {
+                if (master_particles.count(rbID_j)) {
+                  int master_idx = master_particles[rbID_j];
+                  if (patch->containsPoint(pX_all[m_j][master_idx])) {
+                    pExtForce_new[m_j][master_idx] -= totalForce;
+                    pTorque_new[m_j][master_idx] -= Cross(arm_j_center, totalForce);
+                  }
+                }
+              } else {
+                // j is MPM
+                if (patch->containsPoint(pX_all[m_j][idx_j])) {
+                  pExtForce_new[m_j][idx_j] -= totalForce;
+                }
+              }
             }
           }
         }
@@ -2700,6 +2649,8 @@ SerialMPM::scheduleIntegrateDEMRotation(SchedulerP& sched,
   t->needs(Task::OldDW, d_mpm_labels->pAngularVelocityLabel, Ghost::None);
   t->needs(Task::OldDW, d_mpm_labels->pOrientationLabel, Ghost::None);
   t->needs(Task::OldDW, d_mpm_labels->pInertiaTensorLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pRigidBodyIDLabel, Ghost::None);
   t->needs(Task::NewDW, d_mpm_labels->pTorqueLabel_preReloc, Ghost::None);
 
   t->computes(d_mpm_labels->pAngularVelocityLabel_preReloc);
@@ -2737,7 +2688,8 @@ SerialMPM::integrateDEMRotation(const ProcessorGroup*,
 
       constParticleVariable<Vector> pAngularVelocity, pTorque;
       constParticleVariable<Matrix3> pOrientation, pInertiaTensor;
-      constParticleVariable<double> pRadius;
+      constParticleVariable<double> pRadius, pMass;
+      constParticleVariable<long64> pRigidBodyID;
 
       ParticleVariable<Vector> pAngularVelocity_new;
       ParticleVariable<Matrix3> pOrientation_new, pInertiaTensor_new;
@@ -2747,6 +2699,8 @@ SerialMPM::integrateDEMRotation(const ProcessorGroup*,
       old_dw->get(pOrientation, d_mpm_labels->pOrientationLabel, pset);
       old_dw->get(pInertiaTensor, d_mpm_labels->pInertiaTensorLabel, pset);
       old_dw->get(pRadius, d_mpm_labels->pRadiusLabel, pset);
+      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
+      old_dw->get(pRigidBodyID, d_mpm_labels->pRigidBodyIDLabel, pset);
       new_dw->get(pTorque, d_mpm_labels->pTorqueLabel_preReloc, pset);
 
       new_dw->allocateAndPut(
@@ -2758,19 +2712,19 @@ SerialMPM::integrateDEMRotation(const ProcessorGroup*,
       new_dw->allocateAndPut(
         pRadius_new, d_mpm_labels->pRadiusLabel_preReloc, pset);
 
-      if (mpm_matl->getParticleRadius() > 0.0) {
+      struct RotationState {
+        Vector omega;
+        Matrix3 orient;
+      };
+      std::map<long64, RotationState> master_rotations;
+
+      if (mpm_matl->isDiscrete()) {
         for (auto idx : *pset) {
-          // Angular velocity update: omega_new = omega_old + I^-1 * torque * dt
-          // std::cout << "pInertiaTensor[" << idx << "] = " << pInertiaTensor[idx]
-          //           << std::endl;
-          if (pInertiaTensor[idx].Determinant() > 0.0) {
+          if (pMass[idx] > 0.0 && pInertiaTensor[idx].Determinant() > 0.0) {
             Matrix3 invI              = pInertiaTensor[idx].Inverse();
             Vector angAcc             = invI * pTorque[idx];
             pAngularVelocity_new[idx] = pAngularVelocity[idx] + angAcc * delT;
 
-            // Orientation update (simplified for now, should use quaternions or
-            // exponential map)
-            // dR/dt = skew(omega) * R
             Matrix3 omegaSkew(0.0,
                               -pAngularVelocity[idx].z(),
                               pAngularVelocity[idx].y(),
@@ -2782,14 +2736,25 @@ SerialMPM::integrateDEMRotation(const ProcessorGroup*,
                               0.0);
             pOrientation_new[idx] =
               pOrientation[idx] + (omegaSkew * pOrientation[idx]) * delT;
+            
+            master_rotations[pRigidBodyID[idx]] = {pAngularVelocity_new[idx], pOrientation_new[idx]};
           } else {
             pAngularVelocity_new[idx] = pAngularVelocity[idx];
             pOrientation_new[idx]     = pOrientation[idx];
           }
-
-          // Inertia tensor and radius are carried forward for now
           pInertiaTensor_new[idx] = pInertiaTensor[idx];
           pRadius_new[idx]        = pRadius[idx];
+        }
+
+        // Second pass: Update dummy particles
+        for (auto idx : *pset) {
+          if (pMass[idx] <= 0.0) {
+            long64 rbID = pRigidBodyID[idx];
+            if (master_rotations.count(rbID)) {
+              pAngularVelocity_new[idx] = master_rotations[rbID].omega;
+              pOrientation_new[idx] = master_rotations[rbID].orient;
+            }
+          }
         }
       } else {
         for (auto idx : *pset) {
@@ -5381,6 +5346,8 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   if (d_mpm_flags->d_enableDEM) {
     t->needs(Task::OldDW, d_mpm_labels->pRadiusLabel, gnone);
     t->needs(Task::OldDW, d_mpm_labels->pX0Label, gnone);
+    t->needs(Task::OldDW, d_mpm_labels->pRigidBodyIDLabel, gnone);
+    t->needs(Task::OldDW, d_mpm_labels->pAngularVelocityLabel, gnone);
   }
   t->needs(Task::NewDW, d_mpm_labels->pdTdtLabel_preReloc, gnone);
   t->needs(Task::NewDW, d_mpm_labels->pLocalizedMPMLabel, gnone);
@@ -5577,8 +5544,12 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       old_dw->get(pDisp, d_mpm_labels->pDispLabel, pset);
 
       constParticleVariable<double> pRadius;
+      constParticleVariable<long64> pRigidBodyID;
+      constParticleVariable<Vector> pAngularVelocity;
       if (d_mpm_flags->d_enableDEM) {
         old_dw->get(pRadius, d_mpm_labels->pRadiusLabel, pset);
+        old_dw->get(pRigidBodyID, d_mpm_labels->pRigidBodyIDLabel, pset);
+        old_dw->get(pAngularVelocity, d_mpm_labels->pAngularVelocityLabel, pset);
       }
 
       constParticleVariable<Vector> pVelocityXPIC;
@@ -5685,6 +5656,15 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
       auto* delset = scinew ParticleSubset(0, matID, patch);
 
+      // Map to store master particle kinematics for synchronization
+      struct MasterState {
+        Point pos;
+        Point pos_old;
+        Vector vel;
+        Vector omega;
+      };
+      std::map<long64, MasterState> master_states;
+
       double Cp       = mpm_matl->getSpecificHeat();
       double rho_init = mpm_matl->getInitialDensity();
 
@@ -5754,6 +5734,11 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           pX_new[idx]        = pX[idx] + velocity * delT * move_particles;
           pDisp_new[idx]     = pDisp[idx] + velocity * delT;
           pVelocity_new[idx] = pVelocity[idx] + acceleration * delT;
+        }
+
+        // Collect master particle states for discrete materials
+        if (d_mpm_flags->d_enableDEM && mpm_matl->isDiscrete() && pMass[idx] > 0) {
+          master_states[pRigidBodyID[idx]] = {pX_new[idx], pX[idx], pVelocity_new[idx], pAngularVelocity[idx]};
         }
 
         // Explicit boundary enforcement for discrete particles
@@ -5881,6 +5866,41 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         partvoldef += pVolume_new[idx];
 
       } // End loop over particles
+
+      // Synchronize dummy particles with master particle for discrete materials
+      if (d_mpm_flags->d_enableDEM && mpm_matl->isDiscrete()) {
+        for (auto idx : *pset) {
+          if (pMass[idx] <= 0) {
+            long64 rbID = pRigidBodyID[idx];
+            if (master_states.count(rbID)) {
+              const auto& master = master_states[rbID];
+              Vector arm = pX[idx] - master.pos_old;
+              double arm_len = arm.length();
+              
+              if (master.omega.length2() > 1e-12) {
+                 // Predict new position with explicit rotation
+                 pVelocity_new[idx] = master.vel + Cross(master.omega, arm);
+                 Vector arm_new = arm + Cross(master.omega, arm) * delT;
+                 
+                 // Corrector: Enforce rigid body distance constraint
+                 // Normalize arm_new to the original arm length to prevent spiral drift
+                 if (arm_new.length() > 1e-12) {
+                    arm_new = arm_new * (arm_len / arm_new.length());
+                 }
+                 
+                 pX_new[idx] = master.pos + arm_new;
+                 
+                 // Recalculate velocity to be consistent with the corrected position
+                 pVelocity_new[idx] = (pX_new[idx] - pX[idx]) / delT;
+              } else {
+                 pX_new[idx] = master.pos + arm;
+                 pVelocity_new[idx] = master.vel;
+              }
+              pDisp_new[idx] = pX_new[idx] - pX[idx];
+            }
+          }
+        }
+      }
 
       // If load curves are being used with VelocityBC then apply
       // these BCs to the boundary particles
