@@ -68,9 +68,9 @@ target_link_libraries(MPM_Diffusion
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_MPM_Diffusion)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(MPM_Diffusion PRIVATE BUILD_MPM_Diffusion)
+endif()
 
 install(TARGETS
   MPM_Diffusion

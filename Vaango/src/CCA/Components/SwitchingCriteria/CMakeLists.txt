@@ -47,9 +47,9 @@ target_link_libraries(Vaango_CCA_Components_SwitchingCriteria
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_CCA_Components_SwitchingCriteria)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_CCA_Components_SwitchingCriteria PRIVATE BUILD_Vaango_CCA_Components_SwitchingCriteria)
+endif()
 
 install(TARGETS
   Vaango_CCA_Components_SwitchingCriteria

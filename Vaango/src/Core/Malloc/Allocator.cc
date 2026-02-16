@@ -725,6 +725,8 @@ void* Allocator::alloc_big(size_t size, const char* tag, int linenum)
 
   Tag* obj=big_bin.free;
   size_t osize=size+OVERHEAD;
+  if(osize%ALIGN != 0)
+    osize += ALIGN - osize%ALIGN;
   size_t maxsize=osize+(size>>4);
   for(;obj!=0;obj=obj->next){
     // See if this object is within 6.25% of the right size...
@@ -1068,6 +1070,10 @@ void Allocator::fill_bin(AllocBin* bin)
   if (bin->maxsize <= MEDIUM_THRESHOLD){
     size_t tsize;
     tsize=bin->maxsize+OVERHEAD;
+    // Ensure tsize is a multiple of ALIGN
+    if(tsize%ALIGN != 0)
+      tsize += ALIGN - tsize%ALIGN;
+
     unsigned int nalloc=(unsigned int)(SMALLEST_ALLOCSIZE/tsize);
     if(nalloc<1)nalloc=1;
     size_t reqsize=nalloc*tsize;

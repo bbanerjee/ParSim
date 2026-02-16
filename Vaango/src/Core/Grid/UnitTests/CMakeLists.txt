@@ -36,9 +36,7 @@ SET(VAANGO_LIBS
 #------------------------
 # Google tests
 #------------------------
-set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
 set(GTEST_LIB GTest::gtest_main)
-include_directories(${GTEST_INCLUDE_DIR})
 
 add_executable(testMaterialManager testMaterialManager.cc)
 target_include_directories(testMaterialManager PRIVATE

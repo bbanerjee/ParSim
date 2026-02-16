@@ -54,9 +54,9 @@ if (PETSC)
   target_link_petsc(MPM_Core PRIVATE)
 endif()
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_MPM_Core)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(MPM_Core PRIVATE BUILD_MPM_Core)
+endif()
 
 install(TARGETS
   MPM_Core

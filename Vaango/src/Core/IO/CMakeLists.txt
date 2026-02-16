@@ -39,9 +39,9 @@ target_link_libraries(Vaango_Core_IO
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_Core_IO)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_Core_IO PRIVATE BUILD_Vaango_Core_IO)
+endif()
 
 install(TARGETS
   Vaango_Core_IO

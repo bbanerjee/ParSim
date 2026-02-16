@@ -52,9 +52,9 @@ target_link_libraries(MPM_ParticleCreator PRIVATE
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-	add_definitions(-DBUILD_MPM_ParticleCreator)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(MPM_ParticleCreator PRIVATE BUILD_MPM_ParticleCreator)
+endif()
 
 install(TARGETS
   MPM_ParticleCreator

@@ -53,9 +53,9 @@ target_link_libraries(Peridynamics_DamageModels
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Peridynamics_DamageModels)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Peridynamics_DamageModels PRIVATE BUILD_Peridynamics_DamageModels)
+endif()
 
 install(TARGETS
   Peridynamics_DamageModels

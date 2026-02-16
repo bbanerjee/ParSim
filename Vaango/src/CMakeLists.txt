@@ -34,8 +34,8 @@
 #----------------------------------------------------------------------------
 # Create the project and check cmake version
 #----------------------------------------------------------------------------
-MESSAGE(STATUS "This is CMake ${CMAKE_VERSION}")
-MESSAGE(STATUS "")
+message(STATUS "This is CMake ${CMAKE_VERSION}")
+message(STATUS "")
 
 cmake_minimum_required(VERSION 3.28 FATAL_ERROR)
 
@@ -57,6 +57,10 @@ project(Vaango
     DESCRIPTION "Vaango project"
 )
 
+set(VAANGO_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+set(VAANGO_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+set(VAANGO_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
+
 # Optional: Create legacy variables for compatibility
 set(MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
 set(MINOR_VERSION ${PROJECT_VERSION_MINOR})
@@ -72,6 +76,15 @@ add_library(vaango_warnings INTERFACE)
 # Create aliases for cleaner usage
 add_library(Vaango::Options ALIAS vaango_options)
 add_library(Vaango::Warnings ALIAS vaango_warnings)
+
+# Add common include directories to vaango_options
+target_include_directories(vaango_options INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+)
 
 # Backward compatibility
 include (CMakeBackwardCompatibilityC)
@@ -449,7 +462,6 @@ set(HAVE_EXPRLIB "no")
 #----------------------------------------------------------------------------------
 set(DEF_MPM "")
 set(DEF_ICE "")
-set(DEF_NO_FORTRAN "")
 
 if (MPM)
   set(BUILD_MPM "yes")
@@ -474,13 +486,13 @@ endif()
 #----------------------------------------------------------------------------------
 find_program(PERL perl)
 set(FSPEC ${CMAKE_CURRENT_BINARY_DIR}/genfspec.pl CACHE STRING "Path to fspec")
-configure_file(${Vaango_SOURCE_DIR}/tools/fspec.pl.in ${FSPEC})
+configure_file(${VAANGO_SOURCE_DIR}/tools/fspec.pl.in ${FSPEC})
 
 #----------------------------------------------------------------------------------
 # Find the MPI package to use
 #----------------------------------------------------------------------------------
 find_package(MPI REQUIRED COMPONENTS C CXX Fortran)
-if (MPI_CXX_FOUND)
+if (MPI_FOUND)
   message(STATUS "MPI found. Version: ${MPI_CXX_VERSION}")
   #message(STATUS "MPI CXX Libraries: ${MPI_CXX_LIBRARIES}")
   #message(STATUS "MPI Fortran Libraries: ${MPI_Fortran_LIBRARIES}")
@@ -489,6 +501,8 @@ if (MPI_CXX_FOUND)
   set(DEF_MPI_CONST_WORKS "#define MPICONST const")
   set(DEF_MPI_MAX_THREADS "#define MPI_MAX_THREADS 64")
   set(DEF_MPI3_ENABLED "#define UINTAH_ENABLE_MPI3 true")
+
+  target_link_libraries(vaango_options INTERFACE MPI::MPI_CXX)
 endif()
 
 #----------------------------------------------------------------------------------
@@ -496,21 +510,21 @@ endif()
 #----------------------------------------------------------------------------------
 find_package(LibXml2 REQUIRED)
 if (LIBXML2_FOUND)
-  #include_directories(${LIBXML2_INCLUDE_DIR})
   message(STATUS "LibXml2 found. Version: ${LIBXML2_VERSION_STRING}")
+  target_link_libraries(vaango_options INTERFACE LibXml2::LibXml2)
 endif()
 
 #-----------------------------------------------------------------------------
 # Configure time cross-platform header file generation
 #-----------------------------------------------------------------------------
 # SCI_MALLOC on?
-IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(DEF_MALLOC "")
   set(DEF_MALLOC_LINENUMBERS "")
 else()
   set(DEF_MALLOC "#define DISABLE_SCI_MALLOC 1")
   set(DEF_MALLOC_LINENUMBERS "")
-ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
+endif()
 
 # SCI Assertions
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -550,6 +564,7 @@ if(TARGET Threads::Threads)
     endif()
     
     message(STATUS "Threads library ${THREADS_TYPE} found")
+    target_link_libraries(vaango_options INTERFACE Threads::Threads)
 else()
     set(DEF_THREAD "#define SCI_NOTHREAD 1")
     set(THREAD_LIB_FLAG "")
@@ -578,22 +593,22 @@ find_package(Eigen3 REQUIRED)
 # Modern target-based approach
 if(TARGET Eigen3::Eigen)
     message(STATUS "Eigen3 found as imported target")
-    # No need for manual include_directories with modern targets
+    target_link_libraries(vaango_options INTERFACE Eigen3::Eigen)
     
     if(USE_CLANG)
         # Modern way to add system includes to a target
-        target_compile_options(your_target_name PRIVATE 
+        target_compile_options(vaango_options INTERFACE 
             $<$<COMPILE_LANGUAGE:CXX>:-isystem>
             $<$<COMPILE_LANGUAGE:CXX>:$<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>>
         )
     endif()
 else()
     # Fallback for older Eigen3 installations
-    include_directories(${EIGEN3_INCLUDE_DIR})
+    target_include_directories(vaango_options INTERFACE ${EIGEN3_INCLUDE_DIR})
     message(STATUS "Eigen3 include directory is ${EIGEN3_INCLUDE_DIR}")
     
     if(USE_CLANG)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem ${EIGEN3_INCLUDE_DIR}")
+        target_compile_options(vaango_options INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-isystem ${EIGEN3_INCLUDE_DIR}>)
     endif()
 endif()
 
@@ -611,12 +626,12 @@ if(HDF5_FOUND)
         else()
             set(HDF5_TARGET HDF5::HDF5)
         endif()
-        # Target will handle includes and linking automatically
+        target_link_libraries(vaango_options INTERFACE ${HDF5_TARGET})
     else()
         # Fallback for older HDF5 installations
-        include_directories(${HDF5_INCLUDE_DIRS})
+        target_include_directories(vaango_options INTERFACE ${HDF5_INCLUDE_DIRS})
+        target_link_libraries(vaango_options INTERFACE ${HDF5_CXX_LIBRARIES})
         message(STATUS "HDF5 include directory is ${HDF5_INCLUDE_DIRS}")
-        set(HDF5_TARGET ${HDF5_CXX_LIBRARIES})
     endif()
 else()
     message(STATUS "No HDF5 found")
@@ -645,6 +660,7 @@ if(PETSC)
   if(PETSC_FOUND)
     set(HAVE_PETSC TRUE)
     set(DEF_PETSC "#define HAVE_PETSC 1")
+    target_link_libraries(vaango_options INTERFACE PETSc_lib)
   endif()
 endif()
 
@@ -680,6 +696,7 @@ if(HYPRE)
       endif()
 
       message(STATUS "HYPRE found: ${HYPRE_VERSION_MAJOR}.${HYPRE_VERSION_MINOR}; Target: ${HYPRE_TARGET}")
+      target_link_libraries(vaango_options INTERFACE ${HYPRE_TARGET})
     else()
       message(STATUS "HYPRE not found")
     endif()
@@ -798,27 +815,16 @@ if (CUDA)
   endif (CUDAToolkit_FOUND)
 endif (CUDA)
 
-#------------------------------------------------------------------------
-# Set up vaango paths for files
-#------------------------------------------------------------------------
-set(VAANGO_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
-set(VAANGO_BINARY_DIR "${CMAKE_BINARY_DIR}")
-set(VAANGO_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
-
 #-----------------------------------------------------------------------
 # Create the cross-platform header files
 #-----------------------------------------------------------------------
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs)
-
 include(ConfigureHeaders)
 configure_standard_sci_headers()
 
 #-----------------------------------------------------------------------------
 # For reading JSON input files
 #-----------------------------------------------------------------------------
-#set(JSON_INCLUDES ${Vaango_SOURCE_DIR}/submodules/json/src)
+#set(JSON_INCLUDES ${VAANGO_SOURCE_DIR}/submodules/json/src)
 #include_directories(${JSON_INCLUDES})
 
 #-----------------------------------------------------------------------------
@@ -826,22 +832,11 @@ configure_standard_sci_headers()
 set(LOAD_PACKAGE "Vaango" CACHE STRING "Building Vaango package by default.")
 set(HANDLED_PACKAGE_Vaango "YES")
 
-include_directories(
-  ${PETSC_INCLUDES}
-  ${HYPRE_INCLUDE}
-  ${XML2_INCLUDE}
-)
-
-include_directories(
-  ${Vaango_SOURCE_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR}
-)
-
 #=========================================================================
 # For compliation, installation, and regression testing
 #=========================================================================
-MESSAGE(STATUS "")
-MESSAGE(STATUS "Configuring done. Adding subdirectories.")
+message(STATUS "")
+message(STATUS "Configuring done. Adding subdirectories.")
 
 #------------------------------------------------------------------------
 # Set up RPATH
@@ -870,6 +865,7 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 # Add main sources
 #------------------------------------------------------------------------
 add_subdirectory(Core)
+target_link_libraries(vaango_options INTERFACE Vaango_Core_Malloc)
 add_subdirectory(CCA)
 add_subdirectory(StandAlone)
 
@@ -889,19 +885,15 @@ endif()
 #enable_testing()
 #add_test(NAME create_gold_standards 
 #  COMMAND ${CMAKE_COMMAND} 
-#   -D Vaango_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+#   -D VAANGO_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
 #   -D Vaango_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}
-#   -P ${Vaango_SOURCE_DIR}/cmake/Macros/goldstandards.cmake)
+#   -P ${VAANGO_SOURCE_DIR}/cmake/Macros/goldstandards.cmake)
 #set_tests_properties(create_gold_standards PROPERTIES ENVIRONMENT
-#  "PYTHONPATH=${Vaango_SOURCE_DIR}/R_Tester/toplevel;${Vaango_SOURCE_DIR}/R_Tester")
+#  "PYTHONPATH=${VAANGO_SOURCE_DIR}/R_Tester/toplevel;${VAANGO_SOURCE_DIR}/R_Tester")
 
 #----------------------------------------------------------------------------------
 # Unit testing (googletests)
 #----------------------------------------------------------------------------------
-if (USE_CLANG)
-  set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
-  set(CMAKE_CXX_FLAGS "-std=c++11")
-endif ()
 
 #include(FetchContent)
 #FetchContent_Declare(

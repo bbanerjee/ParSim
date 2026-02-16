@@ -55,9 +55,9 @@ if (PETSC)
   target_link_petsc(MPM_PhysicalBC PRIVATE)
 endif()
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_MPM_PhysicalBC)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(MPM_PhysicalBC PRIVATE BUILD_MPM_PhysicalBC)
+endif()
 
 install(TARGETS
   MPM_PhysicalBC

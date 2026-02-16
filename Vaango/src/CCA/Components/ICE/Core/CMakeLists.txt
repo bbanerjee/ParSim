@@ -45,9 +45,9 @@ target_link_libraries(ICE_Core PRIVATE
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_ICE_Core)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(ICE_Core PRIVATE BUILD_ICE_Core)
+endif()
 
 install(TARGETS
   ICE_Core

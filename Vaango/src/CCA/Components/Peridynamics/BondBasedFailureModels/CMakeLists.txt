@@ -53,9 +53,9 @@ target_link_libraries(Peridynamics_FailureModels PRIVATE
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Peridynamics_FailureModels)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Peridynamics_FailureModels PRIVATE BUILD_Peridynamics_FailureModels)
+endif()
 
 
 

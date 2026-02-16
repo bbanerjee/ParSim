@@ -69,9 +69,9 @@ if (WIN32)
   )
 endif()
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_CCA_Components_OnTheFlyAnalysis)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_CCA_Components_OnTheFlyAnalysis PRIVATE BUILD_Vaango_CCA_Components_OnTheFlyAnalysis)
+endif()
 
 install(TARGETS
   Vaango_CCA_Components_OnTheFlyAnalysis

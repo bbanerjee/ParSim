@@ -57,25 +57,28 @@ namespace Uintah {
 
 struct OSHunk;
 
-struct Sentinel {
+struct alignas(16) Sentinel {
     unsigned int first_word;
     unsigned int second_word;
+    unsigned int padding[2]; // Explicit padding to keep size 16
 };
 
 struct AllocBin;
 
-struct Tag {
+struct alignas(16) Tag {
 //    Allocator* allocator;
 //    size_t size;
     AllocBin* bin;
     const char* tag;
 #ifdef USE_TAG_LINENUM
   int linenum;
+  int padding_linenum;
 #endif
     Tag* next;
     Tag* prev;
     OSHunk* hunk;
     size_t reqsize;
+    size_t padding; 
 };
 
 struct AllocBin {

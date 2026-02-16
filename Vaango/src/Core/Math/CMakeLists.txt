@@ -99,6 +99,6 @@ target_compile_options(Vaango_Core_Math PRIVATE
   $<$<COMPILE_LANGUAGE:CUDA>:-diag-suppress=20015>
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_Core_Math)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_Core_Math PRIVATE BUILD_Vaango_Core_Math)
+endif()

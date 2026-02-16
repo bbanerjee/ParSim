@@ -35,9 +35,9 @@ target_link_libraries(MPMICE_Core
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_MPMICE_Core)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(MPMICE_Core PRIVATE BUILD_MPMICE_Core)
+endif()
 
 install(TARGETS
   MPMICE_Core

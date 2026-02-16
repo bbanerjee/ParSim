@@ -79,6 +79,7 @@ SET(LIBS
   MPM_ParticleCreator
   MPM_GradientComputer
   MPM_ConstitutiveModel_FORTRAN
+  MPM_ConstitutiveModel_FORTRAN_Utils
   ${HDF5_TARGET}
 )
 
@@ -99,9 +100,9 @@ if (HAVE_CUDA)
 target_compile_options(MPM_ConstitutiveModel PUBLIC -Wno-unknown-pragmas --expt-relaxed-constexpr)
 endif ()
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_MPM_ConstitutiveModel)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(MPM_ConstitutiveModel PRIVATE BUILD_MPM_ConstitutiveModel)
+endif()
 
 if(NOT DEFINED HAVE_KOKKOS) 
   add_subdirectory(UnitTests)

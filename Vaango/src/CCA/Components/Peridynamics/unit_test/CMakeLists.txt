@@ -59,6 +59,6 @@ set(VAANGO_LIBS
 #  ${VAANGO_LIBS} 
 #) 
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_ut_lib)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(ut_lib PRIVATE BUILD_ut_lib)
+endif()

@@ -196,7 +196,7 @@ extern "C" {
 }
 #endif
 
-void* operator new(size_t size) throw(std::bad_alloc)
+void* operator new(size_t size)
 {
   if(!default_allocator)
     MakeDefaultAllocator();
@@ -209,7 +209,7 @@ void* operator new(size_t size) throw(std::bad_alloc)
   return mem;
 }
 
-void* operator new[](size_t size) throw(std::bad_alloc)
+void* operator new[](size_t size)
 {
   if(!default_allocator)
     MakeDefaultAllocator();
@@ -222,7 +222,7 @@ void* operator new[](size_t size) throw(std::bad_alloc)
   return mem;
 }
 
-void* operator new(size_t size, const std::nothrow_t&) throw()
+void* operator new(size_t size, const std::nothrow_t&) noexcept
 {
   if(!default_allocator)
     MakeDefaultAllocator();
@@ -234,7 +234,7 @@ void* operator new(size_t size, const std::nothrow_t&) throw()
   return mem;
 }
 
-void* operator new[](size_t size, const std::nothrow_t&) throw()
+void* operator new[](size_t size, const std::nothrow_t&) noexcept
 {
   if(!default_allocator)
     MakeDefaultAllocator();
@@ -247,17 +247,17 @@ void* operator new[](size_t size, const std::nothrow_t&) throw()
   return mem;
 }
 
-void operator delete(void* ptr) throw()
+void operator delete(void* ptr) noexcept
 {
     if(!default_allocator)
-  MakeDefaultAllocator();
+      MakeDefaultAllocator();
     default_allocator->free(ptr);
 }
 
-void operator delete[](void* ptr) throw()
+void operator delete[](void* ptr) noexcept
 {
     if(!default_allocator)
-  MakeDefaultAllocator();
+      MakeDefaultAllocator();
     default_allocator->free(ptr);
 }
 
@@ -266,7 +266,7 @@ void* operator new(size_t size, Allocator* a, const char* tag, int linenum)
   if(!a){
     if(!default_allocator)
       MakeDefaultAllocator();
-      a=default_allocator;
+    a=default_allocator;
   }
   void* mem=a->alloc(size, tag, linenum);
 #ifdef INITIALIZE_MEMORY
@@ -281,7 +281,7 @@ void* operator new[](size_t size, Allocator* a, const char* tag, int linenum)
   if(!a){
     if(!default_allocator)
       MakeDefaultAllocator();
-      a=default_allocator;
+    a=default_allocator;
   }
   void* mem=a->alloc(size, tag, linenum);
 #ifdef INITIALIZE_MEMORY
@@ -296,7 +296,7 @@ void operator delete(void* ptr, Allocator* a, const char* tag, int linenum)
   if(!a){
     if(!default_allocator)
       MakeDefaultAllocator();
-      a=default_allocator;
+    a=default_allocator;
   }
   a->free(ptr);
 }
@@ -306,7 +306,7 @@ void operator delete[](void* ptr, Allocator* a, const char* tag, int linenum)
   if(!a){
     if(!default_allocator)
       MakeDefaultAllocator();
-      a=default_allocator;
+    a=default_allocator;
   }
   a->free(ptr);
 }

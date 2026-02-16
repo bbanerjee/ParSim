@@ -51,9 +51,9 @@ SET(VAANGO_LIBS
 #------------------------
 # Google tests
 #------------------------
-set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
+
 set(GTEST_LIB gtest_main gtest)
-include_directories(${GTEST_INCLUDE_DIR})
+
 
 add_executable(testHybridDEM testHybridDEM.cc)
 target_link_libraries(testHybridDEM PRIVATE

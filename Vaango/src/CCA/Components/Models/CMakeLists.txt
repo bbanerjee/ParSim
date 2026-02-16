@@ -66,9 +66,9 @@ target_link_libraries(Vaango_CCA_Components_Models PRIVATE
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_CCA_Components_Models)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_CCA_Components_Models PRIVATE BUILD_Vaango_CCA_Components_Models)
+endif()
 
 install(TARGETS
   Vaango_CCA_Components_Models

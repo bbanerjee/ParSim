@@ -61,9 +61,9 @@ target_link_libraries(MPM_Contact
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_MPM_Contact)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(MPM_Contact PRIVATE BUILD_MPM_Contact)
+endif()
 
 install(TARGETS
   MPM_Contact

@@ -47,9 +47,9 @@ if (PETSC)
    target_link_petsc(MPM_GradientComputer PRIVATE)
 endif()
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_MPM_GradientComputer)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(MPM_GradientComputer PRIVATE BUILD_MPM_GradientComputer)
+endif()
 
 install(TARGETS
   MPM_GradientComputer

@@ -100,9 +100,9 @@ target_compile_options(Vaango_CCA_Components_Examples PRIVATE
   $<$<COMPILE_LANGUAGE:CUDA>:-diag-suppress=20015>
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_CCA_Components_Examples)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_CCA_Components_Examples PRIVATE BUILD_Vaango_CCA_Components_Examples)
+endif()
 
 install(TARGETS
   Vaango_CCA_Components_Examples

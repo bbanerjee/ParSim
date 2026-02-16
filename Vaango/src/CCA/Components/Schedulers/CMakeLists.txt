@@ -78,6 +78,6 @@ target_link_libraries(Vaango_CCA_Components_Schedulers PRIVATE
   MPI::MPI_CXX
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_CCA_Components_Schedulers)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_CCA_Components_Schedulers PRIVATE BUILD_Vaango_CCA_Components_Schedulers)
+endif()

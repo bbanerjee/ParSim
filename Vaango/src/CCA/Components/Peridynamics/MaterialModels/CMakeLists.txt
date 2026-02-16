@@ -54,9 +54,9 @@ target_link_libraries(Peridynamics_MaterialModels PRIVATE
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Peridynamics_MaterialModels)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Peridynamics_MaterialModels PRIVATE BUILD_Peridynamics_MaterialModels)
+endif()
 
 install(TARGETS
   Peridynamics_MaterialModels
