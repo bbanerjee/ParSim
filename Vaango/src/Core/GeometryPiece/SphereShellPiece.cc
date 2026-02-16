@@ -107,6 +107,29 @@ SphereShellPiece::getBoundingBox() const {
   return Box(lo, hi);
 }
 
+double
+SphereShellPiece::volume() const {
+  double r_out = d_radius + 0.5 * d_h;
+  double r_in  = d_radius - 0.5 * d_h;
+  return (4.0 / 3.0) * M_PI * (std::pow(r_out, 3.0) - std::pow(r_in, 3.0));
+}
+
+Point
+SphereShellPiece::getCenter() const {
+  return d_origin;
+}
+
+Matrix3
+SphereShellPiece::getInertiaTensor() const {
+  double mass = volume();
+  double r_out = d_radius + 0.5 * d_h;
+  double r_in  = d_radius - 0.5 * d_h;
+  // Hollow sphere inertia: 2/5 * M * (R_out^5 - R_in^5) / (R_out^3 - R_in^3)
+  double i = (2.0 / 5.0) * mass * (std::pow(r_out, 5.0) - std::pow(r_in, 5.0)) /
+             (std::pow(r_out, 3.0) - std::pow(r_in, 3.0));
+  return Matrix3(i, 0, 0, 0, i, 0, 0, 0, i);
+}
+
 int
 SphereShellPiece::returnParticleCount(const Patch* patch) {
   Box b = patch->getExtraBox();

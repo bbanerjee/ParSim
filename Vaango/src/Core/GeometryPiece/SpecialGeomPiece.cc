@@ -40,6 +40,86 @@ const std::string SpecialGeomPiece::TYPE_NAME = "special_geom";
 //////////////////////////////////////////////////////////////////////
 /* Returns the vector containing the set of particle locations */
 //////////////////////////////////////////////////////////////////////
+double
+SpecialGeomPiece::volume() const
+{
+  double total_vol = 0;
+  if (d_scalars.count("p.volume")) {
+    for (auto vol : d_scalars.at("p.volume")) {
+      total_vol += vol;
+    }
+  } else if (d_tensors.count("p.size")) {
+    for (auto size : d_tensors.at("p.size")) {
+      total_vol += std::abs(size.Determinant());
+    }
+  }
+  return total_vol;
+}
+
+Point
+SpecialGeomPiece::getCenter() const
+{
+  Vector center(0, 0, 0);
+  double total_vol = 0;
+  if (d_scalars.count("p.volume")) {
+    const auto& vols = d_scalars.at("p.volume");
+    for (size_t i = 0; i < d_points.size(); ++i) {
+      center    = center + d_points[i].asVector() * vols[i];
+      total_vol += vols[i];
+    }
+  } else if (d_tensors.count("p.size")) {
+    const auto& sizes = d_tensors.at("p.size");
+    for (size_t i = 0; i < d_points.size(); ++i) {
+      double vol = std::abs(sizes[i].Determinant());
+      center    = center + d_points[i].asVector() * vol;
+      total_vol += vol;
+    }
+  } else {
+    for (const auto& point : d_points) {
+      center = center + point.asVector();
+    }
+    total_vol = static_cast<double>(d_points.size());
+  }
+
+  if (total_vol > 1e-12) {
+    center = center / total_vol;
+  }
+  return Point(center);
+}
+
+Matrix3
+SpecialGeomPiece::getInertiaTensor() const
+{
+  Matrix3 I(0.0);
+  Point center = getCenter();
+  Matrix3 identity;
+  identity.Identity();
+
+  if (d_scalars.count("p.volume")) {
+    const auto& vols = d_scalars.at("p.volume");
+    for (size_t i = 0; i < d_points.size(); ++i) {
+      Vector d       = d_points[i] - center;
+      double d_dot_d = d.length2();
+      I += (identity * d_dot_d - Matrix3(d, d)) * vols[i];
+    }
+  } else if (d_tensors.count("p.size")) {
+    const auto& sizes = d_tensors.at("p.size");
+    for (size_t i = 0; i < d_points.size(); ++i) {
+      double vol     = std::abs(sizes[i].Determinant());
+      Vector d       = d_points[i] - center;
+      double d_dot_d = d.length2();
+      I += (identity * d_dot_d - Matrix3(d, d)) * vol;
+    }
+  } else {
+    for (const auto& point : d_points) {
+      Vector d       = point - center;
+      double d_dot_d = d.length2();
+      I += (identity * d_dot_d - Matrix3(d, d)); // Unit volume
+    }
+  }
+  return I;
+}
+
 std::vector<Point>*
 SpecialGeomPiece::getPoints()
 {

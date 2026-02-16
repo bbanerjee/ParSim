@@ -126,11 +126,56 @@ CylinderShellPiece::getSDFGradient(const Point& p) const {
 // Bounding box
 Box
 CylinderShellPiece::getBoundingBox() const {
-  Point lo(d_bottom.x() - d_radius,
-           d_bottom.y() - d_radius,
-           d_bottom.z() - d_radius);
-  Point hi(d_top.x() + d_radius, d_top.y() + d_radius, d_top.z() + d_radius);
+  double rad = d_radius + 0.5 * d_thickness;
+  Point lo(d_bottom.x() - rad,
+           d_bottom.y() - rad,
+           d_bottom.z() - rad);
+  Point hi(d_top.x() + rad, d_top.y() + rad, d_top.z() + rad);
   return Box(lo, hi);
+}
+
+double
+CylinderShellPiece::volume() const {
+  double r_out = d_radius + 0.5 * d_thickness;
+  double r_in  = d_radius - 0.5 * d_thickness;
+  double h     = (d_top - d_bottom).length();
+  return M_PI * (r_out * r_out - r_in * r_in) * h;
+}
+
+Point
+CylinderShellPiece::getCenter() const {
+  return d_bottom + (d_top - d_bottom) * 0.5;
+}
+
+Matrix3
+CylinderShellPiece::getInertiaTensor() const {
+  double mass = volume();
+  double r_out = d_radius + 0.5 * d_thickness;
+  double r_in  = d_radius - 0.5 * d_thickness;
+  double h     = (d_top - d_bottom).length();
+  
+  double izz_local = 0.5 * mass * (r_out * r_out + r_in * r_in);
+  double ixx_local = (1.0 / 4.0) * mass * (r_out * r_out + r_in * r_in) + 
+                     (1.0 / 12.0) * mass * h * h;
+  double iyy_local = ixx_local;
+  
+  Matrix3 I_local(ixx_local, 0, 0, 0, iyy_local, 0, 0, 0, izz_local);
+  
+  Vector e3 = (d_top - d_bottom);
+  if (h > 1e-12) {
+    e3 /= h;
+  } else {
+    return I_local;
+  }
+  
+  Vector e1, e2;
+  e3.findOrthogonal(e1, e2);
+  
+  Matrix3 R(e1[0], e2[0], e3[0],
+            e1[1], e2[1], e3[1],
+            e1[2], e2[2], e3[2]);
+            
+  return rotateInertiaTensor(I_local, R);
 }
 
 /////////////////////////////////////////////////////////////////////////////

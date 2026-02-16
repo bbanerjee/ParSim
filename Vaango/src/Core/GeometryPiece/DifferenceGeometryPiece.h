@@ -126,6 +126,25 @@ class DifferenceGeometryPiece : public GeometryPiece {
   virtual Box
   getBoundingBox() const;
 
+  /**
+   * Returns the volume of the difference.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the difference.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the difference.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
+
  private:
   virtual void
   outputHelper(ProblemSpecP& ps) const;

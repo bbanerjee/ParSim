@@ -118,4 +118,41 @@ IntersectionGeometryPiece::getBoundingBox() const {
   return Box(lo, hi);
 }
 
+double
+IntersectionGeometryPiece::volume() const {
+  double min_vol = 1.0e30;
+  for (const auto& child : d_children) {
+    min_vol = std::min(min_vol, child->volume());
+  }
+  return min_vol;
+}
+
+Point
+IntersectionGeometryPiece::getCenter() const {
+  double min_vol = 1.0e30;
+  size_t min_idx = 0;
+  for (size_t i = 0; i < d_children.size(); ++i) {
+    double vol = d_children[i]->volume();
+    if (vol < min_vol) {
+      min_vol = vol;
+      min_idx = i;
+    }
+  }
+  return d_children[min_idx]->getCenter();
+}
+
+Matrix3
+IntersectionGeometryPiece::getInertiaTensor() const {
+  double min_vol = 1.0e30;
+  size_t min_idx = 0;
+  for (size_t i = 0; i < d_children.size(); ++i) {
+    double vol = d_children[i]->volume();
+    if (vol < min_vol) {
+      min_vol = vol;
+      min_idx = i;
+    }
+  }
+  return d_children[min_idx]->getInertiaTensor();
+}
+
 } // end namespace Uintah

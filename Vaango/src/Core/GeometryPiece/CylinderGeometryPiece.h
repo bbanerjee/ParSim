@@ -120,6 +120,19 @@ class CylinderGeometryPiece : public GeometryPiece {
   virtual Box
   getBoundingBox() const;
 
+  /**
+   * Returns the center of the cylinder.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the cylinder.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
+
   //////////
   // Calculate the surface area
   //

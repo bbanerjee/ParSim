@@ -131,6 +131,40 @@ PlaneShellPiece::getBoundingBox() const {
   return Box(lo, hi);
 }
 
+double
+PlaneShellPiece::volume() const {
+  return M_PI * d_radius * d_radius * d_thickness;
+}
+
+Point
+PlaneShellPiece::getCenter() const {
+  return d_center;
+}
+
+Matrix3
+PlaneShellPiece::getInertiaTensor() const {
+  double mass = volume();
+  double r = d_radius;
+  double t = d_thickness;
+  
+  double izz_local = 0.5 * mass * r * r;
+  double ixx_local = 0.25 * mass * r * r + (1.0/12.0) * mass * t * t;
+  double iyy_local = ixx_local;
+  
+  Matrix3 I_local(ixx_local, 0, 0, 0, iyy_local, 0, 0, 0, izz_local);
+  
+  Vector e3 = d_normal;
+  e3.normalize();
+  Vector e1, e2;
+  e3.findOrthogonal(e1, e2);
+  
+  Matrix3 R(e1[0], e2[0], e3[0],
+            e1[1], e2[1], e3[1],
+            e1[2], e2[2], e3[2]);
+            
+  return rotateInertiaTensor(I_local, R);
+}
+
 //////////
 /*! Find the particle count on the circular plane surface
    Create the particles on a circle on the x-y plane and then

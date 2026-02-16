@@ -175,6 +175,26 @@ TorusGeometryPiece::getBoundingBox() const {
   return Box(minBB, maxBB);
 }
 
+Point
+TorusGeometryPiece::getCenter() const {
+  return d_center;
+}
+
+Matrix3
+TorusGeometryPiece::getInertiaTensor() const {
+  double R = d_major_radius;
+  double r = d_minor_radius;
+  double mass = volume();
+  
+  double izz_local = mass * (R * R + 0.75 * r * r);
+  double ixx_local = mass * (0.5 * R * R + 0.625 * r * r);
+  double iyy_local = ixx_local;
+  
+  Matrix3 I_local(ixx_local, 0, 0, 0, iyy_local, 0, 0, 0, izz_local);
+  
+  return rotateInertiaTensor(I_local, d_rotation.Transpose());
+}
+
 //////////
 // Calculate the unit normal vector to axis from point
 Vector

@@ -120,6 +120,25 @@ public:
   virtual Box
   getBoundingBox() const override;
 
+  /**
+   * Returns the volume of the triangulated surface.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the triangulated surface.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the triangulated surface.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
+
   void
   scale(const double factor);
 

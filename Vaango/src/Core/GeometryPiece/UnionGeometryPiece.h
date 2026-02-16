@@ -126,6 +126,25 @@ class UnionGeometryPiece : public GeometryPiece {
   virtual Box
   getBoundingBox() const;
 
+  /**
+   * Returns the volume of the union.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the union.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the union.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
+
  private:
   virtual void
   outputHelper(ProblemSpecP& ps) const;

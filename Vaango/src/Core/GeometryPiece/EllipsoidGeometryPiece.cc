@@ -265,4 +265,21 @@ EllipsoidGeometryPiece::getBoundingBox() const {
   return Box(low, high);
 }
 
+Point
+EllipsoidGeometryPiece::getCenter() const {
+  return d_origin;
+}
+
+Matrix3
+EllipsoidGeometryPiece::getInertiaTensor() const {
+  double mass = volume();
+  double ixx_local = 0.2 * mass * (d_r2 * d_r2 + d_r3 * d_r3);
+  double iyy_local = 0.2 * mass * (d_r1 * d_r1 + d_r3 * d_r3);
+  double izz_local = 0.2 * mass * (d_r1 * d_r1 + d_r2 * d_r2);
+  
+  Matrix3 I_local(ixx_local, 0, 0, 0, iyy_local, 0, 0, 0, izz_local);
+  
+  return rotateInertiaTensor(I_local, d_rotation.Transpose());
+}
+
 } // end namespace Uintah

@@ -122,4 +122,43 @@ DifferenceGeometryPiece::getBoundingBox() const {
   return Box(lo, hi);
 }
 
+double
+DifferenceGeometryPiece::volume() const {
+  return std::max(0.0, d_left->volume() - d_right->volume());
+}
+
+Point
+DifferenceGeometryPiece::getCenter() const {
+  double v_l = d_left->volume();
+  double v_r = d_right->volume();
+  double v_diff = v_l - v_r;
+  if (v_diff > 1e-12) {
+    return Point((d_left->getCenter().asVector() * v_l - 
+                  d_right->getCenter().asVector() * v_r) / v_diff);
+  }
+  return d_left->getCenter();
+}
+
+Matrix3
+DifferenceGeometryPiece::getInertiaTensor() const {
+  Point center = getCenter();
+  
+  double v_l = d_left->volume();
+  Point c_l = d_left->getCenter();
+  Vector d_l = c_l - center;
+  Matrix3 I_l = d_left->getInertiaTensor();
+  
+  Matrix3 identity; identity.Identity();
+  Matrix3 I_l_shifted = I_l + (identity * d_l.length2() - Matrix3(d_l, d_l)) * v_l;
+  
+  double v_r = d_right->volume();
+  Point c_r = d_right->getCenter();
+  Vector d_r = c_r - center;
+  Matrix3 I_r = d_right->getInertiaTensor();
+  
+  Matrix3 I_r_shifted = I_r + (identity * d_r.length2() - Matrix3(d_r, d_r)) * v_r;
+  
+  return I_l_shifted - I_r_shifted;
+}
+
 }  // end namespace Uintah

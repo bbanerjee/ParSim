@@ -105,6 +105,25 @@ class PlaneShellPiece : public ShellGeometryPiece {
   virtual Box
   getBoundingBox() const;
 
+  /**
+   * Returns the volume of the plane shell.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the plane shell.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the plane shell.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
+
   //////////
   // Returns the number of particles
   int

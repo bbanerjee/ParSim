@@ -73,4 +73,19 @@ NullGeometryPiece::getBoundingBox() const {
   return d_box;
 }
 
+double
+NullGeometryPiece::volume() const {
+  return 0.0;
+}
+
+Point
+NullGeometryPiece::getCenter() const {
+  return Point(0, 0, 0);
+}
+
+Matrix3
+NullGeometryPiece::getInertiaTensor() const {
+  return Matrix3(0.0);
+}
+
 } // end namespace Uintah

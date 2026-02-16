@@ -2726,6 +2726,7 @@ SerialMPM::integrateDEMRotation(const ProcessorGroup*,
       struct RotationState {
         Vector omega;
         Matrix3 orient;
+        Matrix3 inertia;
       };
       std::map<long64, RotationState> master_rotations;
 
@@ -2745,15 +2746,22 @@ SerialMPM::integrateDEMRotation(const ProcessorGroup*,
                               -pAngularVelocity[idx].y(),
                               pAngularVelocity[idx].x(),
                               0.0);
-            pOrientation_new[idx] =
-              pOrientation[idx] + (omegaSkew * pOrientation[idx]) * delT;
             
-            master_rotations[pRigidBodyID[idx]] = {pAngularVelocity_new[idx], pOrientation_new[idx]};
+            // Rotation increment deltaR = I + omegaSkew * delT
+            Matrix3 identity; identity.Identity();
+            Matrix3 deltaR = identity + omegaSkew * delT;
+
+            pOrientation_new[idx] = deltaR * pOrientation[idx];
+            
+            // Update inertia tensor: I_new = deltaR * I_old * deltaR^T
+            pInertiaTensor_new[idx] = GeometryPiece::rotateInertiaTensor(pInertiaTensor[idx], deltaR);
+
+            master_rotations[pRigidBodyID[idx]] = {pAngularVelocity_new[idx], pOrientation_new[idx], pInertiaTensor_new[idx]};
           } else {
             pAngularVelocity_new[idx] = pAngularVelocity[idx];
             pOrientation_new[idx]     = pOrientation[idx];
+            pInertiaTensor_new[idx] = pInertiaTensor[idx];
           }
-          pInertiaTensor_new[idx] = pInertiaTensor[idx];
           pRadius_new[idx]        = pRadius[idx];
         }
 
@@ -2764,6 +2772,7 @@ SerialMPM::integrateDEMRotation(const ProcessorGroup*,
             if (master_rotations.count(rbID)) {
               pAngularVelocity_new[idx] = master_rotations[rbID].omega;
               pOrientation_new[idx] = master_rotations[rbID].orient;
+              pInertiaTensor_new[idx] = master_rotations[rbID].inertia;
             }
           }
         }

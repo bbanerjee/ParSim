@@ -602,8 +602,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
 
     // For discrete material, check if Master or Slave
     if (d_matl->isDiscrete()) {
-      Box box      = piece->getBoundingBox();
-      Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
+      Point center = piece->getCenter();
       double distSq = (p - center).length2();
       if (distSq > 1.0e-9) {
         // Slave/Dummy particle
@@ -611,48 +610,22 @@ ParticleCreator::initializeParticle(const Patch* patch,
         pvars.pVolume[i] = 0.0;
         pvars.pRadius[i] = 0.0;
       } else {
-        // Master particle: use total volume of geometry piece if available
-        double vol = 0;
-        if (auto* sphere = dynamic_cast<SphereGeometryPiece*>(piece.get())) {
-          vol              = sphere->volume();
-          pvars.pRadius[i] = sphere->radius();
-        } else if (auto* box_piece =
-                     dynamic_cast<BoxGeometryPiece*>(piece.get())) {
-          vol              = box_piece->volume();
-          pvars.pRadius[i] = 0.5 * box_piece->smallestSide();
-        } else if (auto* cyl =
-                     dynamic_cast<CylinderGeometryPiece*>(piece.get())) {
-          vol              = cyl->volume();
-          pvars.pRadius[i] = cyl->radius();
-        } else if (auto* sdf =
-                     dynamic_cast<DynamicSDFGeometry*>(piece.get())) {
-          Box b = sdf->getBoundingBox();
-          Vector diag = b.upper() - b.lower();
-          vol = diag.x() * diag.y() * diag.z();
-          pvars.pRadius[i] = 0.5 * std::min({diag.x(), diag.y(), diag.z()});
-        } else {
-          // Fallback for other geometry pieces
-          Box b = piece->getBoundingBox();
-          Vector diag = b.upper() - b.lower();
-          vol = diag.x() * diag.y() * diag.z();
-          if (pvars.pRadius[i] == 0) {
-            pvars.pRadius[i] = matl->getParticleRadius();
-          }
-        }
-        if (vol > 0) {
-          pvars.pVolume[i] = vol;
-          pvars.pMass[i]   = matl->getInitialDensity() * vol;
-        }
+        // Master particle: use total volume of geometry piece
+        double vol = piece->volume();
+        pvars.pVolume[i] = vol;
+        pvars.pMass[i]   = matl->getInitialDensity() * vol;
+        
+        // Use a characteristic radius for contact (half smallest bounding box side)
+        Box b = piece->getBoundingBox();
+        Vector diag = b.upper() - b.lower();
+        pvars.pRadius[i] = 0.5 * std::min({diag.x(), diag.y(), diag.z()});
       }
     }
 
     if (d_matl->getIsRigid()) {
       // For rigid materials, all particles carry mass normally
       // But we still track the master at center for global kinematics
-      // We already assigned mass above in standard initialization,
-      // just ensure radius is set for the master.
-      Box box      = piece->getBoundingBox();
-      Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
+      Point center = piece->getCenter();
       double distSq = (p - center).length2();
       if (distSq < 1.0e-9) {
         pvars.pRadius[i] = matl->getParticleRadius();
@@ -661,8 +634,8 @@ ParticleCreator::initializeParticle(const Patch* patch,
       }
     }
 
-    double I = 0.4 * pvars.pMass[i] * pvars.pRadius[i] * pvars.pRadius[i];
-    pvars.pInertiaTensor[i] = Matrix3(I, 0, 0, 0, I, 0, 0, 0, I);
+    Matrix3 I = piece->getInertiaTensor() * matl->getInitialDensity();
+    pvars.pInertiaTensor[i] = I;
   }
 
   // Cell ids

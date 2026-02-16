@@ -239,4 +239,34 @@ NaaBoxGeometryPiece::getBoundingBox() const {
   return d_boundingBox;
 }
 
+double
+NaaBoxGeometryPiece::volume() const {
+  Vector v1 = p2_ - p1_;
+  Vector v2 = p3_ - p1_;
+  Vector v3 = p4_ - p1_;
+  return std::abs(Dot(v1, Cross(v2, v3)));
+}
+
+Point
+NaaBoxGeometryPiece::getCenter() const {
+  Vector v1 = p2_ - p1_;
+  Vector v2 = p3_ - p1_;
+  Vector v3 = p4_ - p1_;
+  return p1_ + (v1 + v2 + v3) * 0.5;
+}
+
+Matrix3
+NaaBoxGeometryPiece::getInertiaTensor() const {
+  double mass = volume();
+  Vector v1 = p2_ - p1_;
+  Vector v2 = p3_ - p1_;
+  Vector v3 = p4_ - p1_;
+  
+  Matrix3 identity; identity.Identity();
+  Matrix3 I = (identity * v1.length2() - Matrix3(v1, v1)) +
+              (identity * v2.length2() - Matrix3(v2, v2)) +
+              (identity * v3.length2() - Matrix3(v3, v3));
+  return I * (mass / 12.0);
+}
+
 } // end namespace Uintah

@@ -111,4 +111,16 @@ SphereGeometryPiece::getBoundingBox() const {
   return Box(lo, hi);
 }
 
+Point
+SphereGeometryPiece::getCenter() const {
+  return d_origin;
+}
+
+Matrix3
+SphereGeometryPiece::getInertiaTensor() const {
+  double mass = volume(); // Unit density
+  double i = (2.0 / 5.0) * mass * d_radius * d_radius;
+  return Matrix3(i, 0, 0, 0, i, 0, 0, 0, i);
+}
+
 } // end namespace Uintah

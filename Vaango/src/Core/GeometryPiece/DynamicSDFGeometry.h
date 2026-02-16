@@ -48,6 +48,25 @@ public:
   virtual Vector getSDFGradient(const Point& p) const override;
   virtual Box getBoundingBox() const override;
 
+  /**
+   * Returns the volume of the geometry piece.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the geometry piece.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the geometry piece.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
+
   const LocalSDF& getSDF() const { return *d_sdf; }
 
 private:

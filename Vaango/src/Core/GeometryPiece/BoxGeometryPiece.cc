@@ -137,6 +137,23 @@ BoxGeometryPiece::getBoundingBox() const {
   return d_box;
 }
 
+Point
+BoxGeometryPiece::getCenter() const {
+  return d_box.lower() + (d_box.upper() - d_box.lower()) * 0.5;
+}
+
+Matrix3
+BoxGeometryPiece::getInertiaTensor() const {
+  double w = (d_box.upper()).x() - (d_box.lower()).x();
+  double h = (d_box.upper()).y() - (d_box.lower()).y();
+  double d = (d_box.upper()).z() - (d_box.lower()).z();
+  double mass = w * h * d; // Unit density
+  double ixx = (1.0 / 12.0) * mass * (h * h + d * d);
+  double iyy = (1.0 / 12.0) * mass * (w * w + d * d);
+  double izz = (1.0 / 12.0) * mass * (w * w + h * h);
+  return Matrix3(ixx, 0, 0, 0, iyy, 0, 0, 0, izz);
+}
+
 double
 BoxGeometryPiece::volume() const {
   double dx = (d_box.upper()).x() - (d_box.lower()).x();

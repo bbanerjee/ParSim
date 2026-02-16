@@ -200,6 +200,40 @@ CylinderGeometryPiece::getBoundingBox() const {
   return Box(minBB, maxBB);
 }
 
+Point
+CylinderGeometryPiece::getCenter() const {
+  return d_bottom + (d_top - d_bottom) * 0.5;
+}
+
+Matrix3
+CylinderGeometryPiece::getInertiaTensor() const {
+  double r = d_radius;
+  double h = height();
+  double mass = volume(); // Unit density
+  
+  double izz_local = 0.5 * mass * r * r;
+  double ixx_local = (1.0 / 12.0) * mass * (3.0 * r * r + h * h);
+  double iyy_local = ixx_local;
+  
+  Matrix3 I_local(ixx_local, 0, 0, 0, iyy_local, 0, 0, 0, izz_local);
+  
+  Vector e3 = (d_top - d_bottom);
+  if (h > 1e-12) {
+    e3 /= h;
+  } else {
+    return I_local; // Degenerate case
+  }
+  
+  Vector e1, e2;
+  e3.findOrthogonal(e1, e2);
+  
+  Matrix3 R(e1[0], e2[0], e3[0],
+            e1[1], e2[1], e3[1],
+            e1[2], e2[2], e3[2]);
+            
+  return rotateInertiaTensor(I_local, R);
+}
+
 //////////
 // Calculate the unit normal vector to axis from point
 Vector

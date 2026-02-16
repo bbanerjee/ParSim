@@ -114,6 +114,25 @@ class SphereMembraneGeometryPiece : public GeometryPiece {
   virtual Box
   getBoundingBox() const;
 
+  /**
+   * Returns the volume of the sphere membrane.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the sphere membrane.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the sphere membrane.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
+
   int
   returnParticleCount(const Patch* patch);
 

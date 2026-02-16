@@ -136,6 +136,21 @@ Box DynamicSDFGeometry::getBoundingBox() const {
   return d_sdf->getBoundingBox();
 }
 
+double
+DynamicSDFGeometry::volume() const {
+  return d_mesh->volume();
+}
+
+Point
+DynamicSDFGeometry::getCenter() const {
+  return d_mesh->getCenter();
+}
+
+Matrix3
+DynamicSDFGeometry::getInertiaTensor() const {
+  return d_mesh->getInertiaTensor();
+}
+
 void DynamicSDFGeometry::outputHelper(ProblemSpecP& ps) const {
   ps->appendElement("res", d_res);
   // Mesh output would go here

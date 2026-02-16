@@ -204,9 +204,6 @@ SmoothCylGeomPiece::getSDFGradient(const Point& p) const {
   return GeometryPiece::getSDFGradient(p);
 }
 
-/////////////////////////////////////////////////////////////////////////////
-/*! Find the bounding box for the cylinder */
-/////////////////////////////////////////////////////////////////////////////
 Box
 SmoothCylGeomPiece::getBoundingBox() const {
   // Find the vector along the axis of the cylinder
@@ -218,6 +215,39 @@ SmoothCylGeomPiece::getBoundingBox() const {
   Point hi(top.x() + d_radius, top.y() + d_radius, top.z() + d_radius);
 
   return Box(lo, hi);
+}
+
+double
+SmoothCylGeomPiece::volume() const {
+  double r_out = d_radius;
+  double r_in  = d_radius - d_thickness;
+  double h     = d_height;
+  double v_hollow = M_PI * (r_out * r_out - r_in * r_in) * h;
+  double v_caps   = 2.0 * (M_PI * r_out * r_out * d_capThick);
+  return v_hollow + v_caps;
+}
+
+Point
+SmoothCylGeomPiece::getCenter() const {
+  return d_bottom + (d_top - d_bottom) * 0.5;
+}
+
+Matrix3
+SmoothCylGeomPiece::getInertiaTensor() const {
+  double mass = volume();
+  double r_out = d_radius;
+  double r_in  = d_radius - d_thickness;
+  double h     = d_height;
+  
+  // Approximation for inertia
+  double r_avg2 = 0.5 * (r_out * r_out + r_in * r_in);
+  double izz_local = 0.5 * mass * r_avg2;
+  double ixx_local = (1.0 / 4.0) * mass * r_avg2 + (1.0 / 12.0) * mass * h * h;
+  double iyy_local = ixx_local;
+  
+  Matrix3 I_local(ixx_local, 0, 0, 0, iyy_local, 0, 0, 0, izz_local);
+  
+  return rotateInertiaTensor(I_local, d_rotation.Transpose());
 }
 
 //////////////////////////////////////////////////////////////////////////

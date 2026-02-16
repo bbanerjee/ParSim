@@ -123,6 +123,27 @@ class IntersectionGeometryPiece final : public GeometryPiece {
   Box
   getBoundingBox() const;
 
+  /**
+   * Returns the volume of the intersection.
+   * Approximation: Returns the minimum volume among children.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the intersection.
+   * Approximation: Returns the center of the child with minimum volume.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the intersection.
+   * Approximation: Returns the inertia tensor of the child with minimum volume.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
+
  private:
   void
   outputHelper(ProblemSpecP& ps) const;

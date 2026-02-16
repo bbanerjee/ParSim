@@ -29,6 +29,7 @@
 
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
+#include <Core/Math/Matrix3.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Util/RefCounted.h>
@@ -104,6 +105,35 @@ public:
   inside(const Point& p, [[maybe_unused]] bool default_val) const 
   {
     return inside(p);
+  }
+
+  /**
+   * Returns the center of the geometry piece.
+   */
+  virtual Point
+  getCenter() const = 0;
+
+  /**
+   * Returns the volume of the geometry piece.
+   */
+  virtual double
+  volume() const = 0;
+
+  /**
+   * Returns the inertia tensor of the geometry piece.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const = 0;
+
+  /**
+   * Rotates the inertia tensor I by rotation matrix R.
+   * I' = R * I * R^T
+   */
+  static Matrix3
+  rotateInertiaTensor(const Matrix3& I, const Matrix3& R)
+  {
+    return R * I * R.Transpose();
   }
 
   std::string

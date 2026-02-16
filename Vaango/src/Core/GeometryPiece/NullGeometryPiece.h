@@ -116,6 +116,25 @@ class NullGeometryPiece : public GeometryPiece {
   virtual Box
   getBoundingBox() const;
 
+  /**
+   * Returns the volume of the null geometry.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the null geometry.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the null geometry.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
+
  private:
   virtual void
   outputHelper(ProblemSpecP& ps) const;

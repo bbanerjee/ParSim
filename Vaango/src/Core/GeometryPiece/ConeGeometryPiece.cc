@@ -154,6 +154,51 @@ ConeGeometryPiece::getBoundingBox() const {
   return Box(lo, hi);
 }
 
+Point
+ConeGeometryPiece::getCenter() const {
+  double r1 = d_radius;
+  double r2 = d_topRad;
+  double h = height();
+  // Center of mass from r1 base
+  double z_cm = (h / 4.0) * (r1 * r1 + 2.0 * r1 * r2 + 3.0 * r2 * r2) /
+                (r1 * r1 + r1 * r2 + r2 * r2);
+  Vector axis = (d_top - d_bottom);
+  if (h > 1e-12) axis /= h;
+  return d_bottom + axis * z_cm;
+}
+
+Matrix3
+ConeGeometryPiece::getInertiaTensor() const {
+  double r1 = d_radius;
+  double r2 = d_topRad;
+  double h = height();
+  double mass = volume();
+  
+  // Approximation using average cylinder
+  double r_avg = 0.5 * (r1 + r2);
+  double izz_local = 0.5 * mass * r_avg * r_avg;
+  double ixx_local = (1.0 / 12.0) * mass * (3.0 * r_avg * r_avg + h * h);
+  double iyy_local = ixx_local;
+  
+  Matrix3 I_local(ixx_local, 0, 0, 0, iyy_local, 0, 0, 0, izz_local);
+  
+  Vector e3 = (d_top - d_bottom);
+  if (h > 1e-12) {
+    e3 /= h;
+  } else {
+    return I_local;
+  }
+  
+  Vector e1, e2;
+  e3.findOrthogonal(e1, e2);
+  
+  Matrix3 R(e1[0], e2[0], e3[0],
+            e1[1], e2[1], e3[1],
+            e1[2], e2[2], e3[2]);
+            
+  return rotateInertiaTensor(I_local, R);
+}
+
 //////////
 // Calculate the lateral surface area of the cone
 double

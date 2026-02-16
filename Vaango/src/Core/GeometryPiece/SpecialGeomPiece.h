@@ -107,6 +107,25 @@ public:
   virtual Box
   getBoundingBox() const = 0;
 
+  /**
+   * Returns the volume of the geometry piece.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the geometry piece.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the geometry piece.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
+
   //////////////////////////////////////////////////////////////////////
   /*! Creates points and returns count of points */
   //////////////////////////////////////////////////////////////////////

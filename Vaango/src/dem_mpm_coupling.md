@@ -454,5 +454,47 @@ Following a review of the physical requirements for rigid bodies in hybrid simul
 - **Standard Contact Compatibility**: This approach ensures that standard contact models (Friction, Specified Body, Penalty) work out-of-the-box with rigid materials while maintaining non-deformability.
 
 
+---
 
+## 21. Unphysical Rotation of DEM Materials (February 2026)
 
+Based on an examination of the input file and the source code, the rotation of the DEM piston is likely caused by an extremely underestimated moment of inertia.
+
+###  Analysis:
+- **Incorrect Inertia Calculation**: In ParticleCreator.cc, the moment of inertia for discrete materials is hardcoded using the formula for a solid sphere: $I = 0.4 \times \text{mass} \times \text{radius}^2$.  For a BoxGeometryPiece, the code sets the "radius" to be half of the smallest side of the box.  In your simulation, the piston box dimensions are approximately $1.0 \times 0.0125 \times 0.1$. The "radius" is thus set to $0.00625$.  The resulting rotational inertia ($I \approx 1.56 \times 10^{-5} \times m$) is used for all axes, whereas the actual inertia for a rectangle of width 1.0 should be.
+- **Symmetry Breaking**: In any numerical simulation, there are small asymmetries due to floating-point precision and the discrete nature of the MPM particles in the deformable HMX cylinder. When the piston descends and contacts the cylinder, these small asymmetries produce a net torque.
+- **Amplification**: Because the rotational inertia is so unnaturally small, even a negligible torque results in a massive angular acceleration, causing the piston to spin wildly during the simulation.
+
+###  Recommendation:
+  The moment of inertia calculation in ParticleCreator::initializeParticle should be updated to account for the actual geometry type and dimensions of the GeometryPiece.  Specifically for a BoxGeometryPiece, it should use the standard formula for a rectangular cuboid: $I_{yy} = \frac{1}{12} m (a^2 + c^2)$, etc., where $a, b, c$ are the side lengths.
+
+---
+
+## 22. Geometry-Aware Rotational Inertia and Dynamics (February 2026)
+
+To resolve unphysical rotations caused by underestimated inertia, the `GeometryPiece` hierarchy was extended to provide exact physical properties, and the rotational integration in `SerialMPM` was refined.
+
+### 1. Physical Property Extensions in `GeometryPiece`
+The base `GeometryPiece` class was updated to include virtual methods for calculating exact volume, center of mass, and the moment of inertia tensor.
+- **Exact Formulas**: Implemented geometry-specific inertia tensors for all core shapes:
+    - **`BoxGeometryPiece`**: Rectangular cuboid formulas.
+    - **`SphereGeometryPiece`**: Solid sphere formulas.
+    - **`CylinderGeometryPiece` / `ConeGeometryPiece`**: Formulas for oriented cylinders and frustums.
+    - **`TriGeometryPiece`**: Summation of tetrahedron contributions for closed triangular meshes.
+    - **`Union` / `Difference`**: Calculated using the **Parallel Axis Theorem** to correctly shift and combine child inertia tensors.
+- **Orientation Support**: Inertia tensors are calculated in the object's local frame and then rotated into the global basis using the object's initial orientation.
+
+### 2. Accurate Particle Initialization
+The `ParticleCreator::initializeParticle` method was refactored to use these new geometric queries:
+- **Mass and Volume**: Now uses the exact `piece->volume()` and `piece->getCenter()`.
+- **Inertia Tensor**: The initial `p.inertiaTensor` is populated by querying the `GeometryPiece` and scaling by the material's initial density. This ensures that thin or elongated objects (like the piston) have the correct resistance to rotation about all axes.
+
+### 3. Inertia Tensor Evolution
+In `SerialMPM::integrateDEMRotation`, the moment of inertia tensor is now evolved as the rigid body rotates:
+- **Mechanism**: The rotation increment $\Delta \mathbf{R} \approx \mathbb{I} + \boldsymbol{\Omega} \Delta t$ is used to update the tensor:
+  $$\mathbf{I}_{new} = \Delta \mathbf{R} \cdot \mathbf{I}_{old} \cdot \Delta \mathbf{R}^T$$
+- **Consistency**: This ensures that as an object rotates, its resistance to further rotation correctly follows its spatial orientation.
+- **Synchronization**: The updated inertia tensor and orientation are correctly propagated from the Master particle to all associated Slave particles (geometric proxies).
+
+### 4. Box Surface Visualization
+To support better visual inspection of box-shaped rigid bodies, a new `createBoxSurfacePoints` helper was added to `ParticleGeometryHelpers`. This generates a grid of visual-only particles on all six faces of a `BoxGeometryPiece`, providing a clear boundary for contact verification in post-processing.
