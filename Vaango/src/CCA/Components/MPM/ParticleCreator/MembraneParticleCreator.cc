@@ -86,13 +86,12 @@ MembraneParticleCreator::createParticles(
   CCVariable<short int>& cellNAPID,
   const Patch* patch,
   DataWarehouse* new_dw,
-  std::vector<GeometryObject*>& d_geom_objs)
+  const VecGeometryObjectSP& d_geom_objs)
 {
   ObjectVars vars;
   particleIndex numParticles = 0;
-  std::vector<GeometryObject*>::const_iterator geom;
-  for (geom = d_geom_objs.begin(); geom != d_geom_objs.end(); ++geom) {
-    numParticles += countAndCreateParticles(patch, *geom, vars);
+  for (const auto& geom : d_geom_objs) {
+    numParticles += countAndCreateParticles(patch, geom.get(), vars);
   }
   int dwi = matl->getDWIndex();
 
@@ -101,10 +100,9 @@ MembraneParticleCreator::createParticles(
 
   particleIndex start = 0;
 
-  std::vector<GeometryObject*>::const_iterator obj;
-  for (obj = d_geom_objs.begin(); obj != d_geom_objs.end(); ++obj) {
+  for (const auto& obj : d_geom_objs) {
     particleIndex count  = 0;
-    GeometryPieceP piece = (*obj)->getPiece();
+    GeometryPieceP piece = obj->getPiece();
     Box b1               = piece->getBoundingBox();
     Box b2               = patch->getExtraBox();
     Box b                = b1.intersect(b2);
@@ -112,8 +110,8 @@ MembraneParticleCreator::createParticles(
       count = 0;
     }
 
-    IntVector ppc  = (*obj)->getInitialData_IntVector("res");
-    Vector dxpp    = patch->dCell() / (*obj)->getInitialData_IntVector("res");
+    IntVector ppc  = obj->getInitialData_IntVector("res");
+    Vector dxpp    = patch->dCell() / obj->getInitialData_IntVector("res");
     Vector dcorner = dxpp * 0.5;
     // Size as a fraction of the cell size
     Matrix3 size(1. / ((double)ppc.x()),
@@ -139,9 +137,9 @@ MembraneParticleCreator::createParticles(
                                        start); // CPTI
       for (int idx = 0; idx < (start + numP); idx++) {
         pvars.pVelocity[start + idx] =
-          (*obj)->getInitialData_Vector("velocity");
+          obj->getInitialData_Vector("velocity");
         pvars.pTemperature[start + idx] =
-          (*obj)->getInitialData_double("temperature");
+          obj->getInitialData_double("temperature");
         pvars.pSpecificVolume[start + idx] = 1.0 / matl->getInitialDensity();
         pvars.pMass[start + idx] =
           matl->getInitialDensity() * pvars.pVolume[start + idx];
@@ -181,9 +179,9 @@ MembraneParticleCreator::createParticles(
                 pvars.position[start + count] = p;
                 pvars.pVolume[start + count]  = dxpp.x() * dxpp.y() * dxpp.z();
                 pvars.pVelocity[start + count] =
-                  (*obj)->getInitialData_Vector("velocity");
+                  obj->getInitialData_Vector("velocity");
                 pvars.pTemperature[start + count] =
-                  (*obj)->getInitialData_double("temperature");
+                  obj->getInitialData_double("temperature");
                 pvars.pSpecificVolume[start + count] =
                   1.0 / matl->getInitialDensity();
                 // Calculate particle mass

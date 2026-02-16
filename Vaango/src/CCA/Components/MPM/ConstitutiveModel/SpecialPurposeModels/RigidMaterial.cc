@@ -164,7 +164,7 @@ RigidMaterial::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
     carryForwardSharedData(pset, old_dw, new_dw, matl);
     auto delT = 1.0;
     new_dw->put(delt_vartype(delT), lb->delTLabel, patch->getLevel());
-    DOUT(rigid_mat_dbg, "rigid material delT = " << delT );
+    DOUT(rigid_mat_dbg, "[RigidMaterial] delT = " << delT );
 
     if (flag->d_reductionVars->accStrainEnergy ||
         flag->d_reductionVars->strainEnergy) {

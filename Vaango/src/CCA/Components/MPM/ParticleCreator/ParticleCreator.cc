@@ -25,6 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreator.h>
+#include <CCA/Components/MPM/ParticleCreator/ParticleGeometryHelpers.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/BasicDamageModel.h>
@@ -88,31 +89,33 @@ ParticleCreator::ParticleCreator(MPMMaterial* matl, MPMFlags* flags)
   registerPermanentParticleState(matl);
 }
 
-auto
-ParticleCreator::createParticles(MPMMaterial* matl,
-                                 CCVariable<short int>& cellNAPID,
-                                 const Patch* patch,
-                                 DataWarehouse* new_dw,
-                                 const VecGeometryObjectSP& geom_objs)
-  -> particleIndex
-{
+auto ParticleCreator::createParticles(MPMMaterial* matl,
+                                      CCVariable<short int>& cellNAPID,
+                                      const Patch* patch,
+                                      DataWarehouse* new_dw,
+                                      const VecGeometryObjectSP& geom_objs)
+  -> particleIndex {
+  
+  // Phase 1: Count particles needed across all geometry objects
   ObjectVars obj_vars;
   particleIndex numParticles = 0;
   for (const auto& geom : geom_objs) {
     numParticles += countAndCreateParticles(patch, geom.get(), obj_vars);
   }
 
+  // Phase 2: Allocate memory for all particles
   ParticleVars pvars;
   int dwi = matl->getDWIndex();
   [[maybe_unused]] ParticleSubset* pset =
     allocateVariables(numParticles, dwi, patch, new_dw, pvars);
 
+  // Phase 3: Initialize each particle
   particleIndex current_particle_index = 0;
-
   for (const auto& obj_sp : geom_objs) {
     GeometryObject* obj_ptr = obj_sp.get();
     GeometryPieceP piece = obj_sp->getPiece();
 
+    // Skip if geometry doesn't intersect this patch
     Box b = piece->getBoundingBox().intersect(patch->getExtraBox());
     if (b.degenerate()) {
       continue;
@@ -120,174 +123,28 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 
     Vector dxpp = patch->dCell() / obj_sp->getInitialData_IntVector("res");
 
-    // Special case exception for SpecialGeomPieces
-    // (includes FileGP, SmoothGP, AbaqusGP, CorrugatedGP etc.)
+    // Set up special geometry piece data if applicable
     auto* sgp = dynamic_cast<SpecialGeomPiece*>(piece.get());
-
-    // Set up the local SpecialGeometryPiece particle data
-    SGPData<double> sgp_vol_data;
-    SGPData<double> sgp_temp_data;
-    SGPData<Vector> sgp_force_data;
-    SGPData<Vector> sgp_fiber_data;
-    SGPData<Vector> sgp_velocity_data;
-    SGPData<Matrix3> sgp_size_data;
-    SGPData<double> sgp_color_data;
-    SGPData<double> sgp_concentration_data;
-    SGPData<Vector> sgp_area_data;
-    SGPData<double> sgp_poscharge_data;
-    SGPData<double> sgp_negcharge_data;
-    SGPData<double> sgp_permittivity_data;
-
+    Vaango::Helpers::SGPDataManager sgp_data;
+    
     if (sgp) {
-
       std::cout << std::format(
         "Created a special geometry of type {} with #particles = {}\n",
         piece->getType(), numParticles);
-
-      sgp_vol_data.initialize(sgp, obj_vars, "p.volume", obj_ptr);
-      sgp_temp_data.initialize(sgp, obj_vars, "p.temperature", obj_ptr);
-      sgp_force_data.initialize(sgp, obj_vars, "p.externalforce", obj_ptr);
-      sgp_fiber_data.initialize(sgp, obj_vars, "p.fiberdirs", obj_ptr);
-      sgp_velocity_data.initialize(sgp, obj_vars, "p.velocity", obj_ptr);
-      sgp_size_data.initialize(sgp, obj_vars, "p.size", obj_ptr);
-
-      if (d_withColor) {
-        sgp_color_data.initialize(sgp, obj_vars, "p.color", obj_ptr);
-      }
-
-      if (d_doScalarDiffusion) {
-        sgp_concentration_data.initialize(
-          sgp, obj_vars, "p.concentration", obj_ptr);
-        sgp_area_data.initialize(sgp, obj_vars, "p.area", obj_ptr);
-      }
-
-      if (d_withGaussSolver) {
-        sgp_poscharge_data.initialize(sgp, obj_vars, "p.poscharge", obj_ptr);
-        sgp_negcharge_data.initialize(sgp, obj_vars, "p.negcharge", obj_ptr);
-        sgp_permittivity_data.initialize(
-          sgp, obj_vars, "p.permittivity", obj_ptr);
-      }
-
+      
+      sgp_data.initialize(sgp, obj_vars, obj_ptr,
+                         d_withColor, d_doScalarDiffusion, d_withGaussSolver);
     } else {
       std::cout << "Created a geometry with #particles = " << numParticles
                 << std::endl;
     }
 
-    Vector eps(1e-10, 1e-10, 1e-10);
-    for (const auto& point : obj_vars.points.at(obj_ptr)) {
-      IntVector cell_idx;
-      if (!patch->findCell(point, cell_idx)) {
-        if (!patch->findCell(point - eps, cell_idx)) {
-          continue;
-        }
-      }
-      if (!patch->containsPoint(point) && !patch->containsPoint(point - eps)) {
-        continue;
-      }
-
-      particleIndex pidx = current_particle_index++;
-
-      //std::cout << std::format("Point[{}] = {} Cell = {}\n", pidx, point, cell_idx);
-      initializeParticle(
-        patch, obj_ptr, matl, point, cell_idx, pidx, cellNAPID, pvars);
-
-      // Again, everything below exists for SpecialGeometryPiece only
-      if (sgp) {
-
-        if (auto vol = sgp_vol_data.get_and_advance()) {
-          pvars.pVolume[pidx] = *vol;
-          pvars.pMass[pidx]   = matl->getInitialDensity() * pvars.pVolume[pidx];
-        }
-
-        if (auto temp = sgp_temp_data.get_and_advance()) {
-          pvars.pTemperature[pidx] = *temp;
-        }
-
-        if (auto force = sgp_force_data.get_and_advance()) {
-          pvars.pExternalForce[pidx] = *force;
-        }
-
-        if (auto vel = sgp_velocity_data.get_and_advance()) {
-          pvars.pVelocity[pidx] = *vel;
-        }
-
-        if (auto fiber_dir = sgp_fiber_data.get_and_advance()) {
-          pvars.pFiberDir[pidx] = *fiber_dir;
-        }
-
-        if (auto size_val =
-              sgp_size_data.get_and_advance()) { // Renamed 'size' to 'size_val'
-                                                 // to avoid conflict
-          Vector dxcc       = patch->dCell();
-          pvars.pSize[pidx] = *size_val;
-
-          // Calculate volume based on type
-          if (!d_useCPTI) { // CPDI and others
-            pvars.pVolume[pidx] = std::abs(pvars.pSize[pidx].Determinant());
-          } else { // CPTI
-            pvars.pVolume[pidx] =
-              std::abs(pvars.pSize[pidx].Determinant() / 6.0);
-          }
-          pvars.pMass[pidx] = matl->getInitialDensity() * pvars.pVolume[pidx];
-
-          // Modify pSize (R-vectors) normalized by cell spacing
-          Matrix3 cell_size_norm(1.0 / dxcc.x(),
-                                 0.0,
-                                 0.0,
-                                 0.0,
-                                 1.0 / dxcc.y(),
-                                 0.0,
-                                 0.0,
-                                 0.0,
-                                 1.0 / dxcc.z());
-          pvars.pSize[pidx] = pvars.pSize[pidx] * cell_size_norm;
-        }
-
-        if (d_withColor) {
-          if (auto color = sgp_color_data.get_and_advance()) {
-            pvars.pColor[pidx] = *color;
-          }
-        }
-
-        if (d_doScalarDiffusion) {
-          if (auto area = sgp_area_data.get_and_advance()) {
-            pvars.pArea[pidx] = *area;
-          }
-          if (auto conc = sgp_concentration_data.get_and_advance()) {
-            pvars.pConcentration[pidx] = *conc;
-          }
-        }
-
-        if (d_withGaussSolver) {
-          if (auto pos_charge = sgp_poscharge_data.get_and_advance()) {
-            pvars.pPosCharge[pidx] = *pos_charge;
-          }
-          if (auto neg_charge = sgp_negcharge_data.get_and_advance()) {
-            pvars.pNegCharge[pidx] = *neg_charge;
-          }
-          if (auto permittivity = sgp_permittivity_data.get_and_advance()) {
-            pvars.pPermittivity[pidx] = *permittivity;
-          }
-        }
-      }
-
-      // If the particle is on the surface and if there is
-      // a physical BC attached to it then mark with the
-      // physical BC pointer
-      if (d_useLoadCurves) {
-        pvars.pLoadCurveID[pidx] =
-          checkForSurface(piece, point, dxpp) ? getLoadCurveID(point, dxpp) : 0;
-      }
-      //for (const auto pidx : *pset) {
-      //  std::cout << std::format(
-      //    "pidx = {}, volume = {}\n", pidx, pvars.pVolume[pidx]);
-      //}
-    }
+    // Process all particles for this geometry object
+    processGeometryObjectParticles(obj_ptr, piece, patch, matl, obj_vars,
+                                  dxpp, current_particle_index, cellNAPID,
+                                  pvars, sgp_data);
   }
 
-  //for (const auto pidx: *pset) {
-  //  std::cout << std::format("pidx = {}, volume = {}\n", pidx, pvars.pVolume[pidx]);
-  //}
   return numParticles;
 }
 
@@ -834,270 +691,23 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
     return 0;
   }
 
-  // Create pairs for the particle variables created by
-  // the SpecialGeometryPieces
-  auto vol_pair   = std::make_pair("p.volume", obj);
-  auto temp_pair  = std::make_pair("p.temperature", obj);
-  auto color_pair = std::make_pair("p.color", obj);
-  auto conc_pair  = std::make_pair("p.concentration", obj);
-  auto pos_pair   = std::make_pair("p.poscharge", obj);
-  auto neg_pair   = std::make_pair("p.negcharge", obj);
-  auto perm_pair  = std::make_pair("p.permittivity", obj);
-  auto force_pair = std::make_pair("p.externalforce", obj);
-  auto fiber_pair = std::make_pair("p.fiber", obj);
-  auto vel_pair   = std::make_pair("p.velocity", obj);
-  auto area_pair  = std::make_pair("p.area", obj);
-  auto size_pair  = std::make_pair("p.size", obj);
-
-  // If the material is discrete, we want exactly one master particle
-  // at the center of the object and several slave particles as geometric proxies.
+  // Dispatch based on material type
   if (d_matl->isDiscrete()) {
-    Box box      = piece->getBoundingBox();
-    Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
-
-    Vector eps(1e-10, 1e-10, 1e-10);
-
-    // Master particle at center
-    Point m_center = center;
-    if (!patch->containsPoint(m_center)) {
-      if (patch->containsPoint(m_center - eps)) {
-        m_center = m_center - eps * 0.1;
-      } else if (patch->containsPoint(m_center + eps)) {
-        m_center = m_center + eps * 0.1;
-      }
-    }
-
-    if (patch->containsPoint(m_center)) {
-      obj_vars.points[obj].push_back(m_center);
-    }
-
-    // Add surface dummy particles for visualization.
-    // These particles have zero mass and do not participate in contact,
-    // but follow the rigid body's motion.
-    if (auto* cyl = dynamic_cast<CylinderGeometryPiece*>(piece.get())) {
-      Point bottom = cyl->bottom();
-      Point top    = cyl->top();
-      double rad   = cyl->radius();
-      Vector axis  = top - bottom;
-      double h     = axis.length();
-      axis.normalize();
-
-      // Find two vectors orthogonal to the axis
-      Vector v1, v2;
-      axis.findOrthogonal(v1, v2);
-
-      int n_theta = 16;
-      int n_z     = 8;
-      for (int i_z = 0; i_z <= n_z; ++i_z) {
-        double z = (double)i_z / (double)n_z * h;
-        Point p_z = bottom + axis * z;
-        for (int i_t = 0; i_t < n_theta; ++i_t) {
-          double theta = (double)i_t / (double)n_theta * 2.0 * M_PI;
-          Point p = p_z + (v1 * cos(theta) + v2 * sin(theta)) * rad;
-          if (patch->containsPoint(p)) {
-            obj_vars.points[obj].push_back(p);
-          }
-        }
-      }
-      // Caps
-      int n_r = 3;
-      for (int i_r = 1; i_r < n_r; ++i_r) {
-        double r = (double)i_r / (double)n_r * rad;
-        for (int i_t = 0; i_t < n_theta; ++i_t) {
-          double theta = (double)i_t / (double)n_theta * 2.0 * M_PI;
-          Vector radial = (v1 * cos(theta) + v2 * sin(theta)) * r;
-          Point p_bot = bottom + radial;
-          Point p_top = top + radial;
-          if (patch->containsPoint(p_bot)) obj_vars.points[obj].push_back(p_bot);
-          if (patch->containsPoint(p_top)) obj_vars.points[obj].push_back(p_top);
-        }
-      }
-    } else if (auto* sphere = dynamic_cast<SphereGeometryPiece*>(piece.get())) {
-      Point center = sphere->origin();
-      double rad   = sphere->radius();
-      int n_theta  = 16;
-      int n_phi    = 8;
-      for (int i_p = 1; i_p < n_phi; ++i_p) {
-        double phi = (double)i_p / (double)n_phi * M_PI;
-        double sin_phi = sin(phi);
-        double cos_phi = cos(phi);
-        for (int i_t = 0; i_t < n_theta; ++i_t) {
-          double theta = (double)i_t / (double)n_theta * 2.0 * M_PI;
-          Point p = center + Vector(rad * sin_phi * cos(theta),
-                                    rad * sin_phi * sin(theta),
-                                    rad * cos_phi);
-          if (patch->containsPoint(p)) {
-            obj_vars.points[obj].push_back(p);
-          }
-        }
-      }
-      // Poles
-      Point p_north = center + Vector(0, 0, rad);
-      Point p_south = center + Vector(0, 0, -rad);
-      if (patch->containsPoint(p_north)) obj_vars.points[obj].push_back(p_north);
-      if (patch->containsPoint(p_south)) obj_vars.points[obj].push_back(p_south);
-    } else {
-      // Fallback: Sparse grid points + Corners
-      // (Original slave particle logic already handled corners below)
-    }
-
-    // Slave particles at corners (Geometric Proxies)
-    // These ensure the object is visible to neighbor patches.
-    Point corners[8];
-    corners[0] = box.lower();
-    corners[1] = Point(box.upper().x(), box.lower().y(), box.lower().z());
-    corners[2] = Point(box.upper().x(), box.upper().y(), box.lower().z());
-    corners[3] = Point(box.lower().x(), box.upper().y(), box.lower().z());
-    corners[4] = Point(box.lower().x(), box.lower().y(), box.upper().z());
-    corners[5] = Point(box.upper().x(), box.lower().y(), box.upper().z());
-    corners[6] = box.upper();
-    corners[7] = Point(box.lower().x(), box.upper().y(), box.upper().z());
-
-    for (int k = 0; k < 8; ++k) {
-      Point p = corners[k];
-      Vector to_center = center - p;
-      if (to_center.length() > 1e-9) {
-        to_center.normalize();
-        p = p + to_center * 1e-9;
-      }
-
-      if (patch->containsPoint(p) || 
-          patch->containsPoint(p - eps)) {
-        // Ensure uniqueness (important for 2D where corners overlap)
-        bool exists = false;
-        for (const auto& existing_p : obj_vars.points[obj]) {
-          if ((existing_p - p).length2() < 1.0e-16) {
-            exists = true;
-            break;
-          }
-        }
-        if (!exists) {
-          obj_vars.points[obj].push_back(p);
-        }
-      }
-    }
-
-    return static_cast<particleIndex>(obj_vars.points[obj].size());
+    return handleDiscreteMaterial(patch, obj, obj_vars);
   }
-
-  // If the material is rigid, we discretize normally but also add a master particle at center
+  
   if (d_matl->getIsRigid()) {
-    createPoints(patch, obj, obj_vars);
-    
-    Box box      = piece->getBoundingBox();
-    Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
-    if (patch->containsPoint(center)) {
-      // Check if center is already there
-      bool exists = false;
-      for (const auto& existing_p : obj_vars.points[obj]) {
-        if ((existing_p - center).length2() < 1.0e-16) {
-          exists = true;
-          break;
-        }
-      }
-      if (!exists) {
-        obj_vars.points[obj].push_back(center);
-      }
-    }
-    return static_cast<particleIndex>(obj_vars.points[obj].size());
+    return handleRigidMaterial(patch, obj, obj_vars);
   }
-
-  // If the object is a SpecialGeomPiece (e.g. FileGeometryPiece or
-  // SmoothCylGeomPiece) then use the particle creators in that
-  // class to do the counting
+  
+  // Check for special geometry pieces
   auto* sgp = dynamic_cast<SpecialGeomPiece*>(piece.get());
   if (sgp) {
-    int numPts = 0;
-    auto* fgp  = dynamic_cast<FileGeometryPiece*>(piece.get());
-    if (fgp) {
-      if (d_useCPTI) {
-        proc0cout << "*** Reading CPTI file ***" << std::endl;
-      }
-      fgp->readPoints(patch->getID());
-      numPts = fgp->returnPointCount();
-      proc0cout << "Number of points read from file = " << numPts << std::endl;
-    } else {
-      Vector dxpp = patch->dCell() / obj->getInitialData_IntVector("res");
-      double dx   = Min(Min(dxpp.x(), dxpp.y()), dxpp.z());
-      sgp->setParticleSpacing(dx);
-      sgp->setCellSize(patch->dCell());
-      numPts = sgp->createPoints();
-      proc0cout << "Special Geom Piece: Number of points created = " << numPts
-                << std::endl;
-    }
-
-    auto points         = sgp->getPoints();
-    auto pVols          = sgp->getScalar("p.volume");
-    auto pTemps         = sgp->getScalar("p.temperature");
-    auto pColors        = sgp->getScalar("p.color");
-    auto pConcentration = sgp->getScalar("p.concentration");
-    auto pPosCharge     = sgp->getScalar("p.poscharge");
-    auto pNegCharge     = sgp->getScalar("p.negcharge");
-    auto pPermittivity  = sgp->getScalar("p.permittivity");
-    auto pForces        = sgp->getVector("p.externalforce");
-    auto pFiberDirs     = sgp->getVector("p.fiberdir");
-    auto pVelocities    = sgp->getVector("p.velocity");
-    auto pAreas         = sgp->getVector("p.area");
-    auto pSizes         = sgp->getTensor("p.size");
-
-    Point p;
-    IntVector cell_idx;
-
-    for (int ii = 0; ii < numPts; ++ii) {
-      p = points->at(ii);
-      //IntVector l(patch->getCellLowIndex());
-      //IntVector h(patch->getCellHighIndex());
-      //IntVector c = patch->getLevel()->getCellIndex(p);
-      //std::cout << std::format("Point = {}, cell index = {}, low = {}, hi = {}\n", p, c, l, h);
-      if (patch->findCell(p, cell_idx)) {
-        if (patch->containsPoint(p)) {
-          obj_vars.points[obj].push_back(p);
-
-          if (pVols) {
-            obj_vars.scalars[vol_pair].push_back(pVols->at(ii));
-          }
-          if (pTemps) {
-            obj_vars.scalars[temp_pair].push_back(pTemps->at(ii));
-          }
-          if (pColors) {
-            obj_vars.scalars[color_pair].push_back(pColors->at(ii));
-          }
-          if (pConcentration) {
-            obj_vars.scalars[conc_pair].push_back(pConcentration->at(ii));
-          }
-          if (pPosCharge) {
-            obj_vars.scalars[pos_pair].push_back(pPosCharge->at(ii));
-          }
-          if (pNegCharge) {
-            obj_vars.scalars[neg_pair].push_back(pNegCharge->at(ii));
-          }
-          if (pPermittivity) {
-            obj_vars.scalars[perm_pair].push_back(pPermittivity->at(ii));
-          }
-          if (pForces) {
-            obj_vars.vectors[force_pair].push_back(pForces->at(ii));
-          }
-          if (pFiberDirs) {
-            obj_vars.vectors[fiber_pair].push_back(pFiberDirs->at(ii));
-          }
-          if (pVelocities) {
-            obj_vars.vectors[vel_pair].push_back(pVelocities->at(ii));
-          }
-          if (pAreas) {
-            obj_vars.vectors[area_pair].push_back(pAreas->at(ii));
-          }
-          if (pSizes) {
-            obj_vars.tensors[size_pair].push_back(pSizes->at(ii));
-          }
-        }
-      } // patch contains cell
-    }
-    // sgp->deletePoints();
-    // sgp->deleteVolume();
-  } else {
-    createPoints(patch, obj, obj_vars);
+    return handleSpecialGeometryPiece(patch, obj, obj_vars);
   }
-
+  
+  // Default case: normal discretization
+  createPoints(patch, obj, obj_vars);
   return static_cast<particleIndex>(obj_vars.points[obj].size());
 }
 
@@ -1379,6 +989,400 @@ ParticleCreator::checkForSurface2(const GeometryPieceP piece,
   } else {
     return 0.0;
   }
+}
+
+particleIndex
+ParticleCreator::handleDiscreteMaterial(const Patch* patch,
+                                        GeometryObject* obj,
+                                        ObjectVars& obj_vars)
+{
+  GeometryPieceP piece = obj->getPiece();
+
+  // Create master particle at center
+  createMasterParticle(patch, piece, obj, obj_vars);
+
+  // Create surface visualization particles
+  createSurfaceParticles(patch, piece, obj, obj_vars);
+
+  // Create corner particles as geometric proxies
+  createCornerParticles(patch, piece, obj, obj_vars);
+
+  return static_cast<particleIndex>(obj_vars.points[obj].size());
+}
+
+particleIndex
+ParticleCreator::handleRigidMaterial(const Patch* patch,
+                                     GeometryObject* obj,
+                                     ObjectVars& obj_vars)
+{
+  GeometryPieceP piece = obj->getPiece();
+
+  // Use normal discretization
+  createPoints(patch, obj, obj_vars);
+
+  // Add master particle at center
+  createMasterParticle(patch, piece, obj, obj_vars);
+
+  return static_cast<particleIndex>(obj_vars.points[obj].size());
+}
+
+particleIndex
+ParticleCreator::handleSpecialGeometryPiece(const Patch* patch,
+                                            GeometryObject* obj,
+                                            ObjectVars& obj_vars)
+{
+  GeometryPieceP piece = obj->getPiece();
+  auto* sgp            = dynamic_cast<SpecialGeomPiece*>(piece.get());
+
+  // Determine number of points to create
+  int numPts = 0;
+  auto* fgp  = dynamic_cast<FileGeometryPiece*>(piece.get());
+
+  if (fgp) {
+    // Read points from file
+    if (d_useCPTI) {
+      proc0cout << "*** Reading CPTI file ***" << std::endl;
+    }
+    fgp->readPoints(patch->getID());
+    numPts = fgp->returnPointCount();
+    proc0cout << "Number of points read from file = " << numPts << std::endl;
+  } else {
+    // Generate points using special geometry piece
+    Vector dxpp = patch->dCell() / obj->getInitialData_IntVector("res");
+    double dx   = Min(Min(dxpp.x(), dxpp.y()), dxpp.z());
+    sgp->setParticleSpacing(dx);
+    sgp->setCellSize(patch->dCell());
+    numPts = sgp->createPoints();
+    proc0cout << "Special Geom Piece: Number of points created = " << numPts
+              << std::endl;
+  }
+
+  // Create particle variable pairs
+  ParticleVarPairs pairs(obj);
+
+  // Populate particle variables from special geometry piece
+  populateParticleVariables(sgp, patch, obj, obj_vars, pairs, numPts);
+
+  return static_cast<particleIndex>(obj_vars.points[obj].size());
+}
+
+void
+ParticleCreator::createMasterParticle(const Patch* patch,
+                                      GeometryPieceP piece,
+                                      GeometryObject* obj,
+                                      ObjectVars& obj_vars)
+{
+  Box box      = piece->getBoundingBox();
+  Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
+
+  // Adjust center point if needed to ensure it's in the patch
+  Point m_center = Vaango::Helpers::adjustPointToPatch(center, patch);
+
+  if (patch->containsPoint(m_center)) {
+    // Check if center point already exists
+    bool exists = false;
+    for (const auto& existing_p : obj_vars.points[obj]) {
+      if ((existing_p - m_center).length2() < 1.0e-16) {
+        exists = true;
+        break;
+      }
+    }
+
+    if (!exists) {
+      obj_vars.points[obj].push_back(m_center);
+    }
+  }
+}
+
+void
+ParticleCreator::createSurfaceParticles(const Patch* patch,
+                                        GeometryPieceP piece,
+                                        GeometryObject* obj,
+                                        ObjectVars& obj_vars)
+{
+  // Add surface dummy particles for visualization
+  // These particles have zero mass and do not participate in contact,
+  // but follow the rigid body's motion
+
+  if (auto* box = dynamic_cast<BoxGeometryPiece*>(piece.get())) {
+    Vaango::Helpers::createBoxSurfacePoints(
+      box, patch, obj_vars.points[obj]);
+  } else if (auto* cyl = dynamic_cast<CylinderGeometryPiece*>(piece.get())) {
+    Vaango::Helpers::createCylinderSurfacePoints(
+      cyl, patch, obj_vars.points[obj]);
+  } else if (auto* sphere = dynamic_cast<SphereGeometryPiece*>(piece.get())) {
+    Vaango::Helpers::createSphereSurfacePoints(
+      sphere, patch, obj_vars.points[obj]);
+  } else {
+    // Fallback: For other geometries, corner particles will be sufficient
+    // Could add sparse grid points here if needed
+  }
+}
+
+void
+ParticleCreator::createCornerParticles(const Patch* patch,
+                                       GeometryPieceP piece,
+                                       GeometryObject* obj,
+                                       ObjectVars& obj_vars)
+{
+  Box box      = piece->getBoundingBox();
+  Point center = box.lower() + (box.upper() - box.lower()) * 0.5;
+
+  Vaango::Helpers::createBoundingBoxCornerPoints(
+    box, center, patch, obj_vars.points[obj]);
+}
+
+void
+ParticleCreator::populateParticleVariables(SpecialGeomPiece* sgp,
+                                           const Patch* patch,
+                                           GeometryObject* obj,
+                                           ObjectVars& obj_vars,
+                                           const ParticleVarPairs& pairs,
+                                           int numPts)
+{
+  // Get all particle data from special geometry piece
+  auto points         = sgp->getPoints();
+  auto pVols          = sgp->getScalar("p.volume");
+  auto pTemps         = sgp->getScalar("p.temperature");
+  auto pColors        = sgp->getScalar("p.color");
+  auto pConcentration = sgp->getScalar("p.concentration");
+  auto pPosCharge     = sgp->getScalar("p.poscharge");
+  auto pNegCharge     = sgp->getScalar("p.negcharge");
+  auto pPermittivity  = sgp->getScalar("p.permittivity");
+  auto pForces        = sgp->getVector("p.externalforce");
+  auto pFiberDirs     = sgp->getVector("p.fiberdir");
+  auto pVelocities    = sgp->getVector("p.velocity");
+  auto pAreas         = sgp->getVector("p.area");
+  auto pSizes         = sgp->getTensor("p.size");
+
+  IntVector cell_idx;
+
+  // Iterate through all points and add those contained in this patch
+  for (int ii = 0; ii < numPts; ++ii) {
+    Point p = points->at(ii);
+
+    if (patch->findCell(p, cell_idx)) {
+      if (patch->containsPoint(p)) {
+        obj_vars.points[obj].push_back(p);
+
+        // Add scalar variables if they exist
+        if (pVols) {
+          obj_vars.scalars[pairs.volume].push_back(pVols->at(ii));
+        }
+        if (pTemps) {
+          obj_vars.scalars[pairs.temperature].push_back(pTemps->at(ii));
+        }
+        if (pColors) {
+          obj_vars.scalars[pairs.color].push_back(pColors->at(ii));
+        }
+        if (pConcentration) {
+          obj_vars.scalars[pairs.concentration].push_back(
+            pConcentration->at(ii));
+        }
+        if (pPosCharge) {
+          obj_vars.scalars[pairs.poscharge].push_back(pPosCharge->at(ii));
+        }
+        if (pNegCharge) {
+          obj_vars.scalars[pairs.negcharge].push_back(pNegCharge->at(ii));
+        }
+        if (pPermittivity) {
+          obj_vars.scalars[pairs.permittivity].push_back(pPermittivity->at(ii));
+        }
+
+        // Add vector variables if they exist
+        if (pForces) {
+          obj_vars.vectors[pairs.externalforce].push_back(pForces->at(ii));
+        }
+        if (pFiberDirs) {
+          obj_vars.vectors[pairs.fiber].push_back(pFiberDirs->at(ii));
+        }
+        if (pVelocities) {
+          obj_vars.vectors[pairs.velocity].push_back(pVelocities->at(ii));
+        }
+        if (pAreas) {
+          obj_vars.vectors[pairs.area].push_back(pAreas->at(ii));
+        }
+
+        // Add tensor variables if they exist
+        if (pSizes) {
+          obj_vars.tensors[pairs.size].push_back(pSizes->at(ii));
+        }
+      }
+    }
+  }
+}
+
+
+void
+ParticleCreator::processGeometryObjectParticles(
+  GeometryObject* obj,
+  GeometryPieceP piece,
+  const Patch* patch,
+  MPMMaterial* matl,
+  const ObjectVars& obj_vars,
+  const Vector& dxpp,
+  particleIndex& current_particle_index,
+  CCVariable<short int>& cellNAPID,
+  ParticleVars& pvars,
+  Vaango::Helpers::SGPDataManager& sgp_data)
+{
+
+  Vector eps(1e-10, 1e-10, 1e-10);
+
+  for (const auto& point : obj_vars.points.at(obj)) {
+    // Find which cell this point belongs to
+    IntVector cell_idx;
+    if (!patch->findCell(point, cell_idx)) {
+      if (!patch->findCell(point - eps, cell_idx)) {
+        continue;
+      }
+    }
+
+    // Verify point is actually in this patch
+    if (!patch->containsPoint(point) && !patch->containsPoint(point - eps)) {
+      continue;
+    }
+
+    particleIndex pidx = current_particle_index++;
+
+    // Initialize basic particle properties
+    initializeParticleBasics(
+      patch, obj, matl, point, cell_idx, pidx, cellNAPID, pvars);
+
+    // Apply special geometry piece data if present
+    if (sgp_data.hasData()) {
+      applySpecialGeometryData(sgp_data, matl, patch, pidx, pvars);
+    }
+
+    // Apply load curve if this particle is on a surface with physical BC
+    if (d_useLoadCurves) {
+      applyLoadCurve(piece, point, dxpp, pidx, pvars);
+    }
+  }
+}
+
+void
+ParticleCreator::initializeParticleBasics(const Patch* patch,
+                                          GeometryObject* obj,
+                                          MPMMaterial* matl,
+                                          const Point& point,
+                                          const IntVector& cell_idx,
+                                          particleIndex pidx,
+                                          CCVariable<short int>& cellNAPID,
+                                          ParticleVars& pvars)
+{
+
+  // This calls the existing initializeParticle method which sets up:
+  // - position, cell index
+  // - volume (default calculation)
+  // - mass (from density * volume)
+  // - velocity, temperature (from initial conditions)
+  // - stress, deformation gradient, etc.
+  initializeParticle(patch, obj, matl, point, cell_idx, pidx, cellNAPID, pvars);
+}
+
+void
+ParticleCreator::applySpecialGeometryData(Vaango::Helpers::SGPDataManager& sgp_data,
+                                          MPMMaterial* matl,
+                                          const Patch* patch,
+                                          particleIndex pidx,
+                                          ParticleVars& pvars)
+{
+
+  // Override volume if provided by special geometry
+  if (auto vol = sgp_data.getVolume()) {
+    pvars.pVolume[pidx] = *vol;
+    pvars.pMass[pidx]   = matl->getInitialDensity() * pvars.pVolume[pidx];
+  }
+
+  // Override temperature if provided
+  if (auto temp = sgp_data.getTemperature()) {
+    pvars.pTemperature[pidx] = *temp;
+  }
+
+  // Set external force if provided
+  if (auto force = sgp_data.getExternalForce()) {
+    pvars.pExternalForce[pidx] = *force;
+  }
+
+  // Set velocity if provided
+  if (auto vel = sgp_data.getVelocity()) {
+    pvars.pVelocity[pidx] = *vel;
+  }
+
+  // Set fiber direction if provided
+  if (auto fiber_dir = sgp_data.getFiberDir()) {
+    pvars.pFiberDir[pidx] = *fiber_dir;
+  }
+
+  // Handle particle size (for CPDI/CPTI)
+  if (auto size_val = sgp_data.getSize()) {
+    Vector dxcc       = patch->dCell();
+    pvars.pSize[pidx] = *size_val;
+
+    // Calculate volume based on interpolation type
+    if (!d_useCPTI) { // CPDI and others
+      pvars.pVolume[pidx] = std::abs(pvars.pSize[pidx].Determinant());
+    } else { // CPTI
+      pvars.pVolume[pidx] = std::abs(pvars.pSize[pidx].Determinant() / 6.0);
+    }
+    pvars.pMass[pidx] = matl->getInitialDensity() * pvars.pVolume[pidx];
+
+    // Normalize pSize (R-vectors) by cell spacing
+    Matrix3 cell_size_norm(1.0 / dxcc.x(),
+                           0.0,
+                           0.0,
+                           0.0,
+                           1.0 / dxcc.y(),
+                           0.0,
+                           0.0,
+                           0.0,
+                           1.0 / dxcc.z());
+    pvars.pSize[pidx] = pvars.pSize[pidx] * cell_size_norm;
+  }
+
+  // Apply optional properties
+  if (d_withColor) {
+    if (auto color = sgp_data.getColor()) {
+      pvars.pColor[pidx] = *color;
+    }
+  }
+
+  if (d_doScalarDiffusion) {
+    if (auto area = sgp_data.getArea()) {
+      pvars.pArea[pidx] = *area;
+    }
+    if (auto conc = sgp_data.getConcentration()) {
+      pvars.pConcentration[pidx] = *conc;
+    }
+  }
+
+  if (d_withGaussSolver) {
+    if (auto pos_charge = sgp_data.getPosCharge()) {
+      pvars.pPosCharge[pidx] = *pos_charge;
+    }
+    if (auto neg_charge = sgp_data.getNegCharge()) {
+      pvars.pNegCharge[pidx] = *neg_charge;
+    }
+    if (auto permittivity = sgp_data.getPermittivity()) {
+      pvars.pPermittivity[pidx] = *permittivity;
+    }
+  }
+}
+
+void
+ParticleCreator::applyLoadCurve(GeometryPieceP piece,
+                                const Point& point,
+                                const Vector& dxpp,
+                                particleIndex pidx,
+                                ParticleVars& pvars)
+{
+
+  // If the particle is on the surface and if there is
+  // a physical BC attached to it then mark with the
+  // physical BC pointer
+  pvars.pLoadCurveID[pidx] =
+    checkForSurface(piece, point, dxpp) ? getLoadCurveID(point, dxpp) : 0;
 }
 
 } // end namespace Uintah

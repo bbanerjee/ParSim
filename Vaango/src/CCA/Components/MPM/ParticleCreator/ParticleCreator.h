@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
+ * Copyright (c) 2015-2026 Biswajit Banerjee, Parresia Research Ltd., NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,6 +27,8 @@
 #ifndef ____CCA_COMPONENTS_MPM_PARTICLE_CREATOR_PARTICLECREATOR_H____
 #define ____CCA_COMPONENTS_MPM_PARTICLE_CREATOR_PARTICLECREATOR_H____
 
+#include <CCA/Components/MPM/ParticleCreator/ParticleCreatorStructs.h>
+#include <CCA/Components/MPM/ParticleCreator/SGPDataManager.h>
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Grid/MaterialManager.h>
 #include <Core/Grid/MaterialManagerP.h>
@@ -40,21 +42,8 @@
 #include <string_view>
 #include <vector>
 
+
 namespace Uintah {
-
-using particleIndex = int;
-using particleId    = int;
-
-class GeometryObject;
-class Patch;
-class DataWarehouse;
-class MPMFlags;
-class MPMMaterial;
-class MPMLabel;
-class AMRMPMLabel;
-class HydroMPMLabel;
-class ParticleSubset;
-class VarLabel;
 
 class ParticleCreator
 {
@@ -63,7 +52,6 @@ public:
 
   virtual ~ParticleCreator() = default;
 
-  using VecGeometryObjectSP = std::vector<std::shared_ptr<GeometryObject>>;
 
   virtual auto
   createParticles(MPMMaterial* matl,
@@ -81,76 +69,6 @@ public:
   auto
   returnParticleStatePreReloc() -> std::vector<const VarLabel*>;
 
-  using GeomName   = std::pair<std::string, GeometryObject*>;
-  using GeomPoint  = std::map<GeometryObject*, std::vector<Point>>;
-  using GeomScalar = std::map<GeomName, std::vector<double>>;
-  using GeomVector = std::map<GeomName, std::vector<Vector>>;
-  using GeomTensor = std::map<GeomName, std::vector<Matrix3>>;
-
-  struct ObjectVars
-  {
-    GeomPoint points;
-    GeomScalar scalars;
-    GeomVector vectors;
-    GeomTensor tensors;
-  };
-
-  struct ParticleVars
-  {
-    ParticleVariable<Point> position;
-    ParticleVariable<Point> pX0;
-    ParticleVariable<Vector> pDisp, pVelocity, pAcc, pExternalForce;
-    ParticleVariable<Matrix3> pSize;
-    ParticleVariable<double> pMass, pVolume, pTemperature, pSpecificVolume,
-      pErosion;
-    ParticleVariable<double> pColor, pTempPrevious, p_q;
-    ParticleVariable<long64> pParticleID;
-    ParticleVariable<long64> pRigidBodyID;
-    ParticleVariable<Vector> pAngularVelocity, pTorque;
-    ParticleVariable<Matrix3> pOrientation, pInertiaTensor;
-    ParticleVariable<double> pRadius;
-    ParticleVariable<Vector> pFiberDir;
-    ParticleVariable<int> pLoadCurveID;
-    ParticleVariable<IntVector> pLoadCurveIDVector;
-
-    // Body forces
-    ParticleVariable<Vector> pBodyForceAcc;
-    ParticleVariable<double> pCoriolisImportance;
-
-    // ImplicitParticleCreator
-    ParticleVariable<double> pVolumeold;
-
-    // MembraneParticleCreator
-    ParticleVariable<Vector> pTang1, pTang2, pNorm;
-
-    // AMR
-    ParticleVariable<int> pRefined;
-    ParticleVariable<int> pLastLevel;
-
-    // Switch between explicit and implicit MPM
-    ParticleVariable<double> pExternalHeatFlux;
-
-    // For friction contact
-    ParticleVariable<double> pSurface;
-    ParticleVariable<double> pSurfaceGrad;
-
-    // Scalar Diffusion
-    ParticleVariable<double> pConcentration;
-    ParticleVariable<double> pConcPrevious;
-    ParticleVariable<Vector> pConcGrad;
-    ParticleVariable<double> pExternalScalarFlux;
-    ParticleVariable<double> pPosCharge;
-    ParticleVariable<double> pNegCharge;
-    ParticleVariable<Vector> pPosChargeGrad;
-    ParticleVariable<Vector> pNegChargeGrad;
-    ParticleVariable<double> pPermittivity;
-    ParticleVariable<Vector> pArea;
-
-    // Hydro-mechanical coupling MPM
-    ParticleVariable<double> pFluidMass, pSolidMass, pPorePressure, pPorosity;
-    ParticleVariable<Vector> pFluidVelocity, pFluidAcceleration;
-    ParticleVariable<Vector> pPrescribedPorePressure;
-  };
 
 protected:
   virtual auto
@@ -232,56 +150,108 @@ protected:
 
 private:
 
-  // Helper for getting and iterating over SpecialGeometryPiece data
-  template<typename T>
-  struct SGPData
-  {
-    const std::vector<T>* data = nullptr;
-    typename std::vector<T>::const_iterator iterator;
+  /**
+   * Handles particle creation for discrete materials.
+   * Creates one master particle at center plus geometric proxy particles.
+   */
+  particleIndex handleDiscreteMaterial(const Patch* patch,
+                                      GeometryObject* obj,
+                                      ObjectVars& obj_vars);
 
-    SGPData() = default;
+  /**
+   * Handles particle creation for rigid materials.
+   * Uses normal discretization plus adds a master particle at center.
+   */
+  particleIndex handleRigidMaterial(const Patch* patch,
+                                   GeometryObject* obj,
+                                   ObjectVars& obj_vars);
 
-    void
-    initialize(SpecialGeomPiece* sgp,
-               ObjectVars& obj_vars,
-               const std::string& name,
-               GeometryObject* obj_ptr)
-    {
-      if (sgp) {
-        if constexpr (std::is_same_v<T, double>) {
-          data     = sgp->getScalar(name);
-          auto key = std::make_pair(name, obj_ptr);
-          if (auto map_iter = obj_vars.scalars.find(key);
-              map_iter != obj_vars.scalars.end()) {
-            iterator = map_iter->second.begin();
-          }
-        } else if constexpr (std::is_same_v<T, Vector>) {
-          data     = sgp->getVector(name);
-          auto key = std::make_pair(name, obj_ptr);
-          if (auto map_iter = obj_vars.vectors.find(key);
-              map_iter != obj_vars.vectors.end()) {
-            iterator = map_iter->second.begin();
-          }
-        } else if constexpr (std::is_same_v<T, Matrix3>) {
-          data     = sgp->getTensor(name);
-          auto key = std::make_pair(name, obj_ptr);
-          if (auto map_iter = obj_vars.tensors.find(key);
-              map_iter != obj_vars.tensors.end()) {
-            iterator = map_iter->second.begin();
-          }
-        }
-      }
-    }
+  /**
+   * Handles particle creation for special geometry pieces.
+   * Uses the particle creators from the SpecialGeomPiece class.
+   */
+  particleIndex handleSpecialGeometryPiece(const Patch* patch,
+                                          GeometryObject* obj,
+                                          ObjectVars& obj_vars);
 
-    std::optional<T>
-    get_and_advance()
-    {
-      if (data && iterator != data->end()) {
-        return *iterator++;
-      }
-      return std::nullopt;
-    }
-  };
+  /**
+   * Creates a master particle at the center of the geometry's bounding box.
+   */
+  void createMasterParticle(const Patch* patch,
+                           GeometryPieceP piece,
+                           GeometryObject* obj,
+                           ObjectVars& obj_vars);
+
+  /**
+   * Creates surface visualization particles based on geometry type.
+   * Handles cylinders, spheres, and provides fallback for other geometries.
+   */
+  void createSurfaceParticles(const Patch* patch,
+                             GeometryPieceP piece,
+                             GeometryObject* obj,
+                             ObjectVars& obj_vars);
+
+  /**
+   * Creates corner particles at bounding box corners.
+   * These ensure the object is visible to neighbor patches.
+   */
+  void createCornerParticles(const Patch* patch,
+                            GeometryPieceP piece,
+                            GeometryObject* obj,
+                            ObjectVars& obj_vars);
+
+  /**
+   * Populates particle variables from special geometry piece data.
+   */
+  void populateParticleVariables(SpecialGeomPiece* sgp,
+                                const Patch* patch,
+                                GeometryObject* obj,
+                                ObjectVars& obj_vars,
+                                const ParticleVarPairs& pairs,
+                                int numPts);
+  /**
+   * Initializes a single particle with position, cell, and basic properties.
+   */
+  void initializeParticleBasics(const Patch* patch,
+                               GeometryObject* obj,
+                               MPMMaterial* matl,
+                               const Point& point,
+                               const IntVector& cell_idx,
+                               particleIndex pidx,
+                               CCVariable<short int>& cellNAPID,
+                               ParticleVars& pvars);
+  
+  /**
+   * Applies special geometry piece data to a particle.
+   */
+  void applySpecialGeometryData(Vaango::Helpers::SGPDataManager& sgp_data,
+                               MPMMaterial* matl,
+                               const Patch* patch,
+                               particleIndex pidx,
+                               ParticleVars& pvars);
+  
+  /**
+   * Applies load curve if particle is on surface.
+   */
+  void applyLoadCurve(GeometryPieceP piece,
+                     const Point& point,
+                     const Vector& dxpp,
+                     particleIndex pidx,
+                     ParticleVars& pvars);
+  
+  /**
+   * Processes and initializes all particles for a single geometry object.
+   */
+  void processGeometryObjectParticles(GeometryObject* obj,
+                                     GeometryPieceP piece,
+                                     const Patch* patch,
+                                     MPMMaterial* matl,
+                                     const ObjectVars& obj_vars,
+                                     const Vector& dxpp,
+                                     particleIndex& current_particle_index,
+                                     CCVariable<short int>& cellNAPID,
+                                     ParticleVars& pvars,
+                                     Vaango::Helpers::SGPDataManager& sgp_data);
 };
 
 } // End of namespace Uintah
