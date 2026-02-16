@@ -96,6 +96,7 @@
 #include <Core/Math/MinMax.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/Util/DOUT.hpp>
 #include <Core/Util/DebugStream.h>
 
 #ifdef __NVCC__
@@ -127,12 +128,12 @@
 
 using namespace Uintah;
 
+// Debug streams
 //__________________________________
 //  To turn on debug d_mpm_flags
 //  csh/tcsh : setenv SCI_DEBUG "MPM:+,SerialMPM:+".....
 //  bash     : export SCI_DEBUG="MPM:+,SerialMPM:+" )
 //  default is OFF
-
 static DebugStream cout_doing("MPM", false);
 static DebugStream cout_dbg("SerialMPM", false);
 static DebugStream cout_convert("MPMConv", false);
@@ -140,6 +141,7 @@ static DebugStream cout_heat("MPMHeat", false);
 static DebugStream amr_doing("AMRMPM", false);
 static DebugStream cout_damage("Damage", false);
 static DebugStream cout_dem("DEM", false);
+Dout mpm_delt_dbg("MPMdelt", "MPM", "Debug MPM delta t", false);
 
 SerialMPM::SerialMPM(const ProcessorGroup* myworld,
                      const MaterialManagerP& materialManager)
@@ -1584,14 +1586,19 @@ SerialMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
       if (!mpm_matl || (!mpm_matl->isDiscrete() && !mpm_matl->getIsRigid())) {
         continue;
       }
-      double kn = mpm_matl->getDEMNormalStiffness();
-      double dt_mat = beta * std::sqrt(d_mpm_flags->d_minPartMass / kn);
-      if (dt_mat < dt_dem) {
-        dt_dem = dt_mat;
+      if (mpm_matl->isDiscrete()) {
+        double kn = mpm_matl->getDEMNormalStiffness();
+        double dt_mat = beta * std::sqrt(d_mpm_flags->d_minPartMass / kn);
+        if (dt_mat < dt_dem) {
+          dt_dem = dt_mat;
+        }
+      } else {
+        dt_dem = 1.0;
       }
     }
     const Level* level = getLevel(patches);
     new_dw->put(delt_vartype(dt_dem), d_mpm_labels->delTLabel, level);
+    DOUT(mpm_delt_dbg, "Init MPM Discrete/Rigid delT = " << dt_dem );
     return;
   }
 
@@ -1613,25 +1620,29 @@ SerialMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
         continue;
       }
 
-      ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
+      if (mpm_matl->isDiscrete()) {
+        ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
 
-      constParticleVariable<double> pMass;
-      new_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
+        constParticleVariable<double> pMass;
+        new_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
 
-      double kn = mpm_matl->getDEMNormalStiffness();
+        double kn = mpm_matl->getDEMNormalStiffness();
 
-      for (auto idx : *pset) {
-        if (pMass[idx] > 0) {
-          double dt_particle = beta * std::sqrt(pMass[idx] / kn);
-          if (dt_particle < dt_dem) {
-            dt_dem = dt_particle;
+        for (auto idx : *pset) {
+          if (pMass[idx] > 0) {
+            double dt_particle = beta * std::sqrt(pMass[idx] / kn);
+            if (dt_particle < dt_dem) {
+              dt_dem = dt_particle;
+            }
           }
         }
+      } else {
+        dt_dem = 1.0;
       }
     }
   }
 
-  //std::cout << "[MPM:ComputeStableTimestep] DEM delt = " << dt_dem << std::endl;
+  DOUT(mpm_delt_dbg, "[MPM:ComputeStableTimestep] DEM/Rigid delt = " << dt_dem);
 
   const Level* level = getLevel(patches);
   new_dw->put(delt_vartype(dt_dem), d_mpm_labels->delTLabel, level);

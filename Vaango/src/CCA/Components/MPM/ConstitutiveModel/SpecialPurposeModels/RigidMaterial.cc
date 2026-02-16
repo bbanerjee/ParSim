@@ -43,11 +43,17 @@
 #include <Core/Math/MinMax.h>
 #include <Core/Math/Short27.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/Util/DOUT.hpp>
+#include <Core/Util/DebugStream.h>
 #include <fstream>
 #include <iostream>
 
 using std::cerr;
 using namespace Uintah;
+
+// Debug streams
+Dout rigid_mat_dbg("RigidMat", "MPM", "Debug rigid MPM material", false);
+
 
 RigidMaterial::RigidMaterial(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
@@ -156,7 +162,9 @@ RigidMaterial::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
     // when using RigidMPM.
     // This method is defined in the ConstitutiveModel base class.
     carryForwardSharedData(pset, old_dw, new_dw, matl);
-    new_dw->put(delt_vartype(1.0), lb->delTLabel, patch->getLevel());
+    auto delT = 1.0;
+    new_dw->put(delt_vartype(delT), lb->delTLabel, patch->getLevel());
+    DOUT(rigid_mat_dbg, "rigid material delT = " << delT );
 
     if (flag->d_reductionVars->accStrainEnergy ||
         flag->d_reductionVars->strainEnergy) {

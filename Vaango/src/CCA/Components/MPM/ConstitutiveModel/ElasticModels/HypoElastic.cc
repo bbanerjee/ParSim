@@ -43,10 +43,16 @@
 #include <Core/Math/MinMax.h>
 #include <Core/Math/Short27.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/Util/DOUT.hpp>
+#include <Core/Util/DebugStream.h>
 #include <fstream>
 #include <iostream>
 
 using namespace Uintah;
+
+// Debug streams
+Dout hypoelastic_dbg("Hypoelastic", "MPM", "Debug hypoelastic MPM material", 
+                     false);
 
 HypoElastic::HypoElastic(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
@@ -136,7 +142,7 @@ HypoElastic::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   double delT_new = waveSpeed.minComponent();
   new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 
-  //std::cout << "Hypoelastic init: delT = " << delT_new << "\n";
+  DOUT(hypoelastic_dbg, "Hypoelastic init: delT = " << delT_new);
 }
 
 void
@@ -293,7 +299,7 @@ HypoElastic::computeStressTensor(const PatchSubset* patches,
     double delT_new = waveSpeed.minComponent();
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 
-    //std::cout << "Hypoelastic: delT = " << delT_new << "\n";
+    DOUT(hypoelastic_dbg, "Hypoelastic: delT = " << delT_new);
 
     if (flag->d_reductionVars->accStrainEnergy ||
         flag->d_reductionVars->strainEnergy) {
