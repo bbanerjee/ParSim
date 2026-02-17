@@ -81,11 +81,13 @@ target_link_libraries(testElasticModuli_Arena PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testElasticModuli_Arena)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 
 add_executable(testElasticModuli_MetalIso testElasticModuli_MetalIso.cc)
 target_link_libraries(testElasticModuli_MetalIso PRIVATE
@@ -113,11 +115,13 @@ target_link_libraries(testElasticModuli_Tabular PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testElasticModuli_Tabular)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 
 add_executable(testElasticModuli_NeuralNet testElasticModuli_NeuralNet.cc)
 target_link_libraries(testElasticModuli_NeuralNet PRIVATE
@@ -129,12 +133,14 @@ target_link_libraries(testElasticModuli_NeuralNet PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testElasticModuli_NeuralNet)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST} > ${UNIT_TEST}.out
-  VERBATIM
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST} > ${UNIT_TEST}.out
+    VERBATIM
+  )
+endif()
 
 set(UNIT_TEST testElasticModuli_NeuralNet_Bulk)
 add_executable(${UNIT_TEST} ${UNIT_TEST}.cc)
@@ -146,11 +152,13 @@ target_link_libraries(${UNIT_TEST} PRIVATE
   Vaango::Options
   Vaango::Warnings
 )
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 
 set(UNIT_TEST testElasticModuli_SupportVector)
 add_executable(${UNIT_TEST} ${UNIT_TEST}.cc)
@@ -162,9 +170,11 @@ target_link_libraries(${UNIT_TEST} PRIVATE
   Vaango::Options
   Vaango::Warnings
 )
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 

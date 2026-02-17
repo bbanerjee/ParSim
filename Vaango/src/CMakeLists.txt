@@ -29,6 +29,8 @@
 #  -DCMAKE_BUILD_TYPE=Debug -- for the debug build
 #  -DVISIT_DIR=aa/bb/cc -- to build Visit
 #  -DBUILD_UNIT_TESTS=1   -- to build unit tests
+#  -DRUN_UNIT_TESTS_ON_BUILD=OFF -- to disable running unit tests during compile. 
+#                                   By default, these tests are run during the build.
 #  -DUSE_CLANG=1  -- use clang compilers
 
 #----------------------------------------------------------------------------
@@ -117,6 +119,7 @@ option(HYPRE           "Build with HYPRE" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(VISIT             "Build with Visit" OFF) 
 option(CUDA             "Build with CUDA" OFF) 
+option(RUN_UNIT_TESTS_ON_BUILD "Run unit tests during compile" ON)
 
 # Explicitly setting VISIT ON if VISIT_DIR is defined,
 # but consider making VISIT an option if it's user-configurable.

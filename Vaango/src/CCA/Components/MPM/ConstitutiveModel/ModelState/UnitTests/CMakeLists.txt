@@ -70,11 +70,13 @@ target_link_libraries(testModelState_Tabular PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testModelState_Tabular)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 
 add_executable(testModelState testModelState.cc)
 target_link_libraries(testModelState PRIVATE
@@ -87,11 +89,13 @@ target_link_libraries(testModelState PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testModelState)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 
 set(BORJA_TEST testModelState_Borja)
 add_executable(${BORJA_TEST} ${BORJA_TEST}.cc)
@@ -104,9 +108,11 @@ target_link_libraries(${BORJA_TEST} PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST ${BORJA_TEST})
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 

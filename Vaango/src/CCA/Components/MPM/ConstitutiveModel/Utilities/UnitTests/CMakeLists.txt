@@ -75,11 +75,13 @@ target_link_libraries(testHDF5Reader
   Vaango::Warnings
 )
 set(UNIT_TEST testHDF5Reader)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testTensorUtils testTensorUtils.cc)
@@ -90,11 +92,13 @@ target_link_libraries(testTensorUtils
   Vaango::Warnings
 )
 set(UNIT_TEST testTensorUtils)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testYieldCondUtils testYieldCondUtils.cc)
@@ -108,11 +112,13 @@ target_link_libraries(testYieldCondUtils
   Vaango::Warnings
 )
 set(UNIT_TEST testYieldCondUtils)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 gtest_discover_tests(${UNIT_TEST})
 
 add_executable(testEigen testEigen.cc)
@@ -123,10 +129,12 @@ target_link_libraries(testEigen
   Vaango::Warnings
 )
 set(UNIT_TEST testEigen)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 gtest_discover_tests(${UNIT_TEST})
 

@@ -78,11 +78,13 @@ target_link_libraries(testYieldCond_Tabular PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testYieldCond_Tabular)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 
 add_executable(testYieldCond_TabularCap testYieldCond_TabularCap.cc)
 target_link_libraries(testYieldCond_TabularCap PRIVATE
@@ -94,8 +96,10 @@ target_link_libraries(testYieldCond_TabularCap PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testYieldCond_TabularCap)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()

@@ -71,8 +71,10 @@ target_link_libraries(${TEST} PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST ${TEST})
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()

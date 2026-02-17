@@ -69,11 +69,13 @@ target_link_libraries(testPressure_Air PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testPressure_Air)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 
 add_executable(testPressure_Water testPressure_Water.cc)
 target_link_libraries(testPressure_Water PRIVATE
@@ -85,11 +87,13 @@ target_link_libraries(testPressure_Water PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testPressure_Water)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 
 add_executable(testPressure_Granite testPressure_Granite.cc)
 target_link_libraries(testPressure_Granite PRIVATE
@@ -101,11 +105,13 @@ target_link_libraries(testPressure_Granite PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testPressure_Granite)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 
 set(TEST testEOS_BorjaT)
 add_executable(${TEST} ${TEST}.cc)
@@ -118,8 +124,10 @@ target_link_libraries(${TEST} PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST ${TEST})
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
