@@ -141,32 +141,8 @@ if(ENABLE_COVERAGE)
         message(STATUS "Found genhtml: ${GENHTML_PATH}")
 
         add_custom_target(coverage
-            # Initial capture: zero out counters
-            COMMAND ${LCOV_PATH} --directory . --zerocounters
-            
-            # Run tests - since tests run POST_BUILD, we might just need to trigger a build 
-            # or rely on the fact that they ran. However, a dedicated run is safer.
-            # Here we assume ctest is enabled or targets exist.
-            # For simplicity, we just remind the user to run tests first if they are not POST_BUILD.
-            
-            # Capture coverage data
-            COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage.info
-            
-            # Remove unwanted files (external libraries, submodules, tests themselves)
-            COMMAND ${LCOV_PATH} --remove coverage.info 
-                    '/usr/*' 
-                    '${CMAKE_SOURCE_DIR}/submodules/*' 
-                    '${CMAKE_BINARY_DIR}/*'
-                    '*/UnitTests/*'
-                    '*/tests/*'
-                    --output-file coverage.cleaned.info
-            
-            # Generate HTML report
-            COMMAND ${GENHTML_PATH} coverage.cleaned.info --output-directory coverage_report
-            
-            # Summary output
-            COMMAND ${LCOV_PATH} --list coverage.cleaned.info
-            
+            COMMAND ${CMAKE_COMMAND} -E make_directory coverage
+            COMMAND cd coverage && find .. -name "*.gcda" -exec gcov {} + && ${LCOV_PATH} --directory .. --capture --output-file coverage.info --ignore-errors mismatch --preserve && cd .. && ${LCOV_PATH} --remove coverage/coverage.info '/usr/*' '${CMAKE_SOURCE_DIR}/submodules/*' '${CMAKE_BINARY_DIR}/*' '*/UnitTests/*' '*/tests/*' --output-file coverage/coverage.cleaned.info --ignore-errors unused && ${GENHTML_PATH} coverage/coverage.cleaned.info --output-directory coverage/html && ${LCOV_PATH} --list coverage/coverage.cleaned.info
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             COMMENT "Generating code coverage report..."
         )
@@ -179,9 +155,9 @@ if(ENABLE_COVERAGE)
         message(STATUS "Found gcovr: ${GCOVR_PATH}")
         add_custom_target(coverage-summary
             COMMAND ${GCOVR_PATH} -r ${CMAKE_SOURCE_DIR} . 
-                    -e "${CMAKE_SOURCE_DIR}/submodules/.*"
-                    -e ".*/UnitTests/.*"
-                    -e ".*/tests/.*"
+                    -e "${CMAKE_SOURCE_DIR}/submodules/"
+                    -e ".*/UnitTests/"
+                    -e ".*/tests/"
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             COMMENT "Generating console coverage summary..."
         )
