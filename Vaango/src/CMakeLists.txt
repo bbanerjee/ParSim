@@ -31,6 +31,7 @@
 #  -DBUILD_UNIT_TESTS=1   -- to build unit tests
 #  -DRUN_UNIT_TESTS_ON_BUILD=OFF -- to disable running unit tests during compile. 
 #                                   By default, these tests are run during the build.
+#  -DENABLE_COVERAGE=ON -- to enable code coverage reporting (requires lcov/gcovr)
 #  -DUSE_CLANG=1  -- use clang compilers
 
 #----------------------------------------------------------------------------
@@ -120,6 +121,72 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(VISIT             "Build with Visit" OFF) 
 option(CUDA             "Build with CUDA" OFF) 
 option(RUN_UNIT_TESTS_ON_BUILD "Run unit tests during compile" ON)
+option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
+
+if(ENABLE_COVERAGE)
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(WARNING "Code coverage is usually more accurate with Debug build type. Current: ${CMAKE_BUILD_TYPE}")
+    endif()
+
+    # Add coverage flags to the common options
+    target_compile_options(vaango_options INTERFACE --coverage -fprofile-arcs -ftest-coverage)
+    target_link_options(vaango_options INTERFACE --coverage)
+
+    # Find coverage tools
+    find_program(LCOV_PATH lcov)
+    find_program(GENHTML_PATH genhtml)
+
+    if(LCOV_PATH AND GENHTML_PATH)
+        message(STATUS "Found lcov: ${LCOV_PATH}")
+        message(STATUS "Found genhtml: ${GENHTML_PATH}")
+
+        add_custom_target(coverage
+            # Initial capture: zero out counters
+            COMMAND ${LCOV_PATH} --directory . --zerocounters
+            
+            # Run tests - since tests run POST_BUILD, we might just need to trigger a build 
+            # or rely on the fact that they ran. However, a dedicated run is safer.
+            # Here we assume ctest is enabled or targets exist.
+            # For simplicity, we just remind the user to run tests first if they are not POST_BUILD.
+            
+            # Capture coverage data
+            COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage.info
+            
+            # Remove unwanted files (external libraries, submodules, tests themselves)
+            COMMAND ${LCOV_PATH} --remove coverage.info 
+                    '/usr/*' 
+                    '${CMAKE_SOURCE_DIR}/submodules/*' 
+                    '${CMAKE_BINARY_DIR}/*'
+                    '*/UnitTests/*'
+                    '*/tests/*'
+                    --output-file coverage.cleaned.info
+            
+            # Generate HTML report
+            COMMAND ${GENHTML_PATH} coverage.cleaned.info --output-directory coverage_report
+            
+            # Summary output
+            COMMAND ${LCOV_PATH} --list coverage.cleaned.info
+            
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Generating code coverage report..."
+        )
+    else()
+        message(WARNING "lcov or genhtml not found. HTML coverage target will not be created.")
+    endif()
+
+    find_program(GCOVR_PATH gcovr)
+    if(GCOVR_PATH)
+        message(STATUS "Found gcovr: ${GCOVR_PATH}")
+        add_custom_target(coverage-summary
+            COMMAND ${GCOVR_PATH} -r ${CMAKE_SOURCE_DIR} . 
+                    -e "${CMAKE_SOURCE_DIR}/submodules/.*"
+                    -e ".*/UnitTests/.*"
+                    -e ".*/tests/.*"
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Generating console coverage summary..."
+        )
+    endif()
+endif()
 
 # Explicitly setting VISIT ON if VISIT_DIR is defined,
 # but consider making VISIT an option if it's user-configurable.
