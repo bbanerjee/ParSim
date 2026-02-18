@@ -32,6 +32,95 @@ Simulation-wide correctness is verified through high-level tests.
 *   **CI Integration**: (Future) Integrate coverage reporting into the CI pipeline to ensure that new PRs do not decrease the coverage percentage.
 *   **Coverage Targets**: Set incremental goals (e.g., "increase coverage by 5% every quarter").
 
+## Clarifications for Unit Testing (Phase 2 & 3)
+1.  **Scope**: Work through `src/Core` subdirectories alphabetically.
+2.  **Depth**: Implement basic "Sanity/Construction" tests initially.
+3.  **Dependencies**: Link against required internal libraries; use `gmock` only for high-complexity dependencies.
+4.  **Integration**: Use the modern CMake pattern with `gtest_discover_tests`.
+5.  **Tracking**: Work one subdirectory at a time, documenting progress in `src/progress_report.md`.
+
+## Summary of Completed Unit Testing
+### Core/Containers
+- Established `UnitTests` directory and CMake integration.
+- Added basic construction and sanity tests for `ConsecutiveRangeSet`, `Array1`, `RangeTree`, and `SuperBox`.
+- Verified integration with `Vaango_Core_Math` for geometry dependencies in `SuperBox` tests.
+
+### Core/DataArchive
+- Established `UnitTests` directory and CMake integration.
+- Implemented construction test for `DataArchive` with a mock `.uda` structure.
+- Resolved issues with internal error exceptions during construction by providing a minimal `index.xml`.
+
+### Core/Datatypes
+- Established `UnitTests` directory and CMake integration.
+- Added basic tests for `DenseMatrix` and `ColumnMatrix`, including construction, identity matrix generation, and matrix-vector multiplication.
+- Verified polymorphic behavior through the `Matrix` base class interface.
+
+### Core/Disclosure
+- Established `UnitTests` directory and CMake integration.
+- Added tests for `TypeDescription` lookup and `toString` functionality.
+- Verified `TypeUtils` helper functions for fundamental types.
+- Noted that types must be explicitly registered via `fun_getTypeDescription` before lookup in tests.
+
+### Core/Exceptions
+- Established `UnitTests` directory and CMake integration.
+- Added basic tests for common exception types (`InternalError`, `ProblemSetupException`, `FileNotFound`, `ArrayIndexOutOfBounds`).
+- Verified that error messages and exception types are correctly reported.
+
+### Core/Geometry
+- Established `UnitTests` directory and CMake integration.
+- Added basic tests for `Point`, `Vector`, and `BBox`.
+- Verified construction, arithmetic operations (Point + Vector, Point - Point), and bounding box extension/containment.
+
+### Core/GeometryPiece
+- Standardized `UnitTests` directory and updated CMake integration to use `gtest_discover_tests`.
+- Added basic tests for `BoxGeometryPiece` and `SphereGeometryPiece`.
+- Verified volume calculations, bounding box generation, and point-in-shape tests.
+
+### Core/Grid
+- Standardized `UnitTests` directory and CMake integration.
+- Added basic construction tests for `Grid` and `Level`.
+- Verified basic patch management within a level.
+
+### Core/IO
+- Established `UnitTests` directory and CMake integration.
+- Added tests for `UintahZlibUtil` reading from compressed files.
+- Verified token-based reading (`getString`, `getInt`, `getDouble`) and line reading with comment skipping.
+
+### Core/Malloc
+- Established `UnitTests` directory and CMake integration.
+- Added basic tests for the custom `Allocator`.
+- Verified `scinew`, `scinew[]`, and standard `malloc` functionality when using the project's allocator.
+
+### Core/Math
+- Established `UnitTests` directory and CMake integration.
+- Added basic tests for `Matrix3` (construction, identity, determinant, inverse) and `MiscMath` (Min, Max, Clamp).
+- Verified core numerical operations essential for geometry and physics calculations.
+
+### Core/OS
+- Standardized `UnitTests` directory and CMake integration.
+- Added basic tests for `ProcessInfo` class.
+- Verified retrieval of memory usage information and human-readable formatting.
+
+### Core/Parallel
+- Established `UnitTests` directory and CMake integration.
+- Added basic tests for `Parallel` static accessors.
+- Verified that `getRootProcessorGroup` throws `InternalError` when MPI is not initialized, ensuring robust error handling in serial environments.
+
+### Core/ProblemSpec
+- Established `UnitTests` directory and CMake integration.
+- Added basic tests for `ProblemSpec` XML parsing from memory buffers.
+- Verified attribute retrieval, block finding, and default value handling.
+
+### Core/Util
+- Established `UnitTests` directory and CMake integration.
+- Added basic tests for `StringUtil` (conversion, case changing, splitting) and `Endian` (endianness detection, byte swapping).
+- Verified core utility functions used throughout the codebase.
+
+### Core/Lockfree (Skipped)
+- Attempted to implement tests for `Lockfree::Pool`.
+- Encountered persistent memory corruption errors attributed to interactions between the lockfree pool's memory management and the project's `sci-malloc` allocator.
+- Decision made to skip this module for initial coverage efforts to maintain progress.
+
 ## Appendix: Running Coverage Tests
 
 To generate a baseline coverage report from the `dbg` directory, follow these steps:

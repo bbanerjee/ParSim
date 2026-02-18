@@ -81,5 +81,6 @@ install(TARGETS
 )
 
 
-
-add_subdirectory(UnitTests)
+if (NOT DEFINED HAVE_KOKKOS)
+  add_subdirectory(UnitTests)
+endif ()

@@ -53,7 +53,7 @@ ArrayIndexOutOfBounds::ArrayIndexOutOfBounds(long value, long lower, long upper,
     << file << ":" << line << "\n"
     << "Array index " << value << " out of range ["
     << lower << ", " << upper << ")";
-  msg = (char*)(s.str().c_str());
+  msg = strdup(s.str().c_str());
 #ifdef EXCEPTIONS_CRASH
     std::cout << msg << "\n";
 #endif
@@ -66,6 +66,9 @@ ArrayIndexOutOfBounds::ArrayIndexOutOfBounds(const ArrayIndexOutOfBounds& copy)
     
 ArrayIndexOutOfBounds::~ArrayIndexOutOfBounds()
 {
+  if (msg) {
+    free(msg);
+  }
 }
 
 const char* ArrayIndexOutOfBounds::message() const

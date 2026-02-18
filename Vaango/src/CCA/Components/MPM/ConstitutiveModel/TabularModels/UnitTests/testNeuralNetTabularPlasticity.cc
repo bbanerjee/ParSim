@@ -80,7 +80,6 @@ public:
   virtual void
   SetUp()
   {
-    // Uintah::Parallel::determineIfRunningUnderMPI(d_argc, d_argv);
     Uintah::Parallel::initializeManager(d_argc, d_argv);
     Uintah::create_sci_environment(d_env, 0, true);
   }

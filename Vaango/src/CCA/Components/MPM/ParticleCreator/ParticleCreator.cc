@@ -1105,6 +1105,7 @@ ParticleCreator::createCornerParticles(const Patch* patch,
     box, center, patch, obj_vars.points[obj]);
 }
 
+
 void
 ParticleCreator::populateParticleVariables(SpecialGeomPiece* sgp,
                                            const Patch* patch,

@@ -104,6 +104,49 @@ option(HYPRE           "Build with HYPRE" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(VISIT             "Build with Visit" OFF) 
 option(CUDA             "Build with CUDA" OFF) 
+option(RUN_UNIT_TESTS_ON_BUILD "Run unit tests during compile" ON)
+option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
+
+if(ENABLE_COVERAGE)
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(WARNING "Code coverage is usually more accurate with Debug build type. Current: ${CMAKE_BUILD_TYPE}")
+    endif()
+
+    # Add coverage flags to the common options
+    target_compile_options(vaango_options INTERFACE --coverage -fprofile-arcs -ftest-coverage)
+    target_link_options(vaango_options INTERFACE --coverage)
+
+    # Find coverage tools
+    find_program(LCOV_PATH lcov)
+    find_program(GENHTML_PATH genhtml)
+
+    if(LCOV_PATH AND GENHTML_PATH)
+        message(STATUS "Found lcov: ${LCOV_PATH}")
+        message(STATUS "Found genhtml: ${GENHTML_PATH}")
+
+        add_custom_target(coverage
+            COMMAND ${CMAKE_COMMAND} -E make_directory coverage
+            COMMAND cd coverage && find .. -name "*.gcda" -exec gcov {} + && ${LCOV_PATH} --directory .. --capture --output-file coverage.info --ignore-errors mismatch --preserve && cd .. && ${LCOV_PATH} --remove coverage/coverage.info '/usr/*' '${CMAKE_SOURCE_DIR}/submodules/*' '${CMAKE_BINARY_DIR}/*' '*/UnitTests/*' '*/tests/*' --output-file coverage/coverage.cleaned.info --ignore-errors unused && ${GENHTML_PATH} coverage/coverage.cleaned.info --output-directory coverage/html && ${LCOV_PATH} --list coverage/coverage.cleaned.info
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Generating code coverage report..."
+        )
+    else()
+        message(WARNING "lcov or genhtml not found. HTML coverage target will not be created.")
+    endif()
+
+    find_program(GCOVR_PATH gcovr)
+    if(GCOVR_PATH)
+        message(STATUS "Found gcovr: ${GCOVR_PATH}")
+        add_custom_target(coverage-summary
+            COMMAND ${GCOVR_PATH} -r ${CMAKE_SOURCE_DIR} . 
+                    -e "${CMAKE_SOURCE_DIR}/submodules/"
+                    -e ".*/UnitTests/"
+                    -e ".*/tests/"
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Generating console coverage summary..."
+        )
+    endif()
+endif()
 
 # Explicitly setting VISIT ON if VISIT_DIR is defined,
 # but consider making VISIT an option if it's user-configurable.
@@ -489,6 +532,8 @@ if (MPI_CXX_FOUND)
   set(DEF_MPI_CONST_WORKS "#define MPICONST const")
   set(DEF_MPI_MAX_THREADS "#define MPI_MAX_THREADS 64")
   set(DEF_MPI3_ENABLED "#define UINTAH_ENABLE_MPI3 true")
+
+  target_link_libraries(vaango_options INTERFACE MPI::MPI_CXX)
 endif()
 
 #----------------------------------------------------------------------------------
@@ -496,21 +541,21 @@ endif()
 #----------------------------------------------------------------------------------
 find_package(LibXml2 REQUIRED)
 if (LIBXML2_FOUND)
-  #include_directories(${LIBXML2_INCLUDE_DIR})
   message(STATUS "LibXml2 found. Version: ${LIBXML2_VERSION_STRING}")
+  target_link_libraries(vaango_options INTERFACE LibXml2::LibXml2)
 endif()
 
 #-----------------------------------------------------------------------------
 # Configure time cross-platform header file generation
 #-----------------------------------------------------------------------------
 # SCI_MALLOC on?
-IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(DEF_MALLOC "")
   set(DEF_MALLOC_LINENUMBERS "")
 else()
   set(DEF_MALLOC "#define DISABLE_SCI_MALLOC 1")
   set(DEF_MALLOC_LINENUMBERS "")
-ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
+endif()
 
 # SCI Assertions
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -539,6 +584,7 @@ if(TARGET Threads::Threads)
         set(THREAD_LIBRARY "")
     endif()
     set(THREAD_LIB_FLAG "${THREAD_LIBRARY}")
+    message(STATUS "Threads library = ${THREAD_LIB_FLAG}")
     
     # Determine thread type based on platform
     if(CMAKE_USE_PTHREADS_INIT OR UNIX)
@@ -550,6 +596,7 @@ if(TARGET Threads::Threads)
     endif()
     
     message(STATUS "Threads library ${THREADS_TYPE} found")
+    target_link_libraries(vaango_options INTERFACE Threads::Threads)
 else()
     set(DEF_THREAD "#define SCI_NOTHREAD 1")
     set(THREAD_LIB_FLAG "")
@@ -579,6 +626,7 @@ find_package(Eigen3 REQUIRED)
 if(TARGET Eigen3::Eigen)
     message(STATUS "Eigen3 found as imported target")
     # No need for manual include_directories with modern targets
+    target_link_libraries(vaango_options INTERFACE Eigen3::Eigen)
     
     if(USE_CLANG)
         # Modern way to add system includes to a target
@@ -612,6 +660,7 @@ if(HDF5_FOUND)
             set(HDF5_TARGET HDF5::HDF5)
         endif()
         # Target will handle includes and linking automatically
+        target_link_libraries(vaango_options INTERFACE ${HDF5_TARGET})
     else()
         # Fallback for older HDF5 installations
         include_directories(${HDF5_INCLUDE_DIRS})
@@ -785,6 +834,7 @@ if (CUDA)
     set(CMAKE_CUDA_ARCHITECTURES "native")
     set(CMAKE_CUDA_STANDARD 20)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    target_link_libraries(vaango_options INTERFACE CUDA::cuda_driver CUDA::cudart)
 
     message(STATUS "Trying to find Kokkos")
     find_package(Kokkos REQUIRED)
@@ -794,6 +844,7 @@ if (CUDA)
       set(DEF_KOKKOS_USING_GPU "#define KOKKOS_USING_GPU")
       message(STATUS "Kokkos found")  
       message(STATUS "Kokkos libraries: ${Kokkos_LIBRARIES}")  
+      target_link_libraries(vaango_options INTERFACE Kokkos::kokkos)
     endif()
   endif (CUDAToolkit_FOUND)
 endif (CUDA)

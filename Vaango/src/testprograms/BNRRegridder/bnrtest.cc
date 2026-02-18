@@ -89,7 +89,6 @@ int f_array[X_RES][Y_RES]=
 */
 int main(int argc, char** argv)
 {
-	//Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
 	Uintah::Parallel::initializeManager( argc, argv );
 
 	ProcessorGroup *d_myworld=Uintah::Parallel::getRootProcessorGroup();
