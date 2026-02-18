@@ -2477,19 +2477,28 @@ SerialMPM::computeDEMForces(const ProcessorGroup*,
           // Identify unique rigid bodies in material j to interact with
           // This avoids overcounting and ensures every MPM particle sees every DEM body
           std::map<long64, int> unique_bodies;
-          for (auto idx_j : *psets_all[m_j]) {
-            if (m_i == m_j && idx_i == idx_j) continue;
-            if (m_i == m_j && pRigidBodyID_all[m_i][idx_i] == pRigidBodyID_all[m_j][idx_j]) continue;
-            if (m_i == m_j && idx_j <= idx_i) continue;
+          if (matl_j->isDiscrete()) {
+            for (auto idx_j : *psets_all[m_j]) {
+              if (m_i == m_j && idx_i == idx_j) continue;
+              if (m_i == m_j && pRigidBodyID_all[m_i][idx_i] == pRigidBodyID_all[m_j][idx_j]) continue;
+              if (m_i == m_j && idx_j <= idx_i) continue;
 
-            long64 rbID = pRigidBodyID_all[m_j][idx_j];
-            if (unique_bodies.find(rbID) == unique_bodies.end()) {
-              unique_bodies[rbID] = idx_j;
-            } else {
-              // For visualization/proxy, keep the one closest to pos_i
-              double d2_new = (pos_i - pX_all[m_j][idx_j]).length2();
-              double d2_old = (pos_i - pX_all[m_j][unique_bodies[rbID]]).length2();
-              if (d2_new < d2_old) unique_bodies[rbID] = idx_j;
+              long64 rbID = pRigidBodyID_all[m_j][idx_j];
+              if (unique_bodies.find(rbID) == unique_bodies.end()) {
+                unique_bodies[rbID] = idx_j;
+              } else {
+                // For visualization/proxy, keep the one closest to pos_i
+                double d2_new = (pos_i - pX_all[m_j][idx_j]).length2();
+                double d2_old = (pos_i - pX_all[m_j][unique_bodies[rbID]]).length2();
+                if (d2_new < d2_old) unique_bodies[rbID] = idx_j;
+              }
+            }
+          } else {
+            // For standard MPM materials, every particle is an independent body for DEM contact
+            for (auto idx_j : *psets_all[m_j]) {
+              if (m_i == m_j && idx_i == idx_j) continue;
+              if (m_i == m_j && idx_j <= idx_i) continue;
+              unique_bodies[(long64)idx_j] = idx_j;
             }
           }
 
@@ -2500,9 +2509,13 @@ SerialMPM::computeDEMForces(const ProcessorGroup*,
             Vector arm_j_center(0, 0, 0);
             bool collision = false;
 
-            if (matl_i->isDiscrete() && pMass_all[m_i][idx_i] > 0) {
-              // Case 1: Rigid body i vs Particle j
-              int objIdx_i = (int)(rbID_j & 0xFFFFFFFF); // Use object index from ID
+            // Determine interaction type
+            bool i_is_rigid = matl_i->isDiscrete() && pMass_all[m_i][idx_i] > 0;
+            bool j_is_rigid = matl_j->isDiscrete(); // We'll find master_j below
+
+            if (i_is_rigid && !j_is_rigid) {
+              // Case: Rigid i vs Particle j
+              int objIdx_i = (int)(pRigidBodyID_all[m_i][idx_i] & 0xFFFFFFFF);
               const GeometryObject* obj_i = matl_i->getGeometryObject(objIdx_i);
               
               if (obj_i) {
@@ -2551,14 +2564,18 @@ SerialMPM::computeDEMForces(const ProcessorGroup*,
                    collision = true;
                 }
               }
-            } else if (matl_j->isDiscrete()) {
-               // Case 2: Particle i vs Rigid body j
+            } else if (!i_is_rigid && j_is_rigid) {
+               // Case: Particle i vs Rigid body j
                int master_idx_j = master_particles.count(rbID_j) ? master_particles[rbID_j] : idx_j;
                int objIdx_j = (int)(rbID_j & 0xFFFFFFFF);
                const GeometryObject* obj_j = matl_j->getGeometryObject(objIdx_j);
                
                if (obj_j) {
                  const GeometryPieceP piece_j = obj_j->getPiece();
+                 // If the master is not on this patch, we MUST retrieve its state from the proxy particle
+                 // Slaves in Discrete materials are synchronized to carry Master's pX0, orientation, etc.
+                 // But current pX for slaves is their corner pos. We need current centroid.
+                 // For now, assume master is nearby or use the proxy as a heuristic (needs improvement)
                  Point pos0_master_j = pX0_all[m_j][master_idx_j];
                  Point pos_master_j = pX_all[m_j][master_idx_j];
                  Matrix3 orient_master_j = pOrientation_all[m_j][master_idx_j];
@@ -2591,7 +2608,7 @@ SerialMPM::computeDEMForces(const ProcessorGroup*,
                     Vector v_rel = v_contact_j - v_contact_i;
 
                     double v_rel_n = Dot(v_rel, worldGrad);
-                    double f_n_mag = kn * overlap + gamma * v_rel_n; // Repulsion: overlap rate is +v_rel_n
+                    double f_n_mag = kn * overlap + gamma * v_rel_n;
                     if (f_n_mag < 0) f_n_mag = 0;
                     
                     Vector force_n = worldGrad * (f_n_mag); // Force on Particle i (Repulsion)
@@ -2604,6 +2621,26 @@ SerialMPM::computeDEMForces(const ProcessorGroup*,
                     totalForce = force_n + force_t;
                     collision = true;
                  }
+               }
+            } else if (i_is_rigid && j_is_rigid) {
+               // Case: Rigid i vs Rigid j
+               // Existing sphere-based or SDF-based body contact could go here
+               // For now, let's treat it as centroid-to-centroid sphere contact
+               Point pos_j = pX_all[m_j][idx_j];
+               double rad_j = pRadius_all[m_j][idx_j];
+               Vector dist = pos_j - pos_i;
+               double d = dist.length();
+               if (d < (rad_i + rad_j)) {
+                  double overlap = (rad_i + rad_j) - d;
+                  Vector normal = dist / d;
+                  
+                  Vector v_rel = (pVelocity_all[m_j][idx_j] + Cross(pAngVel_all[m_j][idx_j], Vector(0,0,0))) - 
+                                 (vel_i + Cross(omega_i, Vector(0,0,0)));
+                  double v_rel_n = Dot(v_rel, normal);
+                  double f_n_mag = kn * overlap - gamma * v_rel_n;
+                  if (f_n_mag < 0) f_n_mag = 0;
+                  totalForce = normal * (-f_n_mag);
+                  collision = true;
                }
             }
 
