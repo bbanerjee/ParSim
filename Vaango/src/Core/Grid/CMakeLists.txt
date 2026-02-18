@@ -63,7 +63,9 @@ SET(Vaango_Core_Grid_SRCS
 add_subdirectory(BoundaryConditions)
 add_subdirectory(Variables)
 add_subdirectory(PatchBVH)
-add_subdirectory(UnitTests)
+if (NOT DEFINED HAVE_KOKKOS)
+  add_subdirectory(UnitTests)
+endif ()
 
 #message(STATUS "Core/Grid sources are ${Vaango_Core_Grid_SRCS}")
 

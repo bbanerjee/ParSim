@@ -47,12 +47,9 @@ class ElasticModuli_SupportVector : public ElasticModuliModel
 
 public:
 
-  ElasticModuli_SupportVector() = delete;
-  ElasticModuli_SupportVector(const ElasticModuli_SupportVector& smm) = delete;
-  ~ElasticModuli_SupportVector() = default;
-
   ElasticModuli_SupportVector(Uintah::ProblemSpecP& ps);
   ElasticModuli_SupportVector(const ElasticModuli_SupportVector* smm);
+  ~ElasticModuli_SupportVector();
   ElasticModuli_SupportVector& operator=(const ElasticModuli_SupportVector& smm) = delete;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;

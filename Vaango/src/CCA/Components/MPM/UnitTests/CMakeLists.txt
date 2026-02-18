@@ -31,6 +31,7 @@ SET(VAANGO_LIBS
         Vaango_Core_Parallel    
         Vaango_Core_Util        
         Vaango_Core_Math        
+        Vaango_Core_Malloc        
         Vaango_Core_Exceptions  
         Vaango_Core_OS  
         Vaango_Core_GeometryPiece

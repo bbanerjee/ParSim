@@ -48,3 +48,5 @@ install(TARGETS
   Vaango_Core_Containers
 )
 
+add_subdirectory(UnitTests)
+

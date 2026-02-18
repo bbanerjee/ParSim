@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2014-2026 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -44,17 +22,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
- */
-
-/*
- *  AllocOS.cc: ?
- *
- *  Written by:
- *   Author: ?
- *   Department of Computer Science
- *   University of Utah
- *   Date: ?
- *
  */
 
 #include <sci_defs/bits_defs.h>
@@ -64,146 +31,151 @@
 #include <Core/Malloc/AllocPriv.h>
 
 #ifdef __APPLE__
-#  include <sys/types.h>
+#include <sys/types.h>
 #endif
 
 #ifndef _WIN32
-#  include <sys/mman.h>
-#  include <unistd.h>
+#include <sys/mman.h>
+#include <unistd.h>
 #endif
 
-#include <cstdio>
-#include <cstring>
 #include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <fcntl.h>
-
-#define ALIGN 16
-
-#if defined(sun) || defined(__linux)
-#  define MMAP_TYPE char
-#else
-#  define MMAP_TYPE void
-#endif
 
 namespace Uintah {
 
 #ifndef DISABLE_SCI_MALLOC
-  static int devzero_fd=-1;
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+inline constexpr int ALIGN = 32;
+
+// On Linux and Solaris, mmap() expects a char* rather than void*.
+#if defined(sun) || defined(__linux)
+using MmapType = char;
+#else
+using MmapType = void;
 #endif
 
-OSHunk* OSHunk::alloc(size_t size, bool returnable, Allocator* allocator)
+// ---------------------------------------------------------------------------
+// Module-level state
+// ---------------------------------------------------------------------------
+static int devzero_fd = -1;
+
+// ---------------------------------------------------------------------------
+// OSHunk::alloc
+// ---------------------------------------------------------------------------
+[[nodiscard]] OSHunk*
+OSHunk::alloc(std::size_t size, bool returnable, Allocator* allocator)
 {
-#ifndef DISABLE_SCI_MALLOC
-    unsigned long offset = sizeof(OSHunk)%ALIGN;
-    if(offset != 0)
-      offset = ALIGN-offset;
-    size_t asize=size+sizeof(OSHunk)+offset;
-    void* ptr;
-    if(returnable){
-       if(devzero_fd == -1){
-	  devzero_fd=open("/dev/zero", O_RDWR);
-	  if(devzero_fd == -1){
-	     fprintf(stderr, "Error opening /dev/zero: errno=%d\n", errno);
-	     abort();
-	  }
-       }
-#ifdef SCI_64BITS
-#  ifdef __sgi
-       ptr=mmap64(0, asize, PROT_READ|PROT_WRITE, MAP_PRIVATE,
-		  devzero_fd, 0);
-#  else
-       ptr=mmap(0, asize, PROT_READ|PROT_WRITE, MAP_PRIVATE,
-		devzero_fd, 0);
-#  endif
-#else
-       ptr=mmap(0, asize, PROT_READ|PROT_WRITE, MAP_PRIVATE,
-		devzero_fd, 0);
-#endif
-    } else {
-      void* align = sbrk(0);
-      unsigned long offset = reinterpret_cast<unsigned long>(align)%ALIGN;
-      if(offset){
-	sbrk((long)(ALIGN-offset));
+  // Compute padding needed so that hunk->data is ALIGN-byte aligned.
+  const unsigned long hunk_offset =
+    (sizeof(OSHunk) % ALIGN != 0) ? (ALIGN - sizeof(OSHunk) % ALIGN) : 0UL;
+
+  const std::size_t asize = size + sizeof(OSHunk) + hunk_offset;
+
+  void* ptr = nullptr;
+
+  if (returnable) {
+    // Use mmap for returnable (big-object) hunks.
+    if (devzero_fd == -1) {
+      devzero_fd = open("/dev/zero", O_RDWR);
+      if (devzero_fd == -1) {
+        std::fprintf(stderr,
+                     "Error opening /dev/zero: errno=%d\n", errno);
+        std::abort();
       }
-      ptr = sbrk((long)asize);
     }
+    ptr = mmap(nullptr, asize,
+               PROT_READ | PROT_WRITE, MAP_PRIVATE,
+               devzero_fd, 0);
+  } else {
+    // Use sbrk for non-returnable (pool) hunks, ensuring alignment first.
+    void* current        = sbrk(0);
+    unsigned long offset = reinterpret_cast<unsigned long>(current) % ALIGN;
+    if (offset != 0) {
+      sbrk(static_cast<long>(ALIGN - offset));
+    }
+    ptr = sbrk(static_cast<long>(asize));
+  }
 
-    OSHunk* hunk=(OSHunk*)ptr;
-    if((long)ptr == -1){
-#ifdef SCI_64BITS
-       fprintf(stderr, "Error allocating memory (%lu bytes requested)\nmmap: errno=%d\n", asize, errno);
-#else
-       fprintf(stderr, "Error allocating memory (%u bytes requested)\nmmap: errno=%d\n", asize, errno);
-#endif
-       
-       if(allocator){
-#ifdef SCI_64BITS
-	 fprintf(stderr, "Allocator was using %lu bytes.\n", allocator->sizealloc );
-#else
-	 fprintf(stderr, "Allocator was using %u bytes.\n", allocator->sizealloc );
-#endif
-	 // If the allocator is already dieing, we will just quit to try
-	 // to avoid going into an infinite loop
-	 if(allocator->dieing)
-	   exit(1);
+  // Both mmap and sbrk signal failure by returning (void*)-1.
+  if (ptr == reinterpret_cast<void*>(-1L)) {
+    std::fprintf(stderr,
+                 "Error allocating memory (%zu bytes requested)\nmmap: errno=%d\n",
+                 asize, errno);
 
-	 // Mark the allocator as dieing and unlock it so that allocations
-	 // might succeed as we are shutting down
-	 allocator->dieing = true;
-	 allocator->noninline_unlock();
-       }
-       abort();
+    if (allocator) {
+      std::fprintf(stderr,
+                   "Allocator was using %zu bytes.\n", allocator->sizealloc);
+
+      // If the allocator is already dying, exit immediately to avoid
+      // an infinite loop.
+      if (allocator->dieing) {
+        std::exit(1);
+      }
+
+      // Mark dying and release the lock so that any remaining
+      // allocations during shutdown have a chance to succeed.
+      allocator->dieing = true;
+      allocator->noninline_unlock();
     }
-    hunk->data=(void*)(hunk+1);
-    if(offset){
-      // Ensure alignment
-      hunk->data = (void*)((char*)hunk->data+offset);
-    }
-    hunk->next=0;
-    hunk->ninuse=0;
-    hunk->len=size-offset;
-    hunk->alloc_len=asize;
-    hunk->returnable=returnable;
-    return hunk;
-#else
-    return nullptr;
-#endif // DISABLE_SCI_MALLOC
+    std::abort();
+  }
+
+  auto* hunk = static_cast<OSHunk*>(ptr);
+
+  // Place data immediately after the OSHunk header, with alignment padding.
+  hunk->data = static_cast<void*>(
+    reinterpret_cast<char*>(hunk + 1) + hunk_offset);
+
+  hunk->next       = nullptr;
+  hunk->ninuse     = 0;
+  hunk->len        = size;
+  hunk->alloc_len  = asize;
+  hunk->returnable = returnable;
+
+  return hunk;
 }
 
 #ifdef MALLOC_TRACE
-#  include <MallocTraceOff.h>
+#include <MallocTraceOff.h>
 #endif
 
+// ---------------------------------------------------------------------------
+// OSHunk::free
+// ---------------------------------------------------------------------------
 void
 OSHunk::free(OSHunk* hunk)
 {
-#ifndef DISABLE_SCI_MALLOC
-   if(!hunk->returnable){
-      fprintf(stderr, "Attempt to return a non-returnable memory hunk!\n");
-      abort();
-   }
-    size_t len=hunk->alloc_len;
+  if (!hunk->returnable) {
+    std::fprintf(stderr,
+                 "Attempt to return a non-returnable memory hunk!\n");
+    std::abort();
+  }
 
-    if(munmap((MMAP_TYPE*)hunk, len) == -1){
-	int i;
-        for(i=0;i<10;i++){
-#ifdef __sgi
-	    sginap(10);
-#endif
-    	    if(munmap((MMAP_TYPE*)hunk, len) != -1)
-		break;
-        }
- 	if(i==10){
-	    fprintf(stderr, "Error unmapping memory\nmunmap: errno=%d\n", errno);
-	    fprintf(stderr, "Unmap failed - leaking memory\n");
-	    //abort();
-	}
+  const std::size_t len = hunk->alloc_len;
+
+  // munmap can spuriously fail; retry up to 10 times before giving up.
+  for (int attempt = 0; attempt < 10; ++attempt) {
+    if (munmap(static_cast<MmapType*>(static_cast<void*>(hunk)), len) == 0) {
+      return;
     }
-#endif // DISABLE_SCI_MALLOC
+  }
+
+  std::fprintf(stderr,
+               "Error unmapping memory\nmunmap: errno=%d\n", errno);
+  std::fprintf(stderr, "Unmap failed - leaking memory\n");
 }
 
 #ifdef MALLOC_TRACE
-#  include <MallocTraceOn.h>
+#include <MallocTraceOn.h>
 #endif
 
-} // End namespace Uintah
+#endif // !DISABLE_SCI_MALLOC
+
+} // namespace Uintah

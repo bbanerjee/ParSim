@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2014-2026 Biswajit Banerjee, Parresia Research Lmited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -44,18 +22,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
- */
-
-
-/*
- *  Allocator.h: ?
- *
- *  Written by:
- *   Author: ?
- *   Department of Computer Science
- *   University of Utah
- *   Date: ?
- *
  */
 
 #ifndef Malloc_Allocator_h
@@ -68,31 +34,32 @@
 //
 // For more information on using the SCI Memory Trace facility, see Trace.h.
 
-#if MALLOC_TRACE == 1 && ( !defined(DISABLE_SCI_MALLOC) || DISABLE_SCI_MALLOC != 1 )
-#  error MALLOC_TRACE and !DISABLE_SCI_MALLOC may not both be set!
+#if MALLOC_TRACE == 1 &&                                                       \
+  (!defined(DISABLE_SCI_MALLOC) || DISABLE_SCI_MALLOC != 1)
+#error MALLOC_TRACE and !DISABLE_SCI_MALLOC may not both be set!
 #endif
 
-#if defined( MALLOC_TRACE )
+#if defined(MALLOC_TRACE)
 
-//define define scinew to new so MallocTrace catches the calls
-#  define scinew new
+// define define scinew to new so MallocTrace catches the calls
+#define scinew new
 
-//include malloc trace functions
+// include malloc trace functions
 #include "MallocTrace.h"
 
-//include problematic headers
+// include problematic headers
 #include <algorithm>
 #include <valarray>
 
-//turn on tracing
+// turn on tracing
 #include "MallocTraceOn.h"
 
-#elif !defined( DISABLE_SCI_MALLOC )
-#  ifndef _WIN32
-#    include   <unistd.h>
-#  endif
+#elif !defined(DISABLE_SCI_MALLOC)
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
-//set these macros to be blank so everything will compile without MallocTrace
+// set these macros to be blank so everything will compile without MallocTrace
 #define MALLOC_TRACE_TAG_SCOPE(tag) ;
 #define MALLOC_TRACE_TAG(tag) ;
 #define MALLOC_TRACE_LOG_FILE(file) ;
@@ -100,91 +67,150 @@
 #include <cstdlib>
 
 namespace Uintah {
-  
+
 struct Allocator;
-Allocator* MakeAllocator();
-void DestroyAllocator(Allocator*);
+
+Allocator*
+MakeAllocator();
+
+void
+DestroyAllocator(Allocator*);
 
 extern Allocator* default_allocator;
-void MakeDefaultAllocator();
 
-void PrintTag(void*);
+void
+MakeDefaultAllocator();
+
+void
+PrintTag(void*);
 
 //
 // These functions are for use in tracking down memory leaks.  In the
 // MALLOC_STATS file, non-freed memory will be listed with the specified
 // tag...
 //
-const char* AllocatorSetDefaultTagMalloc(const char* tag);
-const char* AllocatorSetDefaultTagNew(const char* tag);
-int         AllocatorSetDefaultTagLineNumber(int line_number);
-void        AllocatorResetDefaultTagMalloc();
-void        AllocatorResetDefaultTagNew();
-void        AllocatorResetDefaultTagLineNumber();
-const char* AllocatorSetDefaultTag(const char* tag);
-void        AllocatorResetDefaultTag();
+const char*
+AllocatorSetDefaultTagMalloc(const char* tag);
 
-// The MPI that comes with the Ubuntu Lenny kernel, for whatever reason, calls atexit(), which, if
-// we are in a sci-malloc enabled build, causes our malloc to kick off (for the very first time), which
-// causes us to call atexit(), which deadlocks and hangs.  This hack avoids that.  For most OSes, this
+const char*
+AllocatorSetDefaultTagNew(const char* tag);
+
+int
+AllocatorSetDefaultTagLineNumber(int line_number);
+
+void
+AllocatorResetDefaultTagMalloc();
+
+void
+AllocatorResetDefaultTagNew();
+
+void
+AllocatorResetDefaultTagLineNumber();
+
+const char*
+AllocatorSetDefaultTag(const char* tag);
+
+void
+AllocatorResetDefaultTag();
+
+// The MPI that comes with the Ubuntu Lenny kernel, for whatever reason, calls
+// atexit(), which, if we are in a sci-malloc enabled build, causes our malloc
+// to kick off (for the very first time), which causes us to call atexit(),
+// which deadlocks and hangs.  This hack avoids that.  For most OSes, this
 // should just be commented out.
-#define USE_LENNY_HACK 
+// #define USE_LENNY_HACK
 
 // append the num to the MallocStats file if MallocStats are dumped to a file
 // (negative appends nothing)
-void AllocatorMallocStatsAppendNumber(int num);
-  
-Allocator* DefaultAllocator();
-void GetGlobalStats(Allocator*,
-		    size_t& nalloc, size_t& sizealloc,
-		    size_t& nfree, size_t& sizefree,
-		    size_t& nfillbin,
-		    size_t& nmmap, size_t& sizemmap,
-		    size_t& nmunmap, size_t& sizemunmap,
-		    size_t& highwater_alloc, size_t& highwater_mmap,
-		    size_t& bytes_overhead,
-		    size_t& bytes_free,
-		    size_t& bytes_fragmented,
-		    size_t& bytes_inuse,
-		    size_t& bytes_inhunks);
-void GetGlobalStats(Allocator*,
-		    size_t& nalloc, size_t& sizealloc,
-		    size_t& nfree, size_t& sizefree,
-		    size_t& nfillbin,
-		    size_t& nmmap, size_t& sizemmap,
-		    size_t& nmunmap, size_t& sizemunmap,
-		    size_t& highwater_alloc, size_t& highwater_mmap);
-int  GetNbins(Allocator*);
-void GetBinStats(Allocator*, int binno, size_t& minsize, size_t& maxsize,
-		 size_t& nalloc, size_t& nfree, size_t& ninlist);
+void
+AllocatorMallocStatsAppendNumber(int num);
 
-void AuditAllocator(Allocator*);
-void DumpAllocator(Allocator*, const char* filename = "alloc.dump");
+Allocator*
+DefaultAllocator();
 
-  // Functions for locking and unlocking the allocator.  In the
-  // pthreads implementation, these use a recursive lock that will
-  // allow the same thread to lock and unlock the allocator until
-  // UnLockAllocator is called.  In other implentations this just uses
-  // the regular lock and unlock functions.
-  void LockAllocator(Allocator*);
-  void UnLockAllocator(Allocator*);
-  
+void
+GetGlobalStats(Allocator*,
+               size_t& nalloc,
+               size_t& sizealloc,
+               size_t& nfree,
+               size_t& sizefree,
+               size_t& nfillbin,
+               size_t& nmmap,
+               size_t& sizemmap,
+               size_t& nmunmap,
+               size_t& sizemunmap,
+               size_t& highwater_alloc,
+               size_t& highwater_mmap,
+               size_t& bytes_overhead,
+               size_t& bytes_free,
+               size_t& bytes_fragmented,
+               size_t& bytes_inuse,
+               size_t& bytes_inhunks);
+
+void
+GetGlobalStats(Allocator*,
+               size_t& nalloc,
+               size_t& sizealloc,
+               size_t& nfree,
+               size_t& sizefree,
+               size_t& nfillbin,
+               size_t& nmmap,
+               size_t& sizemmap,
+               size_t& nmunmap,
+               size_t& sizemunmap,
+               size_t& highwater_alloc,
+               size_t& highwater_mmap);
+
+int
+GetNbins(Allocator*);
+
+void
+GetBinStats(Allocator*,
+            int binno,
+            size_t& minsize,
+            size_t& maxsize,
+            size_t& nalloc,
+            size_t& nfree,
+            size_t& ninlist);
+
+void
+AuditAllocator(Allocator*);
+
+void
+DumpAllocator(Allocator*, const char* filename = "alloc.dump");
+
+// Functions for locking and unlocking the allocator.  In the
+// pthreads implementation, these use a recursive lock that will
+// allow the same thread to lock and unlock the allocator until
+// UnLockAllocator is called.  In other implentations this just uses
+// the regular lock and unlock functions.
+void
+LockAllocator(Allocator*);
+
+void
+UnLockAllocator(Allocator*);
+
 } // End namespace Uintah
 
-#  ifdef _WIN32
-#    define scinew new
-#  else
-     void* operator new(size_t, Uintah::Allocator*, const char*, int);
-     void* operator new[](size_t, Uintah::Allocator*, const char*, int);
-#    define scinew new(Uintah::default_allocator, __FILE__, __LINE__)
-#  endif
+#ifdef _WIN32
+#define scinew new
+#else
 
-#else  // MALLOC_TRACE
+void*
+operator new(size_t, Uintah::Allocator*, const char*, int);
 
-   // Not tracing and not using sci malloc...
-#  define scinew new
+void*
+operator new[](size_t, Uintah::Allocator*, const char*, int);
 
-//set these macros to be blank so everything will compile without MallocTrace
+#define scinew new (Uintah::default_allocator, __FILE__, __LINE__)
+#endif
+
+#else // MALLOC_TRACE
+
+// Not tracing and not using sci malloc...
+#define scinew new
+
+// set these macros to be blank so everything will compile without MallocTrace
 #define MALLOC_TRACE_TAG_SCOPE(tag) ;
 #define MALLOC_TRACE_TAG(tag) ;
 #define MALLOC_TRACE_LOG_FILE(file) ;
@@ -192,4 +218,3 @@ void DumpAllocator(Allocator*, const char* filename = "alloc.dump");
 #endif // MALLOC_TRACE
 
 #endif // Malloc_Allocator_h 1
- 

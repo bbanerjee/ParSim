@@ -40,12 +40,16 @@ using namespace Vaango;
 /** Read inputs and JSON */
 ElasticModuli_SupportVector::ElasticModuli_SupportVector(Uintah::ProblemSpecP& ps)
 {
+  // std::cout << "DEBUG: In ElasticModuli_SupportVector constructor" << std::endl;
   ps->require("filename", d_bulk.filename);
   ps->require("G0", d_shear.G0);
   ps->require("nu", d_shear.nu);
 
+  // std::cout << "DEBUG: filename = " << d_bulk.filename << std::endl;
   readJSONFile(d_bulk.filename);
+  // std::cout << "DEBUG: readJSONFile finished" << std::endl;
   checkInputParameters();
+  // std::cout << "DEBUG: checkInputParameters finished" << std::endl;
 }
 
 /** Check that the input parameters are reasonable */
@@ -57,6 +61,11 @@ ElasticModuli_SupportVector::checkInputParameters()
     warn << "G0 must be positive. G0 = " << d_shear.G0 << std::endl;
     throw Uintah::ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
+}
+
+ElasticModuli_SupportVector::~ElasticModuli_SupportVector()
+{
+  // std::cout << "DEBUG: ~ElasticModuli_SupportVector destructor started" << std::endl;
 }
 
 /** Construct a copy of the model */
@@ -269,6 +278,7 @@ ElasticModuli_SupportVector::computeModuliAndDModuliDIntVar(const ModelStateBase
 void
 ElasticModuli_SupportVector::readJSONFile(const std::string& filename)
 {
+  // std::cout << "DEBUG: readJSONFile opening file" << std::endl;
   std::ifstream inputFile(filename);
   if (!inputFile) {
     std::ostringstream out;
@@ -277,24 +287,39 @@ ElasticModuli_SupportVector::readJSONFile(const std::string& filename)
     throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
+  // std::cout << "DEBUG: readJSONFile reading file into stream" << std::endl;
   std::stringstream inputStream;
   inputStream << inputFile.rdbuf();
   inputFile.close();
 
+  // std::cout << "DEBUG: readJSONFile parsing JSON" << std::endl;
   nlohmann::json doc = loadJSON(inputStream, filename);
   
+  // std::cout << "DEBUG: readJSONFile extracting fields" << std::endl;
   d_bulk.strain_conversion_factor = getVector2dJSON(doc, "X_conversion_factor", filename); 
+  // std::cout << "DEBUG: strain_conversion_factor finished" << std::endl;
   d_bulk.strain_scale_factor = getVector2dJSON(doc, "X_scale", filename); 
+  // std::cout << "DEBUG: strain_scale_factor finished" << std::endl;
   d_bulk.strain_min = getVector2dJSON(doc, "X_min", filename); 
+  // std::cout << "DEBUG: strain_min finished" << std::endl;
   d_bulk.strain_max = getVector2dJSON(doc, "X_max", filename); 
+  // std::cout << "DEBUG: strain_max finished" << std::endl;
   d_bulk.pressure_conversion_factor = getDoubleJSON(doc, "y_conversion_factor", filename); 
+  // std::cout << "DEBUG: pressure_conversion_factor finished" << std::endl;
   d_bulk.pressure_scale_factor = getVector1dJSON(doc, "y_scale", filename); 
+  // std::cout << "DEBUG: pressure_scale_factor finished" << std::endl;
   d_bulk.pressure_min = getVector1dJSON(doc, "y_min", filename); 
+  // std::cout << "DEBUG: pressure_min finished" << std::endl;
   d_bulk.pressure_max = getVector1dJSON(doc, "y_max", filename); 
+  // std::cout << "DEBUG: pressure_max finished" << std::endl;
   d_bulk.rbf_kernel_gamma = getDoubleJSON(doc, "gamma", filename);
+  // std::cout << "DEBUG: rbf_kernel_gamma finished" << std::endl;
   d_bulk.svr_support_vectors = getMatrixN2dJSON(doc, "support_vectors", filename);
+  // std::cout << "DEBUG: svr_support_vectors finished" << std::endl;
   d_bulk.svr_dual_coeffs = getMatrixN1dJSON(doc, "dual_coeffs", filename);
+  // std::cout << "DEBUG: svr_dual_coeffs finished" << std::endl;
   d_bulk.svr_intercept = getVector1dJSON(doc, "intercept", filename); 
+  // std::cout << "DEBUG: svr_intercept finished" << std::endl;
 }
 
 nlohmann::json 
@@ -440,15 +465,9 @@ ElasticModuli_SupportVector::getMatrixN1dJSON(const nlohmann::json& object,
   std::vector<double> vec;
   try {
     for (const auto& val : *matrix) {
-      vec = val.get<std::vector<double>>();
+      auto subvec = val.get<std::vector<double>>();
+      vec.insert(vec.end(), subvec.begin(), subvec.end());
     }
-    /*
-    std::cout << key << ":";
-    for (const auto& val : vec) {
-      std::cout << val << " ";
-    }
-    std::cout << std::endl;
-    */
   } catch (const std::exception& err) {
     std::ostringstream out;
     out << "**ERROR**"
@@ -457,8 +476,12 @@ ElasticModuli_SupportVector::getMatrixN1dJSON(const nlohmann::json& object,
         << " Data expected to be of the form 'key : [x1, x2, ..., x_n]^T'.";
     throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
-  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, 1>> mapped_vec(vec.data(), vec.size(), 1);
-  return mapped_vec;
+  
+  Eigen::Matrix<double, Eigen::Dynamic, 1> res(vec.size());
+  for (std::size_t i = 0; i < vec.size(); ++i) {
+    res(i) = vec[i];
+  }
+  return res;
 }
 
 Eigen::Matrix<double, Eigen::Dynamic, 2>
@@ -478,22 +501,11 @@ ElasticModuli_SupportVector::getMatrixN2dJSON(const nlohmann::json& object,
 
   std::vector<double> col1, col2;
   try {
-    //std::cout << key << ":";
     for (const auto& val : *matrix) {
       auto vec = val.get<std::vector<double>>();
       col1.push_back(vec[0]);
       col2.push_back(vec[1]);
     }
-    /*
-    for (const auto& val : col1) {
-      std::cout << val << " ";
-    }
-    std::cout << std::endl;
-    for (const auto& val : col2) {
-      std::cout << val << " ";
-    }
-    std::cout << std::endl;
-    */
   } catch (const std::exception& err) {
     std::ostringstream out;
     out << "**ERROR**"
@@ -503,8 +515,10 @@ ElasticModuli_SupportVector::getMatrixN2dJSON(const nlohmann::json& object,
     throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
-  std::move(col2.begin(), col2.end(), std::back_inserter(col1));
-
-  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, 2>> mapped_vec(col1.data(), col2.size(), 2);
-  return mapped_vec;
+  Eigen::Matrix<double, Eigen::Dynamic, 2> res(col1.size(), 2);
+  for (std::size_t i = 0; i < col1.size(); ++i) {
+    res(i, 0) = col1[i];
+    res(i, 1) = col2[i];
+  }
+  return res;
 }

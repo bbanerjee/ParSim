@@ -44,6 +44,7 @@ SET(EXTRACTOR_LIBS
   Vaango_Core_Util    
   Vaango_Core_OS    
   Vaango_Core_DataArchive    
+  Vaango_Core_Malloc    
   Vaango_CCA_Components_DataArchiver    
   Vaango_CCA_Components_Schedulers
   Vaango::Options

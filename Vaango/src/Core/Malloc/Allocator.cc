@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2014-2026 Biswajit Banerjee, Parresia Research Ltd., NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -44,166 +22,197 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
- */
-
-/*
- *  Allocator.cc: ?
- *
- *  Written by:
- *   Author: ?
- *   Department of Computer Science
- *   University of Utah
- *   Date: ?
- *
  */
 
 #ifdef __INTEL_COMPILER
-   // Disable the fprintf warning that appears everywhere in this file on icpc.
-#  pragma warning( disable : 181 )
+// Disable the fprintf warning that appears everywhere in this file on icpc.
+#pragma warning(disable : 181)
 #endif
 
-#define LINUX_GETENV_HACK 0
 /* TODO:
 6) Destroy allocators
 */
 
 #include <sci_defs/bits_defs.h>
-
 #include <Core/Malloc/Allocator.h>
 
-// USE_LENNY_HACK: See Allocator.h for mor information:
+// USE_LENNY_HACK: See Allocator.h for more information.
 
-#if !defined( DISABLE_SCI_MALLOC )
+#if !defined(DISABLE_SCI_MALLOC)
 
-//#define ALIGN 16
-const int ALIGN=16;
+#include <Core/Malloc/AllocOS.h>
+#include <Core/Malloc/AllocPriv.h>
 
-#  include <Core/Malloc/AllocPriv.h>
-#  include <Core/Malloc/AllocOS.h>
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cstdint>
 
-#  if defined(__sun) || defined(_WIN32)
-#    include <cstring>
-#    define bcopy(src,dest,n) memcpy(dest,src,n)
-#  elif defined(__linux) || defined(__digital__) || defined(__sgi) || defined(_AIX) || defined(__APPLE__) || defined(__CYGWIN__)
-#    include <cstring>
-#  else
-#    error "Need bcopy idfdef for this architecture"
-#  endif
+#ifdef SCI_PTHREAD
+#include <pthread.h>
+#endif
 
-#  ifndef _WIN32
-#    include <sys/param.h>
-//   irix64 KCC stuff
-#    include <strings.h>
-#  endif
-#  include <cstdio>
-
-#  ifdef SCI_PTHREAD
-#    include <pthread.h>
-#  endif
-
-/* we use UCONV to avoid compiler warnings. */
-// NOTE(boulos): On Darwin systems, even if it's not a 64-bit build
-// the compiler will generate warnings (so we use %lu for that case as
-// well)
-// SIZET is used for typecasting to ensure the types line up.  This helps work 
-// around portability issues with printf and types of size_t.
-#  if defined(SCI_64BITS) || defined(__APPLE__)
-     typedef unsigned long SIZET;
-#    define UCONV "%lu"
-#  else
-     typedef unsigned int SIZET;
-#    define UCONV "%u"
-#  endif
+#ifndef _WIN32
+#include <sys/param.h>
+#include <strings.h>
+#endif
 
 namespace Uintah {
 
-// Dd: For AIX
-#  ifdef STATSIZE
-#    undef STATSIZE
-#  endif
+// ---------------------------------------------------------------------------
+// Alignment
+// ---------------------------------------------------------------------------
+inline constexpr int ALIGN = 32;
 
-#  define STATSIZE (4096+BUFSIZ)
+// ---------------------------------------------------------------------------
+// Object state constants
+// ---------------------------------------------------------------------------
+inline constexpr int OBJFREE            = 1;
+inline constexpr int OBJINUSE           = 2;
+inline constexpr int OBJFREEING         = 3;
+inline constexpr int OBJMEMALIGNFREEING = 4;
 
-#  ifndef DISABLE_SCI_MALLOC
-     static char trace_buffer[STATSIZE];
-#  endif
+// ---------------------------------------------------------------------------
+// Sentinel values
+// ---------------------------------------------------------------------------
+inline constexpr unsigned int SENT_VAL_FREE  = 0xdeadbeef;
+inline constexpr unsigned int SENT_VAL_INUSE = 0xbeefface;
 
-Allocator* default_allocator=0;
+// Fill pattern used to detect use-after-free / out-of-bounds writes
+inline constexpr unsigned int FILL_PATTERN = 0xffff5a5au;
 
-// Granularity of small things - 8 bytes
-// Anything smaller than this is considered "small"
-#define SMALL_THRESHOLD (512-8)
-#define SMALLEST_ALLOCSIZE (8*1024)
+// ---------------------------------------------------------------------------
+// Bin sizing: small objects  (granularity: 16 bytes, max: ~504 bytes)
+// ---------------------------------------------------------------------------
+inline constexpr std::size_t SMALL_THRESHOLD = 512 - 8;
 
-#define SMALL_BIN(size) (((size)+7)>>4)
-#define NSMALL_BINS ((SMALL_THRESHOLD+8)>>4)
-#define SMALL_BINSIZE(bin) (((bin)<<4)+8)
+[[nodiscard]] constexpr std::size_t small_bin(std::size_t size) noexcept
+{
+  return (size + 7) >> 4;
+}
+[[nodiscard]] constexpr std::size_t small_binsize(std::size_t bin) noexcept
+{
+  return (bin << 4) + 8;
+}
 
-// Granularity of medium things - 2k bytes
-#define MEDIUM_THRESHOLD (65536*8)
+inline constexpr std::size_t NSMALL_BINS = (SMALL_THRESHOLD + 8) >> 4;
 
-#define MEDIUM_BIN(size) (((size)-1)>>11)
-#define NMEDIUM_BINS ((MEDIUM_THRESHOLD)>>11)
-#define MEDIUM_BINSIZE(bin) (((bin)<<11)+2048)
+// ---------------------------------------------------------------------------
+// Bin sizing: medium objects  (granularity: 2 KiB, max: ~512 KiB)
+// ---------------------------------------------------------------------------
+inline constexpr std::size_t MEDIUM_THRESHOLD = 65536 * 8;
 
-#define OVERHEAD (sizeof(Tag)+sizeof(Sentinel)+sizeof(Sentinel))
+[[nodiscard]] constexpr std::size_t medium_bin(std::size_t size) noexcept
+{
+  return (size - 1) >> 11;
+}
+[[nodiscard]] constexpr std::size_t medium_binsize(std::size_t bin) noexcept
+{
+  return (bin << 11) + 2048;
+}
 
-#define OBJFREE 1
-#define OBJINUSE 2
-#define OBJFREEING 3
-#define OBJMEMALIGNFREEING 4
+inline constexpr std::size_t NMEDIUM_BINS = MEDIUM_THRESHOLD >> 11;
 
-#define SENT_VAL_FREE 0xdeadbeef
-#define SENT_VAL_INUSE 0xbeefface
+// ---------------------------------------------------------------------------
+// Other allocator constants
+// ---------------------------------------------------------------------------
+inline constexpr std::size_t OVERHEAD            = sizeof(Tag) + 2 * sizeof(Sentinel);
+inline constexpr std::size_t SMALLEST_ALLOCSIZE  = 8 * 1024;
+inline constexpr std::size_t NORMAL_OS_ALLOC_SIZE = 512 * 1024;
+inline constexpr std::size_t MAX_ALLOCSIZE        = 1024 * 1024 * 1024;
 
-#define NORMAL_OS_ALLOC_SIZE (512*1024)
+// AIX defines STATSIZE in sys/param.h — undefine it first.
+#ifdef STATSIZE
+#undef STATSIZE
+#endif
+inline constexpr int STATSIZE = 4096 + BUFSIZ;
 
-// Objects bigger than this can't be allocated
-#define MAX_ALLOCSIZE (1024*1024*1024)
+// ---------------------------------------------------------------------------
+// Module-level state
+// ---------------------------------------------------------------------------
+static char trace_buffer[STATSIZE];
 
-static bool do_shutdown=false;
-static int mallocStatsAppendNum = -1;
+Allocator* default_allocator = nullptr;
 
-void AllocatorMallocStatsAppendNumber(int num)
+static bool do_shutdown         = false;
+static int  mallocStatsAppendNum = -1;
+
+// ---------------------------------------------------------------------------
+// Helper: initialise memory when INITIALIZE_MEMORY is defined
+// ---------------------------------------------------------------------------
+static inline void initialize_memory(void* mem, std::size_t size) noexcept
+{
+#ifdef INITIALIZE_MEMORY
+  std::fill_n(static_cast<unsigned char*>(mem), size, MEMORY_INIT_NUMBER);
+#else
+  (void)mem;
+  (void)size;
+#endif
+}
+
+// ---------------------------------------------------------------------------
+
+void
+AllocatorMallocStatsAppendNumber(int num)
 {
   mallocStatsAppendNum = num;
 }
 
-inline size_t Allocator::obj_maxsize(Tag* t)
+inline std::size_t
+Allocator::obj_maxsize(Tag* t) noexcept
 {
-    return (t->bin == &big_bin)?(t->hunk->len-OVERHEAD):t->bin->maxsize;
+  if (!t->bin) {
+    return t->reqsize;
+  }
+  return (t->bin == &big_bin) ? (t->hunk->len - OVERHEAD) : t->bin->maxsize;
 }
 
-static void account_bin(Allocator* a, AllocBin* bin, FILE* out,
-                        size_t& bytes_overhead,
-                        size_t& bytes_free,
-                        size_t& bytes_fragmented,
-                        size_t& bytes_inuse)
+// ---------------------------------------------------------------------------
+// Internal accounting helper
+// ---------------------------------------------------------------------------
+static void
+account_bin(Allocator* a,
+            AllocBin*  bin,
+            FILE*      out,
+            std::size_t& bytes_overhead,
+            std::size_t& bytes_free,
+            std::size_t& bytes_fragmented,
+            std::size_t& bytes_inuse)
 {
-    Tag* p;
-    for(p=bin->free;p!=0;p=p->next){
-        bytes_overhead+=OVERHEAD;
-        bytes_free+=a->obj_maxsize(p);
+  for (Tag* p = bin->free; p != nullptr; p = p->next) {
+    bytes_overhead += OVERHEAD;
+    bytes_free     += a->obj_maxsize(p);
+  }
+  for (Tag* p = bin->inuse; p != nullptr; p = p->next) {
+    bytes_overhead    += OVERHEAD;
+    bytes_inuse       += p->reqsize;
+    bytes_fragmented  += a->obj_maxsize(p) - p->reqsize;
+    if (out) {
+#ifdef USE_TAG_LINENUM
+      fprintf(out,
+              "%p: %zu bytes (%s:%d)\n",
+              static_cast<void*>(static_cast<char*>(static_cast<void*>(p))
+                                 + sizeof(Tag) + sizeof(Sentinel)),
+              p->reqsize,
+              p->tag,
+              p->linenum);
+#else
+      fprintf(out,
+              "%p: %zu bytes (%s)\n",
+              static_cast<void*>(static_cast<char*>(static_cast<void*>(p))
+                                 + sizeof(Tag) + sizeof(Sentinel)),
+              p->reqsize,
+              p->tag);
+#endif
     }
-    for(p=bin->inuse;p!=0;p=p->next){
-        bytes_overhead+=OVERHEAD;
-        bytes_inuse+=p->reqsize;
-        bytes_fragmented+=a->obj_maxsize(p)-p->reqsize;
-        if(out){
-#  ifdef USE_TAG_LINENUM
-            fprintf(out, "%p: "UCONV" bytes (%s:%d)\n",
-                    (char*)p+sizeof(Tag)+sizeof(Sentinel),
-                    (SIZET)p->reqsize, p->tag, p->linenum);
-#  else
-            fprintf(out, "%p: "UCONV" bytes (%s)\n",
-                    (char*)p+sizeof(Tag)+sizeof(Sentinel),
-                    (SIZET)p->reqsize, p->tag);
-#  endif
-        }
-    }
+  }
 }
 
-#if !defined( USE_LENNY_HACK )
+// ---------------------------------------------------------------------------
+// Shutdown / stats dump
+// ---------------------------------------------------------------------------
+#if !defined(USE_LENNY_HACK)
 static
 #endif
 void
@@ -211,976 +220,934 @@ shutdown()
 {
   static char stat_buffer[STATSIZE];
 
-  Allocator* a=DefaultAllocator();
+  Allocator* a = DefaultAllocator();
   if (a->statsfile && !a->stats_out) {
     char filename[256];
-    strcpy(filename, a->statsfile);
+    std::strcpy(filename, a->statsfile);
     if (mallocStatsAppendNum >= 0) {
-      strcat(filename, ".");
-      sprintf(filename + strlen(filename), "%i", mallocStatsAppendNum);
+      std::strcat(filename, ".");
+      std::sprintf(filename + std::strlen(filename), "%i", mallocStatsAppendNum);
     }
-    a->stats_out=fopen(filename, "w");
-    setvbuf(a->stats_out, stat_buffer, _IOFBF, STATSIZE);
-    if(!a->stats_out){
-      perror("fopen");
-      fprintf(stderr, "cannot open stats file: %s, will not print stats\n",
-              filename);
-      a->stats_out=0;
+    a->stats_out = std::fopen(filename, "w");
+    std::setvbuf(a->stats_out, stat_buffer, _IOFBF, STATSIZE);
+    if (!a->stats_out) {
+      std::perror("fopen");
+      std::fprintf(stderr,
+                   "cannot open stats file: %s, will not print stats\n",
+                   filename);
+      a->stats_out = nullptr;
     }
   }
 
-  if(a->stats_out){
-    if(do_shutdown){
-      // We have already done this once, but we got called again,
-      // so we rewind the file if we can
-      rewind(a->stats_out);
-    }
-
-    // Just in case...
-    a->lock();
-
-    fprintf(a->stats_out, "Unfreed objects:\n");
-    // Full accounting - go through each bin...
-    size_t bytes_overhead=0, bytes_free=0, bytes_fragmented=0,
-      bytes_inuse=0, bytes_inhunks=0;
-    int i;
-    for(i=0;i<NSMALL_BINS;i++)
-      account_bin(a, &a->small_bins[i], a->stats_out, bytes_overhead,
-                  bytes_free, bytes_fragmented, bytes_inuse);
-    for(i=0;i<NMEDIUM_BINS;i++)
-      account_bin(a, &a->medium_bins[i], a->stats_out, bytes_overhead,
-                  bytes_free, bytes_fragmented, bytes_inuse);
-    account_bin(a, &a->big_bin, a->stats_out, bytes_overhead, bytes_free,
-                bytes_fragmented, bytes_inuse);
-
-    // Count hunks...
-    for(OSHunk* hunk=a->hunks;hunk!=0;hunk=hunk->next){
-      bytes_overhead+=sizeof(OSHunk);
-      bytes_inhunks+=hunk->spaceleft;
-    }
-    // And the ones in the bigbin...
-    Tag* p;
-    for(p=a->big_bin.free;p!=0;p=p->next)
-      bytes_overhead+=sizeof(OSHunk);
-    for(p=a->big_bin.inuse;p!=0;p=p->next)
-      bytes_overhead+=sizeof(OSHunk);
-    bytes_overhead+=a->mysize;
-    if(bytes_inuse == 0)
-      fprintf(a->stats_out, "None\n");
-
-    fprintf(a->stats_out, "statistics:\n");
-    fprintf(a->stats_out, "alloc:\t\t\t"UCONV" calls\n",(SIZET)a->nalloc);
-    fprintf(a->stats_out, "alloc:\t\t\t"UCONV" bytes\n", (SIZET)a->sizealloc);
-    fprintf(a->stats_out, "free:\t\t\t"UCONV" calls\n", (SIZET)a->nfree);
-    fprintf(a->stats_out, "free:\t\t\t"UCONV" bytes\n", (SIZET)a->sizefree);
-    fprintf(a->stats_out, "fillbin:\t\t"UCONV" calls\n", (SIZET)a->nfillbin);
-    fprintf(a->stats_out, "mmap:\t\t\t"UCONV" calls\n", (SIZET)a->nmmap);
-    fprintf(a->stats_out, "mmap:\t\t\t"UCONV" bytes\n", (SIZET)a->sizemmap);
-    fprintf(a->stats_out, "munmap:\t\t\t"UCONV" calls\n", (SIZET)a->nmunmap);
-    fprintf(a->stats_out, "munmap:\t\t\t"UCONV" bytes\n", (SIZET)a->sizemunmap);
-    fprintf(a->stats_out, "highwater alloc:\t"UCONV" bytes\n",
-            (SIZET)a->highwater_alloc);
-    fprintf(a->stats_out, "highwater mmap:\t\t"UCONV" bytes\n",
-            (SIZET)a->highwater_mmap);
-    fprintf(a->stats_out, "\n");
-    fprintf(a->stats_out, "breakdown of total bytes:\n");
-    fprintf(a->stats_out, "in use:\t\t\t"UCONV" bytes\n", (SIZET)bytes_inuse);
-    fprintf(a->stats_out, "free:\t\t\t"UCONV" bytes\n", (SIZET)bytes_free);
-    fprintf(a->stats_out, "fragmentation:\t\t"UCONV" bytes\n",
-            (SIZET)bytes_fragmented);
-    fprintf(a->stats_out, "left in mmap hunks:\t"UCONV"\n", (SIZET)bytes_inhunks);
-    fprintf(a->stats_out, "per object overhead:\t"UCONV" bytes\n",
-            (SIZET)bytes_overhead);
-    fprintf(a->stats_out, "\n");
-    fprintf(a->stats_out, ""UCONV" bytes missing ("UCONV" memory objects)\n",
-            (SIZET)a->sizealloc-(SIZET)a->sizefree, (SIZET)a->nalloc-(SIZET)a->nfree);
-
-    a->unlock();
-    do_shutdown=true;
+  if (!a->stats_out) {
+    return;
   }
+
+  if (do_shutdown) {
+    // Called again — rewind the file.
+    std::rewind(a->stats_out);
+  }
+
+  a->lock();
+
+  std::fprintf(a->stats_out, "Unfreed objects:\n");
+
+  std::size_t bytes_overhead = 0, bytes_free = 0,
+              bytes_fragmented = 0, bytes_inuse = 0, bytes_inhunks = 0;
+
+  for (int i = 0; i < static_cast<int>(NSMALL_BINS); i++) {
+    account_bin(a, &a->small_bins[i], a->stats_out,
+                bytes_overhead, bytes_free, bytes_fragmented, bytes_inuse);
+  }
+  for (int i = 0; i < static_cast<int>(NMEDIUM_BINS); i++) {
+    account_bin(a, &a->medium_bins[i], a->stats_out,
+                bytes_overhead, bytes_free, bytes_fragmented, bytes_inuse);
+  }
+  account_bin(a, &a->big_bin, a->stats_out,
+              bytes_overhead, bytes_free, bytes_fragmented, bytes_inuse);
+
+  for (OSHunk* hunk = a->hunks; hunk != nullptr; hunk = hunk->next) {
+    bytes_overhead += sizeof(OSHunk);
+    bytes_inhunks  += hunk->spaceleft;
+  }
+  for (Tag* p = a->big_bin.free;  p != nullptr; p = p->next) { bytes_overhead += sizeof(OSHunk); }
+  for (Tag* p = a->big_bin.inuse; p != nullptr; p = p->next) { bytes_overhead += sizeof(OSHunk); }
+  bytes_overhead += a->mysize;
+
+  if (bytes_inuse == 0) {
+    std::fprintf(a->stats_out, "None\n");
+  }
+
+  std::fprintf(a->stats_out, "statistics:\n");
+  std::fprintf(a->stats_out, "alloc:\t\t\t%zu calls\n",  a->nalloc);
+  std::fprintf(a->stats_out, "alloc:\t\t\t%zu bytes\n",  a->sizealloc);
+  std::fprintf(a->stats_out, "free:\t\t\t%zu calls\n",   a->nfree);
+  std::fprintf(a->stats_out, "free:\t\t\t%zu bytes\n",   a->sizefree);
+  std::fprintf(a->stats_out, "fillbin:\t\t%zu calls\n",  a->nfillbin);
+  std::fprintf(a->stats_out, "mmap:\t\t\t%zu calls\n",   a->nmmap);
+  std::fprintf(a->stats_out, "mmap:\t\t\t%zu bytes\n",   a->sizemmap);
+  std::fprintf(a->stats_out, "munmap:\t\t\t%zu calls\n", a->nmunmap);
+  std::fprintf(a->stats_out, "munmap:\t\t\t%zu bytes\n", a->sizemunmap);
+  std::fprintf(a->stats_out, "highwater alloc:\t%zu bytes\n", a->highwater_alloc);
+  std::fprintf(a->stats_out, "highwater mmap:\t\t%zu bytes\n", a->highwater_mmap);
+  std::fprintf(a->stats_out, "\n");
+  std::fprintf(a->stats_out, "breakdown of total bytes:\n");
+  std::fprintf(a->stats_out, "in use:\t\t\t%zu bytes\n",        bytes_inuse);
+  std::fprintf(a->stats_out, "free:\t\t\t%zu bytes\n",          bytes_free);
+  std::fprintf(a->stats_out, "fragmentation:\t\t%zu bytes\n",   bytes_fragmented);
+  std::fprintf(a->stats_out, "left in mmap hunks:\t%zu\n",      bytes_inhunks);
+  std::fprintf(a->stats_out, "per object overhead:\t%zu bytes\n", bytes_overhead);
+  std::fprintf(a->stats_out, "\n");
+  std::fprintf(a->stats_out,
+               "%zu bytes missing (%zu memory objects)\n",
+               a->sizealloc - a->sizefree,
+               a->nalloc    - a->nfree);
+
+  a->unlock();
+  do_shutdown = true;
 }
 
-inline AllocBin* Allocator::get_bin(size_t size)
+// ---------------------------------------------------------------------------
+// Bin lookup
+// ---------------------------------------------------------------------------
+inline AllocBin*
+Allocator::get_bin(std::size_t size) noexcept
 {
-  if(size <= SMALL_THRESHOLD){
-    size_t bin=SMALL_BIN(size);
-    return &small_bins[bin];
-  } else if(size <= MEDIUM_THRESHOLD){
-    size_t bin=MEDIUM_BIN(size);
-    return &medium_bins[bin];
+  if (size <= SMALL_THRESHOLD) {
+    return &small_bins[small_bin(size)];
+  } else if (size <= MEDIUM_THRESHOLD) {
+    return &medium_bins[medium_bin(size)];
   } else {
     return &big_bin;
   }
 }
 
-#  if defined(SCI_NOTHREAD) || defined(DISABLE_SCI_MALLOC)
+// ---------------------------------------------------------------------------
+// Locking
+// ---------------------------------------------------------------------------
+#if defined(SCI_NOTHREAD) || defined(DISABLE_SCI_MALLOC)
 
-void Allocator::initlock()
+void  Allocator::initlock() noexcept {}
+void  Allocator::lock()    noexcept {}
+void  Allocator::unlock()  noexcept {}
+void  LockAllocator(Allocator*)   {}
+void  UnLockAllocator(Allocator*) {}
+
+#else
+#ifdef SCI_PTHREAD
+
+void
+Allocator::initlock() noexcept
 {
-}
-
-
-inline void Allocator::lock()
-{
-}
-
-inline void Allocator::unlock()
-{
-}
-
-
-void LockAllocator(Allocator * /*a*/)
-{
-}
-
-void UnLockAllocator(Allocator * /*a*/)
-{
-}
-#  else
-#    ifdef SCI_PTHREAD
-
-// This is code taken from Core/Thread/RecursiveMutex_default.cc
-// I'm using this code to make sure that if a thread locks the allocator
-// that this thread is the only one who can use the allocator until
-// it unlocks the mutex.
-
-// These should be made part of the allocator class when verified that it
-// works.
-
-void Allocator::initlock()
-{
-  // Set this to false.  We don't want to use a recursive mutex unless needed
-  use_rlock = false;
-  lock_count = 0;
-  owner = 0;
+  use_rlock         = false;
+  lock_count        = 0;
+  owner             = 0;
   owner_initialized = false;
 
   static pthread_mutex_t init = PTHREAD_MUTEX_INITIALIZER;
-  the_lock=init;
+  the_lock = init;
 }
 
-inline void Allocator::lock()
+inline void
+Allocator::lock() noexcept
 {
   if (!use_rlock) {
-    // Lock the mutex
-    if(pthread_mutex_lock(&the_lock) != 0) {
-      perror("Allocator::lock: pthread_mutex_lock");
-      exit(-1);
+    if (pthread_mutex_lock(&the_lock) != 0) {
+      std::perror("Allocator::lock: pthread_mutex_lock");
+      std::exit(-1);
     }
   } else {
-    pthread_t me= pthread_self();
-    // pthread_equal returns a non zero value when they are equal
-    if(owner_initialized && pthread_equal(owner, me)) {
-      // Already have exclusive rights, so increment the lock count
-      lock_count++;
+    pthread_t me = pthread_self();
+    if (owner_initialized && pthread_equal(owner, me)) {
+      ++lock_count;
       return;
     }
-    // Lock the mutex
-    if(pthread_mutex_lock(&the_lock) != 0) {
-      perror("Allocator::lock: pthread_mutex_lock");
-      exit(-1);
+    if (pthread_mutex_lock(&the_lock) != 0) {
+      std::perror("Allocator::lock: pthread_mutex_lock");
+      std::exit(-1);
     }
   }
 }
 
-inline void Allocator::rlock()
+inline void
+Allocator::rlock() noexcept
 {
-  pthread_t me= pthread_self();
-  // pthread_equal returns a non zero value when they are equal
-  if(owner_initialized && pthread_equal(owner, me)) {
-    // Already have exclusive rights, so increment the lock count
-    lock_count++;
+  pthread_t me = pthread_self();
+  if (owner_initialized && pthread_equal(owner, me)) {
+    ++lock_count;
     return;
   }
-  // Lock the mutex
-  if(pthread_mutex_lock(&the_lock) != 0) {
-    perror("Allocator::lock: pthread_mutex_lock");
-    exit(-1);
+  if (pthread_mutex_lock(&the_lock) != 0) {
+    std::perror("Allocator::rlock: pthread_mutex_lock");
+    std::exit(-1);
   }
-  // Set the owner to the calling thread
-  owner = me;
+  owner             = me;
   owner_initialized = true;
-  use_rlock = true;
-  // Start the count at 1.
-  lock_count = 1;
+  use_rlock         = true;
+  lock_count        = 1;
 }
 
-inline void Allocator::unlock()
+inline void
+Allocator::unlock() noexcept
 {
   if (!use_rlock) {
-    if(pthread_mutex_unlock(&the_lock) != 0) {
-      perror("pthread_mutex_lock");
-      exit(-1);
+    if (pthread_mutex_unlock(&the_lock) != 0) {
+      std::perror("Allocator::unlock: pthread_mutex_unlock");
+      std::exit(-1);
     }
   } else {
-    // If the lock_count is 0, then the thread is done using it.  Unlock it
-    // and go.
-    if(--lock_count == 0) {
-      // Again, I don't know what to initialize owner to, so I'll make sure
-      // that I set this flag to make sure we know if it is initialized.
-      owner = 0;
+    if (--lock_count == 0) {
+      owner             = 0;
       owner_initialized = false;
-      // Since this is the last unlock for this thread, we turn off the use
-      // of the recursive mutex.  If we want to use it again, we have to
-      // explicitly lock the allocator again.
-      use_rlock = false;
-      if(pthread_mutex_unlock(&the_lock) != 0) {
-        perror("pthread_mutex_lock");
-        exit(-1);
+      use_rlock         = false;
+      if (pthread_mutex_unlock(&the_lock) != 0) {
+        std::perror("Allocator::unlock: pthread_mutex_unlock");
+        std::exit(-1);
       }
     }
   }
 }
 
-void LockAllocator(Allocator *a)
+void LockAllocator(Allocator* a)   { a->rlock();  }
+void UnLockAllocator(Allocator* a) { a->unlock(); }
+
+#endif // SCI_PTHREAD
+#endif // SCI_NOTHREAD || DISABLE_SCI_MALLOC
+
+// ---------------------------------------------------------------------------
+// Public factory / error helpers
+// ---------------------------------------------------------------------------
+void
+MakeDefaultAllocator()
 {
-  a->rlock();
-}
-
-void UnLockAllocator(Allocator *a)
-{
-  a->unlock();
-}
-
-#    else
-
-#      ifdef __sgi
-
-void Allocator::initlock()
-{
-  if(init_lock(&the_lock))
-    AllocError("Error initializing lock");
-}
-
-
-inline void Allocator::lock()
-{
-  spin_lock(&the_lock);
-}
-
-inline void Allocator::unlock()
-{
-  if(release_lock(&the_lock) != 0)
-    AllocError("Error unlocking lock");
-}
-
-
-void LockAllocator(Allocator *a)
-{
-  a->lock();
-}
-
-void UnLockAllocator(Allocator *a)
-{
-  a->unlock();
-}
-
-#      else  // !__sgi
-#        error ERROR: undefined allocator lock mode (Malloc/Allocator.cc).
-#      endif // __sgi
-#    endif // SCI_PTHREAD
-#  endif // SCI_NOTHREAD ||| DISABLE_SCI_MALLOC
-
-void MakeDefaultAllocator()
-{
-  if(!default_allocator){
-    default_allocator=MakeAllocator();
+  if (!default_allocator) {
+    default_allocator = MakeAllocator();
   }
 }
 
-void AllocError(const char* msg)
+void
+AllocError(const char* msg)
 {
-  fprintf(stderr, "Allocator error: %s\n", msg);
-  abort();
+  std::fprintf(stderr, "Allocator error: %s\n", msg);
+  std::abort();
 }
 
-Allocator* MakeAllocator()
+// ---------------------------------------------------------------------------
+// MakeAllocator
+// ---------------------------------------------------------------------------
+[[nodiscard]] Allocator*
+MakeAllocator()
 {
-#  ifndef DISABLE_SCI_MALLOC
-  // Compute the size of the allocator structures
-  size_t size=sizeof(Allocator);
-  int nsmall=NSMALL_BINS;
-  size+=nsmall*sizeof(AllocBin);
-  int nmedium=NMEDIUM_BINS;
-  size+=nmedium*sizeof(AllocBin);
+#ifndef DISABLE_SCI_MALLOC
+  std::size_t size = sizeof(Allocator)
+                   + NSMALL_BINS  * sizeof(AllocBin)
+                   + NMEDIUM_BINS * sizeof(AllocBin);
 
-  OSHunk* alloc_hunk=OSHunk::alloc(size, false, 0);
-  Allocator* a=(Allocator*)alloc_hunk->data;
-  alloc_hunk->spaceleft=0;
-  alloc_hunk->next=0;
-  alloc_hunk->ninuse=1;
+  OSHunk* alloc_hunk    = OSHunk::alloc(size, false, nullptr);
+  auto*   a             = static_cast<Allocator*>(alloc_hunk->data);
+  alloc_hunk->spaceleft = 0;
+  alloc_hunk->next      = nullptr;
+  alloc_hunk->ninuse    = 1;
 
-  a->hunks=alloc_hunk;
-  a->small_bins=(AllocBin*)(a+1);
-  a->mysize=size;
-  // Fill in the small bin info...
-  for(int j=0;j<NSMALL_BINS;j++){
-    int minsize=j==0?0:SMALL_BINSIZE(j-1)+1;
-    a->init_bin(&a->small_bins[j], SMALL_BINSIZE(j), minsize);
-  }
-  a->medium_bins=a->small_bins+nsmall;
-  for(int i=0;i<NMEDIUM_BINS;i++){
-    int minsize=i==0?SMALL_THRESHOLD+1:MEDIUM_BINSIZE(i-1)+1;
-    a->init_bin(&a->medium_bins[i], MEDIUM_BINSIZE(i), minsize);
-  }
-  a->init_bin(&a->big_bin, MAX_ALLOCSIZE, MEDIUM_THRESHOLD+1);
+  a->hunks      = alloc_hunk;
+  a->small_bins = reinterpret_cast<AllocBin*>(a + 1);
+  a->mysize     = size;
 
-
-  // See if we are in strict mode
-  if(LINUX_GETENV_HACK||getenv("MALLOC_STRICT")){
-    a->strict=1;
-  } else {
-    a->strict=0;
+  for (int j = 0; j < static_cast<int>(NSMALL_BINS); j++) {
+    std::size_t minsize = (j == 0) ? 0 : small_binsize(j - 1) + 1;
+    a->init_bin(&a->small_bins[j], small_binsize(j), minsize);
   }
 
-  if(getenv("MALLOC_LAZY")){
-    a->lazy=1;
-  } else {
-    a->lazy=0;
+  a->medium_bins = a->small_bins + NSMALL_BINS;
+  for (int i = 0; i < static_cast<int>(NMEDIUM_BINS); i++) {
+    std::size_t minsize = (i == 0) ? SMALL_THRESHOLD + 1 : medium_binsize(i - 1) + 1;
+    a->init_bin(&a->medium_bins[i], medium_binsize(i), minsize);
   }
+  a->init_bin(&a->big_bin, MAX_ALLOCSIZE, MEDIUM_THRESHOLD + 1);
 
-  // Initialize stats...
-  a->nmmap=1;
-  a->sizemmap=size+sizeof(OSHunk);
-  a->highwater_mmap=size;
-  a->nalloc=a->nfree=a->sizealloc=a->sizefree=0;
-  a->nfillbin=0;
-  a->nmunmap=a->sizemunmap=0;
-  a->highwater_alloc=0;
+  a->strict = (getenv("MALLOC_STRICT") != nullptr) ? 1 : 0;
+  a->lazy   = (getenv("MALLOC_LAZY")   != nullptr) ? 1 : 0;
 
-  a->pagesize=getpagesize();
-  // Setup the lock...
+  // Initialise stats
+  a->nmmap          = 1;
+  a->sizemmap       = size + sizeof(OSHunk);
+  a->highwater_mmap = size;
+  a->nalloc = a->nfree = a->sizealloc = a->sizefree = 0;
+  a->nfillbin                                       = 0;
+  a->nmunmap = a->sizemunmap                        = 0;
+  a->highwater_alloc                                = 0;
+
+  a->pagesize = getpagesize();
   a->initlock();
 
-  // Must run this block of code before the MALLOC_STATS code
-  // because the "alloc" in the MALLOC_STATS block uses the
-  // "trace_out" var that is set here.
-  bool atexit_added=false;
-  if(getenv("MALLOC_TRACE")){
-    // Set the default allocator, since the fopen below may
-    // call malloc.
-    if(!default_allocator)
-      default_allocator=a;
-    char* file=getenv("MALLOC_TRACE");
-    if(!file || strlen(file) == 0){
-      a->trace_out=stderr;
+  bool atexit_added = false;
+
+  // --- Trace file setup ---
+  if (getenv("MALLOC_TRACE")) {
+    if (!default_allocator) {
+      default_allocator = a;
+    }
+    const char* file = getenv("MALLOC_TRACE");
+    if (!file || std::strlen(file) == 0) {
+      a->trace_out = stderr;
     } else {
       char filename[MAXPATHLEN];
-      sprintf(filename, file, getpid());
-      a->trace_out=fopen(filename, "w");
-      setvbuf(a->trace_out, trace_buffer, _IOFBF, STATSIZE);
-      if(!a->trace_out){
-        perror("fopen");
-        fprintf(stderr, "cannot open trace file: %s, not tracing\n",
-                file);
-        a->trace_out=0;
+      std::sprintf(filename, file, getpid());
+      a->trace_out = std::fopen(filename, "w");
+      std::setvbuf(a->trace_out, trace_buffer, _IOFBF, STATSIZE);
+      if (!a->trace_out) {
+        std::perror("fopen");
+        std::fprintf(stderr, "cannot open trace file: %s, not tracing\n", file);
+        a->trace_out = nullptr;
       }
     }
-    if(a->trace_out){
-      if(!a->stats_out){
-        a->stats_out=a->trace_out;
-#if !defined( USE_LENNY_HACK )
-        atexit(shutdown);
-        atexit_added=true;
+    if (a->trace_out && !a->stats_out) {
+      a->stats_out = a->trace_out;
+#if !defined(USE_LENNY_HACK)
+      std::atexit(shutdown);
+      atexit_added = true;
 #endif
-      }
     }
   } else {
-    a->trace_out=0;
+    a->trace_out = nullptr;
   }
 
-  a->statsfile = 0;
-  char* statsfile = getenv("MALLOC_STATS");
-  if(LINUX_GETENV_HACK||statsfile){
-    // Set the default allocator, since the fopen below may
-    // call malloc.
-    if(!default_allocator)
-      default_allocator=a;
-    if(!statsfile || strlen(statsfile) == 0){
-      a->stats_out=stderr;
-    } else {
-      //char filename[MAXPATHLEN];
-      //sprintf(filename, statsfile, getpid());
-      a->statsfile = statsfile;
-
-      // open stats_out at the end to make sure mpi processes have split
-      a->stats_out = 0;
+  // --- Stats file setup ---
+  a->statsfile    = nullptr;
+  const char* statsfile = getenv("MALLOC_STATS");
+  if (statsfile) {
+    if (!default_allocator) {
+      default_allocator = a;
     }
-    if((a->stats_out || statsfile) && !atexit_added){
-#if !defined( USE_LENNY_HACK )	
-      atexit(shutdown);
+    if (std::strlen(statsfile) == 0) {
+      a->stats_out = stderr;
+    } else {
+      a->statsfile = statsfile;
+      a->stats_out = nullptr;
+    }
+    if ((a->stats_out || statsfile) && !atexit_added) {
+#if !defined(USE_LENNY_HACK)
+      std::atexit(shutdown);
 #endif
     }
   } else {
-    a->stats_out=0;
+    a->stats_out = nullptr;
   }
 
   a->dieing = false;
   return a;
-#  else
+#else
   return nullptr;
-#  endif // DISABLE_SCI_MALLOC
+#endif // DISABLE_SCI_MALLOC
 }
 
-void* Allocator::alloc(size_t size, const char* tag, int linenum)
+// ---------------------------------------------------------------------------
+// alloc
+// ---------------------------------------------------------------------------
+[[nodiscard]] void*
+Allocator::alloc(std::size_t size, const char* tag, int linenum)
 {
-  if(size > MEDIUM_THRESHOLD)
+  if (size > MEDIUM_THRESHOLD) {
     return alloc_big(size, tag, linenum);
-  if(size == 0)
-    return 0;
+  }
+  if (size == 0) {
+    return nullptr;
+  }
 
-  // Find a block that this will fit in...
-  AllocBin* obj_bin=get_bin(size);
-#  ifndef DEBUG
-  if(obj_bin->maxsize < size || size < obj_bin->minsize){
-    fprintf(stderr, "maxsize: "UCONV"\n", (SIZET)obj_bin->maxsize);
-    fprintf(stderr, "size: "UCONV"\n", (SIZET)size);
+  AllocBin* obj_bin = get_bin(size);
+
+#ifndef DEBUG
+  if (obj_bin->maxsize < size || size < obj_bin->minsize) {
+    std::fprintf(stderr, "maxsize: %zu\n", obj_bin->maxsize);
+    std::fprintf(stderr, "size: %zu\n",    size);
     AllocError("Bins messed up...");
   }
-#  endif
+#endif
+
   lock();
 
-  if(!obj_bin->free)
+  if (!obj_bin->free) {
     fill_bin(obj_bin);
-  Tag* obj=obj_bin->free;
-  obj_bin->free=obj->next;
-  if(obj_bin->free)
-    obj_bin->free->prev=0;
+  }
 
-  // Tell the hunk that we are using this one...
+  Tag* obj      = obj_bin->free;
+  obj_bin->free = obj->next;
+  if (obj_bin->free) {
+    obj_bin->free->prev = nullptr;
+  }
+
   obj->hunk->ninuse++;
-  obj->tag=tag;
-#  ifdef USE_TAG_LINENUM
+  obj->tag = tag;
+#ifdef USE_TAG_LINENUM
   obj->linenum = linenum;
-#  endif
-  obj->next=obj_bin->inuse;
-  if(obj_bin->inuse)
-    obj_bin->inuse->prev=obj;
-  obj->prev=0;
-  obj_bin->inuse=obj;
-  obj->reqsize=size;
+#endif
+  obj->next = obj_bin->inuse;
+  if (obj_bin->inuse) {
+    obj_bin->inuse->prev = obj;
+  }
+  obj->prev      = nullptr;
+  obj_bin->inuse = obj;
+  obj->reqsize   = size;
   obj_bin->ninuse++;
 
   nalloc++;
-  sizealloc+=size;
-  size_t bytes_inuse=sizealloc-sizefree;
-  
-  if(sizealloc<sizefree)
-    bytes_inuse=0;
-  
-  if(bytes_inuse > highwater_alloc)
-    highwater_alloc=bytes_inuse;
+  sizealloc += size;
+  std::size_t bytes_inuse = (sizealloc >= sizefree) ? (sizealloc - sizefree) : 0;
+  if (bytes_inuse > highwater_alloc) {
+    highwater_alloc = bytes_inuse;
+  }
   obj_bin->nalloc++;
 
-  // Safe to unlock now
   unlock();
 
-  // Make sure that it is still cleared out...
-  if(!lazy)
+  if (!lazy) {
     audit(obj, OBJFREE);
-
-  // Setup the new sentinels...
-  char* data=(char*)obj;
-  data+=sizeof(Tag);
-  Sentinel* sent1=(Sentinel*)data;
-  data+=sizeof(Sentinel);
-  char* d=data;
-  data+=obj_maxsize(obj);
-  Sentinel* sent2=(Sentinel*)data;
-
-  sent1->first_word=sent1->second_word=
-    sent2->first_word=sent2->second_word=SENT_VAL_INUSE;
-  // Fill in the region between the end of the allocation and the
-  // end of the chunk.
-  if(strict){
-    unsigned int i = 0xffff5a5a;
-    unsigned int start =
-      (unsigned int)((obj->reqsize+sizeof(int))/sizeof(int));
-    for(unsigned int* p=(unsigned int*)d+start;
-        p<(unsigned int*)sent2;p++)
-      *p++=i;
   }
 
-  if(trace_out)
-#  ifdef USE_TAG_LINENUM
-    fprintf(trace_out, "A %p "UCONV" (%s:%d)\n", d, (SIZET)size, tag, linenum);
-#  else
-  fprintf(trace_out, "A %p "UCONV" (%s)\n", d, (SIZET)size, tag);
-#  endif
+  auto* data  = static_cast<char*>(static_cast<void*>(obj));
+  data       += sizeof(Tag);
+  auto* sent1  = reinterpret_cast<Sentinel*>(data);
+  data        += sizeof(Sentinel);
+  char* d      = data;
+  data        += obj_maxsize(obj);
+  auto* sent2  = reinterpret_cast<Sentinel*>(data);
 
-  if(do_shutdown)
+  sent1->first_word = sent1->second_word =
+  sent2->first_word = sent2->second_word = SENT_VAL_INUSE;
+
+  if (strict) {
+    unsigned int start = static_cast<unsigned int>(
+      (obj->reqsize + sizeof(int)) / sizeof(int));
+    for (auto* p = reinterpret_cast<unsigned int*>(d) + start;
+         p < reinterpret_cast<unsigned int*>(sent2); p++) {
+      *p++ = FILL_PATTERN;
+    }
+  }
+
+  if (trace_out) {
+#ifdef USE_TAG_LINENUM
+    std::fprintf(trace_out, "A %p %zu (%s:%d)\n", static_cast<void*>(d), size, tag, linenum);
+#else
+    std::fprintf(trace_out, "A %p %zu (%s)\n",    static_cast<void*>(d), size, tag);
+#endif
+  }
+
+  if (do_shutdown) {
     shutdown();
-  return (void*)d;
+  }
+  return static_cast<void*>(d);
 }
 
-// When USE_TAG_LINENUM is not defined this function could generate
-// warnings, because linenum will never be used.  I could have
-// #ifdef'ed the function header, but I thought that would be more
-// ugly than simply getting a warning.  Since this is in a .cc file
-// instead of a header file the warning should only be seen once
-// rather than over and over again.
-void* Allocator::alloc_big(size_t size, const char* tag, int linenum)
+// ---------------------------------------------------------------------------
+// alloc_big
+// ---------------------------------------------------------------------------
+[[nodiscard]] void*
+Allocator::alloc_big(std::size_t size, const char* tag,
+                     [[maybe_unused]] int linenum)
 {
   lock();
 
-  Tag* obj=big_bin.free;
-  size_t osize=size+OVERHEAD;
-  if(osize%ALIGN != 0)
-    osize += ALIGN - osize%ALIGN;
-  size_t maxsize=osize+(size>>4);
-  for(;obj!=0;obj=obj->next){
-    // See if this object is within 6.25% of the right size...
-    if(obj->hunk->len > osize && obj->hunk->len <= maxsize)
+  Tag*        obj    = big_bin.free;
+  std::size_t osize  = size + OVERHEAD;
+  std::size_t maxsize = osize + (size >> 4);
+
+  for (; obj != nullptr; obj = obj->next) {
+    if (obj->hunk->len > osize && obj->hunk->len <= maxsize) {
       break;
+    }
   }
-  if(!obj){
-    // First, see if we need to clean out the list.
-    int nfree=big_bin.ntotal-big_bin.ninuse;
-    if(nfree >= 20){
-      // Skip the first half...
-      obj=big_bin.free;
-      for(int i=0;i<10;i++)
-        obj=obj->next;
-      Tag* last=obj;
-      obj=obj->next;
-      // Free these ones...
-      while(obj!=0){
-        Tag* next=obj->next;
-        OSHunk* hunk=obj->hunk;
+
+  if (!obj) {
+    // Optionally trim the free list if it's grown too large.
+    int nfree = big_bin.ntotal - big_bin.ninuse;
+    if (nfree >= 20) {
+      Tag* cursor = big_bin.free;
+      for (int i = 0; i < 10; i++) {
+        cursor = cursor->next;
+      }
+      Tag* last    = cursor;
+      Tag* to_free = cursor->next;
+      while (to_free != nullptr) {
+        Tag*    next = to_free->next;
+        OSHunk* h    = to_free->hunk;
         nmunmap++;
-        sizemunmap+=hunk->len+sizeof(OSHunk);
-        OSHunk::free(hunk);
-        obj=next;
+        sizemunmap += h->len + sizeof(OSHunk);
+        OSHunk::free(h);
+        to_free = next;
         big_bin.ntotal--;
       }
-      last->next=0;
+      last->next = nullptr;
     }
 
-    // Make a new one...
-    size_t tsize=sizeof(OSHunk)+OVERHEAD+size;
-    // Round up to nearest page size
-    size_t npages=(tsize+pagesize-1)/pagesize;
-    tsize=npages*pagesize;
-    tsize-=sizeof(OSHunk);
-    unsigned long offset = sizeof(OSHunk)%ALIGN;
-    if(offset != 0)
-      offset = ALIGN-offset;
+    // Allocate a new hunk.
+    std::size_t tsize  = sizeof(OSHunk) + OVERHEAD + size;
+    std::size_t npages = (tsize + pagesize - 1) / pagesize;
+    tsize              = npages * pagesize;
+    tsize             -= sizeof(OSHunk);
+
+    unsigned long offset = sizeof(OSHunk) % ALIGN;
+    if (offset != 0) {
+      offset = ALIGN - offset;
+    }
     tsize -= offset;
-    OSHunk* hunk=OSHunk::alloc(tsize, true, this);
+
+    OSHunk* hunk = OSHunk::alloc(tsize, true, this);
     nmmap++;
-    sizemmap+=tsize+sizeof(OSHunk);
-    size_t diffmmap=sizemmap-sizemunmap;
-    if(diffmmap > highwater_mmap)
-      highwater_mmap=diffmmap;
-    obj=(Tag*)hunk->data;
-    obj->bin=&big_bin;
-    obj->tag="never used (big object)";
-#  ifdef USE_TAG_LINENUM
-    obj->linenum=0;
-#  endif
-    obj->next=big_bin.free;
-    if(big_bin.free)
-      big_bin.free->prev=obj;
-    obj->prev=0;
-    big_bin.free=obj;
-    obj->hunk=hunk;
+    sizemmap += tsize + sizeof(OSHunk);
+    std::size_t diffmmap = sizemmap - sizemunmap;
+    if (diffmmap > highwater_mmap) {
+      highwater_mmap = diffmmap;
+    }
+
+    obj      = static_cast<Tag*>(hunk->data);
+    obj->bin = &big_bin;
+    obj->tag = "never used (big object)";
+#ifdef USE_TAG_LINENUM
+    obj->linenum = 0;
+#endif
+    obj->next = big_bin.free;
+    if (big_bin.free) {
+      big_bin.free->prev = obj;
+    }
+    obj->prev    = nullptr;
+    big_bin.free = obj;
+    obj->hunk    = hunk;
     big_bin.ntotal++;
 
-    // Fill in sentinel info...
-    char* data=(char*)obj;
-    data+=sizeof(Tag);
-    Sentinel* sent1=(Sentinel*)data;
-    data+=sizeof(Sentinel);
-    char* d=(char*)data;
-    data+=obj_maxsize(obj);
-    Sentinel* sent2=(Sentinel*)data;
+    // Set up sentinels in the newly created object.
+    {
+      auto* data  = static_cast<char*>(static_cast<void*>(obj));
+      data       += sizeof(Tag);
+      auto* s1    = reinterpret_cast<Sentinel*>(data);
+      data       += sizeof(Sentinel);
+      char* d     = data;
+      data       += obj_maxsize(obj);
+      auto* s2    = reinterpret_cast<Sentinel*>(data);
 
-    sent1->first_word=sent1->second_word=
-      sent2->first_word=sent2->second_word=SENT_VAL_FREE;
-    if(strict){
-      // Fill in the data region with markers.
-      unsigned int i = 0xffff5a5a;
-      for(unsigned int* p=(unsigned int*)d;
-          p<(unsigned int*)sent2;p++)
-        *p++=i;
+      s1->first_word = s1->second_word =
+      s2->first_word = s2->second_word = SENT_VAL_FREE;
+
+      if (strict) {
+        for (auto* p = reinterpret_cast<unsigned int*>(d);
+             p < reinterpret_cast<unsigned int*>(s2); p++) {
+          *p++ = FILL_PATTERN;
+        }
+      }
     }
   }
 
-  // Have obj now...
-  if(obj->prev)
-    obj->prev->next=obj->next;
-  else
-    big_bin.free=obj->next;
-  if(obj->next)
-    obj->next->prev=obj->prev;
+  // Unlink from free list.
+  if (obj->prev) {
+    obj->prev->next = obj->next;
+  } else {
+    big_bin.free = obj->next;
+  }
+  if (obj->next) {
+    obj->next->prev = obj->prev;
+  }
 
-  // Tell the hunk that we are using this one...
   obj->hunk->ninuse++;
-  obj->tag=tag;
-#  ifdef USE_TAG_LINENUM
+  obj->tag = tag;
+#ifdef USE_TAG_LINENUM
   obj->linenum = linenum;
-#  endif
-  obj->next=big_bin.inuse;
-  obj->prev=0;
-  if(big_bin.inuse)
-    big_bin.inuse->prev=obj;
-  big_bin.inuse=obj;
-  obj->reqsize=size;
+#endif
+  obj->next = big_bin.inuse;
+  obj->prev = nullptr;
+  if (big_bin.inuse) {
+    big_bin.inuse->prev = obj;
+  }
+  big_bin.inuse = obj;
+  obj->reqsize  = size;
   big_bin.ninuse++;
 
   nalloc++;
-  sizealloc+=size;
-  size_t bytes_inuse=sizealloc-sizefree;
-  if(bytes_inuse > highwater_alloc)
-    highwater_alloc=bytes_inuse;
+  sizealloc += size;
+  std::size_t bytes_inuse = sizealloc - sizefree;
+  if (bytes_inuse > highwater_alloc) {
+    highwater_alloc = bytes_inuse;
+  }
   big_bin.nalloc++;
 
-  // Safe to unlock now
   unlock();
 
-  // Make sure that it is still cleared out...
-  if(!lazy)
+  if (!lazy) {
     audit(obj, OBJFREE);
-
-  // Setup the new sentinels...
-  char* data=(char*)obj;
-  data+=sizeof(Tag);
-  Sentinel* sent1=(Sentinel*)data;
-  data+=sizeof(Sentinel);
-  char* d=data;
-  data+=obj_maxsize(obj);
-  Sentinel* sent2=(Sentinel*)data;
-
-  sent1->first_word=sent1->second_word=
-    sent2->first_word=sent2->second_word=SENT_VAL_INUSE;
-  // Fill in the region between the end of the allocation and the
-  // end of the chunk.
-  if(strict){
-    unsigned int i = 0xffff5a5a;
-    unsigned int start =
-      (unsigned int)((obj->reqsize+sizeof(int))/sizeof(int));
-    for(unsigned int* p=(unsigned int*)d+start;
-        p<(unsigned int*)sent2;p++)
-      *p++=i;
   }
 
-  if(trace_out)
-#  ifdef USE_TAG_LINENUM
-    fprintf(trace_out, "A %p "UCONV" (%s:%d)\n",d, (SIZET)size, tag, linenum);
-#  else
-  fprintf(trace_out, "A %p "UCONV" (%s)\n",d, (SIZET)size, tag);
-#  endif
+  auto* data  = static_cast<char*>(static_cast<void*>(obj));
+  data       += sizeof(Tag);
+  auto* sent1  = reinterpret_cast<Sentinel*>(data);
+  data        += sizeof(Sentinel);
+  char* d      = data;
+  data        += obj_maxsize(obj);
+  auto* sent2  = reinterpret_cast<Sentinel*>(data);
 
-  if(do_shutdown)
+  sent1->first_word = sent1->second_word =
+  sent2->first_word = sent2->second_word = SENT_VAL_INUSE;
+
+  if (strict) {
+    unsigned int start = static_cast<unsigned int>(
+      (obj->reqsize + sizeof(int)) / sizeof(int));
+    for (auto* p = reinterpret_cast<unsigned int*>(d) + start;
+         p < reinterpret_cast<unsigned int*>(sent2); p++) {
+      *p++ = FILL_PATTERN;
+    }
+  }
+
+  if (trace_out) {
+#ifdef USE_TAG_LINENUM
+    std::fprintf(trace_out, "A %p %zu (%s:%d)\n", static_cast<void*>(d), size, tag, linenum);
+#else
+    std::fprintf(trace_out, "A %p %zu (%s)\n",    static_cast<void*>(d), size, tag);
+#endif
+  }
+
+  if (do_shutdown) {
     shutdown();
-  return (void*)d;
+  }
+  return static_cast<void*>(d);
 }
 
-void* Allocator::realloc(void* dobj, size_t newsize)
+// ---------------------------------------------------------------------------
+// realloc
+// ---------------------------------------------------------------------------
+[[nodiscard]] void*
+Allocator::realloc(void* dobj, std::size_t newsize)
 {
-  if(!dobj)
+  if (!dobj) {
     return alloc(newsize, "realloc", 0);
-  // NOTE:  Realloc after free is NOT supported, and
-  // probably never will be - MP problems
-  char* dd=(char*)dobj;
-  dd-=sizeof(Sentinel);
-  dd-=sizeof(Tag);
-  Tag* oldobj=(Tag*)dd;
-
-  // Make sure that it is still intact...
-  if(!lazy)
-    audit(oldobj, OBJFREEING);
-
-  // Check the simple case first...
-  AllocBin* oldbin=get_bin(oldobj->bin->maxsize);
-  if(newsize <= obj_maxsize(oldobj) && newsize >= oldbin->minsize){
-    size_t oldsize=oldobj->reqsize;
-    oldobj->reqsize=newsize;
-    // Setup the new sentinels...
-    char* data=(char*)oldobj;
-    data+=sizeof(Tag);
-    data+=sizeof(Sentinel);
-    char* d=data;
-    data+=obj_maxsize(oldobj);
-    Sentinel* sent2=(Sentinel*)data;
-
-    // Fill in the region between the end of the allocation and the
-    // end of the chunk.
-    if(strict){
-      unsigned int i = 0xffff5a5a;
-      unsigned int start =
-        (unsigned int)((oldobj->reqsize+sizeof(int))/sizeof(int));
-      for(unsigned int* p=(unsigned int*)d+start;
-          p<(unsigned int*)sent2;p++)
-        *p++=i;
-    }
-    if(trace_out)
-#  ifdef USE_TAG_LINENUM
-      fprintf(trace_out, "R %p "UCONV" %p "UCONV" (%s:%d)\n", dobj,
-              (SIZET)oldsize, dobj, (SIZET)newsize, oldobj->tag, oldobj->linenum);
-#  else
-    fprintf(trace_out, "R %p "UCONV" %p "UCONV" (%s)\n", dobj,
-            (SIZET)oldsize, dobj, (SIZET)newsize, oldobj->tag);
-#  endif
-
-    return dobj;
   }
 
-  void* nobj=alloc(newsize, "realloc", 0);
-  size_t minsize=newsize;
-  size_t oldsize=oldobj->reqsize;
-  if(newsize > oldsize)
-    minsize=oldsize;
-  bcopy(dobj, nobj, minsize);
+  auto* dd      = static_cast<char*>(dobj) - sizeof(Sentinel) - sizeof(Tag);
+  auto* oldobj  = reinterpret_cast<Tag*>(dd);
+
+  if (!lazy) {
+    audit(oldobj, OBJFREEING);
+  }
+
+  if (oldobj->bin) {
+    AllocBin* oldbin = get_bin(oldobj->bin->maxsize);
+    if (newsize <= obj_maxsize(oldobj) && newsize >= oldbin->minsize) {
+      size_t oldsize  = oldobj->reqsize;
+      oldobj->reqsize = newsize;
+
+      auto* data  = static_cast<char*>(static_cast<void*>(oldobj));
+      data       += sizeof(Tag) + sizeof(Sentinel);
+      char* d     = data;
+      data       += obj_maxsize(oldobj);
+      auto* sent2 = reinterpret_cast<Sentinel*>(data);
+
+      if (strict) {
+        unsigned int start = static_cast<unsigned int>(
+          (oldobj->reqsize + sizeof(int)) / sizeof(int));
+        for (auto* p = reinterpret_cast<unsigned int*>(d) + start;
+             p < reinterpret_cast<unsigned int*>(sent2); p++) {
+          *p++ = FILL_PATTERN;
+        }
+      }
+
+      if (trace_out) {
+#ifdef USE_TAG_LINENUM
+        std::fprintf(trace_out, "R %p %zu %p %zu (%s:%d)\n",
+                     dobj, oldsize, dobj, newsize, oldobj->tag, oldobj->linenum);
+#else
+        std::fprintf(trace_out, "R %p %zu %p %zu (%s)\n",
+                     dobj, oldsize, dobj, newsize, oldobj->tag);
+#endif
+      }
+      return dobj;
+    }
+  }
+
+  void*       nobj    = alloc(newsize, "realloc", 0);
+  std::size_t oldsize = oldobj->reqsize;
+  std::size_t minsize = (newsize < oldsize) ? newsize : oldsize;
+  std::memcpy(nobj, dobj, minsize);   // Note: memcpy(dest, src, n) — reversed vs bcopy
   free(dobj);
-  if(trace_out)
-#  ifdef USE_TAG_LINENUM
-    fprintf(trace_out, "R %p "UCONV" %p "UCONV" (%s:%d)\n", dobj,
-            (SIZET)oldsize, nobj, (SIZET)newsize, oldobj->tag, oldobj->linenum);
-#  else
-  fprintf(trace_out, "R %p "UCONV" %p "UCONV" (%s)\n", dobj,
-          (SIZET)oldsize, nobj, (SIZET)newsize, oldobj->tag);
-#  endif
+
+  if (trace_out) {
+#ifdef USE_TAG_LINENUM
+    std::fprintf(trace_out, "R %p %zu %p %zu (%s:%d)\n",
+                 dobj, oldsize, nobj, newsize, oldobj->tag, oldobj->linenum);
+#else
+    std::fprintf(trace_out, "R %p %zu %p %zu (%s)\n",
+                 dobj, oldsize, nobj, newsize, oldobj->tag);
+#endif
+  }
 
   return nobj;
 }
 
-void* Allocator::memalign(size_t alignment, size_t size, const char* ctag)
+// ---------------------------------------------------------------------------
+// memalign
+// ---------------------------------------------------------------------------
+[[nodiscard]] void*
+Allocator::memalign(std::size_t alignment, std::size_t size, const char* ctag)
 {
-  if(alignment <= 8)
+  if (alignment <= 8) {
     return alloc(size, ctag, 0);
+  }
 
-  size_t asize=size+sizeof(Tag)+sizeof(Sentinel)+alignment-8;
-  void* addr=(char*)alloc(asize, ctag, 0);
-  char* m=(char*)addr;
-  size_t misalign=((size_t)m+sizeof(Tag)+sizeof(Sentinel))%alignment;
-  misalign=misalign==0?0:alignment-misalign;
-  m+=misalign;
-  Tag* tag=(Tag*)m;
-  m+=sizeof(Tag);
-  tag->bin=0;
-  tag->next=tag->prev=(Tag*)addr;
-  tag->hunk=0;
-  tag->reqsize=size;
-  tag->tag=ctag;
-#  ifdef USE_TAG_LINENUM
-  tag->linenum=0;
-#  endif
-  Sentinel* sent1=(Sentinel*)m;
-  m+=sizeof(Sentinel);
-  sent1->first_word=sent1->second_word=SENT_VAL_INUSE;
-  return m;
+  std::size_t asize = size + OVERHEAD + alignment;
+  void*       orig_addr = alloc(asize, ctag, 0);
+  auto*       addr  = static_cast<char*>(orig_addr);
+
+  std::size_t misalign =
+    (reinterpret_cast<std::size_t>(addr) + OVERHEAD) % alignment;
+  misalign = (misalign == 0) ? 0 : (alignment - misalign);
+  addr    += misalign;
+
+  auto* tag     = reinterpret_cast<Tag*>(addr);
+  addr         += sizeof(Tag);
+  tag->bin      = nullptr;
+  tag->next     = tag->prev = reinterpret_cast<Tag*>(orig_addr);
+  tag->hunk     = nullptr;
+  tag->reqsize  = size;
+  tag->tag      = ctag;
+#ifdef USE_TAG_LINENUM
+  tag->linenum = 0;
+#endif
+  auto* sent1             = reinterpret_cast<Sentinel*>(addr);
+  addr                   += sizeof(Sentinel);
+  sent1->first_word       = sent1->second_word = SENT_VAL_INUSE;
+  return static_cast<void*>(addr);
 }
 
-void Allocator::free(void* dobj)
+// ---------------------------------------------------------------------------
+// free
+// ---------------------------------------------------------------------------
+void
+Allocator::free(void* dobj) noexcept
 {
-  //    fprintf(stderr, "Freeing %x\n", dobj);
-  if(!dobj)
-    return;
-  char* dd=(char*)dobj;
-  dd-=sizeof(Sentinel);
-  dd-=sizeof(Tag);
-  Tag* obj=(Tag*)dd;
-
-  if(!obj->bin){
-    // This was allocated with memalign...
-    if(!lazy)
-      audit(obj, OBJMEMALIGNFREEING);
-    if(obj->next != obj->prev)
-      AllocError("Memalign tag inconsistency, or memory corrupt!\n");
-    free((void*)obj->prev);
-    if(do_shutdown)
-      shutdown();
+  if (!dobj) {
     return;
   }
 
-  // Make sure that it is still intact...
-  if(trace_out)
-#  ifdef USE_TAG_LINENUM
-    fprintf(trace_out, "F %p "UCONV" (%s:%d)\n", dobj, (SIZET)obj->reqsize, obj->tag, obj->linenum);
-#  else
-  fprintf(trace_out, "F %p "UCONV" (%s)\n", dobj, (SIZET)obj->reqsize, obj->tag);
-#  endif
+  auto* dd  = static_cast<char*>(dobj) - sizeof(Sentinel) - sizeof(Tag);
+  auto* obj = reinterpret_cast<Tag*>(dd);
 
-  if(!lazy)
+  // std::cout << "DEBUG: Allocator::free(" << dobj << ") tag=" << (obj->tag ? obj->tag : "null") << std::endl;
+
+  if (!obj->bin) {
+    // Allocated via memalign
+    if (!lazy) {
+      audit(obj, OBJMEMALIGNFREEING);
+    }
+    if (obj->next != obj->prev) {
+      AllocError("Memalign tag inconsistency, or memory corrupt!\n");
+    }
+    free(static_cast<void*>(obj->prev));
+    if (do_shutdown) {
+      shutdown();
+    }
+    return;
+  }
+
+  if (trace_out) {
+#ifdef USE_TAG_LINENUM
+    std::fprintf(trace_out, "F %p %zu (%s:%d)\n",
+                 dobj, obj->reqsize, obj->tag, obj->linenum);
+#else
+    std::fprintf(trace_out, "F %p %zu (%s)\n",
+                 dobj, obj->reqsize, obj->tag);
+#endif
+  }
+
+  if (!lazy) {
     audit(obj, OBJFREEING);
+  }
 
-  AllocBin* obj_bin=get_bin(obj->bin->maxsize);
-
+  AllocBin* obj_bin = get_bin(obj->bin->maxsize);
 
   lock();
   nfree++;
-  sizefree+=obj->reqsize;
+  sizefree += obj->reqsize;
   obj_bin->nfree++;
 
-  // Remove it from the inuse list...
-  if(obj->next)
-    obj->next->prev=obj->prev;
-  if(obj->prev){
-    obj->prev->next=obj->next;
+  // Remove from inuse list.
+  if (obj->next) { obj->next->prev = obj->prev; }
+  if (obj->prev) {
+    obj->prev->next = obj->next;
   } else {
-    obj_bin->inuse=obj->next;
+    obj_bin->inuse = obj->next;
   }
   obj_bin->ninuse--;
 
-  if(obj_bin == &big_bin && obj->reqsize > 50*1024*1024){
-    // Go ahead and unmap this segment...
-    OSHunk* hunk=obj->hunk;
+  if (obj_bin == &big_bin && obj->reqsize > 50 * 1024 * 1024) {
+    OSHunk* hunk = obj->hunk;
     nmunmap++;
-    sizemunmap+=hunk->len+sizeof(OSHunk);
+    sizemunmap += hunk->len + sizeof(OSHunk);
     OSHunk::free(hunk);
     big_bin.ntotal--;
   } else {
-    // Put it in the free list...
-    obj->next=obj_bin->free;
-    if(obj_bin->free)
-      obj_bin->free->prev=obj;
-    obj->prev=0;
-    obj_bin->free=obj;
+    // Return to free list.
+    obj->next = obj_bin->free;
+    if (obj_bin->free) {
+      obj_bin->free->prev = obj;
+    }
+    obj->prev     = nullptr;
+    obj_bin->free = obj;
 
+    auto* data  = static_cast<char*>(static_cast<void*>(obj));
+    data       += sizeof(Tag);
+    auto* sent1  = reinterpret_cast<Sentinel*>(data);
+    data        += sizeof(Sentinel);
+    char* d      = data;
+    data        += obj_maxsize(obj);
+    auto* sent2  = reinterpret_cast<Sentinel*>(data);
 
-    // Setup the new sentinels...
-    char* data=(char*)obj;
-    data+=sizeof(Tag);
-    Sentinel* sent1=(Sentinel*)data;
-    data+=sizeof(Sentinel);
-    char* d=(char*)data;
-    data+=obj_maxsize(obj);
-    Sentinel* sent2=(Sentinel*)data;
+    sent1->first_word = sent1->second_word =
+    sent2->first_word = sent2->second_word = SENT_VAL_FREE;
 
-    sent1->first_word=sent1->second_word=
-      sent2->first_word=sent2->second_word=SENT_VAL_FREE;
-
-    if(strict){
-      // Fill in the data region with markers.
-      unsigned int i = 0xffff5a5a;
-      for(unsigned int* p=(unsigned int*)d;
-          p<(unsigned int*)sent2;p++)
-        *p++=i;
+    if (strict) {
+      for (auto* p = reinterpret_cast<unsigned int*>(d);
+           p < reinterpret_cast<unsigned int*>(sent2); p++) {
+        *p++ = FILL_PATTERN;
+      }
     }
   }
   unlock();
-  if(do_shutdown)
+
+  if (do_shutdown) {
     shutdown();
-}
-
-void Allocator::fill_bin(AllocBin* bin)
-{
-  nfillbin++;
-  if (bin->maxsize <= MEDIUM_THRESHOLD){
-    size_t tsize;
-    tsize=bin->maxsize+OVERHEAD;
-    // Ensure tsize is a multiple of ALIGN
-    if(tsize%ALIGN != 0)
-      tsize += ALIGN - tsize%ALIGN;
-
-    unsigned int nalloc=(unsigned int)(SMALLEST_ALLOCSIZE/tsize);
-    if(nalloc<1)nalloc=1;
-    size_t reqsize=nalloc*tsize;
-
-    // Get the hunk...
-    OSHunk* hunk;
-    void* p;
-    get_hunk(reqsize, hunk, p);
-    for(int i=0;i<(int)nalloc;i++){
-      Tag* t=(Tag*)p;
-      t->bin=bin;
-      t->tag="never used";
-#  ifdef USE_TAG_LINENUM
-      t->linenum=0;
-#  endif
-      t->next=bin->free;
-      if(bin->free)
-        bin->free->prev=t;
-      t->prev=0;
-      bin->free=t;
-      t->hunk=hunk;
-      p=(void*)((char*)p+tsize);
-      char* data=(char*)t;
-      data+=sizeof(Tag);
-      Sentinel* sent1=(Sentinel*)data;
-      data+=sizeof(Sentinel);
-      char* d=(char*)data;
-      data+=t->bin->maxsize;
-      Sentinel* sent2=(Sentinel*)data;
-
-      sent1->first_word=sent1->second_word=
-        sent2->first_word=sent2->second_word=SENT_VAL_FREE;
-      if(strict){
-        // Fill in the data region with markers.
-        unsigned int i = 0xffff5a5a;
-        for(unsigned int* p=(unsigned int*)d;
-            p<(unsigned int*)sent2;p++)
-          *p++=i;
-      }
-    }
-    bin->ntotal+=nalloc;
-  } else {
-    AllocError("fill_bin not finished...");
   }
 }
 
-void Allocator::init_bin(AllocBin* bin, size_t maxsize, size_t minsize)
+// ---------------------------------------------------------------------------
+// fill_bin
+// ---------------------------------------------------------------------------
+void
+Allocator::fill_bin(AllocBin* bin)
 {
-  bin->maxsize=maxsize;
-  bin->minsize=minsize;
-  bin->free=0;
-  bin->inuse=0;
-  bin->ninuse=0;
-  bin->ntotal=0;
+  nfillbin++;
+  if (bin->maxsize > MEDIUM_THRESHOLD) {
+    AllocError("fill_bin not finished...");
+    return;
+  }
+
+  std::size_t tsize  = (bin->maxsize + OVERHEAD + ALIGN - 1) & ~(ALIGN - 1);
+  auto        nalloc = static_cast<unsigned int>(SMALLEST_ALLOCSIZE / tsize);
+  if (nalloc < 1) {
+    nalloc = 1;
+  }
+  std::size_t reqsize = nalloc * tsize;
+
+  OSHunk* hunk = nullptr;
+  void*   p    = nullptr;
+  get_hunk(reqsize, hunk, p);
+
+  for (unsigned int i = 0; i < nalloc; i++) {
+    auto* t  = static_cast<Tag*>(p);
+    t->bin   = bin;
+    t->tag   = "never used";
+#ifdef USE_TAG_LINENUM
+    t->linenum = 0;
+#endif
+    t->next = bin->free;
+    if (bin->free) {
+      bin->free->prev = t;
+    }
+    t->prev   = nullptr;
+    bin->free = t;
+    t->hunk   = hunk;
+    p         = static_cast<void*>(static_cast<char*>(p) + tsize);
+
+    auto* data  = static_cast<char*>(static_cast<void*>(t));
+    data       += sizeof(Tag);
+    auto* sent1  = reinterpret_cast<Sentinel*>(data);
+    data        += sizeof(Sentinel);
+    char* d      = data;
+    data        += t->bin->maxsize;
+    auto* sent2  = reinterpret_cast<Sentinel*>(data);
+
+    sent1->first_word = sent1->second_word =
+    sent2->first_word = sent2->second_word = SENT_VAL_FREE;
+
+    if (strict) {
+      for (auto* fp = reinterpret_cast<unsigned int*>(d);
+           fp < reinterpret_cast<unsigned int*>(sent2); fp++) {
+        *fp++ = FILL_PATTERN;
+      }
+    }
+  }
+  bin->ntotal += nalloc;
 }
 
-static void printObjectAllocMessage(Tag* obj) {
-#  ifdef USE_TAG_LINENUM
-  fprintf(stderr, "Object was allocated with this tag:\n%s at this line number:%d\n", obj->tag, obj->linenum);
-#  else
-  fprintf(stderr, "Object was allocated with this tag:\n%s\n", obj->tag);
-#  endif
-
+// ---------------------------------------------------------------------------
+// init_bin
+// ---------------------------------------------------------------------------
+void
+Allocator::init_bin(AllocBin* bin,
+                    std::size_t maxsize,
+                    std::size_t minsize) noexcept
+{
+  bin->maxsize = maxsize;
+  bin->minsize = minsize;
+  bin->free    = nullptr;
+  bin->inuse   = nullptr;
+  bin->ninuse  = 0;
+  bin->ntotal  = 0;
 }
 
-void Allocator::audit(Tag* obj, int what)
+// ---------------------------------------------------------------------------
+// audit helpers
+// ---------------------------------------------------------------------------
+static void
+printObjectAllocMessage(Tag* obj)
 {
-  char* data=(char*)obj;
-  data+=sizeof(Tag);
-  Sentinel* sent1=(Sentinel*)data;
-  data+=sizeof(Sentinel);
-  char* d=data;
-  if(what != OBJMEMALIGNFREEING)
-    data+=obj_maxsize(obj);
-  Sentinel* sent2=(Sentinel*)data;
+#ifdef USE_TAG_LINENUM
+  std::fprintf(stderr,
+               "Object was allocated with this tag:\n%s at this line number:%d\n",
+               obj->tag, obj->linenum);
+#else
+  std::fprintf(stderr,
+               "Object was allocated with this tag:\n%s\n", obj->tag);
+#endif
+}
 
-  //    fprintf(stderr, "sentinels: %x %x %x %x\n", sent1->first_word, sent1->second_word, sent2->first_word, sent2->second_word);
+void
+Allocator::audit(Tag* obj, int what)
+{
+  auto* data  = static_cast<char*>(static_cast<void*>(obj));
+  data       += sizeof(Tag);
+  auto* sent1  = reinterpret_cast<Sentinel*>(data);
+  data        += sizeof(Sentinel);
+  char* d      = data;
 
+  if (what != OBJMEMALIGNFREEING) {
+    data += obj_maxsize(obj);
+  }
+  auto* sent2 = reinterpret_cast<Sentinel*>(data);
 
-  // Check that the sentinels are OK...
-  if(what == OBJFREE){
-    if(sent1->first_word != SENT_VAL_FREE || sent1->second_word != SENT_VAL_FREE){
-      if(sent1->first_word == SENT_VAL_INUSE){
+  if (what == OBJFREE) {
+    if (sent1->first_word != SENT_VAL_FREE || sent1->second_word != SENT_VAL_FREE) {
+      if (sent1->first_word == SENT_VAL_INUSE) {
         printObjectAllocMessage(obj);
         AllocError("Object should be free, but is tagged as INUSE");
       } else {
-        fprintf(stderr, "Free object has been corrupted within\n");
-        fprintf(stderr, "the 8 bytes before the allocated region\n");
+        std::fprintf(stderr, "DEBUG: sent1: 0x%x 0x%x (expected 0x%x)\n", 
+                     sent1->first_word, sent1->second_word, SENT_VAL_FREE);
+        std::fprintf(stderr, "Free object has been corrupted within\n");
+        std::fprintf(stderr, "the 8 bytes before the allocated region\n");
         printObjectAllocMessage(obj);
         AllocError("Freed object corrupt");
       }
     }
-    if(sent2->first_word != SENT_VAL_FREE || sent2->second_word != SENT_VAL_FREE){
-      if(sent2->first_word == SENT_VAL_INUSE){
+    if (sent2->first_word != SENT_VAL_FREE || sent2->second_word != SENT_VAL_FREE) {
+      if (sent2->first_word == SENT_VAL_INUSE) {
         AllocError("Object should be free, but is tagged as INUSE (on tail only)");
       } else {
-        fprintf(stderr, "Free object has been corrupted within\n");
-        fprintf(stderr, "the 8 bytes following the allocated region\n");
+        std::fprintf(stderr, "Free object has been corrupted within\n");
+        std::fprintf(stderr, "the 8 bytes following the allocated region\n");
         printObjectAllocMessage(obj);
         AllocError("Freed object corrupt");
       }
     }
-  } else if(what == OBJFREEING || what == OBJINUSE || what == OBJMEMALIGNFREEING){
-    if(sent1->first_word != SENT_VAL_INUSE || sent1->second_word != SENT_VAL_INUSE){
-      if(sent1->first_word == SENT_VAL_FREE){
-        if(what == OBJFREEING){
-          fprintf(stderr, "Pointer (%p) was freed twice!\n", d);
+  } else if (what == OBJFREEING || what == OBJINUSE || what == OBJMEMALIGNFREEING) {
+    if (sent1->first_word != SENT_VAL_INUSE || sent1->second_word != SENT_VAL_INUSE) {
+      if (sent1->first_word == SENT_VAL_FREE) {
+        if (what == OBJFREEING) {
+          std::fprintf(stderr, "Pointer (%p) was freed twice!\n", static_cast<void*>(d));
           printObjectAllocMessage(obj);
           AllocError("Freeing pointer twice");
         } else {
@@ -1188,17 +1155,20 @@ void Allocator::audit(Tag* obj, int what)
           AllocError("Object should be inuse, but is tagged as FREE");
         }
       } else {
-        fprintf(stderr, "Object has been corrupted within\n");
-        fprintf(stderr, "the 8 bytes before the allocated region\n");
+        std::fprintf(stderr, "DEBUG: sent1: 0x%x 0x%x (expected 0x%x)\n", 
+                     sent1->first_word, sent1->second_word, SENT_VAL_INUSE);
+        std::fprintf(stderr, "Object has been corrupted within\n");
+        std::fprintf(stderr, "the 8 bytes before the allocated region\n");
         printObjectAllocMessage(obj);
         AllocError("Memory Object corrupt");
       }
     }
-    if(what != OBJMEMALIGNFREEING){
-      if(sent2->first_word != SENT_VAL_INUSE || sent2->second_word != SENT_VAL_INUSE){
-        if(sent2->first_word == SENT_VAL_FREE){
-          if(what == OBJFREEING){
-            fprintf(stderr, "Pointer (%p) was freed twice! (tail only?)\n", d);
+    if (what != OBJMEMALIGNFREEING) {
+      if (sent2->first_word != SENT_VAL_INUSE || sent2->second_word != SENT_VAL_INUSE) {
+        if (sent2->first_word == SENT_VAL_FREE) {
+          if (what == OBJFREEING) {
+            std::fprintf(stderr, "Pointer (%p) was freed twice! (tail only?)\n",
+                         static_cast<void*>(d));
             printObjectAllocMessage(obj);
             AllocError("Freeing pointer twice");
           } else {
@@ -1206,8 +1176,8 @@ void Allocator::audit(Tag* obj, int what)
             AllocError("Object should be inuse, but is tagged as FREE");
           }
         } else {
-          fprintf(stderr, "Object has been corrupted within\n");
-          fprintf(stderr, "the 8 bytes after the allocated region\n");
+          std::fprintf(stderr, "Object has been corrupted within\n");
+          std::fprintf(stderr, "the 8 bytes after the allocated region\n");
           printObjectAllocMessage(obj);
           AllocError("Memory Object corrupt");
         }
@@ -1215,31 +1185,29 @@ void Allocator::audit(Tag* obj, int what)
     }
   }
 
-  // Check the space between the end of the allocation and the sentinel...
-  if(strict && (what == OBJFREEING || what == OBJINUSE)){
-    unsigned int i = 0xffff5a5a;
-    unsigned int start =
-      (unsigned int)((obj->reqsize+sizeof(int))/sizeof(int));
-    for(unsigned int* p=(unsigned int*)d+start;
-        p<(unsigned int*)sent2;p++){
-      unsigned int p1=*p++;
-      if(p1 != i){
-        fprintf(stderr, "p1=0x%x (should be 0x%x)\n", (int)p1, (int)i);
-        fprintf(stderr, "Object has been corrupted immediately ");
-        fprintf(stderr, "after the allocated region\n");
+  if (strict && (what == OBJFREEING || what == OBJINUSE)) {
+    unsigned int start = static_cast<unsigned int>(
+      (obj->reqsize + sizeof(int)) / sizeof(int));
+    for (auto* p = reinterpret_cast<unsigned int*>(d) + start;
+         p < reinterpret_cast<unsigned int*>(sent2); p++) {
+      unsigned int p1 = *p++;
+      if (p1 != FILL_PATTERN) {
+        std::fprintf(stderr, "p1=0x%x (should be 0x%x)\n",
+                     static_cast<int>(p1), static_cast<int>(FILL_PATTERN));
+        std::fprintf(stderr, "Object has been corrupted immediately ");
+        std::fprintf(stderr, "after the allocated region\n");
         printObjectAllocMessage(obj);
         AllocError("Memory Object corrupt");
       }
     }
   }
-  if(strict && what == OBJFREE){
-    // Check the markers in the data region...
-    unsigned int i = 0xffff5a5a;
-    for(unsigned int* p=(unsigned int*)d;
-        p<(unsigned int*)sent2;p++){
-      unsigned int p1=*p++;
-      if(p1 != i){
-        fprintf(stderr, "Object has been written after free\n");
+
+  if (strict && what == OBJFREE) {
+    for (auto* p = reinterpret_cast<unsigned int*>(d);
+         p < reinterpret_cast<unsigned int*>(sent2); p++) {
+      unsigned int p1 = *p++;
+      if (p1 != FILL_PATTERN) {
+        std::fprintf(stderr, "Object has been written after free\n");
         printObjectAllocMessage(obj);
         AllocError("Write after free");
       }
@@ -1247,271 +1215,327 @@ void Allocator::audit(Tag* obj, int what)
   }
 }
 
-
-void Allocator::get_hunk(size_t reqsize, OSHunk*& ret_hunk, void*& ret_p)
+// ---------------------------------------------------------------------------
+// get_hunk
+// ---------------------------------------------------------------------------
+void
+Allocator::get_hunk(std::size_t reqsize, OSHunk*& ret_hunk, void*& ret_p)
 {
-  // See if we have room in any of the current hunks...
-  OSHunk* hunk;
-  for(hunk=hunks; hunk!=0; hunk=hunk->next){
-    if(hunk->spaceleft >= reqsize)
+  OSHunk* hunk = nullptr;
+  for (hunk = hunks; hunk != nullptr; hunk = hunk->next) {
+    if (hunk->spaceleft >= reqsize) {
       break;
+    }
   }
-  if(!hunk){
-    // Always request big chunks
-    size_t s=reqsize>NORMAL_OS_ALLOC_SIZE?reqsize:NORMAL_OS_ALLOC_SIZE;
-    hunk=OSHunk::alloc(s, false, this);
-    hunk->next=hunks;
-    hunks=hunk;
-    hunk->spaceleft=s;
-    hunk->curr=hunk->data;
+
+  if (!hunk) {
+    std::size_t s = (reqsize > NORMAL_OS_ALLOC_SIZE) ? reqsize : NORMAL_OS_ALLOC_SIZE;
+    hunk            = OSHunk::alloc(s, false, this);
+    hunk->next      = hunks;
+    hunks           = hunk;
+    hunk->spaceleft = s;
+    hunk->curr      = hunk->data;
     nmmap++;
-    sizemmap+=s+sizeof(OSHunk);
-    size_t diffmmap=sizemmap-sizemunmap;
-    if(diffmmap > highwater_mmap)
-      highwater_mmap=diffmmap;
+    sizemmap += s + sizeof(OSHunk);
+    std::size_t diffmmap = sizemmap - sizemunmap;
+    if (diffmmap > highwater_mmap) {
+      highwater_mmap = diffmmap;
+    }
   }
-  hunk->spaceleft-=reqsize;
-  ret_p=hunk->curr;
-  hunk->curr=(void*)((char*)hunk->curr+reqsize);
-  if(default_allocator && default_allocator->trace_out)
-    fprintf(default_allocator->trace_out, "H %p %p "UCONV"\n", hunk, ret_p, (SIZET)reqsize);
-  ret_hunk=hunk;
+
+  hunk->spaceleft -= reqsize;
+  ret_p            = hunk->curr;
+  hunk->curr       = static_cast<void*>(static_cast<char*>(hunk->curr) + reqsize);
+
+  if (default_allocator && default_allocator->trace_out) {
+    std::fprintf(default_allocator->trace_out,
+                 "H %p %p %zu\n",
+                 static_cast<void*>(hunk),
+                 ret_p,
+                 reqsize);
+  }
+  ret_hunk = hunk;
 }
 
-void PrintTag(void* dobj)
+// ---------------------------------------------------------------------------
+// PrintTag
+// ---------------------------------------------------------------------------
+void
+PrintTag(void* dobj)
 {
-  char* dd=(char*)dobj;
-  dd-=sizeof(Sentinel);
-  Sentinel* sent1=(Sentinel*)dd;
-  dd-=sizeof(Tag);
-  Tag* obj=(Tag*)dd;
+  auto* dd    = static_cast<char*>(dobj) - sizeof(Sentinel);
+  auto* sent1 = reinterpret_cast<Sentinel*>(dd);
+  dd         -= sizeof(Tag);
+  auto* obj   = reinterpret_cast<Tag*>(dd);
 
-#  ifdef USE_TAG_LINENUM
-  fprintf(stderr, "tag %p: allocated by: %s at %d\n", obj, obj->tag, obj->linenum);
-#  else
-  fprintf(stderr, "tag %p: allocated by: %s\n", obj, obj->tag);
-#  endif
-  fprintf(stderr, "requested object size: "UCONV" bytes\n", (SIZET)obj->reqsize);
-  fprintf(stderr, "maximum bin size: "UCONV" bytes\n", (SIZET)obj->bin->maxsize);
-  fprintf(stderr, "range of object: %p - "UCONV"\n", dobj,
-          (SIZET)dobj+(SIZET)obj->reqsize);
-  fprintf(stderr, "range of object with overhead and sentinels: %p - %p\n",
-          obj, obj+OVERHEAD);
-  fprintf(stderr, "range of hunk: "UCONV" - "UCONV"\n", (SIZET)obj->hunk->data, (SIZET)obj->hunk->data+obj->hunk->len);
-  fprintf(stderr, "pre-sentinels: %x %x\n",
-          sent1->first_word, sent1->second_word);
-  if(sent1->first_word == SENT_VAL_FREE && sent1->second_word == SENT_VAL_FREE){
-    fprintf(stderr, "object should be free\n");
-  } else if(sent1->first_word == SENT_VAL_INUSE && sent1->second_word == SENT_VAL_INUSE){
-    fprintf(stderr, "object should be inuse\n");
+#ifdef USE_TAG_LINENUM
+  std::fprintf(stderr, "tag %p: allocated by: %s at %d\n",
+               static_cast<void*>(obj), obj->tag, obj->linenum);
+#else
+  std::fprintf(stderr, "tag %p: allocated by: %s\n",
+               static_cast<void*>(obj), obj->tag);
+#endif
+  std::fprintf(stderr, "requested object size: %zu bytes\n", obj->reqsize);
+  std::fprintf(stderr, "maximum bin size: %zu bytes\n",      obj->bin->maxsize);
+  std::fprintf(stderr, "range of object: %p - %zu\n",
+               dobj,
+               reinterpret_cast<std::size_t>(dobj) + obj->reqsize);
+  std::fprintf(stderr,
+               "range of object with overhead and sentinels: %p - %p\n",
+               static_cast<void*>(obj),
+               static_cast<void*>(reinterpret_cast<char*>(obj) + OVERHEAD));
+  std::fprintf(stderr, "range of hunk: %zu - %zu\n",
+               reinterpret_cast<std::size_t>(obj->hunk->data),
+               reinterpret_cast<std::size_t>(obj->hunk->data) + obj->hunk->len);
+  std::fprintf(stderr, "pre-sentinels: %x %x\n",
+               sent1->first_word, sent1->second_word);
+
+  if (sent1->first_word == SENT_VAL_FREE && sent1->second_word == SENT_VAL_FREE) {
+    std::fprintf(stderr, "object should be free\n");
+  } else if (sent1->first_word == SENT_VAL_INUSE && sent1->second_word == SENT_VAL_INUSE) {
+    std::fprintf(stderr, "object should be inuse\n");
   } else {
-    fprintf(stderr, "status of object is unknown - sentinels must be messed up\n");
+    std::fprintf(stderr, "status of object is unknown - sentinels must be messed up\n");
   }
 }
 
-void GetGlobalStats(Allocator* a,
-                    size_t& nalloc, size_t& sizealloc,
-                    size_t& nfree, size_t& sizefree,
-                    size_t& nfillbin,
-                    size_t& nmmap, size_t& sizemmap,
-                    size_t& nmunmap, size_t& sizemunmap,
-                    size_t& highwater_alloc, size_t& highwater_mmap,
-                    size_t& bytes_overhead,
-                    size_t& bytes_free,
-                    size_t& bytes_fragmented,
-                    size_t& bytes_inuse,
-                    size_t& bytes_inhunks)
+// ---------------------------------------------------------------------------
+// GetGlobalStats (full accounting)
+// ---------------------------------------------------------------------------
+void
+GetGlobalStats(Allocator*   a,
+               std::size_t& nalloc,
+               std::size_t& sizealloc,
+               std::size_t& nfree,
+               std::size_t& sizefree,
+               std::size_t& nfillbin,
+               std::size_t& nmmap,
+               std::size_t& sizemmap,
+               std::size_t& nmunmap,
+               std::size_t& sizemunmap,
+               std::size_t& highwater_alloc,
+               std::size_t& highwater_mmap,
+               std::size_t& bytes_overhead,
+               std::size_t& bytes_free,
+               std::size_t& bytes_fragmented,
+               std::size_t& bytes_inuse,
+               std::size_t& bytes_inhunks)
 {
-  if(!a){
-    nalloc=sizealloc=nfree=sizefree=nfillbin=0;
-    nmmap=sizemmap=nmunmap=sizemunmap=0;
-    highwater_alloc=highwater_mmap=0;
-    bytes_overhead=bytes_free=bytes_fragmented=bytes_inuse=0;
-    bytes_inhunks=0;
+  if (!a) {
+    nalloc = sizealloc = nfree = sizefree = nfillbin = 0;
+    nmmap = sizemmap = nmunmap = sizemunmap          = 0;
+    highwater_alloc = highwater_mmap                 = 0;
+    bytes_overhead = bytes_free = bytes_fragmented = bytes_inuse = bytes_inhunks = 0;
     return;
   }
+
   a->lock();
-  nalloc=a->nalloc;
-  sizealloc=a->sizealloc;
-  nfree=a->nfree;
-  sizefree=a->sizefree;
-  nfillbin=a->nfillbin;
-  nmmap=a->nmmap;
-  sizemmap=a->sizemmap;
-  nmunmap=a->nmunmap;
-  sizemunmap=a->sizemunmap;
-  highwater_alloc=a->highwater_alloc;
-  highwater_mmap=a->highwater_mmap;
+  nalloc          = a->nalloc;
+  sizealloc       = a->sizealloc;
+  nfree           = a->nfree;
+  sizefree        = a->sizefree;
+  nfillbin        = a->nfillbin;
+  nmmap           = a->nmmap;
+  sizemmap        = a->sizemmap;
+  nmunmap         = a->nmunmap;
+  sizemunmap      = a->sizemunmap;
+  highwater_alloc = a->highwater_alloc;
+  highwater_mmap  = a->highwater_mmap;
 
-  // Full accounting - go through each bin...
-  bytes_overhead=bytes_free=bytes_fragmented=bytes_inuse=bytes_inhunks=0;
-  int i;
-  for(i=0;i<NSMALL_BINS;i++)
-    account_bin(a, &a->small_bins[i], 0, bytes_overhead, bytes_free,
-                bytes_fragmented, bytes_inuse);
-  for(i=0;i<NMEDIUM_BINS;i++)
-    account_bin(a, &a->medium_bins[i], 0, bytes_overhead, bytes_free,
-                bytes_fragmented, bytes_inuse);
-  account_bin(a, &a->big_bin, 0, bytes_overhead, bytes_free,
-              bytes_fragmented, bytes_inuse);
+  bytes_overhead = bytes_free = bytes_fragmented = bytes_inuse = bytes_inhunks = 0;
 
-  // Count hunks...
-  for(OSHunk* hunk=a->hunks;hunk!=0;hunk=hunk->next){
-    bytes_overhead+=sizeof(OSHunk);
-    bytes_inhunks+=hunk->spaceleft;
+  for (int i = 0; i < static_cast<int>(NSMALL_BINS); i++) {
+    account_bin(a, &a->small_bins[i], nullptr,
+                bytes_overhead, bytes_free, bytes_fragmented, bytes_inuse);
   }
-  // And the ones in the bigbin...
-  Tag* p;
-  for(p=a->big_bin.free;p!=0;p=p->next)
-    bytes_overhead+=sizeof(OSHunk);
-  for(p=a->big_bin.inuse;p!=0;p=p->next)
-    bytes_overhead+=sizeof(OSHunk);
-  bytes_overhead+=a->mysize;
+  for (int i = 0; i < static_cast<int>(NMEDIUM_BINS); i++) {
+    account_bin(a, &a->medium_bins[i], nullptr,
+                bytes_overhead, bytes_free, bytes_fragmented, bytes_inuse);
+  }
+  account_bin(a, &a->big_bin, nullptr,
+              bytes_overhead, bytes_free, bytes_fragmented, bytes_inuse);
+
+  for (OSHunk* hunk = a->hunks; hunk != nullptr; hunk = hunk->next) {
+    bytes_overhead += sizeof(OSHunk);
+    bytes_inhunks  += hunk->spaceleft;
+  }
+  for (Tag* p = a->big_bin.free;  p != nullptr; p = p->next) { bytes_overhead += sizeof(OSHunk); }
+  for (Tag* p = a->big_bin.inuse; p != nullptr; p = p->next) { bytes_overhead += sizeof(OSHunk); }
+  bytes_overhead += a->mysize;
 
   a->unlock();
 }
 
-// Shorter/faster version that doesn't do full accounting...
-void GetGlobalStats(Allocator* a,
-                    size_t& nalloc, size_t& sizealloc,
-                    size_t& nfree, size_t& sizefree,
-                    size_t& nfillbin,
-                    size_t& nmmap, size_t& sizemmap,
-                    size_t& nmunmap, size_t& sizemunmap,
-                    size_t& highwater_alloc, size_t& highwater_mmap)
+// ---------------------------------------------------------------------------
+// GetGlobalStats (fast — no bin accounting)
+// ---------------------------------------------------------------------------
+void
+GetGlobalStats(Allocator*   a,
+               std::size_t& nalloc,
+               std::size_t& sizealloc,
+               std::size_t& nfree,
+               std::size_t& sizefree,
+               std::size_t& nfillbin,
+               std::size_t& nmmap,
+               std::size_t& sizemmap,
+               std::size_t& nmunmap,
+               std::size_t& sizemunmap,
+               std::size_t& highwater_alloc,
+               std::size_t& highwater_mmap)
 {
-  if(!a){
-    nalloc=sizealloc=nfree=sizefree=nfillbin=0;
-    nmmap=sizemmap=nmunmap=sizemunmap=0;
-    highwater_alloc=highwater_mmap=0;
+  if (!a) {
+    nalloc = sizealloc = nfree = sizefree = nfillbin = 0;
+    nmmap = sizemmap = nmunmap = sizemunmap           = 0;
+    highwater_alloc = highwater_mmap                  = 0;
     return;
   }
-  a->lock();
-  nalloc=a->nalloc;
-  sizealloc=a->sizealloc;
-  nfree=a->nfree;
-  sizefree=a->sizefree;
-  nfillbin=a->nfillbin;
-  nmmap=a->nmmap;
-  sizemmap=a->sizemmap;
-  nmunmap=a->nmunmap;
-  sizemunmap=a->sizemunmap;
-  highwater_alloc=a->highwater_alloc;
-  highwater_mmap=a->highwater_mmap;
 
+  a->lock();
+  nalloc          = a->nalloc;
+  sizealloc       = a->sizealloc;
+  nfree           = a->nfree;
+  sizefree        = a->sizefree;
+  nfillbin        = a->nfillbin;
+  nmmap           = a->nmmap;
+  sizemmap        = a->sizemmap;
+  nmunmap         = a->nmunmap;
+  sizemunmap      = a->sizemunmap;
+  highwater_alloc = a->highwater_alloc;
+  highwater_mmap  = a->highwater_mmap;
   a->unlock();
 }
 
-int GetNbins(Allocator*)
+// ---------------------------------------------------------------------------
+// Bin stats
+// ---------------------------------------------------------------------------
+int
+GetNbins(Allocator*)
 {
-  return NSMALL_BINS+NMEDIUM_BINS+1;
+  return static_cast<int>(NSMALL_BINS + NMEDIUM_BINS + 1);
 }
 
-void GetBinStats(Allocator* a, int binno, size_t& minsize, size_t& maxsize,
-                 size_t& nalloc, size_t& nfree, size_t& ninlist)
+void
+GetBinStats(Allocator*   a,
+            int          binno,
+            std::size_t& minsize,
+            std::size_t& maxsize,
+            std::size_t& nalloc,
+            std::size_t& nfree,
+            std::size_t& ninlist)
 {
-  AllocBin* bin;
-  if(binno < NSMALL_BINS)
-    bin=&a->small_bins[binno];
-  else if(binno < NSMALL_BINS+NMEDIUM_BINS)
-    bin=&a->medium_bins[binno-NSMALL_BINS];
-  else
-    bin=&a->big_bin;
+  AllocBin* bin = nullptr;
+  if (binno < static_cast<int>(NSMALL_BINS)) {
+    bin = &a->small_bins[binno];
+  } else if (binno < static_cast<int>(NSMALL_BINS + NMEDIUM_BINS)) {
+    bin = &a->medium_bins[binno - static_cast<int>(NSMALL_BINS)];
+  } else {
+    bin = &a->big_bin;
+  }
 
   a->lock();
-  minsize=bin->minsize;
-  maxsize=bin->maxsize;
-  nalloc=bin->nalloc;
-  nfree=bin->nfree;
-  ninlist=bin->ntotal-bin->ninuse;
+  minsize = bin->minsize;
+  maxsize = bin->maxsize;
+  nalloc  = bin->nalloc;
+  nfree   = bin->nfree;
+  ninlist = bin->ntotal - bin->ninuse;
   a->unlock();
 }
 
-Allocator* DefaultAllocator()
+// ---------------------------------------------------------------------------
+// DefaultAllocator
+// ---------------------------------------------------------------------------
+[[nodiscard]] Allocator*
+DefaultAllocator()
 {
   MakeDefaultAllocator();
-
   return default_allocator;
 }
 
-static void audit_bin(Allocator* a, AllocBin* bin)
+// ---------------------------------------------------------------------------
+// Audit helpers
+// ---------------------------------------------------------------------------
+static void
+audit_bin(Allocator* a, AllocBin* bin)
 {
-  Tag* p;
-  for(p=bin->free;p!=0;p=p->next){
-    if(p->next && p->next->prev != p)
+  for (Tag* p = bin->free; p != nullptr; p = p->next) {
+    if (p->next && p->next->prev != p) {
       AllocError("Free list confused");
+    }
     a->audit(p, OBJFREE);
   }
-  for(p=bin->inuse;p!=0;p=p->next){
-    if(p->next && p->next->prev != p)
+  for (Tag* p = bin->inuse; p != nullptr; p = p->next) {
+    if (p->next && p->next->prev != p) {
       AllocError("Inuse list confused");
+    }
     a->audit(p, OBJINUSE);
   }
 }
 
-void AuditAllocator(Allocator* a)
+void
+AuditAllocator(Allocator* a)
 {
   a->lock();
-  int i;
-  for(i=0;i<NSMALL_BINS;i++)
-    audit_bin(a, &a->small_bins[i]);
-  for(i=0;i<NMEDIUM_BINS;i++)
-    audit_bin(a, &a->medium_bins[i]);
+  for (int i = 0; i < static_cast<int>(NSMALL_BINS);  i++) { audit_bin(a, &a->small_bins[i]);  }
+  for (int i = 0; i < static_cast<int>(NMEDIUM_BINS); i++) { audit_bin(a, &a->medium_bins[i]); }
   audit_bin(a, &a->big_bin);
   a->unlock();
 }
 
-void AuditDefaultAllocator()
+void
+AuditDefaultAllocator()
 {
   AuditAllocator(default_allocator);
 }
 
-static void dump_bin(Allocator*, AllocBin* bin, FILE* fp)
+// ---------------------------------------------------------------------------
+// DumpAllocator
+// ---------------------------------------------------------------------------
+static void
+dump_bin(Allocator*, AllocBin* bin, FILE* fp)
 {
-  for(Tag* p=bin->inuse;p!=0;p=p->next){
-#  ifdef USE_TAG_LINENUM
-    fprintf(fp, "%p "UCONV" %s:%d\n", (p+sizeof(Tag)+sizeof(Sentinel)),
-            (SIZET)p->reqsize, p->tag, p->linenum);
-#  else
-    fprintf(fp, "%p "UCONV" %s\n", (p+sizeof(Tag)+sizeof(Sentinel)),
-            (SIZET)p->reqsize, p->tag);
-#  endif
+  for (Tag* p = bin->inuse; p != nullptr; p = p->next) {
+    auto* obj_ptr = static_cast<void*>(
+      reinterpret_cast<char*>(p) + sizeof(Tag) + sizeof(Sentinel));
+#ifdef USE_TAG_LINENUM
+    std::fprintf(fp, "%p %zu %s:%d\n", obj_ptr, p->reqsize, p->tag, p->linenum);
+#else
+    std::fprintf(fp, "%p %zu %s\n",    obj_ptr, p->reqsize, p->tag);
+#endif
   }
 }
 
-void DumpAllocator(Allocator* a, const char* filename)
+void
+DumpAllocator(Allocator* a, const char* filename)
 {
-  FILE* fp=fopen(filename, "w");
+  if (!a) {
+    std::printf("WARNING: In DumpAllocator: Allocator is nullptr.\n");
+    std::printf("         Therefore no information to dump.");
+    return;
+  }
 
-  if( a == nullptr )
-    {
-      printf( "WARNING: In DumpAllocator: Allocator is nullptr.\n");
-      printf( "         Therefore no information to dump.");
-      return;
-    }
-  if( fp == nullptr )
-    {
-      perror("DumpAllocator fopen");
-      exit( 1 );
-    }
-  fprintf(fp, "\n");
+  FILE* fp = std::fopen(filename, "w");
+  if (!fp) {
+    std::perror("DumpAllocator fopen");
+    std::exit(1);
+  }
+
+  std::fprintf(fp, "\n");
   a->lock();
-
-  int i;
-  for(i=0;i<NSMALL_BINS;i++)
-    dump_bin(a, &a->small_bins[i], fp);
-  for(i=0;i<NMEDIUM_BINS;i++)
-    dump_bin(a, &a->medium_bins[i], fp);
+  for (int i = 0; i < static_cast<int>(NSMALL_BINS);  i++) { dump_bin(a, &a->small_bins[i],  fp); }
+  for (int i = 0; i < static_cast<int>(NMEDIUM_BINS); i++) { dump_bin(a, &a->medium_bins[i], fp); }
   dump_bin(a, &a->big_bin, fp);
   a->unlock();
-  fclose(fp);
+  std::fclose(fp);
 }
 
-void Allocator::noninline_unlock()
+// ---------------------------------------------------------------------------
+
+void
+Allocator::noninline_unlock()
 {
   unlock();
 }
 
-} // End namespace Uintah
+} // namespace Uintah
 
-#endif // !defined( DISABLE_SCI_MALLOC )
+#endif // !defined(DISABLE_SCI_MALLOC)

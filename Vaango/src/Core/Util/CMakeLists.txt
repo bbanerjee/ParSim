@@ -85,3 +85,5 @@ target_link_libraries(Vaango_Core_Util PRIVATE
 if (BUILD_SHARED_LIBS)
   target_compile_definitions(Vaango_Core_Util PRIVATE BUILD_Vaango_Core_Util)
 endif()
+
+add_subdirectory(UnitTests)

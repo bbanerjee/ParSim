@@ -44,3 +44,7 @@ target_link_libraries(Vaango_Core_DataArchive PRIVATE
 if (BUILD_SHARED_LIBS)
   target_compile_definitions(Vaango_Core_DataArchive PRIVATE BUILD_Vaango_Core_DataArchive)
 endif()
+
+if (NOT DEFINED HAVE_KOKKOS)
+  add_subdirectory(UnitTests)
+endif ()

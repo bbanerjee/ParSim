@@ -60,10 +60,11 @@ class ElasticModuli_NeuralNet_Bulk : public ElasticModuliModel
 public:
   ElasticModuli_NeuralNet_Bulk() = delete;
   ElasticModuli_NeuralNet_Bulk(const ElasticModuli_NeuralNet_Bulk& smm) = delete;
-  ~ElasticModuli_NeuralNet_Bulk() = default;
 
   ElasticModuli_NeuralNet_Bulk(Uintah::ProblemSpecP& ps);
   ElasticModuli_NeuralNet_Bulk(const ElasticModuli_NeuralNet_Bulk* smm);
+  ~ElasticModuli_NeuralNet_Bulk();
+
   ElasticModuli_NeuralNet_Bulk& operator=(const ElasticModuli_NeuralNet_Bulk& smm) = delete;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;

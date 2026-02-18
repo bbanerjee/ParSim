@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2014-2026 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,37 +24,30 @@
  * IN THE SOFTWARE.
  */
 
-
-/*
- *  AllocOS.h: ?
- *
- *  Written by:
- *   Author: ?
- *   Department of Computer Science
- *   University of Utah
- *   Date: ?
- *
- */
-
 #ifndef Malloc_AllocOS_h
 #define Malloc_AllocOS_h 1
 
 #include <cstdlib>
 
 namespace Uintah {
-  struct Allocator;
-struct OSHunk {
-    static OSHunk* alloc(size_t size, bool returnable, Allocator* allocator);
-    static void free(OSHunk*);
-    void* data;
-    OSHunk* next;
+struct Allocator;
+struct OSHunk
+{
+  static OSHunk*
+  alloc(size_t size, bool returnable, Allocator* allocator);
 
-    int ninuse;
-    size_t spaceleft;
-    void* curr;
-    size_t len;
-    size_t alloc_len;
-    bool returnable;
+  static void
+  free(OSHunk*);
+
+  void* data;
+  OSHunk* next;
+
+  int ninuse;
+  size_t spaceleft;
+  void* curr;
+  size_t len;
+  size_t alloc_len;
+  bool returnable;
 };
 
 } // End namespace Uintah

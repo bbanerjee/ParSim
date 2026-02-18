@@ -61,12 +61,7 @@ SET(Vaango_Core_Malloc_SRCS
 
 add_library(Vaango_Core_Malloc ${Vaango_Core_Malloc_SRCS})
 
-target_link_libraries(Vaango_Core_Malloc PRIVATE
-  Vaango::Options
-  Vaango::Warnings
-)
-
-if (BUILD_SHARED_LIBS)
-  target_compile_definitions(Vaango_Core_Malloc PRIVATE BUILD_Vaango_Core_Malloc)
-endif()
+IF(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILD_Vaango_Core_Malloc)
+ENDIF(BUILD_SHARED_LIBS)
 

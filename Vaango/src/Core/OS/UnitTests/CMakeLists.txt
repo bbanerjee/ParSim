@@ -50,7 +50,22 @@ target_link_libraries(testDir PRIVATE
   Vaango::Warnings
   MPI::MPI_CXX
 )
-set(UNIT_TEST testDir)
+#---------------------------------------------------------
+# testProcessInfo
+#---------------------------------------------------------
+set(UNIT_TEST testProcessInfo)
+add_executable(${UNIT_TEST} testProcessInfo.cc)
+target_link_libraries(${UNIT_TEST} PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  ${CMAKE_DL_LIBS}
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
+  Vaango::Options
+  Vaango::Warnings
+  MPI::MPI_CXX
+)
 if (RUN_UNIT_TESTS_ON_BUILD)
   add_custom_command(
     TARGET ${UNIT_TEST}

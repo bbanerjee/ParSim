@@ -30,6 +30,7 @@ target_link_libraries(SimpleMath
   Vaango_Core_Grid          
   Vaango_Core_Util          
   Vaango_Core_Math          
+  Vaango_Core_Malloc          
   Vaango_Core_OS          
   Vaango_Core_ProblemSpec   
   Vaango_Core_Parallel      

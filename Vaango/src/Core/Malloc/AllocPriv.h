@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2014-2026 Biswajit Banerjee, Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,162 +24,175 @@
  * IN THE SOFTWARE.
  */
 
+#pragma once
 
-/*
- *  AllocPriv.h: ?
- *
- *  Written by:
- *   Author: ?
- *   Department of Computer Science
- *   University of Utah
- *   Date: ?
- *
- */
-
-#include <sci_defs/thread_defs.h>
 #include <sci_defs/malloc_defs.h>
+#include <sci_defs/thread_defs.h>
 
-#include <cstdlib>
-#include <stdio.h>
+#include <cstddef>
+#include <cstdio>
 
 #ifdef SCI_PTHREAD
-#  include <pthread.h>
+#include <pthread.h>
 #else
-#  ifdef __sgi
-#    include <abi_mutex.h>
-#  else
-#    if !defined(SCI_NOTHREAD) && !defined(_WIN32)
-#      error "No lock implementation for this architecture"
-#    endif
-#  endif
+#if !defined(SCI_NOTHREAD) && !defined(_WIN32)
+#error "No lock implementation for this architecture"
+#endif
 #endif
 
 namespace Uintah {
 
 struct OSHunk;
 
-struct alignas(16) Sentinel {
-    unsigned int first_word;
-    unsigned int second_word;
-    unsigned int padding[2]; // Explicit padding to keep size 16
+// ---------------------------------------------------------------------------
+// Sentinel — guards either side of every allocation to detect corruption.
+// ---------------------------------------------------------------------------
+struct Sentinel
+{
+  unsigned int first_word;
+  unsigned int second_word;
 };
 
 struct AllocBin;
 
-struct alignas(16) Tag {
-//    Allocator* allocator;
-//    size_t size;
-    AllocBin* bin;
-    const char* tag;
+// ---------------------------------------------------------------------------
+// Tag — header placed immediately before each allocation's sentinel pair.
+// ---------------------------------------------------------------------------
+struct Tag
+{
+  AllocBin*   bin;
+  const char* tag;
 #ifdef USE_TAG_LINENUM
-  int linenum;
-  int padding_linenum;
-#endif
-    Tag* next;
-    Tag* prev;
-    OSHunk* hunk;
-    size_t reqsize;
-    size_t padding; 
-};
-
-struct AllocBin {
-    Tag* free;
-    Tag* inuse;
-    size_t maxsize;
-    size_t minsize;
-    int ninuse;
-    int ntotal;
-    size_t nalloc;
-    size_t nfree;
-};
-
-struct Allocator {
-#ifdef SCI_PTHREAD
-   pthread_mutex_t the_lock;
+  int         linenum;
+  int         pad;     // Pad to make sizeof(Tag) + sizeof(Sentinel) a multiple of 32
 #else
-# ifdef __sgi
-   abilock_t the_lock;
-# endif
+  long long   pad;     // Pad to make sizeof(Tag) + sizeof(Sentinel) a multiple of 32
 #endif
-    void initlock();
-    inline void lock();
-    inline void unlock();
-  void noninline_unlock();
+  Tag*        next;
+  Tag*        prev;
+  OSHunk*     hunk;
+  std::size_t reqsize;
+};
+
+// ---------------------------------------------------------------------------
+// AllocBin — a size-class bucket holding free and in-use object lists.
+// ---------------------------------------------------------------------------
+struct AllocBin
+{
+  Tag*        free;
+  Tag*        inuse;
+  std::size_t maxsize;
+  std::size_t minsize;
+  int         ninuse;
+  int         ntotal;
+  std::size_t nalloc;
+  std::size_t nfree;
+};
+
+// ---------------------------------------------------------------------------
+// Allocator
+// ---------------------------------------------------------------------------
+struct Allocator
+{
+  // --- Locking ------------------------------------------------------------
+#ifdef SCI_PTHREAD
+  pthread_mutex_t the_lock;
+#endif
+
+  void        initlock() noexcept;
+  inline void lock()    noexcept;
+  inline void unlock()  noexcept;
+  void        noninline_unlock();
 
 #ifdef SCI_PTHREAD
-    inline void rlock();
-    // These (dont_lock et.al.) are added in an attempt to deal with some
-    // bugs with current versions of glibc in linux.  If and when they get
-    // resolved, this code should be removed.  The bug relates to mishandling
-    // of mutex's accross fork calls.
-    // This variable is initialized in initlock.
-    //   James Bigler - 02/04/2003
-    bool use_rlock;
-    // Current thread that has the lock
-    // I'm not sure what to initialize this to, but 0 seems a close enough bet
-    pthread_t owner;
-    bool owner_initialized;
-    // Number of locks held by owner
-    int lock_count;
+  inline void rlock() noexcept;
 
+  // These members deal with recursive locking behaviour needed to work
+  // around glibc mutex/fork interaction bugs (see implementation for
+  // details).  Initialised in initlock().
+  bool      use_rlock;
+  pthread_t owner;
+  bool      owner_initialized;
+  int       lock_count;
 #endif
-  
-    void* alloc_big(size_t size, const char* tag, int linenum);
-    
-    void* memalign(size_t alignment, size_t size, const char* tag);
-    void* alloc(size_t size, const char* tag, int linenum);
+
+  // --- Core allocation / deallocation -------------------------------------
+  [[nodiscard]] void* alloc_big(std::size_t size,
+                                const char* tag,
+                                int         linenum);
+
+  [[nodiscard]] void* memalign(std::size_t alignment,
+                               std::size_t size,
+                               const char* tag);
+
+  [[nodiscard]] void* alloc(std::size_t size,
+                            const char* tag,
+                            int         linenum);
+
 #ifdef MALLOC_TRACE
-#  include <MallocTraceOff.h>
+#include <MallocTraceOff.h>
 #endif
-    void free(void*);
-    void* realloc(void* p, size_t size);
+
+  void  free(void* ptr) noexcept;
+
+  [[nodiscard]] void* realloc(void* ptr, std::size_t size);
+
 #ifdef MALLOC_TRACE
-#  include <MallocTraceOn.h>
+#include <MallocTraceOn.h>
 #endif
 
-    int strict;
-    int lazy;
-    FILE* trace_out;
-    FILE* stats_out;
-    char* statsfile;
-    OSHunk* hunks;
+  // --- Configuration ------------------------------------------------------
+  int   strict;
+  int   lazy;
+  FILE* trace_out;
+  FILE* stats_out;
+  const char* statsfile;    // changed from char* — never modified after set
+  OSHunk* hunks;
 
-    AllocBin* small_bins;
-    AllocBin* medium_bins;
-    AllocBin big_bin;
+  // --- Bin tables ---------------------------------------------------------
+  AllocBin* small_bins;
+  AllocBin* medium_bins;
+  AllocBin  big_bin;
 
-    inline AllocBin* get_bin(size_t size);
-    void fill_bin(AllocBin*);
-    void get_hunk(size_t, OSHunk*&, void*&);
+  // --- Internal helpers ---------------------------------------------------
+  [[nodiscard]] inline AllocBin* get_bin(std::size_t size) noexcept;
 
-    void init_bin(AllocBin*, size_t maxsize, size_t minsize);
+  void fill_bin(AllocBin* bin);
 
-    void audit(Tag*, int);
-    size_t obj_maxsize(Tag*);
+  void get_hunk(std::size_t reqsize, OSHunk*& ret_hunk, void*& ret_p);
 
-    // Statistics...
-    size_t nalloc;
-    size_t nfree;
-    size_t sizealloc;
-    size_t sizefree;
+  void init_bin(AllocBin*   bin,
+                std::size_t maxsize,
+                std::size_t minsize) noexcept;
 
-    size_t nfillbin;
-    size_t nmmap;
-    size_t sizemmap;
-    size_t nmunmap;
-    size_t sizemunmap;
+  void audit(Tag* obj, int what);
 
-    size_t highwater_alloc;
-    size_t highwater_mmap;
+  [[nodiscard]] inline std::size_t obj_maxsize(Tag* t) noexcept;
 
-    size_t mysize;
+  // --- Statistics ---------------------------------------------------------
+  std::size_t nalloc;
+  std::size_t nfree;
+  std::size_t sizealloc;
+  std::size_t sizefree;
 
-  size_t pagesize;
+  std::size_t nfillbin;
+  std::size_t nmmap;
+  std::size_t sizemmap;
+  std::size_t nmunmap;
+  std::size_t sizemunmap;
+
+  std::size_t highwater_alloc;
+  std::size_t highwater_mmap;
+
+  std::size_t mysize;
+  std::size_t pagesize;
+
   bool dieing;
 };
 
-void AllocError(const char*);
+// ---------------------------------------------------------------------------
+// Free functions
+// ---------------------------------------------------------------------------
+[[noreturn]] void AllocError(const char* msg);
 
-} // End namespace Uintah
-
-
+} // namespace Uintah

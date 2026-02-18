@@ -59,3 +59,5 @@ target_link_libraries(Vaango_Core_Exceptions PRIVATE
 if (BUILD_SHARED_LIBS)
   target_compile_definitions(Vaango_Core_Exceptions PRIVATE BUILD_Vaango_Core_Exceptions)
 endif()
+
+add_subdirectory(UnitTests)

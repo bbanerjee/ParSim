@@ -44,5 +44,11 @@ if (BUILD_SHARED_LIBS)
 endif()
 
 install(TARGETS
+
   Vaango_Core_IO
+
 )
+
+
+
+add_subdirectory(UnitTests)

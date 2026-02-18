@@ -48,6 +48,7 @@ SET(VAANGO_LIBS
         Vaango_Core_Parallel    
         Vaango_Core_Util        
         Vaango_Core_Math        
+        Vaango_Core_Malloc        
         Vaango_Core_Exceptions  
         Vaango_Core_OS  
         Vaango_CCA_Ports        
@@ -123,8 +124,13 @@ if (RUN_UNIT_TESTS_ON_BUILD)
   )
 endif()
 
-add_executable(testElasticModuli_NeuralNet testElasticModuli_NeuralNet.cc)
-target_link_libraries(testElasticModuli_NeuralNet PRIVATE
+set(UNIT_TEST testElasticModuli_NeuralNet)
+add_executable(${UNIT_TEST} testElasticModuli_NeuralNet.cc)
+target_compile_definitions(${UNIT_TEST}
+  PRIVATE
+    EIGEN_MALLOC_ALREADY_ALIGNED=0
+)
+target_link_libraries(${UNIT_TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
   MPM_ConstitutiveModel
@@ -132,7 +138,6 @@ target_link_libraries(testElasticModuli_NeuralNet PRIVATE
   Vaango::Options
   Vaango::Warnings
 )
-set(UNIT_TEST testElasticModuli_NeuralNet)
 if (RUN_UNIT_TESTS_ON_BUILD)
   add_custom_command(
     TARGET ${UNIT_TEST}
@@ -144,6 +149,10 @@ endif()
 
 set(UNIT_TEST testElasticModuli_NeuralNet_Bulk)
 add_executable(${UNIT_TEST} ${UNIT_TEST}.cc)
+target_compile_definitions(${UNIT_TEST}
+  PRIVATE
+    EIGEN_MALLOC_ALREADY_ALIGNED=0
+)
 target_link_libraries(${UNIT_TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
@@ -162,6 +171,10 @@ endif()
 
 set(UNIT_TEST testElasticModuli_SupportVector)
 add_executable(${UNIT_TEST} ${UNIT_TEST}.cc)
+target_compile_definitions(${UNIT_TEST}
+  PRIVATE
+    EIGEN_MALLOC_ALREADY_ALIGNED=0
+)
 target_link_libraries(${UNIT_TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}

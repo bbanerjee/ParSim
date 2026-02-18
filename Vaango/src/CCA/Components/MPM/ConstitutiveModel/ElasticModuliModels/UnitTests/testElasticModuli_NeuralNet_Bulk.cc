@@ -61,7 +61,7 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
               BAD_CAST "0.2");
 
   // Print the document to stdout
-  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
   // std::cout << "Created doc" << std::endl;
 
   // Create a ProblemSpec
@@ -72,7 +72,7 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
     exit(-1);
   }
 
-  //std::cout << "Created ps" << std::endl;
+  // std::cout << "Created ps" << std::endl;
 
   // Test model creation
   try {
@@ -91,7 +91,7 @@ TEST(ElasticModuliNeuralNetBulkTest, constructorTest)
     throw;
   }
 
-  //std::cout << "Created model 1" << std::endl;
+  // std::cout << "Created model 1" << std::endl;
 
   // Create a model
   ElasticModuli_NeuralNet_Bulk model(ps);

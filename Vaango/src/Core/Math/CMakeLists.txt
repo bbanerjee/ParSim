@@ -102,3 +102,5 @@ target_compile_options(Vaango_Core_Math PRIVATE
 if (BUILD_SHARED_LIBS)
   target_compile_definitions(Vaango_Core_Math PRIVATE BUILD_Vaango_Core_Math)
 endif()
+
+add_subdirectory(UnitTests)
