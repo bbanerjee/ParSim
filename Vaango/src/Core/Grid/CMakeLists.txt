@@ -63,9 +63,7 @@ SET(Vaango_Core_Grid_SRCS
 add_subdirectory(BoundaryConditions)
 add_subdirectory(Variables)
 add_subdirectory(PatchBVH)
-if (NOT DEFINED HAVE_KOKKOS)
-  add_subdirectory(UnitTests)
-endif ()
+add_subdirectory(UnitTests)
 
 #message(STATUS "Core/Grid sources are ${Vaango_Core_Grid_SRCS}")
 
@@ -89,5 +87,9 @@ target_link_libraries(Vaango_Core_Grid
 
 if (BUILD_SHARED_LIBS)
   target_compile_definitions(Vaango_Core_Grid PRIVATE BUILD_Vaango_Core_Grid)
+endif()
+
+if (HAVE_KOKKOS)
+  target_compile_definitions(Vaango_Core_Grid PRIVATE KOKKOS_DEPENDENCE)
 endif()
 

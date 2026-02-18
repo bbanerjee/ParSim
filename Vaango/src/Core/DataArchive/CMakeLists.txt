@@ -47,4 +47,5 @@ endif()
 
 if (NOT DEFINED HAVE_KOKKOS)
   add_subdirectory(UnitTests)
-endif ()
+endif()
+

@@ -106,6 +106,7 @@ option(VISIT             "Build with Visit" OFF)
 option(CUDA             "Build with CUDA" OFF) 
 option(RUN_UNIT_TESTS_ON_BUILD "Run unit tests during compile" ON)
 option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
+option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
 
 if(ENABLE_COVERAGE)
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -146,6 +147,17 @@ if(ENABLE_COVERAGE)
             COMMENT "Generating console coverage summary..."
         )
     endif()
+endif()
+
+# Clang-tidy integration
+# Custom target for batch clang-tidy analysis
+find_package(Python3 QUIET)
+if(Python3_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/../run-clang-tidy.py")
+    add_custom_target(tidy
+        COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/../run-clang-tidy.py" -p "${CMAKE_BINARY_DIR}"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        COMMENT "Running batch clang-tidy analysis..."
+    )
 endif()
 
 # Explicitly setting VISIT ON if VISIT_DIR is defined,

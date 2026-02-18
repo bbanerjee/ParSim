@@ -104,9 +104,7 @@ if (BUILD_SHARED_LIBS)
   target_compile_definitions(MPM_ConstitutiveModel PRIVATE BUILD_MPM_ConstitutiveModel)
 endif()
 
-if(NOT DEFINED HAVE_KOKKOS) 
-  add_subdirectory(UnitTests)
-endif()
+add_subdirectory(UnitTests)
 
 install(TARGETS
   MPM_ConstitutiveModel

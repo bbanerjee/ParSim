@@ -27,14 +27,24 @@ include(GoogleTest)
 
 set(VAANGO_LIBS
     Vaango_CCA_Components_SimulationCommon
-    Vaango_Core_Grid
-    Vaango_Core_Parallel
-    Vaango_Core_Util
-    Vaango_Core_ProblemSpec
-    Vaango_Core_Exceptions
-    Vaango_Core_GeometryPiece
-    Vaango_Core_Math
-    Vaango_Core_Malloc
+    Vaango_Core_DataArchive 
+    Vaango_Core_Grid        
+    Vaango_Core_Parallel    
+    Vaango_Core_Util        
+    Vaango_Core_Math        
+    Vaango_Core_Malloc        
+    Vaango_Core_Exceptions  
+    Vaango_Core_OS  
+    Vaango_CCA_Ports        
+    Vaango_CCA_Components_Parent 
+    Vaango_CCA_Components_DataArchiver  
+    Vaango_CCA_Components_LoadBalancers 
+    Vaango_CCA_Components_Regridder     
+    Vaango_Core_ProblemSpec             
+    Vaango_CCA_Components_SimulationController 
+    Vaango_CCA_Components_Schedulers           
+    Vaango_CCA_Components_ProblemSpecification 
+    Vaango_CCA_Components_Solvers
 )
 
 set(GTEST_LIB GTest::gtest_main)
@@ -43,10 +53,15 @@ set(GTEST_LIB GTest::gtest_main)
 # testSimulationCommon
 #---------------------------------------------------------
 set(UNIT_TEST testSimulationCommon)
-add_executable(${UNIT_TEST} testSimulationCommon.cc)
+set(SOURCES testSimulationCommon.cc)
+if (HAVE_KOKKOS)
+  list(APPEND SOURCES ../../Schedulers/GPUDataWarehouse.cc)
+endif()
+add_executable(${UNIT_TEST} ${SOURCES})
 target_link_libraries(${UNIT_TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings

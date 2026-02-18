@@ -75,12 +75,9 @@ if (BUILD_SHARED_LIBS)
 endif()
 
 install(TARGETS
-
   Vaango_Core_GeometryPiece
-
 )
-
 
 if (NOT DEFINED HAVE_KOKKOS)
   add_subdirectory(UnitTests)
-endif ()
+endif()

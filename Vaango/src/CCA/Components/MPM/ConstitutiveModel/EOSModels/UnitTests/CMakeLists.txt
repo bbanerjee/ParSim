@@ -31,26 +31,27 @@
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-        Vaango_Core_DataArchive 
-        Vaango_Core_Grid        
-        Vaango_Core_Parallel    
-        Vaango_Core_Util        
-        Vaango_Core_Math        
-        Vaango_Core_Malloc        
-        Vaango_Core_Exceptions  
-        Vaango_Core_OS  
-        Vaango_CCA_Ports        
-        Vaango_CCA_Components_Parent 
-        Vaango_CCA_Components_DataArchiver  
-        Vaango_CCA_Components_LoadBalancers 
-        Vaango_CCA_Components_Regridder     
-        Vaango_Core_ProblemSpec             
-        Vaango_CCA_Components_SimulationController 
-        Vaango_CCA_Components_Schedulers           
-        Vaango_CCA_Components_ProblemSpecification 
-        Vaango_CCA_Components_Solvers
-        ${HDF5_TARGET}
-        $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
+  Vaango_Core_DataArchive 
+  Vaango_Core_Grid        
+  Vaango_Core_Parallel    
+  Vaango_Core_Util        
+  Vaango_Core_Math        
+  Vaango_Core_Malloc        
+  Vaango_Core_Exceptions  
+  Vaango_Core_OS  
+  Vaango_Core_ProblemSpec             
+  Vaango_CCA_Ports        
+  Vaango_CCA_Components_Parent 
+  Vaango_CCA_Components_DataArchiver  
+  Vaango_CCA_Components_LoadBalancers 
+  Vaango_CCA_Components_Regridder     
+  Vaango_CCA_Components_Schedulers           
+  Vaango_CCA_Components_SimulationController 
+  Vaango_CCA_Components_ProblemSpecification 
+  Vaango_CCA_Components_Solvers
+  ${HDF5_TARGET}
+  $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
 )
 
 #------------------------
@@ -59,9 +60,14 @@ SET(VAANGO_LIBS
 
 set(GTEST_LIB gtest_main gtest)
 
+if (HAVE_KOKKOS)
+  set(GPU_SRC ${CMAKE_SOURCE_DIR}/CCA/Components/Schedulers/GPUDataWarehouse.cc)
+endif()
 
-add_executable(testPressure_Air testPressure_Air.cc)
-target_link_libraries(testPressure_Air PRIVATE
+set(UNIT_TEST testPressure_Air)
+set(SOURCES ${UNIT_TEST}.cc)
+add_executable(${UNIT_TEST} ${SOURCES} ${GPU_SRC})
+target_link_libraries(${UNIT_TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
   MPM_ConstitutiveModel
@@ -69,7 +75,6 @@ target_link_libraries(testPressure_Air PRIVATE
   Vaango::Options
   Vaango::Warnings
 )
-set(UNIT_TEST testPressure_Air)
 if (RUN_UNIT_TESTS_ON_BUILD)
   add_custom_command(
     TARGET ${UNIT_TEST}
@@ -78,7 +83,7 @@ if (RUN_UNIT_TESTS_ON_BUILD)
   )
 endif()
 
-add_executable(testPressure_Water testPressure_Water.cc)
+add_executable(testPressure_Water testPressure_Water.cc ${GPU_SRC})
 target_link_libraries(testPressure_Water PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
@@ -96,7 +101,7 @@ if (RUN_UNIT_TESTS_ON_BUILD)
   )
 endif()
 
-add_executable(testPressure_Granite testPressure_Granite.cc)
+add_executable(testPressure_Granite testPressure_Granite.cc ${GPU_SRC})
 target_link_libraries(testPressure_Granite PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
@@ -115,7 +120,8 @@ if (RUN_UNIT_TESTS_ON_BUILD)
 endif()
 
 set(TEST testEOS_BorjaT)
-add_executable(${TEST} ${TEST}.cc)
+set(SOURCES ${TEST}.cc)
+add_executable(${TEST} ${SOURCES} ${GPU_SRC})
 target_link_libraries(${TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
@@ -133,7 +139,7 @@ if (RUN_UNIT_TESTS_ON_BUILD)
   )
 endif()
 
-add_executable(testMieGruneisenEOS testMieGruneisenEOS.cc)
+add_executable(testMieGruneisenEOS testMieGruneisenEOS.cc ${GPU_SRC})
 target_link_libraries(testMieGruneisenEOS PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
@@ -151,7 +157,7 @@ if (RUN_UNIT_TESTS_ON_BUILD)
   )
 endif()
 
-add_executable(testHyperElasticEOS testHyperElasticEOS.cc)
+add_executable(testHyperElasticEOS testHyperElasticEOS.cc ${GPU_SRC})
 target_link_libraries(testHyperElasticEOS PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
@@ -169,7 +175,7 @@ if (RUN_UNIT_TESTS_ON_BUILD)
   )
 endif()
 
-add_executable(testDefaultHypoElasticEOS testDefaultHypoElasticEOS.cc)
+add_executable(testDefaultHypoElasticEOS testDefaultHypoElasticEOS.cc ${GPU_SRC})
 target_link_libraries(testDefaultHypoElasticEOS PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
@@ -187,7 +193,7 @@ if (RUN_UNIT_TESTS_ON_BUILD)
   )
 endif()
 
-add_executable(testBorjaEOS testBorjaEOS.cc)
+add_executable(testBorjaEOS testBorjaEOS.cc ${GPU_SRC})
 target_link_libraries(testBorjaEOS PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}

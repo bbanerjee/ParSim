@@ -27,6 +27,7 @@ include(GoogleTest)
 
 set(VAANGO_LIBS
     Vaango_CCA_Components_DataArchiver
+    Vaango_CCA_Components_Schedulers
     Vaango_Core_Grid
     Vaango_Core_Parallel
     Vaango_Core_Util
@@ -46,6 +47,7 @@ add_executable(${UNIT_TEST} testDataArchiver.cc)
 target_link_libraries(${UNIT_TEST} PRIVATE
   ${GTEST_LIB}
   ${VAANGO_LIBS}
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   LibXml2::LibXml2
   Vaango::Options
   Vaango::Warnings

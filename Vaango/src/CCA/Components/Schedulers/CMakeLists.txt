@@ -74,7 +74,7 @@ target_link_libraries(Vaango_CCA_Components_Schedulers PRIVATE
   LibXml2::LibXml2
   $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
   $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
-  $<$<BOOL:${HAVE_CUDA}>:Kokkos::kokkos>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   MPI::MPI_CXX
 )
 

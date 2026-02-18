@@ -32,6 +32,7 @@
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
+        Vaango_CCA_Components_Schedulers           
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
@@ -46,7 +47,6 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_Regridder     
         Vaango_Core_ProblemSpec             
         Vaango_CCA_Components_SimulationController 
-        Vaango_CCA_Components_Schedulers           
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
         ${HDF5_TARGET}

@@ -42,9 +42,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   set(CMAKE_COMPILER_IS_INTEL 1)
 endif()
 
-if (NOT DEFINED HAVE_KOKKOS)
+#if (NOT DEFINED HAVE_KOKKOS)
   add_subdirectory(UnitTests)
-endif()
-
+#endif()
 
 

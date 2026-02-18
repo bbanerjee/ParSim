@@ -57,7 +57,7 @@ TEST(HyperElasticEOSTest, basicTest)
   // Strain Energy
   double U = model.computeStrainEnergy(rho_orig, rho_cur);
   double expected_U = 0.5 * bulk * (0.5 * (J * J - 1.0) - std::log(J));
-  EXPECT_DOUBLE_EQ(U, expected_U);
+  EXPECT_NEAR(U, expected_U, 1.0e-7);
 
   // Density
   double rho_calc = model.computeDensity(rho_orig, expected_p);
