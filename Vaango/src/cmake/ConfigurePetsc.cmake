@@ -277,7 +277,7 @@ function(configure_petsc)
     # Set properties for the INTERFACE library
     target_include_directories(${PETSC_INTERFACE_TARGET} INTERFACE ${PETSC_INSTALL_DIR}/include)
     target_link_directories(${PETSC_INTERFACE_TARGET} INTERFACE ${PETSC_INSTALL_DIR}/lib)
-    target_link_libraries(${PETSC_INTERFACE_TARGET} INTERFACE petsc) # Link against the actual library name, not the target name
+    target_link_libraries(${PETSC_INTERFACE_TARGET} INTERFACE ${PETSC_INSTALL_DIR}/lib/libpetsc${PETSC_LIB_EXT}) # Link against the actual library path
 
     add_dependencies(${PETSC_INTERFACE_TARGET} ${PETSC_TARGET_NAME})
     
@@ -285,6 +285,7 @@ function(configure_petsc)
     
     # Export variables to parent scope
     set(PETSC_FOUND TRUE PARENT_SCOPE)
+    set(PETSC_INSTALL_DIR ${PETSC_INSTALL_DIR} PARENT_SCOPE)
     set(PETSC_INCLUDE_DIRS ${PETSC_INSTALL_DIR}/include PARENT_SCOPE)
     set(PETSC_LIBRARIES ${PETSC_INSTALL_DIR}/lib/libpetsc${PETSC_LIB_EXT} PARENT_SCOPE)
     set(PETSC_DIR ${PETSC_SOURCE_DIR} PARENT_SCOPE)

@@ -916,6 +916,15 @@ endif()
 
 # Make build targets use the install RPATH for easier testing
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# Add external library paths to RPATH
+if(PETSC_FOUND)
+    list(APPEND CMAKE_INSTALL_RPATH "${PETSC_INSTALL_DIR}/lib")
+endif()
+if(HYPRE_FOUND)
+    list(APPEND CMAKE_INSTALL_RPATH "${HYPRE_INSTALL_DIR}/lib")
+endif()
 
 #------------------------------------------------------------------------
 # Add main sources

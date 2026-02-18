@@ -72,6 +72,8 @@ SET(VAANGO_LIBS
         $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
 )
 
+message(STATUS "Hypre target = ${HYPRE_TARGET}")
+
 #------------------------
 # Google tests
 #------------------------
@@ -87,7 +89,6 @@ target_link_libraries(testTabularData PRIVATE
   MPM_Diffusion
   LibXml2::LibXml2
   ${HDF5_TARGET}
-  $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
   Vaango::Options
   Vaango::Warnings
 )
