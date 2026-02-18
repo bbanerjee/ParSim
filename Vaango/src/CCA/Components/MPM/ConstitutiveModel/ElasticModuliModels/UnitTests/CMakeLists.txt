@@ -31,6 +31,8 @@
 # Copy input files
 #------------------------
 configure_file(table_elastic.json table_elastic.json COPYONLY)
+configure_file(table_bulk.json table_bulk.json COPYONLY)
+configure_file(table_bulk_pressure.json table_bulk_pressure.json COPYONLY)
 configure_file(mlp_regression_keras_total_scaled.json mlp_regression_keras_total_scaled.json COPYONLY)
 configure_file(mlp_regression_keras_total_scaled.h5 mlp_regression_keras_total_scaled.h5 COPYONLY)
 configure_file(ARL_Sand_SVR_fit_10_001.json ARL_Sand_SVR_fit_10_001.json COPYONLY)
@@ -71,6 +73,96 @@ SET(VAANGO_LIBS
 
 set(GTEST_LIB gtest_main gtest)
 
+
+add_executable(testElasticModuli_Constant testElasticModuli_Constant.cc)
+target_link_libraries(testElasticModuli_Constant PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
+  Vaango::Options
+  Vaango::Warnings
+)
+set(UNIT_TEST testElasticModuli_Constant)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
+
+add_executable(testElasticModuli_Arenisca testElasticModuli_Arenisca.cc)
+target_link_libraries(testElasticModuli_Arenisca PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
+  Vaango::Options
+  Vaango::Warnings
+)
+set(UNIT_TEST testElasticModuli_Arenisca)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
+
+add_executable(testElasticModuli_ArenaMixture testElasticModuli_ArenaMixture.cc)
+target_link_libraries(testElasticModuli_ArenaMixture PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
+  Vaango::Options
+  Vaango::Warnings
+)
+set(UNIT_TEST testElasticModuli_ArenaMixture)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
+
+add_executable(testElasticModuli_Tabular_Bulk testElasticModuli_Tabular_Bulk.cc)
+target_link_libraries(testElasticModuli_Tabular_Bulk PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
+  Vaango::Options
+  Vaango::Warnings
+)
+set(UNIT_TEST testElasticModuli_Tabular_Bulk)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
+
+add_executable(testElasticModuli_Tabular_BulkPressure testElasticModuli_Tabular_BulkPressure.cc)
+target_link_libraries(testElasticModuli_Tabular_BulkPressure PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
+  Vaango::Options
+  Vaango::Warnings
+)
+set(UNIT_TEST testElasticModuli_Tabular_BulkPressure)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 
 add_executable(testElasticModuli_Arena testElasticModuli_Arena.cc)
 target_link_libraries(testElasticModuli_Arena PRIVATE

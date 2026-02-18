@@ -66,3 +66,4 @@ SET(Vaango_CCA_Components_Models_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ModifiedArrhenius.cc
   PARENT_SCOPE
 )
+add_subdirectory(UnitTests)

@@ -1,7 +1,6 @@
 #
 # The MIT License
 #
-# Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
 # Copyright (c) 2015-2025 Biswajit Banerjee, Parresia Research Ltd., NZ
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,44 +21,41 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
-# CMakeLists.txt for Vaango/src/CCA/Components/LoadBalancers
 
-SET(Vaango_CCA_Components_LoadBalancers_SRCS
-  LoadBalancerCommon.cc 
-  LoadBalancerFactory.cc 
-  RoundRobinLoadBalancer.cc 
-  DynamicLoadBalancer.cc 
-  SimpleLoadBalancer.cc 
-  CostProfiler.cc 
-  ProfileDriver.cc 
-  CostModelForecaster.cc 
-  ParticleLoadBalancer.cc
+enable_testing()
+include(GoogleTest)
+
+set(VAANGO_LIBS
+    Vaango_CCA_Components_LoadBalancers
+    Vaango_Core_Grid
+    Vaango_Core_Parallel
+    Vaango_Core_Util
+    Vaango_Core_ProblemSpec
+    Vaango_Core_Exceptions
+    Vaango_Core_Math
+    Vaango_Core_Malloc
 )
 
-add_library(Vaango_CCA_Components_LoadBalancers ${Vaango_CCA_Components_LoadBalancers_SRCS})
+set(GTEST_LIB GTest::gtest_main)
 
-target_link_libraries(Vaango_CCA_Components_LoadBalancers
-  Vaango_CCA_Components_ProblemSpecification
-  Vaango_Core_Grid
-  Vaango_Core_Util
-  Vaango_Core_DataArchive
-  Vaango_Core_ProblemSpec
-  Vaango_CCA_Ports
-  Vaango_Core_Parallel
-  Vaango_Core_Exceptions
-  Vaango_CCA_Components_ProblemSpecification
+#---------------------------------------------------------
+# testLoadBalancerCommon
+#---------------------------------------------------------
+set(UNIT_TEST testLoadBalancerCommon)
+add_executable(${UNIT_TEST} testLoadBalancerCommon.cc)
+target_link_libraries(${UNIT_TEST} PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
   LibXml2::LibXml2
-  MPI::MPI_CXX
   Vaango::Options
   Vaango::Warnings
 )
 
-if (BUILD_SHARED_LIBS)
-  target_compile_definitions(Vaango_CCA_Components_LoadBalancers PRIVATE BUILD_Vaango_CCA_Components_LoadBalancers)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
 endif()
-
-install(TARGETS
-  Vaango_CCA_Components_LoadBalancers
-)
-
-add_subdirectory(UnitTests)
+gtest_discover_tests(${UNIT_TEST})

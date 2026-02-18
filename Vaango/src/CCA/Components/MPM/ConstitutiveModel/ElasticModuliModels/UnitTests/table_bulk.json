@@ -1,0 +1,15 @@
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test bulk modulus data"
+  },
+  "Data" : {
+    "PlasticStrainVol" : [0, 0.5],
+    "Data" : [{
+      "ElasticStrainVol" : [0, 0.1],
+      "BulkModulus" : [1.0e9, 1.1e9]
+    }, {
+      "ElasticStrainVol" : [0, 0.1],
+      "BulkModulus" : [1.2e9, 1.3e9]
+    }]
+  }
+}}

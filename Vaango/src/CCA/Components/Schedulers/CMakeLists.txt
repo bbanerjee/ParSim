@@ -81,3 +81,9 @@ target_link_libraries(Vaango_CCA_Components_Schedulers PRIVATE
 if (BUILD_SHARED_LIBS)
   target_compile_definitions(Vaango_CCA_Components_Schedulers PRIVATE BUILD_Vaango_CCA_Components_Schedulers)
 endif()
+
+install(TARGETS
+  Vaango_CCA_Components_Schedulers
+)
+
+add_subdirectory(UnitTests)

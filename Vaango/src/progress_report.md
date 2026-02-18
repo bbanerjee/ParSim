@@ -27,6 +27,14 @@
 15. **Util**: `testUtil`.
 
 ## Completed CCA Components
+- **SimulationCommon**: `testSimulationCommon`, `testSimulationReductionVariable`.
+- **DataArchiver**: `testDataArchiver`.
+- **Schedulers**: `testSchedulerCommon`.
+- **Regridder**: `testRegridderCommon`.
+- **LoadBalancers**: `testLoadBalancerCommon`.
+- **SolidReactionModel**: `testArrhenius`, `testModifiedArrhenius`, `testNthOrderModel`, `testPowerModel`.
+- **ElasticModuliModels**: `testElasticModuli_Arena`, `testElasticModuli_MetalIso`, `testElasticModuli_NeuralNet`, `testElasticModuli_NeuralNet_Bulk`, `testElasticModuli_SupportVector`, `testElasticModuli_Tabular`, `testElasticModuli_Constant`, `testElasticModuli_Arenisca`, `testElasticModuli_ArenaMixture`, `testElasticModuli_Tabular_Bulk`, `testElasticModuli_Tabular_BulkPressure`.
+- **EOSModels**: `testEOS_BorjaT`, `testPressure_Air`, `testPressure_Granite`, `testPressure_Water`, `testMieGruneisenEOS`, `testHyperElasticEOS`, `testDefaultHypoElasticEOS`, `testBorjaEOS`.
 - **TabularModels**: `testTabularData`, `testTabularEOS`, `testTabularPlasticity`, `testTabularPlasticityCap`, `testNeuralNetTabularPlasticity`.
 
 ## Blockers / Skipped

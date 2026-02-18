@@ -54,3 +54,5 @@ endif()
 install(TARGETS
   Vaango_CCA_Components_SimulationCommon
 )
+
+add_subdirectory(UnitTests)

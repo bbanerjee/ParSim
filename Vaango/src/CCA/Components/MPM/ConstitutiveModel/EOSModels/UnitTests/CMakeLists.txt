@@ -132,3 +132,75 @@ if (RUN_UNIT_TESTS_ON_BUILD)
     COMMAND ${UNIT_TEST}
   )
 endif()
+
+add_executable(testMieGruneisenEOS testMieGruneisenEOS.cc)
+target_link_libraries(testMieGruneisenEOS PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
+  Vaango::Options
+  Vaango::Warnings
+)
+set(UNIT_TEST testMieGruneisenEOS)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
+
+add_executable(testHyperElasticEOS testHyperElasticEOS.cc)
+target_link_libraries(testHyperElasticEOS PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
+  Vaango::Options
+  Vaango::Warnings
+)
+set(UNIT_TEST testHyperElasticEOS)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
+
+add_executable(testDefaultHypoElasticEOS testDefaultHypoElasticEOS.cc)
+target_link_libraries(testDefaultHypoElasticEOS PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
+  Vaango::Options
+  Vaango::Warnings
+)
+set(UNIT_TEST testDefaultHypoElasticEOS)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
+
+add_executable(testBorjaEOS testBorjaEOS.cc)
+target_link_libraries(testBorjaEOS PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  MPM_ConstitutiveModel
+  MPM_Diffusion
+  Vaango::Options
+  Vaango::Warnings
+)
+set(UNIT_TEST testBorjaEOS)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()

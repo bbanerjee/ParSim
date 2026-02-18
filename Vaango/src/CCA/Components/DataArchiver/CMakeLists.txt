@@ -50,3 +50,4 @@ target_link_libraries(Vaango_CCA_Components_DataArchiver PRIVATE
 if (BUILD_SHARED_LIBS)
   target_compile_definitions(Vaango_CCA_Components_DataArchiver PRIVATE BUILD_Vaango_CCA_Components_DataArchiver)
 endif()
+add_subdirectory(UnitTests)
