@@ -1178,7 +1178,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
 
     //     Special case for rigid materials
     double totalStrainEnergy = 0.0;
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       ParticleSubset::iterator iter = pset->begin();
       for (; iter != pset->end(); iter++) {
         particleIndex idx       = *iter;
@@ -1576,7 +1576,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
       pPlasticStrain_new, pPlasticStrainLabel_preReloc, pset);
 
     // Special case for rigid materials
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       ParticleSubset::iterator iter = pset->begin();
       for (; iter != pset->end(); iter++) {
         particleIndex idx       = *iter;

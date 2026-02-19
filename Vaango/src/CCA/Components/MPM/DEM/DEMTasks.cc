@@ -120,34 +120,30 @@ DEMTasks::computeStableTimestep(const Patch* patch,
   double beta = 0.2; // Safety factor
   int matID = mpm_matl->getDWIndex();
 
-  if (mpm_matl->isDiscrete()) {
-    ParticleSubset* pset = nullptr;
-    if (new_dw->haveParticleSubset(matID, patch)) {
-        pset = new_dw->getParticleSubset(matID, patch);
-    } else if (old_dw && old_dw->haveParticleSubset(matID, patch)) {
-        pset = old_dw->getParticleSubset(matID, patch);
+  ParticleSubset* pset = nullptr;
+  if (new_dw->haveParticleSubset(matID, patch)) {
+    pset = new_dw->getParticleSubset(matID, patch);
+  } else if (old_dw && old_dw->haveParticleSubset(matID, patch)) {
+    pset = old_dw->getParticleSubset(matID, patch);
+  }
+
+  if (pset) {
+    constParticleVariable<double> pMass;
+    if (new_dw->exists(d_mpm_labels->pMassLabel, matID, patch)) {
+      new_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
+    } else {
+      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
     }
 
-    if (pset) {
-        constParticleVariable<double> pMass;
-        if (new_dw->exists(d_mpm_labels->pMassLabel, matID, patch)) {
-            new_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
-        } else {
-            old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
+    double kn = mpm_matl->getDEMNormalStiffness();
+    for (auto idx : *pset) {
+      if (pMass[idx] > 0) {
+        double dt_particle = beta * std::sqrt(pMass[idx] / kn);
+        if (dt_particle < dt_dem) {
+          dt_dem = dt_particle;
         }
-
-        double kn = mpm_matl->getDEMNormalStiffness();
-        for (auto idx : *pset) {
-          if (pMass[idx] > 0) {
-            double dt_particle = beta * std::sqrt(pMass[idx] / kn);
-            if (dt_particle < dt_dem) {
-              dt_dem = dt_particle;
-            }
-          }
-        }
+      }
     }
-  } else if (mpm_matl->getIsRigid()) {
-      if (dt_dem > 1.0) dt_dem = 1.0;
   }
 }
 
@@ -493,7 +489,7 @@ DEMTasks::integrateDEMRotation(const ProcessorGroup*,
       struct RotationState { Vector omega; Matrix3 orient; Matrix3 inertia; };
       std::map<long64, RotationState> master_rotations;
 
-      if (mpm_matl->isDiscrete() || mpm_matl->getIsRigid()) {
+      if (mpm_matl->isDiscrete() || mpm_matl->isRigid()) {
         for (auto idx : *pset) {
           if (pRadius[idx] > 0.0 && pInertiaTensor[idx].Determinant() > 0.0) {
             Matrix3 invI              = pInertiaTensor[idx].Inverse();

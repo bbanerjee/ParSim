@@ -1555,7 +1555,7 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
         }
       }
 
-      if (mpm_matl->getIsRigid()) {
+      if (mpm_matl->isRigid()) {
         for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
           IntVector c = *iter;
           gVelocity_old[m][c] /= gMass[m][c];
@@ -1793,7 +1793,7 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     for (int m = 0; m < numMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (!mpm_matl->getIsRigid()) {
+      if (!mpm_matl->isRigid()) {
         for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
           IntVector c          = *iter;
           gMass_all[m][c]      = gMass_sum[c];
@@ -2236,7 +2236,7 @@ ImpMPM::computeContact(const ProcessorGroup*,
       for (int n = 0; n < numMatls; n++) {
         MPMMaterial* mpm_matl =
           static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", n));
-        if (mpm_matl->getIsRigid()) {
+        if (mpm_matl->isRigid()) {
           int matID = mpm_matl->getDWIndex();
           new_dw->get(vel_rigid,
                       d_mpm_labels->gVelocityOldLabel,
@@ -2338,7 +2338,7 @@ ImpMPM::findFixedDOF(const ProcessorGroup*,
     for (int m = 0; m < numMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (!mpm_matl->getIsRigid() && firstTimeThrough) {
+      if (!mpm_matl->isRigid() && firstTimeThrough) {
         firstTimeThrough = false;
         int matID        = mpm_matl->getDWIndex();
         constNCVariable<double> mass;
@@ -2925,7 +2925,7 @@ ImpMPM::formStiffnessMatrix(const ProcessorGroup*,
 
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (!mpm_matl->getIsRigid() && firstTimeThrough) {
+      if (!mpm_matl->isRigid() && firstTimeThrough) {
 
         firstTimeThrough = false;
         int matID        = mpm_matl->getDWIndex();
@@ -3041,7 +3041,7 @@ ImpMPM::computeInternalForce(const ProcessorGroup*,
                              patch);
       gInternalForce[m].initialize(Vector(0, 0, 0));
 
-      if (!mpm_matl->getIsRigid()) {
+      if (!mpm_matl->isRigid()) {
 
         DataWarehouse* parent_old_dw =
           new_dw->getOtherDataWarehouse(Task::ParentOldDW);
@@ -3095,7 +3095,7 @@ ImpMPM::computeInternalForce(const ProcessorGroup*,
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (!mpm_matl->getIsRigid()) {
+      if (!mpm_matl->isRigid()) {
         for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
           IntVector node          = *iter;
           gInternalForce[m][node] = gInternalForce_sum[node];
@@ -3152,7 +3152,7 @@ ImpMPM::formQ(const ProcessorGroup*,
     for (int m = 0; m < numMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (!mpm_matl->getIsRigid() && firstTimeThrough) {
+      if (!mpm_matl->isRigid() && firstTimeThrough) {
         firstTimeThrough = false;
         int matID        = mpm_matl->getDWIndex();
 
@@ -3397,7 +3397,7 @@ ImpMPM::updateGridKinematics(const ProcessorGroup*,
     for (int m = 0; m < numMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (mpm_matl->getIsRigid()) {
+      if (mpm_matl->isRigid()) {
         matID_rigid = mpm_matl->getDWIndex();
       }
     }
@@ -3454,7 +3454,7 @@ ImpMPM::updateGridKinematics(const ProcessorGroup*,
         oneifdyn = 1.;
       }
 
-      if (!mpm_matl->getIsRigid()) {
+      if (!mpm_matl->isRigid()) {
         for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
           IntVector node = *iter;
           dispNew[node] += dispInc[node];
@@ -3973,7 +3973,7 @@ ImpMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         totalMom += pVelocity_new[idx] * pMass[idx];
       }
 
-      if (mpm_matl->getIsRigid()) {
+      if (mpm_matl->isRigid()) {
         const double tcurr = simTimeVar;
         if (tcurr >= d_contactStopTime) {
           for (auto idx : *pset) {
@@ -4118,7 +4118,7 @@ ImpMPM::interpolateStressToGrid(const ProcessorGroup*,
       gInternalForce[m].initialize(Vector(0.));
       gStress[m].initialize(Matrix3(0.));
 
-      if (!mpm_matl->getIsRigid()) {
+      if (!mpm_matl->isRigid()) {
 
         constParticleVariable<Point> pX;
         constParticleVariable<double> pVolume;
@@ -4173,7 +4173,7 @@ ImpMPM::interpolateStressToGrid(const ProcessorGroup*,
       }
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (!mpm_matl->getIsRigid()) {
+      if (!mpm_matl->isRigid()) {
         for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
           IntVector node          = *iter;
           gInternalForce[m][node] = gInternalForce_sum[node];
@@ -4193,7 +4193,7 @@ ImpMPM::interpolateStressToGrid(const ProcessorGroup*,
     for (int m = 0; m < numMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (!did_it_already && !mpm_matl->getIsRigid()) {
+      if (!did_it_already && !mpm_matl->isRigid()) {
         did_it_already = true;
         for (auto face : d_boundaryTractionFaces) {
 

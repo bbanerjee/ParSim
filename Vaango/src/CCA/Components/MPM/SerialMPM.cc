@@ -1552,7 +1552,11 @@ SerialMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      d_demTasks->computeStableTimestep(nullptr, mpm_matl, old_dw, new_dw, dt_dem);
+      if (mpm_matl->isDiscrete()) {
+        d_demTasks->computeStableTimestep(nullptr, mpm_matl, old_dw, new_dw, dt_dem);
+      } else if (mpm_matl->isRigid()) {
+        dt_dem = 1.0e30;
+      }
     }
     const Level* level = getLevel(patches);
     new_dw->put(delt_vartype(dt_dem), d_mpm_labels->delTLabel, level);
@@ -1566,7 +1570,11 @@ SerialMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      d_demTasks->computeStableTimestep(patch, mpm_matl, old_dw, new_dw, dt_dem);
+      if (mpm_matl->isDiscrete()) {
+        d_demTasks->computeStableTimestep(patch, mpm_matl, old_dw, new_dw, dt_dem);
+      } else if (mpm_matl->isRigid()) {
+        dt_dem = 1.0e30;
+      }
     }
   }
 
@@ -2252,6 +2260,1963 @@ SerialMPM::applyExternalLoads(const ProcessorGroup*,
       } // end if (d_useLoadCurves)
     }   // matl loop
   }     // patch loop
+}
+
+/*!----------------------------------------------------------------------
+ * scheduleInterpolateParticlesToGrid
+ * interpolateParticlesToGrid
+ *   in(P.MASS, P.VELOCITY, P.NAT_X)
+ *   operation(interpolate the P.MASS and P.VEL to the grid
+ *             using P.NAT_X and some shape function evaluations)
+ *   out(G.MASS, G.VELOCITY)
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
+                                              const PatchSet* patches,
+                                              const MaterialSet* matls)
+{
+  if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                                 getLevel(patches)->getGrid()->numLevels())) {
+    return;
+  }
+
+  printSchedule(patches, cout_doing, "MPM::scheduleInterpolateParticlesToGrid");
+
+  Task* t              = scinew Task("MPM::interpolateParticlesToGrid",
+                        this,
+                        &SerialMPM::interpolateParticlesToGrid);
+  Ghost::GhostType gan = Ghost::AroundNodes;
+  t->needs(Task::OldDW, d_mpm_labels->pMassLabel, gan, d_numGhostParticles);
+  t->needs(
+    Task::OldDW, d_mpm_labels->pVolumeLabel, gan, d_numGhostParticles);
+  t->needs(
+    Task::OldDW, d_mpm_labels->pVelocityLabel, gan, d_numGhostParticles);
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, gan, d_numGhostParticles);
+  t->needs(Task::NewDW,
+              d_mpm_labels->pBodyForceAccLabel_preReloc,
+              gan,
+              d_numGhostParticles);
+  t->needs(Task::NewDW,
+              d_mpm_labels->pExtForceLabel_preReloc,
+              gan,
+              d_numGhostParticles);
+  t->needs(
+    Task::OldDW, d_mpm_labels->pTemperatureLabel, gan, d_numGhostParticles);
+  t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, gan, d_numGhostParticles);
+  t->needs(
+    Task::OldDW, d_mpm_labels->pDefGradLabel, gan, d_numGhostParticles);
+  if (d_mpm_flags->d_useLoadCurves) {
+    t->needs(
+      Task::OldDW, d_mpm_labels->pLoadCurveIDLabel, gan, d_numGhostParticles);
+    if (d_mpm_flags->d_useCBDI) {
+      t->needs(Task::NewDW,
+                  d_mpm_labels->pExternalForceCorner1Label,
+                  gan,
+                  d_numGhostParticles);
+      t->needs(Task::NewDW,
+                  d_mpm_labels->pExternalForceCorner2Label,
+                  gan,
+                  d_numGhostParticles);
+      t->needs(Task::NewDW,
+                  d_mpm_labels->pExternalForceCorner3Label,
+                  gan,
+                  d_numGhostParticles);
+      t->needs(Task::NewDW,
+                  d_mpm_labels->pExternalForceCorner4Label,
+                  gan,
+                  d_numGhostParticles);
+    }
+  }
+
+#ifdef DEBUG_WITH_PARTICLE_ID
+  t->needs(
+    Task::OldDW, d_mpm_labels->pParticleIDLabel, gan, d_numGhostParticles);
+#endif
+
+  t->computes(d_mpm_labels->gMassLabel);
+  t->computes(d_mpm_labels->gMassLabel,
+              d_materialManager->getAllInOneMaterial(),
+              Task::OutOfDomain);
+  t->computes(d_mpm_labels->gTemperatureLabel,
+              d_materialManager->getAllInOneMaterial(),
+              Task::OutOfDomain);
+  t->computes(d_mpm_labels->gVolumeLabel,
+              d_materialManager->getAllInOneMaterial(),
+              Task::OutOfDomain);
+  t->computes(d_mpm_labels->gVelocityLabel,
+              d_materialManager->getAllInOneMaterial(),
+              Task::OutOfDomain);
+  t->computes(d_mpm_labels->gSpecificVolumeLabel);
+  t->computes(d_mpm_labels->gVolumeLabel);
+  t->computes(d_mpm_labels->gVelocityLabel);
+  t->computes(d_mpm_labels->gBodyForceLabel);
+  t->computes(d_mpm_labels->gExternalForceLabel);
+  t->computes(d_mpm_labels->gTemperatureLabel);
+  t->computes(d_mpm_labels->gTemperatureNoBCLabel);
+  t->computes(d_mpm_labels->gTemperatureRateLabel);
+  t->computes(d_mpm_labels->gExternalHeatRateLabel);
+
+  if (d_mpm_flags->d_withICE) {
+    t->computes(d_mpm_labels->gVelocityBCLabel);
+  }
+
+  d_diffusionTasks->scheduleInterpolateParticlesToGrid(t);
+
+  if (d_mpm_flags->d_withColor) {
+    t->needs(
+      Task::OldDW, d_mpm_labels->pColorLabel, gan, d_numGhostParticles);
+    t->computes(d_mpm_labels->gColorLabel);
+  }
+
+  sched->addTask(t, patches, matls);
+}
+
+/*!----------------------------------------------------------------------
+ * interpolateParticlesToGrid
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
+                                      const PatchSubset* patches,
+                                      const MaterialSubset*,
+                                      DataWarehouse* old_dw,
+                                      DataWarehouse* new_dw)
+{
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+
+    printTask(patches, patch, cout_doing, "Doing interpolateParticlesToGrid");
+
+    auto interpolator        = d_mpm_flags->d_interpolator->clone(patch);
+    auto linear_interpolator = std::make_unique<LinearInterpolator>(patch);
+
+    auto numInfluenceNodes = interpolator->size();
+    std::vector<IntVector> ni(numInfluenceNodes);
+    std::vector<double> S(numInfluenceNodes);
+    std::string interp_type = d_mpm_flags->d_interpolatorType;
+
+    NCVariable<double> gMassglobal, gTempglobal, gVolumeglobal;
+    NCVariable<Vector> gVelglobal;
+    new_dw->allocateAndPut(gMassglobal,
+                           d_mpm_labels->gMassLabel,
+                           d_materialManager->getAllInOneMaterial()->get(0),
+                           patch);
+    new_dw->allocateAndPut(gTempglobal,
+                           d_mpm_labels->gTemperatureLabel,
+                           d_materialManager->getAllInOneMaterial()->get(0),
+                           patch);
+    new_dw->allocateAndPut(gVolumeglobal,
+                           d_mpm_labels->gVolumeLabel,
+                           d_materialManager->getAllInOneMaterial()->get(0),
+                           patch);
+    new_dw->allocateAndPut(gVelglobal,
+                           d_mpm_labels->gVelocityLabel,
+                           d_materialManager->getAllInOneMaterial()->get(0),
+                           patch);
+    gMassglobal.initialize(d_SMALL_NUM_MPM);
+    gVolumeglobal.initialize(d_SMALL_NUM_MPM);
+    gTempglobal.initialize(0.0);
+    gVelglobal.initialize(Vector(0.0));
+
+    Ghost::GhostType gan = Ghost::AroundNodes;
+    size_t numMatls      = d_materialManager->getNumMaterials("MPM");
+    for (size_t m = 0; m < numMatls; m++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
+      int matID = mpm_matl->getDWIndex();
+
+      // Create arrays for the particle data
+      constParticleVariable<Point> pX;
+      constParticleVariable<double> pMass, pVolume, pTemperature, pColor;
+      constParticleVariable<Vector> pVelocity, pBodyForceAcc, pExternalForce;
+      constParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
+        pExternalForceCorner3, pExternalForceCorner4;
+      constParticleVariable<Matrix3> pSize;
+      constParticleVariable<Matrix3> pDefGrad_old;
+
+      ParticleSubset* pset = old_dw->getParticleSubset(
+        matID, patch, gan, d_numGhostParticles, d_mpm_labels->pXLabel);
+
+      old_dw->get(pX, d_mpm_labels->pXLabel, pset);
+      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
+      old_dw->get(pVolume, d_mpm_labels->pVolumeLabel, pset);
+      old_dw->get(pVelocity, d_mpm_labels->pVelocityLabel, pset);
+      old_dw->get(pTemperature, d_mpm_labels->pTemperatureLabel, pset);
+      old_dw->get(pSize, d_mpm_labels->pSizeLabel, pset);
+      old_dw->get(pDefGrad_old, d_mpm_labels->pDefGradLabel, pset);
+      new_dw->get(
+        pBodyForceAcc, d_mpm_labels->pBodyForceAccLabel_preReloc, pset);
+      new_dw->get(pExternalForce, d_mpm_labels->pExtForceLabel_preReloc, pset);
+
+      //std::cout << "patch = " << patch << " matID = " << matID
+      //          << " numparticles = " << pset->numParticles()
+      //          << "d_numGhostParticles = " << d_numGhostParticles << "\n ";
+
+      constParticleVariable<int> pLoadCurveID;
+      if (d_mpm_flags->d_useLoadCurves) {
+        old_dw->get(pLoadCurveID, d_mpm_labels->pLoadCurveIDLabel, pset);
+        if (d_mpm_flags->d_useCBDI) {
+          new_dw->get(pExternalForceCorner1,
+                      d_mpm_labels->pExternalForceCorner1Label,
+                      pset);
+
+          /*
+          for (auto idx : *pset) {
+            std::cout << "idx = " << idx << " px = " << pX[idx] << " fext = " <<
+          pExternalForce[idx]
+                      << " curve id = " << pLoadCurveID[idx] << "\n";
+            std::cout << "corner1 = " << pExternalForceCorner1[idx] << "\n";
+          }
+          */
+
+          new_dw->get(pExternalForceCorner2,
+                      d_mpm_labels->pExternalForceCorner2Label,
+                      pset);
+          new_dw->get(pExternalForceCorner3,
+                      d_mpm_labels->pExternalForceCorner3Label,
+                      pset);
+          new_dw->get(pExternalForceCorner4,
+                      d_mpm_labels->pExternalForceCorner4Label,
+                      pset);
+        }
+      }
+
+      if (d_mpm_flags->d_withColor) {
+        old_dw->get(pColor, d_mpm_labels->pColorLabel, pset);
+      }
+
+#ifdef DEBUG_WITH_PARTICLE_ID
+      constParticleVariable<long64> pParticleID;
+      old_dw->get(pParticleID, d_mpm_labels->pParticleIDLabel, pset);
+#endif
+
+      // Create arrays for the grid data
+      NCVariable<double> gMass;
+      NCVariable<double> gVolume;
+      NCVariable<Vector> gVelocity;
+      NCVariable<Vector> gBodyForce;
+      NCVariable<Vector> gExternalForce;
+      NCVariable<double> gExternalheatrate;
+      NCVariable<double> gTemperature;
+      NCVariable<double> gSp_vol;
+      NCVariable<double> gTemperatureNoBC;
+      NCVariable<double> gTemperatureRate;
+      // NCVariable<double> gnumnearparticles;
+
+      new_dw->allocateAndPut(gMass, d_mpm_labels->gMassLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gSp_vol, d_mpm_labels->gSpecificVolumeLabel, matID, patch);
+      new_dw->allocateAndPut(gVolume, d_mpm_labels->gVolumeLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gVelocity, d_mpm_labels->gVelocityLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gTemperature, d_mpm_labels->gTemperatureLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gTemperatureNoBC, d_mpm_labels->gTemperatureNoBCLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gTemperatureRate, d_mpm_labels->gTemperatureRateLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gBodyForce, d_mpm_labels->gBodyForceLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gExternalForce, d_mpm_labels->gExternalForceLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gExternalheatrate, d_mpm_labels->gExternalHeatRateLabel, matID, patch);
+
+      gMass.initialize(d_SMALL_NUM_MPM);
+      gVolume.initialize(d_SMALL_NUM_MPM);
+      gVelocity.initialize(Vector(0, 0, 0));
+      gBodyForce.initialize(Vector(0, 0, 0));
+      gExternalForce.initialize(Vector(0, 0, 0));
+      gTemperature.initialize(0);
+      gTemperatureNoBC.initialize(0);
+      gTemperatureRate.initialize(0);
+      gExternalheatrate.initialize(0);
+      gSp_vol.initialize(0.);
+      // gnumnearparticles.initialize(0.);
+
+      NCVariable<double> gColor;
+      if (d_mpm_flags->d_withColor) {
+        new_dw->allocateAndPut(gColor, d_mpm_labels->gColorLabel, matID, patch);
+        gColor.initialize(0.0);
+      }
+
+      ScalarDiffusionTaskData diffusion_data;
+      d_diffusionTasks->getAndAllocateForParticlesToGrid(
+        patch, pset, old_dw, new_dw, matID, diffusion_data);
+
+      // If the material is not active go to the next material
+      if (!mpm_matl->isActive()) {
+        continue;
+      }
+
+      // Interpolate particle data to Grid data.
+      // This currently consists of the particle velocity and mass
+      // Need to compute the lumped global mass matrix and velocity
+      // Vector from the individual mass matrix and velocity std::vector
+      // GridMass * GridVelocity =  S^T*M_D*ParticleVelocity
+      Vector total_mom(0.0, 0.0, 0.0);
+      double pSp_vol = 1. / mpm_matl->getInitialDensity();
+
+      // loop over all particles in the patch:
+      for (int idx : *pset) {
+
+        if (pMass[idx] <= 0.0) continue;
+
+        // std::cout << std::format("pidx = {}, volume = {}\n", idx, pVolume[idx]);
+        interpolator->findCellAndWeights(
+          pX[idx], ni, S, pSize[idx], pDefGrad_old[idx]);
+        auto pMom = pVelocity[idx] * pMass[idx];
+        total_mom += pMom;
+
+        // Add each particles contribution to the local mass & velocity
+        // Must use the node indices
+        // Iterates through the nodes which
+        // receive information from the current particle
+        IntVector node;
+        for (int k = 0; k < numInfluenceNodes; k++) {
+          node = ni[k];
+          if (patch->containsNode(node)) {
+            gMass[node] += pMass[idx] * S[k];
+            gVelocity[node] += pMom * S[k];
+            gVolume[node] += pVolume[idx] * S[k];
+            gBodyForce[node] += pBodyForceAcc[idx] * pMass[idx] * S[k];
+            gTemperature[node] += pTemperature[idx] * pMass[idx] * S[k];
+            gSp_vol[node] += pSp_vol * pMass[idx] * S[k];
+
+            if (!d_mpm_flags->d_useCBDI) {
+              gExternalForce[node] += pExternalForce[idx] * S[k];
+            }
+
+            if (d_mpm_flags->d_withColor) {
+              gColor[node] += pColor[idx] * pMass[idx] * S[k];
+            }
+#ifdef DEBUG_WITH_PARTICLE_ID
+            if (pParticleID[idx] == testParticleID) {
+              proc0cout << pParticleID[idx] << pExternalForce[idx]
+                        << " pMom = " << pMom
+                        << " pVelocity = " << pVelocity[idx]
+                        << " node = " << node
+                        << " gVelocity = " << gVelocity[node] << "\n";
+            }
+#endif
+          }
+
+          d_diffusionTasks->interpolateParticlesToGrid(
+            patch, ni, S, pX, pMass, idx, diffusion_data);
+        }
+
+        if (d_mpm_flags->d_useLoadCurves && d_mpm_flags->d_useCBDI) {
+          std::vector<IntVector> niCorner1(linear_interpolator->size());
+          std::vector<IntVector> niCorner2(linear_interpolator->size());
+          std::vector<IntVector> niCorner3(linear_interpolator->size());
+          std::vector<IntVector> niCorner4(linear_interpolator->size());
+          std::vector<double> SCorner1(linear_interpolator->size());
+          std::vector<double> SCorner2(linear_interpolator->size());
+          std::vector<double> SCorner3(linear_interpolator->size());
+          std::vector<double> SCorner4(linear_interpolator->size());
+          linear_interpolator->findCellAndWeights(pExternalForceCorner1[idx],
+                                                  niCorner1,
+                                                  SCorner1,
+                                                  pSize[idx],
+                                                  pDefGrad_old[idx]);
+          linear_interpolator->findCellAndWeights(pExternalForceCorner2[idx],
+                                                  niCorner2,
+                                                  SCorner2,
+                                                  pSize[idx],
+                                                  pDefGrad_old[idx]);
+          linear_interpolator->findCellAndWeights(pExternalForceCorner3[idx],
+                                                  niCorner3,
+                                                  SCorner3,
+                                                  pSize[idx],
+                                                  pDefGrad_old[idx]);
+          linear_interpolator->findCellAndWeights(pExternalForceCorner4[idx],
+                                                  niCorner4,
+                                                  SCorner4,
+                                                  pSize[idx],
+                                                  pDefGrad_old[idx]);
+
+          // Iterates through the nodes which receive information
+          // from the current particle
+          for (int k = 0; k < 8; k++) {
+            node = niCorner1[k];
+            if (patch->containsNode(node)) {
+              gExternalForce[node] += pExternalForce[idx] * SCorner1[k];
+            }
+            node = niCorner2[k];
+            if (patch->containsNode(node)) {
+              gExternalForce[node] += pExternalForce[idx] * SCorner2[k];
+            }
+            node = niCorner3[k];
+            if (patch->containsNode(node)) {
+              gExternalForce[node] += pExternalForce[idx] * SCorner3[k];
+            }
+            node = niCorner4[k];
+            if (patch->containsNode(node)) {
+              gExternalForce[node] += pExternalForce[idx] * SCorner4[k];
+            }
+          }
+        }
+      } // End of particle loop
+
+      for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+        IntVector c = *iter;
+        gMassglobal[c] += gMass[c];
+        gVolumeglobal[c] += gVolume[c];
+        gVelglobal[c] += gVelocity[c];
+        gVelocity[c] /= gMass[c];
+        gTempglobal[c] += gTemperature[c];
+        // gBodyForce[c]     /= gMass[c];
+        gTemperature[c] /= gMass[c];
+        gTemperatureNoBC[c] = gTemperature[c];
+        gSp_vol[c] /= gMass[c];
+
+        if (d_mpm_flags->d_withColor) {
+          gColor[c] /= gMass[c];
+        }
+      }
+
+      // Apply boundary conditions to the temperature and velocity (if symmetry)
+      MPMBoundCond bc;
+      bc.setBoundaryCondition(
+        patch, matID, "Temperature", gTemperature, interp_type);
+      bc.setBoundaryCondition(
+        patch, matID, "Symmetric", gVelocity, interp_type);
+
+      // If an MPMICE problem, create a velocity with BCs variable for NCToCC_0
+      if (d_mpm_flags->d_withICE) {
+        NCVariable<Vector> gVelocityWBC;
+        new_dw->allocateAndPut(
+          gVelocityWBC, d_mpm_labels->gVelocityBCLabel, matID, patch);
+        gVelocityWBC.copyData(gVelocity);
+        bc.setBoundaryCondition(
+          patch, matID, "Velocity", gVelocityWBC, interp_type);
+        bc.setBoundaryCondition(
+          patch, matID, "Symmetric", gVelocityWBC, interp_type);
+      }
+
+      // For scalar diffusion
+      d_diffusionTasks->normalizeNodalConc(
+        patch, gMass, bc, matID, diffusion_data);
+
+    } // End loop over materials
+
+    for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+      IntVector c = *iter;
+      gTempglobal[c] /= gMassglobal[c];
+      gVelglobal[c] /= gMassglobal[c];
+    }
+
+  } // End loop over patches
+}
+
+/*!----------------------------------------------------------------------
+ * scheduleComputeNormals: For contact
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::scheduleComputeNormals(SchedulerP& sched,
+                                  const PatchSet* patches,
+                                  const MaterialSet* matls)
+{
+  printSchedule(patches, cout_doing, "MPM::scheduleComputeNormals");
+
+  Task* t =
+    scinew Task("MPM::computeNormals", this, &SerialMPM::computeNormals);
+
+  auto* z_matl = scinew MaterialSubset();
+  z_matl->add(0);
+  z_matl->addReference();
+
+  t->needs(Task::OldDW,
+              d_mpm_labels->pXLabel,
+              Ghost::AroundNodes,
+              d_numGhostParticles);
+  t->needs(Task::OldDW,
+              d_mpm_labels->pMassLabel,
+              Ghost::AroundNodes,
+              d_numGhostParticles);
+  t->needs(Task::OldDW,
+              d_mpm_labels->pVolumeLabel,
+              Ghost::AroundNodes,
+              d_numGhostParticles);
+  t->needs(Task::OldDW,
+              d_mpm_labels->pSizeLabel,
+              Ghost::AroundNodes,
+              d_numGhostParticles);
+  t->needs(Task::OldDW,
+              d_mpm_labels->pStressLabel,
+              Ghost::AroundNodes,
+              d_numGhostParticles);
+  t->needs(Task::OldDW,
+              d_mpm_labels->pDefGradLabel,
+              Ghost::AroundNodes,
+              d_numGhostParticles);
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::AroundNodes, 1);
+  // t->needs(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl,
+  // Ghost::None);
+
+  t->computes(d_mpm_labels->gSurfNormLabel);
+  t->computes(d_mpm_labels->gStressLabel);
+  t->computes(d_mpm_labels->gNormTractionLabel);
+  t->computes(d_mpm_labels->gPositionLabel);
+
+  sched->addTask(t, patches, matls);
+
+  if (z_matl->removeReference()) {
+    delete z_matl; // shouldn't happen, but...
+  }
+}
+
+//______________________________________________________________________
+//
+void
+SerialMPM::computeNormals(const ProcessorGroup*,
+                          const PatchSubset* patches,
+                          const MaterialSubset*,
+                          DataWarehouse* old_dw,
+                          DataWarehouse* new_dw)
+{
+  Ghost::GhostType gan = Ghost::AroundNodes;
+  // Ghost::GhostType  gnone = Ghost::None;
+
+  auto numMPMMatls = d_materialManager->getNumMaterials("MPM");
+  std::vector<constNCVariable<double>> gMass(numMPMMatls);
+  std::vector<NCVariable<Point>> gPosition(numMPMMatls);
+  std::vector<NCVariable<Vector>> gVelocity(numMPMMatls);
+  std::vector<NCVariable<Vector>> gSurfNorm(numMPMMatls);
+  std::vector<NCVariable<double>> gNormTraction(numMPMMatls);
+  std::vector<NCVariable<Matrix3>> gStress(numMPMMatls);
+
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+
+    printTask(patches, patch, cout_doing, "Doing MPM::computeNormals");
+
+    Vector dx = patch->dCell();
+    double oodx[3];
+    oodx[0] = 1.0 / dx.x();
+    oodx[1] = 1.0 / dx.y();
+    oodx[2] = 1.0 / dx.z();
+
+    // constNCVariable<double>    NC_CCweight;
+    // old_dw->get(NC_CCweight,   d_mpm_labels->NC_CCweightLabel,  0, patch,
+    // gnone, 0);
+
+    auto interpolator      = d_mpm_flags->d_interpolator->clone(patch);
+    auto numInfluenceNodes = interpolator->size();
+    std::vector<IntVector> ni(numInfluenceNodes);
+    std::vector<double> S(numInfluenceNodes);
+    std::vector<Vector> d_S(numInfluenceNodes);
+    std::string interp_type = d_mpm_flags->d_interpolatorType;
+
+    // Find surface normal at each material based on a gradient of nodal mass
+    for (size_t m = 0; m < numMPMMatls; m++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
+      int matID = mpm_matl->getDWIndex();
+      new_dw->get(gMass[m], d_mpm_labels->gMassLabel, matID, patch, gan, 1);
+
+      new_dw->allocateAndPut(
+        gSurfNorm[m], d_mpm_labels->gSurfNormLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gPosition[m], d_mpm_labels->gPositionLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gStress[m], d_mpm_labels->gStressLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gNormTraction[m], d_mpm_labels->gNormTractionLabel, matID, patch);
+
+      ParticleSubset* pset = old_dw->getParticleSubset(
+        matID, patch, gan, d_numGhostParticles, d_mpm_labels->pXLabel);
+
+      constParticleVariable<Point> pX;
+      constParticleVariable<double> pMass, pVolume;
+      constParticleVariable<Matrix3> pSize, pStress;
+      constParticleVariable<Matrix3> pDefGrad_old;
+
+      old_dw->get(pX, d_mpm_labels->pXLabel, pset);
+      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
+      old_dw->get(pVolume, d_mpm_labels->pVolumeLabel, pset);
+      old_dw->get(pSize, d_mpm_labels->pSizeLabel, pset);
+      old_dw->get(pStress, d_mpm_labels->pStressLabel, pset);
+      old_dw->get(pDefGrad_old, d_mpm_labels->pDefGradLabel, pset);
+
+      gSurfNorm[m].initialize(Vector(0.0, 0.0, 0.0));
+      gPosition[m].initialize(Point(0.0, 0.0, 0.0));
+      gNormTraction[m].initialize(0.0);
+      gStress[m].initialize(Matrix3(0.0));
+
+      if (d_mpm_flags->d_axisymmetric) {
+        for (auto idx : *pset) {
+          interpolator->findCellAndWeightsAndShapeDerivatives(
+            pX[idx], ni, S, d_S, pSize[idx], pDefGrad_old[idx]);
+          double rho = pMass[idx] / pVolume[idx];
+          for (int k = 0; k < numInfluenceNodes; k++) {
+            auto node = ni[k];
+            if (patch->containsNode(node)) {
+              Vector G(d_S[k].x(), d_S[k].y(), 0.0);
+              gSurfNorm[m][node] += rho * G;
+              gPosition[m][node] += pX[idx].asVector() * pMass[idx] * S[k];
+              gStress[m][node] += pStress[idx] * S[k];
+            }
+          }
+        }
+      } else {
+        for (auto idx : *pset) {
+          interpolator->findCellAndWeightsAndShapeDerivatives(
+            pX[idx], ni, S, d_S, pSize[idx], pDefGrad_old[idx]);
+          for (int k = 0; k < numInfluenceNodes; k++) {
+            auto node = ni[k];
+            if (patch->containsNode(node)) {
+              Vector grad(d_S[k].x() * oodx[0],
+                          d_S[k].y() * oodx[1],
+                          d_S[k].z() * oodx[2]);
+              gSurfNorm[m][node] += pMass[idx] * grad;
+              gPosition[m][node] += pX[idx].asVector() * pMass[idx] * S[k];
+              gStress[m][node] += pStress[idx] * S[k];
+            }
+          }
+        }
+      } // axisymmetric conditional
+    }   // matl loop
+
+    // Make normals collinear by taking an average with the
+    // other materials at a node
+    if (d_mpm_flags->d_computeCollinearNormals) {
+      for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+        IntVector node = *iter;
+        std::vector<Vector> norm_temp(numMPMMatls);
+        for (size_t m = 0; m < numMPMMatls; m++) {
+          norm_temp[m] = Vector(0., 0., 0);
+          if (gMass[m][node] > 1.e-200) {
+            Vector mWON(0., 0., 0.);
+            double mON = 0.0;
+            for (size_t n = 0; n < numMPMMatls; n++) {
+              if (n != m) {
+                mWON += gMass[n][node] * gSurfNorm[n][node];
+                mON += gMass[n][node];
+              }
+            } // loop over other matls
+            mWON /= (mON + 1.e-100);
+            norm_temp[m] = 0.5 * (gSurfNorm[m][node] - mWON);
+          } // If node has mass
+        }   // Outer loop over materials
+
+        // Now put temporary norm into main array
+        for (size_t m = 0; m < numMPMMatls; m++) {
+          gSurfNorm[m][node] = norm_temp[m];
+        } // Outer loop over materials
+      }   // Loop over nodes
+    }     // if(flags..)
+
+    // Make traditional norms unit length, compute gNormTraction
+    for (size_t m = 0; m < numMPMMatls; m++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
+      int matID = mpm_matl->getDWIndex();
+      MPMBoundCond bc;
+      bc.setBoundaryCondition(
+        patch, matID, "Symmetric", gSurfNorm[m], interp_type);
+
+      for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+        IntVector node = *iter;
+        double length  = gSurfNorm[m][node].length();
+        if (length > 1.0e-15) {
+          gSurfNorm[m][node] = gSurfNorm[m][node] / length;
+        }
+        Vector norm            = gSurfNorm[m][node];
+        gNormTraction[m][node] = Dot((norm * gStress[m][node]), norm);
+        gPosition[m][node] /= gMass[m][node];
+      }
+    }
+  } // patches
+}
+
+/*!----------------------------------------------------------------------
+ * scheduleFindSurfaceParticles
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
+                                        const PatchSet* patches,
+                                        const MaterialSet* matls)
+{
+  printSchedule(patches, cout_doing, "MPM::scheduleFindSurfaceParticles");
+
+  Task* t = scinew Task(
+    "MPM::findSurfaceParticles", this, &SerialMPM::findSurfaceParticles);
+
+  t->needs(Task::OldDW,
+              d_mpm_labels->pStressLabel,
+              Ghost::AroundNodes,
+              d_numGhostParticles);
+  t->needs(Task::OldDW,
+              d_mpm_labels->pSurfLabel,
+              Ghost::AroundNodes,
+              d_numGhostParticles);
+  t->computes(d_mpm_labels->pSurfLabel_preReloc);
+
+  sched->addTask(t, patches, matls);
+}
+
+void
+SerialMPM::findSurfaceParticles(const ProcessorGroup*,
+                                const PatchSubset* patches,
+                                const MaterialSubset*,
+                                DataWarehouse* old_dw,
+                                DataWarehouse* new_dw)
+{
+  auto numMPMMatls = d_materialManager->getNumMaterials("MPM");
+
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+
+    printTask(patches, patch, cout_doing, "Doing findSurfaceParticles");
+
+    for (size_t mat = 0; mat < numMPMMatls; mat++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", mat));
+      int matID = mpm_matl->getDWIndex();
+
+      ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+      // Ghost::AroundNodes,
+      // d_numGhostParticles,
+      // d_mpm_labels->pXLabel);
+
+      constParticleVariable<Matrix3> pStress_old;
+      old_dw->get(pStress_old, d_mpm_labels->pStressLabel, pset);
+
+      constParticleVariable<double> pSurf_old;
+      ParticleVariable<double> pSurf;
+
+      old_dw->get(pSurf_old, d_mpm_labels->pSurfLabel, pset);
+      new_dw->allocateAndPut(pSurf, d_mpm_labels->pSurfLabel_preReloc, pset);
+
+      // For now carry forward the particle surface data
+      for (auto particle : *pset) {
+        pSurf[particle] = pSurf_old[particle];
+      }
+    } // matl loop
+  }   // patches
+}
+
+/*!----------------------------------------------------------------------
+ * scheduleComputeLogisticRegression
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::scheduleComputeLogisticRegression(SchedulerP& sched,
+                                             const PatchSet* patches,
+                                             const MaterialSet* matls)
+{
+  if (contactModel->useLogisticRegression()) {
+    printSchedule(
+      patches, cout_doing, "MPM::scheduleComputeLogisticRegression");
+
+    Task* t = scinew Task("MPM::computeLogisticRegression",
+                          this,
+                          &SerialMPM::computeLogisticRegression);
+
+    Ghost::GhostType gp = Ghost::AroundNodes;
+    int ngc_p           = d_numGhostParticles;
+
+    auto* z_matl = scinew MaterialSubset();
+    z_matl->add(0);
+    z_matl->addReference();
+
+    t->needs(Task::OldDW, d_mpm_labels->pXLabel, gp, ngc_p);
+    t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, gp, ngc_p);
+    t->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, gp, ngc_p);
+    t->needs(Task::NewDW, d_mpm_labels->pSurfLabel_preReloc, gp, ngc_p);
+    t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+    // t->needs(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl,
+    // Ghost::None);
+
+    t->computes(d_mpm_labels->gMatlProminenceLabel);
+    t->computes(d_mpm_labels->gAlphaMaterialLabel);
+    t->computes(d_mpm_labels->gNormAlphaToBetaLabel, z_matl);
+
+    sched->addTask(t, patches, matls);
+
+    if (z_matl->removeReference()) {
+      delete z_matl; // shouln't happen, but...
+    }
+  }
+}
+
+void
+SerialMPM::computeLogisticRegression(const ProcessorGroup*,
+                                     const PatchSubset* patches,
+                                     const MaterialSubset*,
+                                     DataWarehouse* old_dw,
+                                     DataWarehouse* new_dw)
+{
+
+  // As of 5/22/19, this uses John Nairn's and Chad Hammerquist's
+  // Logistic Regression method for finding normals used in contact.
+  // These "NormAlphaToBeta" are then used to find each material's
+  // greatest prominence at a node.  That is, the portion of a
+  // particle that projects farthest along the direction of that normal.
+  // One material at each multi-material node is identified as the
+  // alpha material, this is the material with the most mass at the node.
+  // All other materials are beta materials, and the NormAlphaToBeta
+  // is perpendicular to the plane separating those materials
+  Ghost::GhostType gan   = Ghost::AroundNodes;
+  Ghost::GhostType gnone = Ghost::None;
+
+  auto numMPMMatls = d_materialManager->getNumMaterials("MPM");
+  std::vector<constNCVariable<double>> gMass(numMPMMatls);
+  std::vector<constParticleVariable<Point>> pX(numMPMMatls);
+
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+
+    printTask(
+      patches, patch, cout_doing, "Doing MPM::computeLogisticRegression");
+
+    Vector dx = patch->dCell();
+
+    // constNCVariable<double>  NC_CCweight;
+    // old_dw->get(NC_CCweight, d_mpm_labels->NC_CCweightLabel,  0, patch,
+    // gnone, 0);
+
+    auto interpolator      = d_mpm_flags->d_interpolator->clone(patch);
+    auto numInfluenceNodes = interpolator->size();
+    std::vector<IntVector> ni(numInfluenceNodes);
+    std::vector<double> S(numInfluenceNodes);
+    std::vector<Vector> d_S(numInfluenceNodes);
+    std::string interp_type = d_mpm_flags->d_interpolatorType;
+
+    // Declare and allocate storage for use in the Logistic Regression
+    NCVariable<int> gAlphaMaterial;
+    NCVariable<int> gNumMatlsOnNode;
+    NCVariable<int> gNumParticlesOnNode;
+    NCVariable<Vector> gNormAlphaToBeta;
+    std::vector<NCVariable<Int130>> gParticleList(numMPMMatls);
+
+    new_dw->allocateAndPut(
+      gAlphaMaterial, d_mpm_labels->gAlphaMaterialLabel, 0, patch);
+    new_dw->allocateAndPut(
+      gNormAlphaToBeta, d_mpm_labels->gNormAlphaToBetaLabel, 0, patch);
+    new_dw->allocateTemporary(gNumMatlsOnNode, patch);
+    new_dw->allocateTemporary(gNumParticlesOnNode, patch);
+    gAlphaMaterial.initialize(-99);
+    gNumMatlsOnNode.initialize(0);
+    gNumParticlesOnNode.initialize(0);
+    gNormAlphaToBeta.initialize(Vector(-99. - 99. - 99.));
+
+    // Get out the mass first, need access to the mass of all materials
+    // at each node.
+    // Also, at each multi-material node, we need the position of the
+    // particles around that node.  Rather than store the positions, for now,
+    // store a list of particle indices for each material at each node and
+    // use those to point into the particle set to get the particle positions
+    for (size_t mat = 0; mat < numMPMMatls; mat++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", mat));
+      int matID = mpm_matl->getDWIndex();
+      new_dw->get(gMass[mat], d_mpm_labels->gMassLabel, matID, patch, gnone, 0);
+      new_dw->allocateTemporary(gParticleList[mat], patch);
+    }
+
+    // Here, find out two things:
+    // 1.  How many materials have mass on a node
+    // 2.  Which material has the most mass on a node.  That is the alpha matl.
+    for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+      IntVector node = *iter;
+      double maxMass = -9.e99;
+      for (size_t mat = 0; mat < numMPMMatls; mat++) {
+        if (gMass[mat][node] > 1.e-16) {
+          gNumMatlsOnNode[node]++;
+          if (gMass[mat][node] > maxMass) {
+            // This is the alpha material, all other matls are beta
+            gAlphaMaterial[node] = mat;
+            maxMass              = gMass[mat][node];
+          }
+        }
+      } // Loop over materials
+      if (gNumMatlsOnNode[node] < 2) {
+        gAlphaMaterial[node] = -99;
+      }
+    } // Node Iterator
+
+    // In this section of code, we find the particles that are in the
+    // vicinity of a multi-material node and put their indices in a list
+    // so we can retrieve their positions later.
+
+    // I hope to improve on this gParticleList later, but for now,
+    // the last element in the array holds the number of entries in the
+    // array.  I don't yet know how to allocate an STL container on the nodes.
+    for (size_t mat = 0; mat < numMPMMatls; mat++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", mat));
+      int matID = mpm_matl->getDWIndex();
+
+      ParticleSubset* pset = old_dw->getParticleSubset(
+        matID, patch, gan, d_numGhostParticles, d_mpm_labels->pXLabel);
+      constParticleVariable<Matrix3> pSize, pDefGrad_old;
+
+      old_dw->get(pX[mat], d_mpm_labels->pXLabel, pset);
+      old_dw->get(pSize, d_mpm_labels->pSizeLabel, pset);
+      old_dw->get(pDefGrad_old, d_mpm_labels->pDefGradLabel, pset);
+
+      // Initialize the gParticleList
+      for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+        IntVector node = *iter;
+        for (auto particle = 0; particle < 400; particle++) {
+          gParticleList[mat][node][particle] = 0;
+        }
+      }
+
+      // Loop over particles and find which multi-mat nodes they contribute to
+      for (auto idx : *pset) {
+
+        interpolator->findCellAndWeightsAndShapeDerivatives(
+          pX[mat][idx], ni, S, d_S, pSize[idx], pDefGrad_old[idx]);
+
+        std::set<IntVector> nodeList;
+        for (int k = 0; k < numInfluenceNodes; k++) {
+          auto node = ni[k];
+          if (patch->containsNode(node) && gNumMatlsOnNode[node] > 1 &&
+              S[k] > 1.e-100) {
+            nodeList.insert(node);
+          } // conditional
+        }   // loop over nodes returned by interpolator
+
+        for (auto node : nodeList) {
+          auto& particle                     = gParticleList[mat][node][399];
+          gParticleList[mat][node][particle] = idx;
+          particle++;
+          gNumParticlesOnNode[node]++;
+        }
+        nodeList.clear();
+      } // Loop over Particles
+    }
+
+    // This is the Logistic Regression code that finds the normal to the
+    // plane that separates two materials.  This is as directly as possible
+    // from Nairn & Hammerquist, 2019.
+    using Vector4  = Eigen::Matrix<double, 4, 1>;
+    using Matrix44 = Eigen::Matrix<double, 4, 4>;
+
+    double lam     = 1.e-7 * dx.x() * dx.x();
+    Vector4 lambda = { lam, lam, lam, 0 };
+    double wp      = 1.0;
+    for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
+      IntVector node = *iter;
+      // Only work on multi-material nodes
+      if (gAlphaMaterial[node] >= 0) {
+        bool converged = false;
+        int num_iters  = 0;
+        double tol     = 1.e-5;
+        Vector4 phi    = { 1., 0., 0., 0. };
+        Vector nhat_k(phi[0], phi[1], phi[2]);
+        Vector nhat_backup(0.);
+        double error_min = 1.0;
+        double error     = 1.0;
+        while (!converged) {
+          num_iters++;
+
+          Vector4 g_phi          = -lambda.cwiseProduct(phi);
+          Matrix44 g_prime_phi   = Matrix44::Zero();
+          g_prime_phi.diagonal() = lambda;
+
+          // std::cout << "phi_k = " << phi.transpose() << "\n";
+          for (size_t mat = 0; mat < numMPMMatls; mat++) {
+            double cp = 0.;
+            if (gAlphaMaterial[node] == static_cast<int>(mat)) {
+              cp = -1.;
+            } else {
+              cp = 1.;
+            }
+
+            for (int part = 0; part < gParticleList[mat][node][399]; part++) {
+              Point xp    = pX[mat][gParticleList[mat][node][part]];
+              Vector4 xp4 = { xp.x(), xp.y(), xp.z(), 1.0 };
+              Matrix44 xx = xp4 * xp4.transpose();
+
+              double theta    = xp4.dot(phi);
+              double exptheta = std::exp(-theta);
+              if (!std::isfinite(exptheta)) {
+                theta    = xp4.dot(phi / phi.norm());
+                exptheta = std::exp(-theta);
+                // std::cout << "**INTERNAL ERROR** MPM: In logistic regression:
+                // xp . phi too large.\n"; std::cout << "xp = " <<
+                // xp4.transpose() << " phi = " << phi.transpose() << "\n"
+                //           << "theta = " << theta
+                //           << "alpha = " << alpha << " psi = " << psi << " f =
+                //           " << fEq20 << "\n";
+              }
+
+              double alpha    = 1.0 + exptheta;
+              double psi      = 2.0 * exptheta / (alpha * alpha);
+              double fEq20    = 2.0 / alpha - 1.0;
+              double cp_fEq20 = cp - fEq20;
+
+              g_phi += xp4 * (wp * cp_fEq20 * psi);
+              g_prime_phi += xx * (psi * psi * wp);
+
+              // double psi_deriv = psi * (2.0 / alpha * exptheta - 1.0);
+              // g_prime_phi += xx * (psi * psi * wp - cp_fEq20 * psi_deriv);
+
+            } // Loop over each material's particle list
+          }   // Loop over materials
+
+          Eigen::MatrixXd phi_inc =
+            g_prime_phi.colPivHouseholderQr().solve(g_phi);
+          phi += phi_inc;
+
+          /*
+          std::cout << "iter = " << num_iters << "\n";
+          std::cout << "g_phi = " << g_phi.transpose() << "\n";
+          std::cout << "g_prime_phi = " << g_prime_phi << "\n";
+          std::cout << "phi_inc = " << phi_inc.transpose() <<"\n";
+          std::cout << "phi_k+1 = " << phi.transpose() << "\n";
+          */
+
+          Vector nhat_kp1(phi[0], phi[1], phi[2]);
+          nhat_kp1 /= (nhat_kp1.length() + 1.e-100);
+          error = 1.0 - Dot(nhat_kp1, nhat_k);
+          if (error < error_min) {
+            error_min   = error;
+            nhat_backup = nhat_kp1;
+          }
+          if (error < tol || num_iters > 15) {
+            converged = true;
+            if (num_iters > 15) {
+              gNormAlphaToBeta[node] = nhat_backup;
+            } else {
+              gNormAlphaToBeta[node] = nhat_kp1;
+            }
+          } else {
+            nhat_k = nhat_kp1;
+          }
+        } // while(!converged) loop
+
+      } // If this node has more than one particle on it
+    }   // Loop over nodes
+
+    MPMBoundCond bc;
+    bc.setBoundaryCondition(
+      patch, 0, "Symmetric", gNormAlphaToBeta, interp_type);
+
+    // Renormalize normal std::vectors after setting BCs
+    for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+      IntVector node = *iter;
+      gNormAlphaToBeta[node] /= (gNormAlphaToBeta[node].length() + 1.e-100);
+      if (gAlphaMaterial[node] == -99) {
+        gNormAlphaToBeta[node] = Vector(0.);
+      }
+      if (!(gNormAlphaToBeta[node].length() >= 0.0)) {
+        std::cout << "Node  = " << node << "\n";
+        std::cout << "gNormAlphaToBeta[node] = " << gNormAlphaToBeta[node]
+                  << "\n";
+        std::cout << "gAlphaMaterial[node] = " << gAlphaMaterial[node] << "\n";
+        std::cout << "gNumMatlsOnNode[node] = " << gNumMatlsOnNode[node]
+                  << "\n";
+        std::cout << "gNumParticlesOnNode[node] = " << gNumParticlesOnNode[node]
+                  << "\n";
+      }
+    } // Loop over nodes
+
+    // Loop over all the particles, find the nodes they interact with
+    // For the alpha material (gAlphaMaterial) find g.position as the
+    // maximum of the dot product between each particle corner and the
+    // gNormalAlphaToBeta std::vector.
+    // For the beta materials (every other material) find g.position as the
+    // minimum of the dot product between each particle corner and the
+    // gNormalAlphaToBeta std::vector.
+    // Compute "MatlProminence" as the min/max of the dot product between
+    // the normal and the particle corners
+
+    std::vector<NCVariable<double>> d_x_p_dot_n(numMPMMatls);
+
+    for (size_t mat = 0; mat < numMPMMatls; mat++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", mat));
+      int matID = mpm_matl->getDWIndex();
+
+      ParticleSubset* pset = old_dw->getParticleSubset(
+        matID, patch, gan, d_numGhostParticles, d_mpm_labels->pXLabel);
+
+      constParticleVariable<Matrix3> pSize, pDefGrad_old;
+      constParticleVariable<double> pSurf;
+
+      old_dw->get(pSize, d_mpm_labels->pSizeLabel, pset);
+      old_dw->get(pDefGrad_old, d_mpm_labels->pDefGradLabel, pset);
+      new_dw->get(pSurf, d_mpm_labels->pSurfLabel_preReloc, pset);
+
+      new_dw->allocateAndPut(
+        d_x_p_dot_n[mat], d_mpm_labels->gMatlProminenceLabel, matID, patch);
+
+      d_x_p_dot_n[mat].initialize(-99.);
+
+      NCVariable<double> gProjMax, gProjMin;
+      new_dw->allocateTemporary(gProjMax, patch, gnone);
+      new_dw->allocateTemporary(gProjMin, patch, gnone);
+      gProjMax.initialize(-9.e99);
+      gProjMin.initialize(9.e99);
+
+      for (auto idx : *pset) {
+
+        if (pSurf[idx] > 0.9) {
+          interpolator->findCellAndWeights(
+            pX[mat][idx], ni, S, pSize[idx], pDefGrad_old[idx]);
+
+          Matrix3 curSize = pDefGrad_old[idx] * pSize[idx];
+          Matrix3 dsize =
+            curSize * Matrix3(dx[0], 0, 0, 0, dx[1], 0, 0, 0, dx[2]);
+
+#if 0
+          // This version uses particle corners to compute prominence
+          // Compute std::vectors from particle center to the corners
+          Vector RNL[8];
+          RNL[0] = Vector(-dsize(0,0)-dsize(0,1)+dsize(0,2),
+                          -dsize(1,0)-dsize(1,1)+dsize(1,2),
+                          -dsize(2,0)-dsize(2,1)+dsize(2,2))*0.5;
+          RNL[1] = Vector( dsize(0,0)-dsize(0,1)+dsize(0,2),
+                           dsize(1,0)-dsize(1,1)+dsize(1,2),
+                           dsize(2,0)-dsize(2,1)+dsize(2,2))*0.5;
+          RNL[2] = Vector( dsize(0,0)+dsize(0,1)+dsize(0,2),
+                           dsize(1,0)+dsize(1,1)+dsize(1,2),
+                           dsize(2,0)+dsize(2,1)+dsize(2,2))*0.5;
+          RNL[3] = Vector(-dsize(0,0)+dsize(0,1)+dsize(0,2),
+                          -dsize(1,0)+dsize(1,1)+dsize(1,2),
+                          -dsize(2,0)+dsize(2,1)+dsize(2,2))*0.5;
+          RNL[4] = Vector(-dsize(0,0)-dsize(0,1)-dsize(0,2),
+                          -dsize(1,0)-dsize(1,1)-dsize(1,2),
+                          -dsize(2,0)-dsize(2,1)-dsize(2,2))*0.5;
+          RNL[5] = Vector( dsize(0,0)-dsize(0,1)-dsize(0,2),
+                           dsize(1,0)-dsize(1,1)-dsize(1,2),
+                           dsize(2,0)-dsize(2,1)-dsize(2,2))*0.5;
+          RNL[6] = Vector( dsize(0,0)+dsize(0,1)-dsize(0,2),
+                           dsize(1,0)+dsize(1,1)-dsize(1,2),
+                           dsize(2,0)+dsize(2,1)-dsize(2,2))*0.5;
+          RNL[7] = Vector(-dsize(0,0)+dsize(0,1)-dsize(0,2),
+                          -dsize(1,0)+dsize(1,1)-dsize(1,2),
+                          -dsize(2,0)+dsize(2,1)-dsize(2,2))*0.5;
+
+          for (int k = 0; k < numInfluenceNodes; k++) {
+            auto node = ni[k];
+            if (patch->containsNode(node)) {
+              if (S[k] > 0. && gNumParticlesOnNode[node] > 1) {
+                for (int ic = 0; ic < 8; ic++) {
+                  Vector xp_xi = (pX[mat][idx].asVector()+RNL[ic]);
+                  double proj = Dot(xp_xi, gNormAlphaToBeta[node]);
+                  if (mat == gAlphaMaterial[node]) {
+                    if (proj > gProjMax[node]) {
+                       gProjMax[node] = proj;
+                       d_x_p_dot_n[mat][node] = proj;
+                    }
+                  } else {
+                    if (proj < gProjMin[node]) {
+                       gProjMin[node] = proj;
+                       d_x_p_dot_n[mat][node] = proj;
+                    }
+                  }
+                } // Loop over all 8 particle corners
+              }  // Only deal with nodes that this particle affects
+            }  // If node is on the patch
+          } // Loop over nodes near this particle
+#endif
+#if 0
+          // This version uses constant particle radius, here assuming 2 PPC
+          // in each direction
+          double Rp = 0.25*dx.x();
+          for (int k = 0; k < numInfluenceNodes; k++) {
+            auto node = ni[k];
+            if (patch->containsNode(node)) {
+              if (S[k] > 0. && gNumParticlesOnNode[node] > 1) {
+                for (int ic = 0; ic < 8; ic++) {
+                  Vector xp_xi = (pX[mat][idx].asVector());
+                  double proj = Dot(xp_xi, gNormAlphaToBeta[node]);
+                  if (mat == gAlphaMaterial[node]) {
+                    proj += Rp;
+                    if (proj > gProjMax[node]) {
+                      gProjMax[node] = proj;
+                      d_x_p_dot_n[mat][node] = proj;
+                    }
+                  } else {
+                    proj -= Rp;
+                    if (proj < gProjMin[node]) {
+                      gProjMin[node] = proj;
+                      d_x_p_dot_n[mat][node] = proj;
+                    }
+                  }
+                } // Loop over all 8 particle corners
+              }  // Only deal with nodes that this particle affects
+            }  // If node is on the patch
+          } // Loop over nodes near this particle
+#endif
+
+#if 1
+          // This version uses particle faces to compute prominence.
+          // Compute std::vectors from particle center to the faces
+          Vector RFL[6];
+          RFL[0] = Vector(-dsize(0, 0), -dsize(1, 0), -dsize(2, 0)) * 0.5;
+          RFL[1] = Vector(dsize(0, 0), dsize(1, 0), dsize(2, 0)) * 0.5;
+          RFL[2] = Vector(-dsize(0, 1), -dsize(1, 1), -dsize(2, 1)) * 0.5;
+          RFL[3] = Vector(dsize(0, 1), dsize(1, 1), dsize(2, 1)) * 0.5;
+          RFL[4] = Vector(-dsize(0, 2), -dsize(1, 2), -dsize(2, 2)) * 0.5;
+          RFL[5] = Vector(dsize(0, 2), dsize(1, 2), dsize(2, 2)) * 0.5;
+
+          for (int k = 0; k < numInfluenceNodes; k++) {
+            auto node = ni[k];
+            if (patch->containsNode(node)) {
+              if (S[k] > 0. && gNumParticlesOnNode[node] > 1) {
+                for (const auto& ic : RFL) {
+                  Vector xp_xi = pX[mat][idx].asVector() + ic;
+                  double proj  = Dot(xp_xi, gNormAlphaToBeta[node]);
+                  if (static_cast<int>(mat) == gAlphaMaterial[node]) {
+                    if (proj > gProjMax[node]) {
+                      gProjMax[node]         = proj;
+                      d_x_p_dot_n[mat][node] = proj;
+                    }
+                  } else {
+                    if (proj < gProjMin[node]) {
+                      gProjMin[node]         = proj;
+                      d_x_p_dot_n[mat][node] = proj;
+                    }
+                  }
+                } // Loop over all 8 particle corners
+              }   // Only deal with nodes that this particle affects
+            }     // If node is on the patch
+          }       // Loop over nodes near this particle
+#endif
+        } // Is a surface particle
+      }   // end Particle loop
+    }     // loop over matls
+
+  } // patches
+}
+
+/*!----------------------------------------------------------------------
+ * scheduleExchangeMomentumInterpolated
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::scheduleMomentumExchangeInterpolated(SchedulerP& sched,
+                                                const PatchSet* patches,
+                                                const MaterialSet* matls)
+{
+  if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                                 getLevel(patches)->getGrid()->numLevels())) {
+    return;
+  }
+  printSchedule(
+    patches, cout_doing, "MPM::scheduleExchangeMomentumInterpolated");
+
+  contactModel->addComputesAndRequires(
+    sched, patches, matls, d_mpm_labels->gVelocityLabel);
+}
+
+/*!----------------------------------------------------------------------
+ * scheduleComputeContactArea
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::scheduleComputeContactArea(SchedulerP& sched,
+                                      const PatchSet* patches,
+                                      const MaterialSet* matls)
+{
+  if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                                 getLevel(patches)->getGrid()->numLevels())) {
+    return;
+  }
+
+  /** computeContactArea */
+  if (d_boundaryTractionFaces.size() > 0) {
+
+    printSchedule(patches, cout_doing, "MPM::scheduleComputeContactArea");
+    Task* t = scinew Task(
+      "MPM::computeContactArea", this, &SerialMPM::computeContactArea);
+
+    Ghost::GhostType gnone = Ghost::None;
+    t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, gnone);
+    for (auto face : d_boundaryTractionFaces) {
+      int iface = (int)face;
+      t->computes(d_mpm_labels->BndyContactCellAreaLabel[iface]);
+    }
+    sched->addTask(t, patches, matls);
+  }
+}
+
+/*!----------------------------------------------------------------------
+ * computeContactArea
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::computeContactArea(const ProcessorGroup*,
+                              const PatchSubset* patches,
+                              const MaterialSubset*,
+                              DataWarehouse* /*old_dw*/,
+                              DataWarehouse* new_dw)
+{
+  // six indices for each of the faces
+  double bndyCArea[6] = { 0, 0, 0, 0, 0, 0 };
+
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    printTask(patches, patch, cout_doing, "Doing computeContactArea");
+
+    Vector dx = patch->dCell();
+
+    int numMPMMatls = d_materialManager->getNumMaterials("MPM");
+
+    for (int m = 0; m < numMPMMatls; m++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
+      int matID = mpm_matl->getDWIndex();
+      constNCVariable<double> gVolume;
+
+      new_dw->get(
+        gVolume, d_mpm_labels->gVolumeLabel, matID, patch, Ghost::None, 0);
+
+      for (auto face : d_boundaryTractionFaces) {
+        int iface = (int)(face);
+
+        // Check if the face is on an external boundary
+        if (patch->getBCType(face) == Patch::Neighbor) {
+          continue;
+        }
+
+        // We are on the boundary, i.e. not on an interior patch
+        // boundary, and also on the correct side,
+
+        // loop over face nodes to find boundary areas
+        // Because this calculation uses gVolume, particle volumes interpolated
+        // to the nodes, it will give 1/2 the expected value because the
+        // particle values are distributed to all nodes, not just those on this
+        // face.  It would require particles on the other side of the face to
+        // "fill" the nodal volumes and give the correct area when divided by
+        // the face normal cell dimension (celldepth). To correct for this,
+        // nodearea incorporates a factor of two.
+
+        IntVector projlow, projhigh;
+        patch->getFaceNodes(face, 0, projlow, projhigh);
+        const double celldepth = dx[iface / 2];
+
+        for (int i = projlow.x(); i < projhigh.x(); i++) {
+          for (int j = projlow.y(); j < projhigh.y(); j++) {
+            for (int k = projlow.z(); k < projhigh.z(); k++) {
+              IntVector ijk(i, j, k);
+              double nodearea = 2.0 * gVolume[ijk] / celldepth; // node area
+              bndyCArea[iface] += nodearea;
+            }
+          }
+        }
+      } // faces
+    }   // materials
+  }     // patches
+
+  // be careful only to put the fields that we have built
+  // that way if the user asks to output a field that has not been built
+  // it will fail early rather than just giving zeros.
+  for (auto face : d_boundaryTractionFaces) {
+    int iface = (int)face;
+    new_dw->put(sum_vartype(bndyCArea[iface]),
+                d_mpm_labels->BndyContactCellAreaLabel[iface]);
+  }
+}
+
+/*!----------------------------------------------------------------------
+ * scheduleComputeInternalForce
+ *
+ * computeInternalForce
+ *   in(P.CONMOD, P.NAT_X, P.VOLUME)
+ *   operation(evaluate the divergence of the stress (stored in
+ *   P.CONMOD) using P.NAT_X and the gradients of the
+ *   shape functions)
+ * out(G.F_INTERNAL)
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::scheduleComputeInternalForce(SchedulerP& sched,
+                                        const PatchSet* patches,
+                                        const MaterialSet* matls)
+{
+  if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                                 getLevel(patches)->getGrid()->numLevels())) {
+    return;
+  }
+
+  printSchedule(patches, cout_doing, "MPM::scheduleComputeInternalForce");
+
+  Task* t = scinew Task(
+    "MPM::computeInternalForce", this, &SerialMPM::computeInternalForce);
+
+  Ghost::GhostType gan   = Ghost::AroundNodes;
+  Ghost::GhostType gnone = Ghost::None;
+  t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, gnone);
+  t->needs(Task::NewDW,
+              d_mpm_labels->gVolumeLabel,
+              d_materialManager->getAllInOneMaterial(),
+              Task::OutOfDomain,
+              gnone);
+  t->needs(
+    Task::OldDW, d_mpm_labels->pStressLabel, gan, d_numGhostParticles);
+  t->needs(
+    Task::OldDW, d_mpm_labels->pVolumeLabel, gan, d_numGhostParticles);
+  t->needs(Task::OldDW, d_mpm_labels->pXLabel, gan, d_numGhostParticles);
+  t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, gan, d_numGhostParticles);
+  t->needs(
+    Task::OldDW, d_mpm_labels->pDefGradLabel, gan, d_numGhostParticles);
+#ifdef DEBUG_WITH_PARTICLE_ID
+  t->needs(
+    Task::OldDW, d_mpm_labels->pParticleIDLabel, gan, d_numGhostParticles);
+#endif
+
+  if (d_mpm_flags->d_withICE) {
+    t->needs(
+      Task::NewDW, d_mpm_labels->pPressureLabel, gan, d_numGhostParticles);
+  }
+
+  if (d_mpm_flags->d_artificialViscosity) {
+    t->needs(Task::OldDW, d_mpm_labels->p_qLabel, gan, d_numGhostParticles);
+  }
+
+  t->computes(d_mpm_labels->gInternalForceLabel);
+
+  for (auto face : d_boundaryTractionFaces) {
+    int iface = (int)face;
+    t->needs(Task::NewDW, d_mpm_labels->BndyContactCellAreaLabel[iface]);
+    t->computes(d_mpm_labels->BndyForceLabel[iface]);
+    t->computes(d_mpm_labels->BndyContactAreaLabel[iface]);
+    t->computes(d_mpm_labels->BndyTractionLabel[iface]);
+  }
+
+  t->computes(d_mpm_labels->gStressForSavingLabel);
+  t->computes(d_mpm_labels->gStressForSavingLabel,
+              d_materialManager->getAllInOneMaterial(),
+              Task::OutOfDomain);
+
+  sched->addTask(t, patches, matls);
+}
+
+/*!----------------------------------------------------------------------
+ * computeInternalForce
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::computeInternalForce(const ProcessorGroup*,
+                                const PatchSubset* patches,
+                                const MaterialSubset*,
+                                DataWarehouse* old_dw,
+                                DataWarehouse* new_dw)
+{
+  // node based forces
+  Vector bndyForce[6];
+  Vector bndyTraction[6];
+  for (int iface = 0; iface < 6; iface++) {
+    bndyForce[iface]    = Vector(0.);
+    bndyTraction[iface] = Vector(0.);
+  }
+
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    printTask(patches, patch, cout_doing, "Doing computeInternalForce");
+
+    Vector dx = patch->dCell();
+    double oodx[3];
+    oodx[0] = 1.0 / dx.x();
+    oodx[1] = 1.0 / dx.y();
+    oodx[2] = 1.0 / dx.z();
+    Matrix3 Id;
+    Id.Identity();
+
+    auto interpolator      = d_mpm_flags->d_interpolator->clone(patch);
+    auto numInfluenceNodes = interpolator->size();
+    std::vector<IntVector> ni(numInfluenceNodes);
+    std::vector<double> S(numInfluenceNodes);
+    std::vector<Vector> d_S(numInfluenceNodes);
+    std::string interp_type = d_mpm_flags->d_interpolatorType;
+
+    int numMPMMatls = d_materialManager->getNumMaterials("MPM");
+
+    NCVariable<Matrix3> gStressglobal;
+    constNCVariable<double> gVolumeglobal;
+    new_dw->get(gVolumeglobal,
+                d_mpm_labels->gVolumeLabel,
+                d_materialManager->getAllInOneMaterial()->get(0),
+                patch,
+                Ghost::None,
+                0);
+    new_dw->allocateAndPut(gStressglobal,
+                           d_mpm_labels->gStressForSavingLabel,
+                           d_materialManager->getAllInOneMaterial()->get(0),
+                           patch);
+
+    for (int m = 0; m < numMPMMatls; m++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
+      int matID = mpm_matl->getDWIndex();
+      // Create arrays for the particle position, volume
+      // and the constitutive model
+      constParticleVariable<Point> pX;
+      constParticleVariable<double> pVol;
+      constParticleVariable<double> p_pressure;
+      constParticleVariable<double> p_q;
+      constParticleVariable<Matrix3> pStress;
+      constParticleVariable<Matrix3> pSize;
+      constParticleVariable<Matrix3> pDefGrad_old;
+      NCVariable<Vector> gInternalForce;
+      NCVariable<Matrix3> gStress;
+      constNCVariable<double> gVolume;
+
+      ParticleSubset* pset = old_dw->getParticleSubset(matID,
+                                                       patch,
+                                                       Ghost::AroundNodes,
+                                                       d_numGhostParticles,
+                                                       d_mpm_labels->pXLabel);
+
+      old_dw->get(pX, d_mpm_labels->pXLabel, pset);
+      old_dw->get(pVol, d_mpm_labels->pVolumeLabel, pset);
+      old_dw->get(pStress, d_mpm_labels->pStressLabel, pset);
+      old_dw->get(pSize, d_mpm_labels->pSizeLabel, pset);
+      old_dw->get(pDefGrad_old, d_mpm_labels->pDefGradLabel, pset);
+
+#ifdef DEBUG_WITH_PARTICLE_ID
+      constParticleVariable<long64> pParticleID;
+      old_dw->get(pParticleID, d_mpm_labels->pParticleIDLabel, pset);
+#endif
+
+      new_dw->get(
+        gVolume, d_mpm_labels->gVolumeLabel, matID, patch, Ghost::None, 0);
+
+      new_dw->allocateAndPut(
+        gStress, d_mpm_labels->gStressForSavingLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gInternalForce, d_mpm_labels->gInternalForceLabel, matID, patch);
+
+      if (d_mpm_flags->d_withICE) {
+        new_dw->get(p_pressure, d_mpm_labels->pPressureLabel, pset);
+      } else {
+        ParticleVariable<double> p_pressure_create;
+        new_dw->allocateTemporary(p_pressure_create, pset);
+        for (int& it : *pset) {
+          p_pressure_create[it] = 0.0;
+        }
+        p_pressure = p_pressure_create; // reference created data
+      }
+
+      if (d_mpm_flags->d_artificialViscosity) {
+        old_dw->get(p_q, d_mpm_labels->p_qLabel, pset);
+      } else {
+        ParticleVariable<double> p_q_create;
+        new_dw->allocateTemporary(p_q_create, pset);
+        for (int& it : *pset) {
+          p_q_create[it] = 0.0;
+        }
+        p_q = p_q_create; // reference created data
+      }
+
+      gInternalForce.initialize(Vector(0, 0, 0));
+
+      Matrix3 stressvol;
+      Matrix3 stresspress;
+
+      // for the non axisymmetric case:
+      if (!d_mpm_flags->d_axisymmetric) {
+        for (auto idx : *pset) {
+
+          // Get the node indices that surround the cell
+          interpolator->findCellAndWeightsAndShapeDerivatives(
+            pX[idx], ni, S, d_S, pSize[idx], pDefGrad_old[idx]);
+          stressvol   = pStress[idx] * pVol[idx];
+          stresspress = pStress[idx] + Id * (p_pressure[idx] - p_q[idx]);
+          //std::cerr << std::format("idx = {} pStress = {}\n", idx, pStress[idx]);
+          //std::cerr << std::format("stressvol = {}, stresspress = {}\n", stressvol, stresspress);
+
+          for (int k = 0; k < numInfluenceNodes; k++) {
+            auto node = ni[k];
+            if (patch->containsNode(node)) {
+              Vector div(d_S[k].x() * oodx[0],
+                         d_S[k].y() * oodx[1],
+                         d_S[k].z() * oodx[2]);
+              //std::cout << std::format("node = {}, gInternalForce[node] = {}\n",
+              //  node, gInternalForce[node]);
+              gInternalForce[node] -= (div * stresspress) * pVol[idx];
+              gStress[node] += stressvol * S[k];
+              if (!std::isfinite(gInternalForce[node].x())) {
+                std::cout << std::format(
+                  "idx = {}, k = {}, div = {}, S[k] = {}, pVol[idx] = {}, stresspress = {}, stressvol = {}\n",
+                  idx, k, div, S[k], pVol[idx], stresspress, stressvol);
+              }
+
+#ifdef DEBUG_WITH_PARTICLE_ID
+              if (pParticleID[idx] == testParticleID) {
+                if (node == IntVector(3, 38, 0)) {
+                  proc0cout << "Particle ID = " << pParticleID[idx]
+                            << " node = " << node << " dS = " << d_S[k]
+                            << " div = " << div << " stress = " << pStress[idx]
+                            << " damp = " << p_q[idx]
+                            << " stresspress = " << stresspress
+                            << " vol = " << pVol[idx]
+                            << " fint_g = " << gInternalForce[node] << "\n";
+                }
+              }
+#endif
+#ifdef CHECK_ISFINITE
+              if (!std::isfinite(gInternalForce[node].x()) ||
+                  !std::isfinite(gInternalForce[node].y()) ||
+                  !std::isfinite(gInternalForce[node].z())) {
+                std::cout << "vol = " << pVol[idx] << " node = " << node
+                          << " f_i = " << gInternalForce[node]
+                          << " sig_g = " << gStress[node]
+                          << " sig_p = " << stresspress << "\n";
+              }
+#endif
+            }
+          }
+        }
+      }
+
+      // for the axisymmetric case
+      if (d_mpm_flags->d_axisymmetric) {
+        for (auto part : *pset) {
+
+          interpolator->findCellAndWeightsAndShapeDerivatives(
+            pX[part], ni, S, d_S, pSize[part], pDefGrad_old[part]);
+
+          stressvol   = pStress[part] * pVol[part];
+          stresspress = pStress[part] + Id * (p_pressure[part] - p_q[part]);
+
+#ifdef CHECK_ISFINITE
+          if (!std::isfinite(stresspress(0, 0)) ||
+              !std::isfinite(stresspress(0, 1)) ||
+              !std::isfinite(stresspress(0, 2)) ||
+              !std::isfinite(stresspress(1, 1)) ||
+              !std::isfinite(stresspress(1, 2)) ||
+              !std::isfinite(stresspress(2, 2))) {
+            std::cout << " p_pressure = " << p_pressure[part]
+                      << " p_q = " << p_q[part] << "\n";
+          }
+#endif
+
+          // r is the x direction, z (axial) is the y direction
+          double IFr = 0., IFz = 0.;
+          for (int k = 0; k < numInfluenceNodes; k++) {
+            auto node = ni[k];
+            if (patch->containsNode(node)) {
+              IFr = d_S[k].x() * oodx[0] * stresspress(0, 0) +
+                    d_S[k].y() * oodx[1] * stresspress(0, 1) +
+                    d_S[k].z() * stresspress(2, 2);
+              IFz = d_S[k].x() * oodx[0] * stresspress(0, 1) +
+                    d_S[k].y() * oodx[1] * stresspress(1, 1);
+              gInternalForce[node] -= Vector(IFr, IFz, 0.0) * pVol[part];
+              gStress[node] += stressvol * S[k];
+#ifdef CHECK_ISFINITE
+              if (!std::isfinite(gInternalForce[node].x()) ||
+                  !std::isfinite(gInternalForce[node].y()) ||
+                  !std::isfinite(gInternalForce[node].z())) {
+                std::cout << "vol = " << pVol[part] << " node = " << ni[k]
+                          << " f_i = " << gInternalForce[node]
+                          << " sig_g = " << gStress[node]
+                          << " sig_p = " << stresspress << " IFr = " << IFr
+                          << " IFz = " << IFz << "\n";
+              }
+#endif
+#ifdef DEBUG_WITH_PARTICLE_ID
+              // if (pParticleID[part] == testParticleID) {
+              if (node == IntVector(3, 38, 0)) {
+                proc0cout << "Particle ID = " << pParticleID[part]
+                          << " node = " << node << " dS = " << d_S[k]
+                          << " IFr = " << IFr << " IFz = " << IFz
+                          << " stress = " << pStress[part]
+                          << " damp = " << p_q[part]
+                          << " stresspress = " << stresspress
+                          << " vol = " << pVol[part]
+                          << " fint_g = " << gInternalForce[node] << "\n";
+              }
+              //}
+#endif
+            }
+          }
+        }
+      }
+
+      for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+        IntVector c = *iter;
+        gStressglobal[c] += gStress[c];
+        gStress[c] /= gVolume[c];
+      }
+
+      // save boundary forces before apply symmetry boundary condition.
+      for (auto face : d_boundaryTractionFaces) {
+
+        // Check if the face is on an external boundary
+        if (patch->getBCType(face) == Patch::Neighbor) {
+          continue;
+        }
+
+        const int iface = (int)face;
+
+        // We are on the boundary, i.e. not on an interior patch
+        // boundary, and also on the correct side,
+
+        IntVector projlow, projhigh;
+        patch->getFaceNodes(face, 0, projlow, projhigh);
+        Vector norm      = Uintah::Util::face_norm(face);
+        double celldepth = dx[iface / 2]; // length in dir. perp. to boundary
+
+        // loop over face nodes to find boundary forces, ave. stress (traction).
+        // Note that nodearea incorporates a factor of two as described in the
+        // bndyCellArea calculation in order to get node face areas.
+
+        for (int i = projlow.x(); i < projhigh.x(); i++) {
+          for (int j = projlow.y(); j < projhigh.y(); j++) {
+            for (int k = projlow.z(); k < projhigh.z(); k++) {
+              IntVector ijk(i, j, k);
+
+              // flip sign so that pushing on boundary gives positive force
+              bndyForce[iface] -= gInternalForce[ijk];
+
+              double nodearea = 2.0 * gVolume[ijk] / celldepth; // node area
+              for (int ic = 0; ic < 3; ic++) {
+                for (int jc = 0; jc < 3; jc++) {
+                  bndyTraction[iface][ic] +=
+                    gStress[ijk](ic, jc) * norm[jc] * nodearea;
+                }
+              }
+            }
+          }
+        }
+      } // faces
+
+#ifdef DEBUG_WITH_PARTICLE_ID
+      IntVector node(3, 38, 0);
+      if (patch->containsNode(node)) {
+        proc0cout << "Before BC: Material = " << m << " Node = " << node
+                  << " fint_g = " << gInternalForce[node] << "\n";
+      }
+#endif
+      MPMBoundCond bc;
+      bc.setBoundaryCondition(
+        patch, matID, "Symmetric", gInternalForce, interp_type);
+#ifdef DEBUG_WITH_PARTICLE_ID
+      // IntVector node(3,38,0);
+      if (patch->containsNode(node)) {
+        proc0cout << "After BC: Material = " << m << " Node = " << node
+                  << " fint_g = " << gInternalForce[node] << "\n";
+      }
+#endif
+
+      // for (NodeIterator iter = patch->getNodeIterator(); !iter.done();
+      // iter++) {
+      //   std::cout << "After internal force: node = " << *iter
+      //             << " gInternalForce = " << gInternalForce[*iter] << "\n";
+      // }
+    }
+
+    for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+      IntVector c = *iter;
+      gStressglobal[c] /= gVolumeglobal[c];
+    }
+    // delete interpolator;
+  }
+
+  // be careful only to put the fields that we have built
+  // that way if the user asks to output a field that has not been built
+  // it will fail early rather than just giving zeros.
+  for (auto face : d_boundaryTractionFaces) {
+    int iface = (int)face;
+    new_dw->put(sumvec_vartype(bndyForce[iface]),
+                d_mpm_labels->BndyForceLabel[iface]);
+
+    sum_vartype bndyContactCellArea_iface;
+    new_dw->get(bndyContactCellArea_iface,
+                d_mpm_labels->BndyContactCellAreaLabel[iface]);
+
+    if (bndyContactCellArea_iface > 0) {
+      bndyTraction[iface] /= bndyContactCellArea_iface;
+    }
+
+    new_dw->put(sumvec_vartype(bndyTraction[iface]),
+                d_mpm_labels->BndyTractionLabel[iface]);
+
+    // Use the face force and traction calculations to provide a second estimate
+    // of the contact area.
+    double bndyContactArea_iface = bndyContactCellArea_iface;
+    if (bndyTraction[iface][iface / 2] * bndyTraction[iface][iface / 2] >
+        1.e-12) {
+      bndyContactArea_iface =
+        bndyForce[iface][iface / 2] / bndyTraction[iface][iface / 2];
+    }
+
+    new_dw->put(sum_vartype(bndyContactArea_iface),
+                d_mpm_labels->BndyContactAreaLabel[iface]);
+  }
+}
+
+/*!----------------------------------------------------------------------
+ * scheduleComputeAndIntegrateacceleration
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
+                                                   const PatchSet* patches,
+                                                   const MaterialSet* matls)
+{
+  if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                                 getLevel(patches)->getGrid()->numLevels())) {
+    return;
+  }
+
+  printSchedule(
+    patches, cout_doing, "MPM::scheduleComputeAndIntegrateAcceleration");
+
+  Task* t = scinew Task("MPM::computeAndIntegrateAcceleration",
+                        this,
+                        &SerialMPM::computeAndIntegrateAcceleration);
+
+  t->needs(Task::OldDW, d_mpm_labels->delTLabel);
+
+  t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gInternalForceLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gBodyForceLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gExternalForceLabel, Ghost::None);
+  t->needs(Task::NewDW, d_mpm_labels->gVelocityLabel, Ghost::None);
+
+  t->computes(d_mpm_labels->gVelocityStarLabel);
+  t->computes(d_mpm_labels->gAccelerationLabel);
+
+  sched->addTask(t, patches, matls);
+}
+
+/*!----------------------------------------------------------------------
+ * computeAndIntegrateacceleration
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
+                                           const PatchSubset* patches,
+                                           const MaterialSubset*,
+                                           DataWarehouse* old_dw,
+                                           DataWarehouse* new_dw)
+{
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    printTask(
+      patches, patch, cout_doing, "Doing computeAndIntegrateAcceleration");
+
+    Ghost::GhostType gnone = Ghost::None;
+    // Vector gravity = d_mpm_flags->d_gravity;
+    for (size_t m = 0; m < d_materialManager->getNumMaterials("MPM"); m++) {
+      MPMMaterial* mpm_matl =
+        static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
+      int matID = mpm_matl->getDWIndex();
+
+      // Get required variables for this patch
+      constNCVariable<Vector> gInternalForce, gBodyForce, gExternalForce,
+        gVelocity;
+      constNCVariable<double> gMass;
+
+      delt_vartype delT;
+      old_dw->get(delT, d_mpm_labels->delTLabel, getLevel(patches));
+
+      new_dw->get(gInternalForce,
+                  d_mpm_labels->gInternalForceLabel,
+                  matID,
+                  patch,
+                  gnone,
+                  0);
+      new_dw->get(
+        gBodyForce, d_mpm_labels->gBodyForceLabel, matID, patch, gnone, 0);
+      new_dw->get(gExternalForce,
+                  d_mpm_labels->gExternalForceLabel,
+                  matID,
+                  patch,
+                  gnone,
+                  0);
+      new_dw->get(gMass, d_mpm_labels->gMassLabel, matID, patch, gnone, 0);
+      new_dw->get(
+        gVelocity, d_mpm_labels->gVelocityLabel, matID, patch, gnone, 0);
+
+      // Create variables for the results
+      NCVariable<Vector> gVelocity_star, gAcceleration;
+      new_dw->allocateAndPut(
+        gVelocity_star, d_mpm_labels->gVelocityStarLabel, matID, patch);
+      new_dw->allocateAndPut(
+        gAcceleration, d_mpm_labels->gAccelerationLabel, matID, patch);
+
+      gAcceleration.initialize(Vector(0., 0., 0.));
+      double damp_coef = d_mpm_flags->d_artificialDampCoeff;
+
+      if (mpm_matl->isRigid()) {
+        Vector total_force(0, 0, 0);
+        double total_mass = 0;
+        for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+          IntVector c = *iter;
+          if (gMass[c] > d_mpm_flags->d_minMassForAcceleration) {
+            total_force += gInternalForce[c] + gExternalForce[c] + gBodyForce[c];
+            total_mass += gMass[c];
+          }
+        }
+
+        Vector rigid_acc(0, 0, 0);
+        if (total_mass > 0) {
+          rigid_acc = total_force / total_mass;
+        }
+
+        for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+          IntVector c = *iter;
+          Vector acc(0., 0., 0.);
+          if (gMass[c] > d_mpm_flags->d_minMassForAcceleration) {
+            acc = rigid_acc - damp_coef * gVelocity[c];
+          }
+          gAcceleration[c]  = acc;
+          gVelocity_star[c] = gVelocity[c] + gAcceleration[c] * delT;
+// std::cout << "After acceleration: material = " << m << " node = " << c
+//           << " gMass = " << gMass[c]
+//           << " gAcceleration = " << gAcceleration[c] << "\n";
+#ifdef CHECK_ISFINITE
+          if (!std::isfinite(gAcceleration[c].x()) ||
+              !std::isfinite(gAcceleration[c].y()) ||
+              !std::isfinite(gAcceleration[c].z())) {
+            std::cout << " node = " << c << " f_i = " << gInternalForce[c]
+                      << " f_e = " << gExternalForce[c]
+                      << " f_b = " << gBodyForce[c] << " m = " << gMass[c]
+                      << " v = " << gVelocity[c] << "\n";
+          }
+#endif
+#ifdef DEBUG_WITH_PARTICLE_ID
+          IntVector node(3, 38, 0);
+          if (c == node) {
+            proc0cout << "Node = " << node << " fint_g = " << gInternalForce[node]
+                      << " fext_g = " << gExternalForce[node]
+                      << " fbod_g = " << gBodyForce[node]
+                      << " acc = " << gAcceleration[node] << "\n";
+          }
+#endif
+        }
+      } else {
+        for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
+             iter++) {
+          IntVector c = *iter;
+
+          Vector acc(0., 0., 0.);
+          if (gMass[c] > d_mpm_flags->d_minMassForAcceleration) {
+            acc =
+              (gInternalForce[c] + gExternalForce[c] + gBodyForce[c]) / gMass[c];
+            acc -= damp_coef * gVelocity[c];
+          }
+          // gAcceleration[c] = acc +  gravity;
+          gAcceleration[c]  = acc;
+          gVelocity_star[c] = gVelocity[c] + gAcceleration[c] * delT;
+// std::cout << "After acceleration: material = " << m << " node = " << c
+//           << " gMass = " << gMass[c]
+//           << " gAcceleration = " << gAcceleration[c] << "\n";
+#ifdef CHECK_ISFINITE
+          if (!std::isfinite(gAcceleration[c].x()) ||
+              !std::isfinite(gAcceleration[c].y()) ||
+              !std::isfinite(gAcceleration[c].z())) {
+            std::cout << " node = " << c << " f_i = " << gInternalForce[c]
+                      << " f_e = " << gExternalForce[c]
+                      << " f_b = " << gBodyForce[c] << " m = " << gMass[c]
+                      << " v = " << gVelocity[c] << "\n";
+          }
+#endif
+#ifdef DEBUG_WITH_PARTICLE_ID
+          IntVector node(3, 38, 0);
+          if (c == node) {
+            proc0cout << "Node = " << node << " fint_g = " << gInternalForce[node]
+                      << " fext_g = " << gExternalForce[node]
+                      << " fbod_g = " << gBodyForce[node]
+                      << " acc = " << gAcceleration[node] << "\n";
+          }
+#endif
+        }
+      }
+    } // matls
+  }
 }
 
 /*!----------------------------------------------------------------------
@@ -3315,7 +5280,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
 
         // Collect master particle states for discrete or rigid materials
-        if (d_mpm_flags->d_enableDEM && (mpm_matl->isDiscrete() || mpm_matl->getIsRigid()) && pRadius[idx] > 0) {
+        if (d_mpm_flags->d_enableDEM && (mpm_matl->isDiscrete() || mpm_matl->isRigid()) && pRadius[idx] > 0) {
           master_states[pRigidBodyID[idx]] = {pX_new[idx], pX[idx], pVelocity_new[idx], pAngularVelocity[idx]};
         }
 
@@ -3446,10 +5411,10 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       } // End loop over particles
 
       // Synchronize dummy particles with master particle for discrete or rigid materials
-      if (d_mpm_flags->d_enableDEM && (mpm_matl->isDiscrete() || mpm_matl->getIsRigid())) {
+      if (d_mpm_flags->d_enableDEM && (mpm_matl->isDiscrete() || mpm_matl->isRigid())) {
         for (auto idx : *pset) {
           // If it's a dummy particle (discrete only) OR any particle in a rigid material (except the master)
-          if ((mpm_matl->isDiscrete() && pMass[idx] <= 0) || (mpm_matl->getIsRigid() && pRadius[idx] <= 0)) {
+          if ((mpm_matl->isDiscrete() && pMass[idx] <= 0) || (mpm_matl->isRigid() && pRadius[idx] <= 0)) {
             long64 rbID = pRigidBodyID[idx];
             if (master_states.count(rbID)) {
               const auto& master = master_states[rbID];

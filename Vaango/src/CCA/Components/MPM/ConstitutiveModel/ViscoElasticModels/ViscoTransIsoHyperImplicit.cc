@@ -535,7 +535,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     double Bnl[3][24];
     double v[576];
 
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (int idx : *pset) {
         pstress[idx] = Matrix3(0.0);
       }
@@ -1033,7 +1033,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     double t5 = d_initialData.t5;
     double t6 = d_initialData.t6;
 
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (int idx : *pset) {
         pstress[idx] = Matrix3(0.0);
       }

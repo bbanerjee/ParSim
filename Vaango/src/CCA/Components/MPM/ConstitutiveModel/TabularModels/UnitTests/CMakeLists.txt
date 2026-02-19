@@ -67,6 +67,7 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
         Vaango_CCA_Components_Models
+        Vaango_CCA_Components_MPM
         Vaango_Core_Malloc
         ${HDF5_TARGET}
         $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>

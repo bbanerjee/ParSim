@@ -153,7 +153,7 @@ public:
   getMeltTemperature() const -> double;
 
   [[nodiscard]] auto
-  getIsRigid() const -> bool
+  isRigid() const -> bool
   {
     return d_is_rigid;
   }

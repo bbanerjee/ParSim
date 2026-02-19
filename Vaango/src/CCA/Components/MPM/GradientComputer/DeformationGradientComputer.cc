@@ -871,7 +871,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
   }
 
   // Rigid material
-  if (mpm_matl->getIsRigid()) {
+  if (mpm_matl->isRigid()) {
     for (auto particle : *pset) {
       pVolume_new[particle]   = pVolume_old[particle];
       pDefGrad_new[particle]  = pDefGrad_old[particle];
@@ -1144,7 +1144,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
   }
 
   // Rigid material
-  if (mpm_matl->getIsRigid()) {
+  if (mpm_matl->isRigid()) {
     for (auto particle : *pset) {
       pVolume_new[particle]  = pVolume_old[particle];
       pDefGrad_new[particle] = pDefGrad_old[particle];

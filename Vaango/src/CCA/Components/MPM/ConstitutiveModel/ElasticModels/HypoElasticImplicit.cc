@@ -165,7 +165,7 @@ HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     double K_geo[24][24];
     double sig[3][3];
 
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (int idx : *pset) {
         pdTdt[idx] = 0.;
         pStress_new[idx] = Vaango::Util::Zero;
@@ -282,7 +282,7 @@ HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     double bulk = d_modelParam.K;
 
     double strainEnergy = 0.0;
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (int idx : *pset) {
         pStress_new[idx] = Matrix3(0.0);
         pdTdt[idx] = 0.;

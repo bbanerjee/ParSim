@@ -622,7 +622,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
       }
     }
 
-    if (d_matl->getIsRigid()) {
+    if (d_matl->isRigid()) {
       // For rigid materials, all particles carry mass normally
       // But we still track the master at center for global kinematics
       Point center = piece->getCenter();
@@ -669,7 +669,7 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
     return handleDiscreteMaterial(patch, obj, obj_vars);
   }
   
-  if (d_matl->getIsRigid()) {
+  if (d_matl->isRigid()) {
     return handleRigidMaterial(patch, obj, obj_vars);
   }
   
@@ -846,7 +846,7 @@ ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
                                                       particle_state_preReloc);
   }
 
-  if (d_coupledFlow && !matl->getIsRigid()) {
+  if (d_coupledFlow && !matl->isRigid()) {
     // if (d_coupledflow ) {
     particle_state.push_back(d_hydrompm_labels->pFluidMassLabel);
     particle_state.push_back(d_hydrompm_labels->pSolidMassLabel);
