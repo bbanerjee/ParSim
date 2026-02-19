@@ -36,6 +36,7 @@ SET(Vaango_CCA_Components_MPM_Contact_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/NodalSVFContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/NullContact.cc      
   ${CMAKE_CURRENT_SOURCE_DIR}/SpecifiedBodyContact.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEMSpecifiedVelocityContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/SpecifiedBodyFrictionContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/SingleVelContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ContactFactory.cc   

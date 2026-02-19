@@ -37,6 +37,7 @@
 #include <CCA/Components/MPM/Contact/NullContact.h>
 #include <CCA/Components/MPM/Contact/SingleVelContact.h>
 #include <CCA/Components/MPM/Contact/SpecifiedBodyContact.h>
+#include <CCA/Components/MPM/Contact/DEMSpecifiedVelocityContact.h>
 #include <CCA/Components/MPM/Contact/SpecifiedBodyFrictionContact.h>
 #include <CCA/Components/MPM/Core/MPMFlags.h>
 #include <CCA/Components/MPM/Core/HydroMPMLabel.h>
@@ -123,6 +124,11 @@ ContactFactory::create(const ProcessorGroup* myworld,
     else if (con_type == "specified_velocity" || con_type == "specified" ||
              con_type == "rigid") {
       contact_list->add(std::make_unique<SpecifiedBodyContact>(
+        myworld, mat_manager, labels, flags, child));
+    }
+
+    else if (con_type == "dem_specified") {
+      contact_list->add(std::make_unique<DEMSpecifiedVelocityContact>(
         myworld, mat_manager, labels, flags, child));
     }
 

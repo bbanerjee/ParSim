@@ -66,6 +66,7 @@ class CZLabel;
 class CohesiveZoneTasks;
 class ScalarDiffusionTasks;
 class HeatConductionTasks;
+class DEMTasks;
 
 class SerialMPM
   : public SimulationCommon
@@ -206,11 +207,6 @@ protected:
                              const PatchSet* patches,
                              const MaterialSet* matls);
 
-  void
-  scheduleComputeDEMForces(SchedulerP& sched,
-                           const PatchSet* patches,
-                           const MaterialSet* matls);
-
   virtual void
   scheduleInterpolateParticlesToGrid(SchedulerP& sched,
                                      const PatchSet* patches,
@@ -250,11 +246,6 @@ protected:
   scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
                                           const PatchSet* patches,
                                           const MaterialSet* matls);
-
-  void
-  scheduleIntegrateDEMRotation(SchedulerP& sched,
-                               const PatchSet* patches,
-                               const MaterialSet* matls);
 
   virtual void
   scheduleMomentumExchangeIntegrated(SchedulerP& sched,
@@ -572,13 +563,6 @@ protected:
                                   DataWarehouse* new_dw);
 
   void
-  integrateDEMRotation(const ProcessorGroup*,
-                       const PatchSubset* patches,
-                       const MaterialSubset* matls,
-                       DataWarehouse* old_dw,
-                       DataWarehouse* new_dw);
-
-  void
   setGridBoundaryConditions(const ProcessorGroup*,
                             const PatchSubset* patches,
                             const MaterialSubset*,
@@ -605,13 +589,6 @@ protected:
                      const MaterialSubset*,
                      DataWarehouse* old_dw,
                      DataWarehouse* new_dw);
-
-  void
-  computeDEMForces(const ProcessorGroup*,
-                   const PatchSubset* patches,
-                   const MaterialSubset*,
-                   DataWarehouse* old_dw,
-                   DataWarehouse* new_dw);
 
   void
   computeCurrentParticleSize(const ProcessorGroup*,
@@ -732,6 +709,7 @@ protected:
   std::unique_ptr<CohesiveZoneTasks> d_cohesiveZoneTasks{ nullptr };
   std::unique_ptr<ScalarDiffusionTasks> d_diffusionTasks{ nullptr };
   std::unique_ptr<HeatConductionTasks> d_heatConductionTasks{ nullptr };
+  std::unique_ptr<DEMTasks> d_demTasks{ nullptr };
   std::vector<std::unique_ptr<AnalysisModule>> d_analysisModules;
 
   // Ports
