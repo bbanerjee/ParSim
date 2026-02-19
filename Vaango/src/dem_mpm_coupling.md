@@ -498,3 +498,93 @@ In `SerialMPM::integrateDEMRotation`, the moment of inertia tensor is now evolve
 
 ### 4. Box Surface Visualization
 To support better visual inspection of box-shaped rigid bodies, a new `createBoxSurfacePoints` helper was added to `ParticleGeometryHelpers`. This generates a grid of visual-only particles on all six faces of a `BoxGeometryPiece`, providing a clear boundary for contact verification in post-processing.
+
+## 23. Comparison with State-of-the-Art (Liu et al., 2018)
+
+A comparison with the coupling algorithm presented by Liu et al. (2018) highlights the unique design choices in Vaango's hybrid DEM-MPM implementation.
+
+### 1. Representation of DEM Bodies
+*   **Liu et al.**: Each DEM block is represented by **nine "visual material points"** (vertices, midpoints, and center). These points are used to project mass and momentum onto the MPM background grid.
+*   **Vaango**: DEM bodies are represented by a **Master-Slave particle system**. Instead of a fixed set of nine points, Vaango utilizes arbitrary **Geometry Pieces** (Box, Sphere, Cylinder, TriMesh) and can support an arbitrary number of slave (proxy) particles to define the surface. Furthermore, Vaango uses a **Signed Distance Field (SDF)** to represent the body's boundary precisely.
+
+### 2. Contact Detection Mechanism
+*   **Liu et al.**: The interaction between the granular flow (MPM) and the blocks (DEM) is handled via the **standard MPM grid-based multi-material contact algorithm**. Collisions are detected only if material points from both bodies contribute to the same grid node.
+*   **Vaango**: Interaction is handled through a **direct Particle-SDF interaction** in the `computeDEMForces` task. For every standard MPM particle, we perform an SDF check against the DEM body's geometry. This allows for surface-to-surface contact that is independent of the grid resolution for the collision detection phase itself.
+
+### 3. Force Calculation and Projection
+*   **Liu et al.**: The contact force is derived from the **acceleration of grid nodes** and then projected back to the DEM vertices as a body force.
+*   **Vaango**: Contact forces (Normal and Tangential) are calculated using a **penalty method** (stiffness $k_n, k_t$ and damping $\gamma$) directly at the contact point on the SDF surface. These forces and the resulting torques are applied directly to the **Master particle** of the DEM body, which governs its global rigid-body dynamics.
+
+### 4. Integration of Rotational Motion
+*   **Liu et al.**: Focuses on "deformable" blocks where the motion is governed by the displacement of vertices and an internal stiffness matrix.
+*   **Vaango**: Implements explicit **rigid-body rotational dynamics**. It tracks and integrates the orientation (rotation matrix), angular velocity, and the orientation-dependent inertia tensor for each DEM body.
+
+### 5. Distributed Contact (Recent Fix)
+*   The recent correction in `SerialMPM::computeDEMForces` (now in `DEMTasks::computeDEMForces`) ensures that **every individual MPM particle** is checked against the DEM body. This avoids the "single-point contact" approximation that often occurs in grid-based methods (like Liu's) where multiple particles might be collapsed into a single nodal momentum contribution before contact is resolved.
+
+## 24. Comparison with State-of-the-Art (Ren et al., 2022)
+Based on an examination of the paper by Ren et al. (2022) and the current
+implementation in Vaango, the primary differences in the coupling algorithm
+are as follows:
+
+### 1. Representation of Discrete Bodies
+* Ren et al.: Uses the spheropolygon (sphero-polyhedra in 3D) technique to
+    represent non-spherical particles. This involves "eroding" a polygon by a
+    radius $r_{sphero}$ and then "dilating" it, resulting in a shape with
+    rounded corners.
+* Vaango: Uses Signed Distance Fields (SDF) combined with a Master-Slave
+    particle system. Vaango can represent arbitrary shapes (Box, Cylinder,
+    Sphere, TriMesh) using an analytical or grid-based SDF. The surface is
+    explicitly populated with visual/proxy particles for interaction and
+    visualization.
+
+### 2. Multi-Phase Framework
+* Ren et al.: Implements a two-phase (solid and liquid) MPM model to simulate
+    solid-fluid-particle interactions (e.g., boulders in water-saturated soil).
+    It tracks pore water pressure and uses a Darcy drag force for solid-fluid
+    coupling.
+* Vaango: The current hybrid implementation primarily focuses on single-phase
+    solid-particle coupling. While Vaango has MPMICE for fluid-structure
+    interaction, the specific DEM-MPM coupling implemented here is optimized
+    for rigid bodies interacting with deformable continuum solids.
+
+### 3. Collision Detection and Neighbor Search
+* Ren et al.: Proposes a method similar to the Linked Cell List Method
+    (LCLM), where background grid nodes of the MPM system are used to activate
+    a potential contact list between SDEM particles and MPM points.
+* Vaango: Utilizes the background grid for $O(N)$ binning but performs a
+    direct Particle-SDF query. Every MPM particle in the vicinity of a DEM body
+    checks its position against the body's SDF. This provides a more precise
+    sub-cell resolution for the contact surface compared to purely node-based
+    activation.
+
+### 4. Contact Force Model
+* Ren et al.: Uses a unified DEM-style contact model for both solid-particle
+    and fluid-particle interactions. For fluids, it enforces a non-slipping and
+    non-penetration boundary by imposing an extra coupling force
+    $\mathbf{F}_w^{couple}$ based on relative velocity.
+* Vaango: Uses a Penalty-Based Linear Spring-Dashpot model ($k_n, k_t,
+    \gamma$) for solid-particle contact. Forces and torques are calculated at
+    the surface proxy points and aggregated at the Master particle.
+
+### 5. Kinematic Integration
+* Ren et al.: Updates SDEM particles using standard Newton’s second law for
+    translation and rotation.
+* Vaango: Explicitly integrates rotational dynamics using an evolved
+    orientation-dependent inertia tensor ($\mathbf{I}{new} = \Delta \mathbf{R}
+    \cdot \mathbf{I}{old} \cdot \Delta \mathbf{R}^T$). This ensures high
+    accuracy for highly non-spherical objects like elongated beams or thin
+    plates.
+
+### Summary of Algorithmic Focus
+
+  ┌─────────────────┬─────────────────────────┬────────────────────────────────┐
+  │ Feature         │ Ren et al. (2022)       │ Vaango (Current)               │
+  ├─────────────────┼─────────────────────────┼────────────────────────────────┤
+  │ Geometry        │ Spheropolygons          │ SDF + Master/Slave Proxies     │
+  │ Phases          │ Solid + Liquid (Multi-… │ Solid (Single-phase)           │
+  │ Neighbor Search │ Grid-node activation (… │ Grid-binning + Direct SDF Que… │
+  │ **Rotational I… │ Static/Simplified       │ Evolved Orientation-Dependent… │
+  │ Contact Surface │ Rounded (dilation radi… │ Exact (from SDF gradient)      │
+  └─────────────────┴─────────────────────────┴────────────────────────────────┘
+
