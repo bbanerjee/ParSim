@@ -286,7 +286,7 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
     restart_mat_ps, d_materialManager, d_mpm_labels.get(), d_mpm_flags.get());
 
   // DEM
-  d_demTasks = std::make_unique<DEMTasks>(restart_mat_ps,
+  d_demTasks = std::make_unique<Vaango::DEMTasks>(restart_mat_ps,
                                           d_materialManager,
                                           d_mpm_labels.get(),
                                           d_mpm_flags.get(),

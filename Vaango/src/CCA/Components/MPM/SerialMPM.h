@@ -54,6 +54,10 @@
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 
+namespace Vaango {
+class DEMTasks;
+}
+
 namespace Uintah {
 
 class ThermalContact;
@@ -66,7 +70,6 @@ class CZLabel;
 class CohesiveZoneTasks;
 class ScalarDiffusionTasks;
 class HeatConductionTasks;
-class DEMTasks;
 
 class SerialMPM
   : public SimulationCommon
@@ -709,7 +712,7 @@ protected:
   std::unique_ptr<CohesiveZoneTasks> d_cohesiveZoneTasks{ nullptr };
   std::unique_ptr<ScalarDiffusionTasks> d_diffusionTasks{ nullptr };
   std::unique_ptr<HeatConductionTasks> d_heatConductionTasks{ nullptr };
-  std::unique_ptr<DEMTasks> d_demTasks{ nullptr };
+  std::unique_ptr<Vaango::DEMTasks> d_demTasks{ nullptr };
   std::vector<std::unique_ptr<AnalysisModule>> d_analysisModules;
 
   // Ports

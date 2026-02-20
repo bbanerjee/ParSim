@@ -33,70 +33,201 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
-
 class MPMFlags;
 class MPMLabel;
 class MPMMaterial;
+}
+namespace Vaango {
+
+using constParticleVarPoint = Uintah::constParticleVariable<Uintah::Point>;
+using constParticleVarVector = Uintah::constParticleVariable<Uintah::Vector>;
+using constParticleVarMatrix3 = Uintah::constParticleVariable<Uintah::Matrix3>;
+using constParticleVarLong64 = Uintah::constParticleVariable<Uintah::long64>;
+using constParticleVarDouble = Uintah::constParticleVariable<double>;
+using ParticleVarVector = Uintah::ParticleVariable<Uintah::Vector>;
+using ParticleVarLong64 = Uintah::ParticleVariable<Uintah::long64>;
+using ParticleIDToCurrentIdxMap = std::map<Uintah::long64, int>;
+
+// DEM force calculation data structures
+struct DEMParticleInputData {
+  explicit DEMParticleInputData(int num_mats)
+    : pX_old(num_mats), pX0_old(num_mats), 
+      pMass_old(num_mats), pRadius_old(num_mats), pSize_old(num_mats),
+      pOrientation_old(num_mats), pVelocity_old(num_mats), pAngVel_old(num_mats),
+      pRigidBodyID_old(num_mats) 
+  {}
+
+  std::vector<constParticleVarPoint>   pX_old, pX0_old;
+  std::vector<constParticleVarDouble>  pMass_old, pRadius_old;
+  std::vector<constParticleVarMatrix3> pSize_old, pOrientation_old;
+  std::vector<constParticleVarVector>  pVelocity_old, pAngVel_old;
+  std::vector<constParticleVarLong64>  pRigidBodyID_old;
+};
+
+struct DEMParticleSets {
+  explicit DEMParticleSets(int num_mats)
+    : psets_all(num_mats, nullptr), psets_real(num_mats, nullptr)
+  {}
+
+  std::vector<Uintah::ParticleSubset*>  psets_all;
+  std::vector<Uintah::ParticleSubset*>  psets_real;
+};
+
+struct DEMParticleOutputData {
+  explicit DEMParticleOutputData(int num_mats)
+    : pExtForce_new(num_mats), pTorque_new(num_mats), pRigidBodyID_new(num_mats)
+  {}
+
+  std::vector<ParticleVarVector> pExtForce_new;
+  std::vector<ParticleVarVector> pTorque_new;
+  std::vector<ParticleVarLong64> pRigidBodyID_new;
+};
+
+struct DEMContactResult {
+  Vector totalForce   { 0, 0, 0 };
+  Vector arm_i        { 0, 0, 0 };
+  Vector arm_j_center { 0, 0, 0 };
+  bool   collision    { false };
+};
+
+// Contact property helpers 
+struct DEMContactProps {
+  double kn, kt, gamma, mu;
+};
 
 class DEMTasks final
 {
 public:
-  DEMTasks(ProblemSpecP& ps,
-           const MaterialManagerP& mat_manager,
-           const MPMLabel* mpm_labels,
-           const MPMFlags* mpm_flags,
+  DEMTasks(Uintah::ProblemSpecP& ps,
+           const Uintah::MaterialManagerP& mat_manager,
+           const Uintah::MPMLabel* mpm_labels,
+           const Uintah::MPMFlags* mpm_flags,
            int numGhostParticles,
            int numGhostNodes);
 
   ~DEMTasks() = default;
 
   void
-  scheduleInitialize(SchedulerP& sched,
-                     const PatchSet* patches,
-                     const MaterialSet* matls);
+  scheduleInitialize(Uintah::SchedulerP& sched,
+                     const Uintah::PatchSet* patches,
+                     const Uintah::MaterialSet* matls);
 
   void
-  actuallyInitialize(const Patch* patch,
-                     const MPMMaterial* mpm_matl,
-                     DataWarehouse* new_dw);
+  actuallyInitialize(const Uintah::Patch* patch,
+                     const Uintah::MPMMaterial* mpm_matl,
+                     Uintah::DataWarehouse* new_dw);
 
   void
-  computeStableTimestep(const Patch* patch,
-                        const MPMMaterial* mpm_matl,
-                        DataWarehouse* old_dw,
-                        DataWarehouse* new_dw,
+  computeStableTimestep(const Uintah::Patch* patch,
+                        const Uintah::MPMMaterial* mpm_matl,
+                        Uintah::DataWarehouse* old_dw,
+                        Uintah::DataWarehouse* new_dw,
                         double& dt_dem);
 
   void
-  scheduleComputeDEMForces(SchedulerP& sched,
-                           const PatchSet* patches,
-                           const MaterialSet* matls);
+  scheduleComputeDEMForces(Uintah::SchedulerP& sched,
+                           const Uintah::PatchSet* patches,
+                           const Uintah::MaterialSet* matls);
 
   void
-  computeDEMForces(const ProcessorGroup* pg,
-                   const PatchSubset* patches,
-                   const MaterialSubset* matls,
-                   DataWarehouse* old_dw,
-                   DataWarehouse* new_dw);
+  computeDEMForces(const Uintah::ProcessorGroup* pg,
+                   const Uintah::PatchSubset* patches,
+                   const Uintah::MaterialSubset* matls,
+                   Uintah::DataWarehouse* old_dw,
+                   Uintah::DataWarehouse* new_dw);
 
   void
-  scheduleIntegrateDEMRotation(SchedulerP& sched,
-                               const PatchSet* patches,
-                               const MaterialSet* matls);
+  scheduleIntegrateDEMRotation(Uintah::SchedulerP& sched,
+                               const Uintah::PatchSet* patches,
+                               const Uintah::MaterialSet* matls);
 
   void
-  integrateDEMRotation(const ProcessorGroup* pg,
-                       const PatchSubset* patches,
-                       const MaterialSubset* matls,
-                       DataWarehouse* old_dw,
-                       DataWarehouse* new_dw);
+  integrateDEMRotation(const Uintah::ProcessorGroup* pg,
+                       const Uintah::PatchSubset* patches,
+                       const Uintah::MaterialSubset* matls,
+                       Uintah::DataWarehouse* old_dw,
+                       Uintah::DataWarehouse* new_dw);
 
 private:
-  const MaterialManagerP d_mat_manager;
-  const MPMLabel* d_mpm_labels;
-  const MPMFlags* d_mpm_flags;
+  const Uintah::MaterialManagerP d_mat_manager;
+  const Uintah::MPMLabel* d_mpm_labels;
+  const Uintah::MPMFlags* d_mpm_flags;
   int d_num_ghost_particles;
   int d_num_ghost_nodes;
+
+  // Contact properties
+  DEMContactProps
+  getContactProps(const Uintah::MPMMaterial* matl_i, const Uintah::MPMMaterial* matl_j) const;
+
+  // Load particle data
+  void
+  getAndAllocateParticleData(const Uintah::Patch* patch,
+                             Uintah::DataWarehouse* old_dw,
+                             Uintah::DataWarehouse* new_dw,
+                             DEMParticleSets& particle_sets,
+                             DEMParticleInputData& input_data,
+                             DEMParticleOutputData& output_data);
+
+  // Master particle map
+  ParticleIDToCurrentIdxMap
+  buildMasterParticleMap(int numMatls,
+                         const DEMParticleSets& particle_sets,
+                         const DEMParticleInputData& input_data) const;
+
+  // Unique body selection
+  ParticleIDToCurrentIdxMap
+  buildUniqueBodies(int m_i,
+                    Uintah::particleIndex idx_i,
+                    int m_j,
+                    const DEMParticleSets& particle_sets,
+                    const DEMParticleInputData& input_data,
+                    bool j_is_discrete) const;
+
+  // Per-case contact force routines
+  // Case A: rigid SDF body (i) vs. MPM particle (j)
+  DEMContactResult
+  computeRigidVsParticle(Uintah::particleIndex idx_i,
+                         int m_i,
+                         Uintah::particleIndex idx_j,
+                         int m_j,
+                         const DEMContactProps& props,
+                         const DEMParticleInputData& inputs,
+                         const Uintah::MPMMaterial* matl_i) const;
+
+  // Case B: MPM particle (i) vs. rigid SDF body (j)
+  DEMContactResult
+  computeParticleVsRigid(
+    Uintah::particleIndex idx_i,
+    int m_i,
+    Uintah::particleIndex idx_j,
+    int m_j,
+    Uintah::long64 rbID_j,
+    const DEMContactProps& cp,
+    const DEMParticleInputData& pd,
+    const Uintah::MPMMaterial* matl_j,
+    const ParticleIDToCurrentIdxMap& master_particles) const;
+
+  // Case C: rigid sphere (i) vs. rigid sphere (j)
+  DEMContactResult
+  computeRigidVsRigid(Uintah::particleIndex idx_i,
+                      int m_i,
+                      Uintah::particleIndex idx_j,
+                      int m_j,
+                      const DEMContactProps& props,
+                      const DEMParticleInputData& inputs) const;
+
+  // Force/torque application
+  void
+  applyContactForces(const DEMContactResult& contact,
+                     Uintah::particleIndex idx_i,
+                     int m_i,
+                     Uintah::long64 rbID_j,
+                     int m_j,
+                     const DEMParticleInputData& inputs,
+                     const Uintah::MPMMaterial* matl_j,
+                     const Uintah::Patch* patch,
+                     const ParticleIDToCurrentIdxMap& master_particles,
+                     DEMParticleOutputData& outputs);
 
   // Disallow copy and move
   DEMTasks(const DEMTasks&) = delete;
@@ -107,6 +238,6 @@ private:
   operator=(DEMTasks&&) = delete;
 };
 
-} // end namespace Uintah
+} // end namespace Vaango
 
 #endif //__VAANGO_CCA_COMPONENTS_MPM_DEM_TASKS_H__
