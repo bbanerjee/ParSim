@@ -54,7 +54,7 @@ void
 KinematicHardening_Armstrong::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP plastic_ps = ps->appendChild("kinematic_hardening_model");
-  plastic_ps->setAttribute("type", "armstrong_frederick_hardening");
+  plastic_ps->setAttribute("type", "armstrong_frederick");
 
   plastic_ps->appendElement("beta", d_cm.beta);
   plastic_ps->appendElement("hardening_modulus_1", d_cm.hardening_modulus_1);
