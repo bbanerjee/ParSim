@@ -3,8 +3,8 @@
 <Uintah_specification>
 
   <Meta>
-      <title>Arenisca_Verification_Test_01_Uniaxial_Compression_with_Rotation</title>
-      <!--   See Arenisca user manual (sv://csm-slb) for verification test documentation -->
+      <title>Arena_Verification_Test_01_Uniaxial_Compression_with_Rotation</title>
+      <!--   See Arena user manual (sv://csm-slb) for verification test documentation -->
   </Meta>
 
   <SimulationComponent type="mpm" />
@@ -18,7 +18,7 @@
   </Time>
 
   <DataArchiver>
-      <filebase>AreniscaTest_01_UniaxialStrainRotate.uda</filebase>
+      <filebase>ArenaTest_01_UniaxialStrainRotate.uda</filebase>
       <outputInterval>0.001</outputInterval>
       <save label = "p.x"/>
       <save label = "p.color"/>
@@ -34,16 +34,16 @@
       <save label = "p.plasticStrain"/>
       <save label = "p.plasticVolStrain"/>
       <save label = "p.p3"/>
-      <save label = "p.AreniscaPEAKI1"/>
-      <save label = "p.AreniscaFSLOPE"/>
-      <save label = "p.AreniscaSTREN"/>
-      <save label = "p.AreniscaYSLOPE"/>
-      <save label = "p.AreniscaBETA"/>
-      <save label = "p.AreniscaCR"/>
-      <save label = "p.AreniscaT1"/>
-      <save label = "p.AreniscaT2"/>
-      <save label = "p.AreniscaCoher"/>
-      <save label = "p.AreniscaBackStress"/>
+      <save label = "p.ArenaPEAKI1"/>
+      <save label = "p.ArenaFSLOPE"/>
+      <save label = "p.ArenaSTREN"/>
+      <save label = "p.ArenaYSLOPE"/>
+      <save label = "p.ArenaBETA"/>
+      <save label = "p.ArenaCR"/>
+      <save label = "p.ArenaT1"/>
+      <save label = "p.ArenaT2"/>
+      <save label = "p.ArenaCoher"/>
+      <save label = "p.ArenaBackStress"/>
       <save label = "p.porosity"/>
       <save label = "p.saturation"/>
       <save label = "p.elasticVolStrain"/>
@@ -66,7 +66,7 @@
     <use_momentum_form>              false      </use_momentum_form>
     <with_color>                    true       </with_color>
     <use_prescribed_deformation>     true       </use_prescribed_deformation>
-    <prescribed_deformation_file>    inputs/MPM/SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_01_PrescribedDeformation.inp   </prescribed_deformation_file>
+    <prescribed_deformation_file>    inputs/MPM/SoilPlasticityDamage/Arena/Arena3/ArenaTest_01_PrescribedDeformation.inp   </prescribed_deformation_file>
     <minimum_subcycles_for_F>       -2        </minimum_subcycles_for_F>
     <erosion algorithm = "none"/>
   </MPM>
