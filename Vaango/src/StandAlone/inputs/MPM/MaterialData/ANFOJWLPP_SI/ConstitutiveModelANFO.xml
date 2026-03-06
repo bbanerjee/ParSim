@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- ANFOJWLPP -->
+<!-- JWL++ ANFO -->
+<Uintah_Include>
+  <include href="MatConstANFO.xml"/>
+  <constitutive_model type = "jwlpp_mpm">
+    <include href="MurnaghanEOSANFO.xml"/>
+    <include href="JWLEOSANFO.xml"/>
+    <include href="ReactionANFO.xml"/>
+    <ignition_pressure> 1.0e8 </ignition_pressure>
+    <useInitialStress> false </useInitialStress>
+    <initial_pressure> 1.1e8 </initial_pressure>
+  </constitutive_model>
+</Uintah_Include>
+

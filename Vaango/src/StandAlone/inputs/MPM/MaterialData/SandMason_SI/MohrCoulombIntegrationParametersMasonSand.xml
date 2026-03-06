@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Mohr-Coulomb Mason sand -->
+<Uintah_Include>
+  <integration_parameters>
+    <max_iterations_pegasus> 200 </max_iterations_pegasus>
+    <alpha_check_pegasus> 1 </alpha_check_pegasus>
+    <alpha_change_pegasus> 0.05 </alpha_change_pegasus>
+    <alpha_ratio_pegasus> 10 </alpha_ratio_pegasus>
+    <yield_tolerance> 1.0e-6 </yield_tolerance>
+    <integration_tolerance> 0.01 </integration_tolerance>
+    <beta_safety_factor> 0.9 </beta_safety_factor>
+    <minimum_mean_stress> -1.0e8 </minimum_mean_stress>
+    <suction_tolerance> 1.0e-8 </suction_tolerance>
+    <drift_correction_algorithm> at_end </drift_correction_algorithm>
+    <tolerance_algorithm> sloan </tolerance_algorithm>
+    <solution_algorithm> modified_euler </solution_algorithm>
+  </integration_parameters>
+</Uintah_Include>
+

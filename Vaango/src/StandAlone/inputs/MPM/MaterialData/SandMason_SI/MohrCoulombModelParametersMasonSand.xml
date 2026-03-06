@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Mohr-Coulomb Mason sand  model parameters -->
+<Uintah_Include>
+  <model_parameters>
+    <shear_modulus> 6.0e7 </shear_modulus>
+    <bulk_modulus> 9.0e7</bulk_modulus>
+    <cohesion> 1.0e4 </cohesion>
+    <angle_internal_friction> 30.0 </angle_internal_friction>
+    <angle_dilation> 30.0 </angle_dilation>
+    <max_hydrostatic_tension> 1.0e5 </max_hydrostatic_tension>
+    <initial_suction> 0.0 </initial_suction>
+    <phi_b> 0.0 </phi_b>
+    <use_water_retention> false </use_water_retention>
+    <water_retention_param_1> 0.0 </water_retention_param_1>
+    <water_retention_param_2> 0.0 </water_retention_param_2>
+    <water_retention_param_3> 0.0 </water_retention_param_3>
+    <water_retention_param_4> 0.0 </water_retention_param_4>
+    <use_undrained_shear_transition> false </use_undrained_shear_transition>
+    <water_influence_A1> 0.0 </water_influence_A1>
+    <water_influence_B1> 0.0 </water_influence_B1>
+    <water_influence_W> 0.0 </water_influence_W>
+    <beta_strain_rate> 0.0 </beta_strain_rate>
+    <ref_strain_rate> 1.0 </ref_strain_rate>
+    <use_variable_elastic_modulus> false </use_variable_elastic_modulus>
+    <variable_modulus_m> 0.0 </variable_modulus_m>
+    <variable_modulus_nu_y> 0.0 </variable_modulus_nu_y>
+    <use_linearly_varying_cohesion> false </use_linearly_varying_cohesion>
+    <linear_cohesion_a> 0.0 </linear_cohesion_a>
+    <linear_cohesion_y_ref> 0.0 </linear_cohesion_y_ref>
+    <linear_cohesion_depth_direction> y- </linear_cohesion_depth_direction>
+    <use_softening> false </use_softening>
+    <softening_St> 0.0 </softening_St>
+    <softening_strain_95> 0.0 </softening_strain_95>
+    <use_regularized_nonlocal_softening> false </use_regularized_nonlocal_softening>
+    <regularization_t_FE> 0.0 </regularization_t_FE>
+    <regularization_t_shear> 0.0 </regularization_t_shear>
+    <use_nonlocal_correction> false </use_nonlocal_correction>
+    <nonlocal_n> 0.0</nonlocal_n>
+    <nonlocal_l> 0.0</nonlocal_l>
+    <retention_model> gallipoli </retention_model>
+  </model_parameters>
+</Uintah_Include>
+

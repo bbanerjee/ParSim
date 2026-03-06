@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Arenisca 3 dry mason sand-->
+<Uintah_Include>
+  <!-- Bulk modulus model -->
+  <B0> 6.0e7 </B0>
+  <B01> 8.43e1 </B01>
+  <B1> 2.4e8 </B1>
+  <B2> 9.74e4 </B2>
+  <B3> 0.0 </B3>
+  <B4> 0.0 </B4>
+</Uintah_Include>

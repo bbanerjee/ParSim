@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Arenisca 3 dry mason sand-->
+<Uintah_Include>
+  <!-- Flow rule factor -->
+  <BETA_nonassociativity>1.0</BETA_nonassociativity>
+</Uintah_Include>

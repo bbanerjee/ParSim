@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- DuxSeal -->
+<Uintah_Include>
+  <G00>0.00</G00>
+  <G01>0.25</G01>
+  <G02>0.25</G02>
+  <G03>0.25</G03>
+  <G04>0.25</G04>
+  <G05>0.0</G05>
+  <Tau01>0.0002</Tau01>
+  <Tau02>0.0002</Tau02>
+  <Tau03>0.0002</Tau03>
+  <Tau04>0.0002</Tau04>
+  <Tau05>0.0</Tau05>
+  <C1_WLF>0.0</C1_WLF>
+  <C2_WLF>35.0</C2_WLF>
+  <Tref_WLF>300.0</Tref_WLF>
+</Uintah_Include>

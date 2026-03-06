@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- JWL++ ANFO -->
+<Uintah_Include>
+  <murnaghan_K> 1.9342e-10 </murnaghan_K>
+  <murnaghan_n> 15.2 </murnaghan_n>
+</Uintah_Include>

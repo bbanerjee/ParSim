@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- ArmcoIron -->
+<Uintah_Include>
+  <include href="MaterialConstArmcoIron.xml"/>
+  <constitutive_model type="elastic_plastic_hp">
+    <include href="IsotropicElasticArmcoIron.xml"/>
+    <include href="../VonMisesYield.xml"/>
+    <include href="../DruckerStabilityCheck.xml"/>
+    <include href="JohnsonCookPlasticArmcoIron.xml"/>
+    <include href="JohnsonCookDamageArmcoIron.xml"/>
+    <include href="MieGruneisenEOSIron.xml"/>
+    <initial_material_temperature>  294.0 </initial_material_temperature>
+  </constitutive_model>
+</Uintah_Include>

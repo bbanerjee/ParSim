@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Soil Brannon model -->
+<Uintah_Include>
+  <p0_crush_curve> -1.0e99 </p0_crush_curve>
+  <p1_crush_curve> -1.0e99 </p1_crush_curve>
+  <p3_crush_curve> 0.5 </p3_crush_curve>
+  <p4_fluid_effect> 0.2 </p4_fluid_effect>
+</Uintah_Include>
+

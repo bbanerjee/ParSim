@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- SandstoneArenisca2 -->
+<!-- Sandstone -->
+<Uintah_Include>
+  <include href="MatConstSandstone.xml"/>
+  <constitutive_model type="Arenisca">
+    <include href="IsoElasticSandstone.xml"/>
+    <include href="MicrocracksSandstone.xml"/>
+    <include href="PorositySandstone.xml"/>
+    <include href="RateDependenceSandstone.xml"/>
+    <subcycling_characteristic_number> 1 </subcycling_characteristic_number>
+  </constitutive_model>
+</Uintah_Include>

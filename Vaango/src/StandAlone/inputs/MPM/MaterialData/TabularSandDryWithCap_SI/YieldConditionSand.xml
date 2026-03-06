@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Tabular Sand with Cap -->
+<Uintah_Include>
+  <yield_condition type="tabular_cap">
+    <filename>TabularCapTest_11_Yield.json</filename>
+    <independent_variables>Pressure</independent_variables>
+    <dependent_variables>SqrtJ2</dependent_variables>
+    <interpolation type="linear"/>
+    <cap_ellipticity_ratio> 0.7 </cap_ellipticity_ratio> 
+  </yield_condition>
+</Uintah_Include>
+
+

@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Annealed Copper -->
+<Uintah_Include>
+  <flow_model type="linear">
+    <sigma_0>89.6e6</sigma_0>
+    <K>2.0e3</K>
+  </flow_model>
+</Uintah_Include>

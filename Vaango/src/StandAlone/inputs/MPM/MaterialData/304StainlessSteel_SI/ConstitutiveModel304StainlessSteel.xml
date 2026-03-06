@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- 304StainlessSteel -->
+<Uintah_Include>
+  <include href="MatConst304SS.xml"/>
+  <constitutive_model type="elastic_plastic_hp">
+    <include href="IsoElastic304SS.xml"/>
+    <include href="GursonYield304StainlessSteel.xml"/>
+    <include href="../DruckerStabilityCheck.xml"/>
+    <include href="SCGTm304SS.xml"/>
+    <include href="PTWShear304SS.xml"/>
+    <include href="IsoPlastic304SS.xml"/>
+    <include href="PTWPlastic304SS.xml"/>
+    <include href="MieGruneisenEOSIron.xml"/>
+    <initial_material_temperature>  294.0 </initial_material_temperature>
+  </constitutive_model>
+</Uintah_Include>

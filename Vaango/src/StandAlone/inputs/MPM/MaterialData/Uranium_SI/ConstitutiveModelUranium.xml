@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Uranium -->
+<Uintah_Include>
+  <include href="MatConstUranium.xml"/>
+  <constitutive_model type="elastic_plastic_hp">
+    <include href="IsoElasticUranium.xml"/>
+    <include href="../VonMisesYield.xml"/>
+    <include href="../DruckerStabilityCheck.xml"/>
+    <include href="SCGTmU.xml"/>
+    <include href="SCGShearU.xml"/>
+    <include href="SCG_U.xml"/>
+    <initial_material_temperature>  294.0 </initial_material_temperature>
+  </constitutive_model>
+</Uintah_Include>

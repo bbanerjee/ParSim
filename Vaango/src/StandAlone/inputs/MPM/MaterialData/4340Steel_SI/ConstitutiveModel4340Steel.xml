@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- 4340Steel -->
+<Uintah_Include>
+  <include href="MaterialConst4340Steel.xml"/>
+  <constitutive_model type="elastic_plastic_hp">
+    <include href="IsotropicElastic4340Steel.xml"/>
+    <include href="GursonYield4340Steel.xml"/>
+    <include href="../DruckerStabilityCheck.xml"/>
+    <include href="SCGTm4340Steel.xml"/>
+    <include href="SCGShear4340Steel.xml"/>
+    <include href="JohnsonCookDamage4340Steel.xml"/>
+    <include href="JohnsonCookPlastic4340Steel.xml"/>
+    <include href="MieGruneisenEOS4340Steel.xml"/>
+    <initial_material_temperature>  294.0 </initial_material_temperature>
+  </constitutive_model>
+</Uintah_Include>

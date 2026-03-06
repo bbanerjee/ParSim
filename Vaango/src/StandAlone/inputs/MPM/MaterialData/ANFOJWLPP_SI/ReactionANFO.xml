@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- JWL++ ANFO -->
+<Uintah_Include>
+  <reaction_G> 1.0 </reaction_G>
+  <reaction_b> 1.05 </reaction_b>
+  <max_burn_timestep_size> 1.0e-8 </max_burn_timestep_size>
+</Uintah_Include>
+

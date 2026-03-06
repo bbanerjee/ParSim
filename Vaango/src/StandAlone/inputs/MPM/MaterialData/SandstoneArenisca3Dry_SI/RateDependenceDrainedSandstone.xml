@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Arenisca 3 Drained Sandstone-->
+<Uintah_Include>
+	<T1_rate_dependence> 4.0e-4 </T1_rate_dependence>
+	<T2_rate_dependence> 0.835 </T2_rate_dependence> 
+</Uintah_Include>

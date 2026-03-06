@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Arenisca 3 Drained Sandstone-->
+<Uintah_Include>
+	<PEAKI1>21.8457e6</PEAKI1>
+        <!--type,reference strength,weibull modulus,reference volume,seed-->
+        <!--<PEAKI1IDIST>weibull,21.8457e6,4.0,2.547e-7,13138</PEAKI1IDIST>-->
+	<FSLOPE>0.435</FSLOPE>
+	<STREN>1.0e8</STREN>
+	<YSLOPE>0.079</YSLOPE>
+	<BETA_nonassociativity>1.0</BETA_nonassociativity>
+</Uintah_Include>
+

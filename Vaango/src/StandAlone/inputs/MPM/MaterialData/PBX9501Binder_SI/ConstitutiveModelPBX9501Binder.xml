@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- PBX9501Binder -->
+<Uintah_Include>
+  <include href="MaterialConstPBX9501Binder.xml"/>
+  <constitutive_model type="elastic_plastic_hp">
+    <include href="IsoElasticPBX9501Binder.xml"/>
+    <include href="../VonMisesYield.xml"/>
+    <include href="../DruckerStabilityCheck.xml"/>
+    <include href="IsoPlasticPBX9501Binder.xml"/>
+    <initial_material_temperature>  294.0 </initial_material_temperature>
+  </constitutive_model>
+</Uintah_Include>

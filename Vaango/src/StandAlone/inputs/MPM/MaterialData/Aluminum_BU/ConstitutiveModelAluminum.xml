@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Aluminum -->
+<Uintah_Include>
+  <include href="MatConst6061T6Al.xml"/>
+  <constitutive_model type="elastic_plastic_hp">
+    <include href="IsoElastic6061T6Al.xml"/>
+    <include href="../VonMisesYield.xml"/>
+    <include href="../DruckerStabilityCheck.xml"/>
+    <include href="IsoPlastic6061Al.xml"/>
+    <include href="MieGrunEOS6061T6Al.xml"/>
+    <initial_material_temperature>  294.0 </initial_material_temperature>
+  </constitutive_model>
+</Uintah_Include>

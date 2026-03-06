@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- SandstoneArenisca3Dry -->
+<!-- Arenisca 3 Drained Sandstone-->
+<Uintah_Include>
+  <include href="MatConstDrainedSandstone.xml"/>
+  <constitutive_model type="Arenisca3">
+    <include href="YieldConditionDrainedSandstone.xml"/>
+    <include href="IsoElasticDrainedSandstone.xml"/>
+    <include href="CrushCurveDrainedSandstone.xml"/>
+    <include href="PorePressureDrainedSandstone.xml"/>
+    <include href="RateDependenceDrainedSandstone.xml"/>
+	  <subcycling_characteristic_number>256</subcycling_characteristic_number>
+  </constitutive_model>
+</Uintah_Include>

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- 1100Aluminum -->
+<!-- Aluminum -->
+<Uintah_Include>
+  <include href="MatConst1100Al.xml"/>
+  <constitutive_model type="elastic_plastic_hp">
+    <include href="IsoElastic1100Al.xml"/>
+    <include href="../VonMisesYield.xml"/>
+    <include href="../DruckerStabilityCheck.xml"/>
+    <include href="IsoPlastic1100Al.xml"/>
+    <include href="MieGrunEOS1100Al.xml"/>
+    <initial_material_temperature>  294.0 </initial_material_temperature>
+  </constitutive_model>
+</Uintah_Include>

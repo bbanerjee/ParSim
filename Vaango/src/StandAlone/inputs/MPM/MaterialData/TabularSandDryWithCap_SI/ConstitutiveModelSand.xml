@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- TabularSandDryWithCap -->
+<!-- Tabular Sand with Cap -->
+<Uintah_Include>
+  <include href="MatConstSand.xml"/>
+  <constitutive_model type="tabular_plasticity_cap">
+    <include href="ElasticModuliSand.xml"/>
+    <include href="YieldConditionSand.xml"/>
+    <include href="InternalVariableSand.xml"/>
+    <include href="HydrostatSand.xml"/>
+    <consistency_bisection_tolerance>1.0e-4</consistency_bisection_tolerance>
+    <yield_surface_radius_scaling_factor> 1000.0 </yield_surface_radius_scaling_factor>
+	  <subcycling_characteristic_number>256</subcycling_characteristic_number>
+  </constitutive_model> 
+</Uintah_Include>
+

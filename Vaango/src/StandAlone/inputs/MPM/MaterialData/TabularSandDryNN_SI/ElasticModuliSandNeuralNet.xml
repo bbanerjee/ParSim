@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Tabular Sand with Cap uses neural net -->
+<Uintah_Include>
+  <elastic_moduli_model type="neural_net">
+    <filename>mlp_regression_keras_total_tension_scaled.h5</filename>
+    <min_strain>0.0</min_strain>
+    <max_strain>0.5</max_strain>
+    <min_pressure>0.0</min_pressure>
+    <max_pressure>1.0e6</max_pressure>
+    <G0>3500</G0>
+    <nu>0.189</nu>
+  </elastic_moduli_model>
+</Uintah_Include>
+
+

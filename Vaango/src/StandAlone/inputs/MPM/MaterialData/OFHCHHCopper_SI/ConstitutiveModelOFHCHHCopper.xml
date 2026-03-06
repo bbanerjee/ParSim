@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- OFHCHHCopper -->
+<Uintah_Include>
+  <include href="MaterialConstHHCopper.xml"/>
+  <constitutive_model type="elastic_plastic_hp">
+    <include href="IsotropicElasticHHCopper.xml"/>
+    <include href="../VonMisesYield.xml"/>
+    <include href="../DruckerStabilityCheck.xml"/>
+    <include href="MTSPlasticHHCopper.xml"/>
+    <include href="SCGTmOFHCHHCu.xml"/>
+    <include href="JohnsonCookDamageHHCopper.xml"/>
+    <include href="SCGShearOFHCHHCu.xml"/>
+    <include href="MieGruneisenEOSHHCopper.xml"/>
+    <initial_material_temperature>  294.0 </initial_material_temperature>
+  </constitutive_model>
+</Uintah_Include>

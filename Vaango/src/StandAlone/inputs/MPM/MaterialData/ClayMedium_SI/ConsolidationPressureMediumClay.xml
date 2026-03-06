@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Camclay medium clay -->
+<Uintah_Include>
+  <internal_variable_model type="borja_consolidation_pressure">
+    <pc0> -9.0e4  </pc0>
+    <lambdatilde> 0.13 </lambdatilde>
+  </internal_variable_model>
+</Uintah_Include>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- DuxSeal -->
+<Uintah_Include>
+  <K>15.0e6</K>
+  <G>1.5e6</G>
+</Uintah_Include>
+

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- 2169StainlessSteel -->
+<Uintah_Include>
+  <include href="MatConst2169SS.xml"/>
+  <constitutive_model type="elastic_plastic_hp">
+    <include href="IsoElastic2169SS.xml"/>
+    <include href="GursonYield2169StainlessSteel.xml"/>
+    <include href="../DruckerStabilityCheck.xml"/>
+    <include href="PTWPlastic2169SS.xml"/>
+    <include href="PTWShear2169SS.xml"/>
+    <include href="MieGruneisenEOSIron.xml"/>
+    <initial_material_temperature>  294.0 </initial_material_temperature>
+  </constitutive_model>
+</Uintah_Include>

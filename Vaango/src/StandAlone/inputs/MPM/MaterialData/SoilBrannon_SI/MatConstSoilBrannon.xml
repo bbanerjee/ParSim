@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Soil Brannon model -->
+<Uintah_Include>
+  <density>1050</density>
+  <melt_temp>3695.0</melt_temp>
+  <room_temp>294.0</room_temp>
+  <thermal_conductivity>174.0e-7</thermal_conductivity>
+  <specific_heat>134.0e-8</specific_heat>
+</Uintah_Include>
+

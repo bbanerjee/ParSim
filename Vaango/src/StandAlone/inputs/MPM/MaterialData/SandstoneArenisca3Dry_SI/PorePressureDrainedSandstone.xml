@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Arenisca 3 Drained Sandstone-->
+<Uintah_Include>
+	<fluid_B0>0.0e9</fluid_B0>
+	<fluid_pressure_initial>0.0e6</fluid_pressure_initial>
+</Uintah_Include>

@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- TabularEOS -->
+<!-- Tabular EOS -->
+<Uintah_Include>
+  <include href="MatConstTabularEOS.xml"/>
+  <constitutive_model type="tabular_eos">
+     <filename> tabular_eos.json </filename>
+     <independent_variables> DensityRatio </independent_variables>
+     <dependent_variables> Pressure </dependent_variables>
+     <interpolation type="linear"/>
+  </constitutive_model>
+</Uintah_Include>

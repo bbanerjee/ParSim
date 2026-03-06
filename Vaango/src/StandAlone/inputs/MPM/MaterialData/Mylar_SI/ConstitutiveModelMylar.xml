@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Mylar -->
+<Uintah_Include>
+  <include href="MatConstMylar.xml"/>
+  <constitutive_model type="elastic_plastic_hp">
+    <include href="IsoElasticMylar.xml"/>
+    <include href="../VonMisesYield.xml"/>
+    <include href="../DruckerStabilityCheck.xml"/>
+    <include href="IsoPlasticMylar.xml"/>
+    <include href="MieGruneisenEOSMylar.xml"/>
+    <initial_material_temperature>  294.0 </initial_material_temperature>
+  </constitutive_model>
+</Uintah_Include>

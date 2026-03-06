@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Camclay medium clay -->
+<Uintah_Include>
+  <equation_of_state type="borja_pressure">
+    <p0> -9.0  </p0>
+    <alpha> 60 </alpha>
+    <kappatilde> 0.018 </kappatilde>
+    <epse_v0> 0.0 </epse_v0>
+  </equation_of_state>
+</Uintah_Include>

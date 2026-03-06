@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Tabular Sand with Cap -->
+<Uintah_Include>
+  <yield_condition type="tabular">
+    <filename>DrySand_Yield.json</filename>
+    <independent_variables>Pressure</independent_variables>
+    <dependent_variables>SqrtJ2</dependent_variables>
+    <interpolation type="linear"/>
+  </yield_condition>
+</Uintah_Include>
+
+

@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='ISO-8859-1' ?>
-<!-- All Materials -->
+<!-- Camclay medium clay -->
 <Uintah_Include>
-  <yield_condition type="von_mises">
+  <yield_condition type="camclay">
+    <M> 1.05 </M>
   </yield_condition>
 </Uintah_Include>
