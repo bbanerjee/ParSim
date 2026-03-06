@@ -11,8 +11,6 @@
                                       hypo_elastic_fortran, 
                                       hypo_elastic_fracture, 
                                       hypo_elastic_mms, 
-                                      small_strain_plastic,
-                                      hyperelastic_plastic,
                                       elastic_plastic_hp,
                                       ideal_gas, 
                                       membrane, 
@@ -39,7 +37,6 @@
                                       arena, 
                                       arena_mixture, 
                                       Arenisca4, 
-                                      simplified_geo_model,
                                       soil_model_brannon, 
                                       tabular_eos, 
                                       tabular_plasticity, 
@@ -109,27 +106,27 @@
     <use_modified_eos              spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>
     <use_damage                    spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>
     <use_plasticity                spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>
-    <brittle_damage_initial_threshold    spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>
-    <brittle_damage_fracture_energy      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>
-    <brittle_damage_constant_D           spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>
-    <brittle_damage_max_damage_increment spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>
-    <brittle_damage_allowRecovery        spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>
-    <brittle_damage_recoveryCoeff        spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>
-    <brittle_damage_printDamage          spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>
-    <failure_mean                  spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
-    <failure_std                   spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/> 
-    <failure_exponent              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/> 
-    <failure_seed                  spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/> 
-    <failure_distrib               spec="OPTIONAL STRING 'constant, weibull, gauss'" need_applies_to="type hyperelastic_plastic"/> 
-    <failure_criteria              spec="OPTIONAL STRING 'max_principal_stress, max_principal_strain, mohr_coulomb'" need_applies_to="type hyperelastic_plastic"/> 
-    <scaling                       spec="OPTIONAL STRING 'none, kayenta'" need_applies_to="type hyperelastic_plastic"/> 
-    <exponent                      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
-    <reference_volume              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
-    <char_time                     spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
-    <use_initial_stress            spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic"/>  
-    <initial_pressure              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
-    <friction_angle                      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
-    <tensile_cutoff_fraction_of_cohesion spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic"/>  
+    <brittle_damage_initial_threshold    spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_fracture_energy      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_constant_D           spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_max_damage_increment spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_allowRecovery        spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_recoveryCoeff        spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>
+    <brittle_damage_printDamage          spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic "/>
+    <failure_mean                  spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <failure_std                   spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/> 
+    <failure_exponent              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/> 
+    <failure_seed                  spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/> 
+    <failure_distrib               spec="OPTIONAL STRING 'constant, weibull, gauss'" need_applies_to="type hyperelastic_plastic "/> 
+    <failure_criteria              spec="OPTIONAL STRING 'max_principal_stress, max_principal_strain, mohr_coulomb" need_applies_to="type hyperelastic_plastic "/> 
+    <scaling                       spec="OPTIONAL STRING 'none, kayenta'" need_applies_to="type hyperelastic_plastic "/> 
+    <exponent                      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <reference_volume              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <char_time                     spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <use_initial_stress            spec="OPTIONAL BOOLEAN" need_applies_to="type hyperelastic_plastic "/>  
+    <initial_pressure              spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <friction_angle                      spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
+    <tensile_cutoff_fraction_of_cohesion spec="OPTIONAL DOUBLE" need_applies_to="type hyperelastic_plastic "/>  
 
     <!-- type = p_alpha -->
     <Pe                            spec="OPTIONAL DOUBLE" need_applies_to="type p_alpha"/>
@@ -285,40 +282,42 @@
 
     <!-- type = hypo_elastic -->
     <K      spec="REQUIRED DOUBLE 'positive'"
-              need_applies_to="type hypo_elastic hypo_elastic_fortran viscoelastic_fortran program_burn murnaghanMPM"/>
+              need_applies_to="type hypo_elastic hypo_elastic_fortran viscelastic_fortran program_burn murnaghanMPM"/>
     <G      spec="REQUIRED DOUBLE" 
-              need_applies_to="type hypo_elastic hypo_elastic_fortran viscoelastic_fortran"/>
+              need_applies_to="type hypo_elastic hypo_elastic_fortran viscelastic_fortran"/>
 
     <!-- type = comp_mooney_rivlin -->
     <he_constant_1  spec="REQUIRED DOUBLE 'positive'" need_applies_to="type comp_mooney_rivlin"/>
     <he_constant_2  spec="REQUIRED DOUBLE 'positive'" need_applies_to="type comp_mooney_rivlin"/>
     <he_PR          spec="REQUIRED DOUBLE 'positive'" need_applies_to="type comp_mooney_rivlin"/>
 
-    <!-- type = UCNH & type = jwlpp_mpm -->
+    <!-- type = UCNH/comp_neo_hook/cnh_damage/cnhp_damage/comp_neo_hook_plastic 
+         & type = JWLppMPM -->
+    
     <bulk_modulus       spec="OPTIONAL DOUBLE" 
-                          need_applies_to="type visco_plastic hyperelastic_plastic trans_iso_hyper visco_trans_iso_hyper elastic_plastic_hp small_strain_plastic UCNH"/>
+                          need_applies_to="type visco_plastic hyperelastic_plastic trans_iso_hyper visco_trans_iso_hyper elastic_plastic_hp small_strain_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH"/>
     <shear_modulus      spec="OPTIONAL DOUBLE" 
-                          need_applies_to="type visco_plastic hyperelastic_plastic elastic_plastic_hp small_strain_plastic UCNH"/>
+                          need_applies_to="type visco_plastic hyperelastic_plastic elastic_plastic_hp small_strain_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH"/>
     <useModifiedEOS     spec="OPTIONAL BOOLEAN" 
-                          need_applies_to="type visco_scram visco_plastic trans_iso_hyper visco_trans_iso_hyper elastic_plastic_hp small_strain_plastic UCNH"/>
+                          need_applies_to="type visco_scram visco_plastic trans_iso_hyper visco_trans_iso_hyper elastic_plastic_hp small_strain_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH"/>
     <usePlasticity      spec="OPTIONAL BOOLEAN" 
-                          need_applies_to="type UCNH"/>
+                          need_applies_to="type comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH"/>
     <yield_stress       spec="OPTIONAL DOUBLE" 
-                          need_applies_to="type hyperelastic_plastic UCNH"/>
+                          need_applies_to="type hyperelastic_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH"/>
     <hardening_modulus  spec="OPTIONAL DOUBLE" 
-                          need_applies_to="type hyperelastic_plastic UCNH"/>
+                          need_applies_to="type hyperelastic_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH"/>
     <yield_distrib      spec="OPTIONAL STRING 'constant, uniform'" 
-                          need_applies_to="type hyperelastic_plastic UCNH jwlpp_mpm" />
+                          need_applies_to="type hyperelastic_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH JWLppMPM" />
     <yield_range        spec="OPTIONAL DOUBLE"  
-                          need_applies_to="type hyperelastic_plastic UCNH jwlpp_mpm"/>
+                          need_applies_to="type hyperelastic_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH JWLppMPM"/>
     <yield_seed         spec="OPTIONAL INTEGER"  
-                          need_applies_to="type hyperelastic_plastic UCNH jwlpp_mpm"/>
+                          need_applies_to="type hyperelastic_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH JWLppMPM"/>
     <useInitialStress   spec="OPTIONAL BOOLEAN" 
-                          need_applies_to="type UCNH jwlpp_mpm"/>
+                          need_applies_to="type comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH JWLppMPM"/>
     <initial_pressure   spec="OPTIONAL DOUBLE"
-                          need_applies_to="type UCNH jwlpp_mpm"/>
+                          need_applies_to="type comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH JWLppMPM"/>
 
-    <!-- type = jwlpp_mpm -->
+    <!-- type = JWLppMPM -->
     <ignition_pressure  spec="REQUIRED DOUBLE 'positive'" need_applies_to="type jwlpp_mpm"/>
     <murnaghan_K        spec="REQUIRED DOUBLE 'positive'" need_applies_to="type jwlpp_mpm"/>
     <murnaghan_n        spec="REQUIRED DOUBLE 'positive'" need_applies_to="type jwlpp_mpm"/>
@@ -357,7 +356,7 @@
 
     <!--_type = nonlocal_drucker_prager -->
     <alpha                spec="OPTIONAL DOUBLE" 
-                            need_applies_to="type hypo_elastic hyperelastic_plastic UCNH nonlocal_drucker_prager"/>
+                            need_applies_to="type hypo_elastic hyperelastic_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH nonlocal_drucker_prager"/>
     <alpha_p              spec="OPTIONAL DOUBLE" need_applies_to="type nonlocal_drucker_prager"/>
     <k_o                  spec="OPTIONAL DOUBLE" need_applies_to="type nonlocal_drucker_prager"/>
     <k_o_dist             spec="OPTIONAL STRING" need_applies_to="type nonlocal_drucker_prager"/>
@@ -603,13 +602,13 @@
     <damage_model spec="OPTIONAL NO_DATA"
                     attribute1="type REQUIRED STRING 'hancock_mackenzie, johnson_cook'"
                     need_applies_to="type elastic_plastic elastic_plastic_hp">
-      <Dc spec="OPTIONAL DOUBLE" /> 
-      <D0 spec="OPTIONAL DOUBLE" />
-      <D1 spec="OPTIONAL DOUBLE" />
-      <D2 spec="OPTIONAL DOUBLE" />
-      <D3 spec="OPTIONAL DOUBLE" />
-      <D4 spec="OPTIONAL DOUBLE" />
-      <D5 spec="OPTIONAL DOUBLE" />
+      <Dc spec="OPTIONAL DOUBLE" need_applies_to="type hancock_mackenzie johnson_cook"/> 
+      <D0 spec="OPTIONAL DOUBLE" need_applies_to="type hancock_mackenzie johnson_cook"/>
+      <D1 spec="REQUIRED DOUBLE" need_applies_to="type johnson_cook"/>
+      <D2 spec="REQUIRED DOUBLE" need_applies_to="type johnson_cook"/>
+      <D3 spec="REQUIRED DOUBLE" need_applies_to="type johnson_cook"/>
+      <D4 spec="REQUIRED DOUBLE" need_applies_to="type johnson_cook"/>
+      <D5 spec="REQUIRED DOUBLE" need_applies_to="type johnson_cook"/>
     </damage_model>
     
     <deviatoric_stress_model  spec="OPTIONAL NO_DATA"
@@ -620,18 +619,32 @@
     </deviatoric_stress_model>
         
     <melting_temp_model  spec="OPTIONAL NO_DATA"
-                           attribute1="type REQUIRED STRING 'constant_Tm, linear_Tm, scg_Tm, bps_Tm'">
-      <a        spec="OPTIONAL DOUBLE" />
-      <b        spec="OPTIONAL DOUBLE" />
-      <Gamma_0  spec="OPTIONAL DOUBLE" />
-      <K_T      spec="OPTIONAL DOUBLE" />
-      <T_m0     spec="OPTIONAL DOUBLE" />
+                           attribute1="type REQUIRED STRING 'constant_Tm, linear_Tm, scg_Tm, bps_Tm'"
+                           need_applies_to="type elastic_plastic elastic_plastic_hp">
+      <a        spec="REQUIRED DOUBLE" need_applies_to="type linear_Tm scg_Tm"/>
+      <b        spec="REQUIRED DOUBLE" need_applies_to="type linear_Tm"/>
+      <Gamma_0  spec="REQUIRED DOUBLE" need_applies_to="type linear_Tm scg_Tm"/>
+      <K_T      spec="REQUIRED DOUBLE" need_applies_to="type linear_Tm"/>
+      <T_m0     spec="REQUIRED DOUBLE" need_applies_to="type linear_Tm scg_Tm"/>
+      <B0       spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
+      <dB_dp0   spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
+      <G0       spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
+      <dG_dp0   spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
+      <kappa    spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
+      <z        spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
+      <b2rhoTm  spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
+      <alpha    spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
+      <lambda   spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
+      <a        spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
+      <v_ws_a3_factor spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
+      <Boltzmann_Constant spec="REQUIRED DOUBLE" need_applies_to="type bps_Tm"/>
     </melting_temp_model>
 
     <flow_model spec="OPTIONAL NO_DATA"
                   attribute1="type REQUIRED STRING 'linear, johnson_cook, mechanical_threshold_stress,
                                                   preston_tonks_wallace, steinberg_cochran_guinan,
-                                                  zerilli_armstrong, zerilli_armstrong_polymer'">
+                                                  zerilli_armstrong, zerilli_armstrong_polymer'"
+                  need_applies_to="type elastic_plastic elastic_plastic_hp">
  
       <!-- linear model -->
       <K       spec="REQUIRED DOUBLE" 
@@ -828,96 +841,101 @@
     </flow_model>
 
     <viscoplastic_flow_model spec="OPTIONAL NO_DATA"
-                             attribute1="type REQUIRED STRING 'suvic_i'">
-      <coeff_backstress_evol       spec="OPTIONAL DOUBLE" />
-      <exponent_backstress_evol    spec="OPTIONAL DOUBLE" />
-      <normalizing_backstress      spec="OPTIONAL DOUBLE" />
-      <coeff_saturation_backstress spec="OPTIONAL DOUBLE" />
-      <exponent_backstress         spec="OPTIONAL DOUBLE" />
-      <ref_strainrate              spec="OPTIONAL DOUBLE" />
-      <normalizing_inelastic_strainrate spec="OPTIONAL DOUBLE" />
-      <activation_energy           spec="OPTIONAL DOUBLE" />
-      <universal_gas_constant      spec="OPTIONAL DOUBLE" />
-      <temperature                 spec="OPTIONAL DOUBLE" />
-      <exponent_inelastic_strainrate spec="OPTIONAL DOUBLE" />
-      <coeff_yieldstress_saturation  spec="OPTIONAL DOUBLE" />
-      <exponent_yieldstress          spec="OPTIONAL DOUBLE" />
-      <coeff_yieldstress_evol        spec="OPTIONAL DOUBLE" />
-      <exponent_dragstress         spec="OPTIONAL DOUBLE" />
-      <coeff_dragstress_evol       spec="OPTIONAL DOUBLE" />
-      <coeff_stress_saturation     spec="OPTIONAL DOUBLE" />
-      <intial_drag                 spec="OPTIONAL DOUBLE" />
-      <initial_yield               spec="OPTIONAL DOUBLE" />
-      <integration_parameter_theta spec="OPTIONAL DOUBLE" />
+                             attribute1="type REQUIRED STRING 'suvic_i'"
+                             need_applies_to="type visco_plastic">
+      <coeff_backstress_evol       spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <exponent_backstress_evol    spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <normalizing_backstress      spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <coeff_saturation_backstress spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <exponent_backstress         spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <ref_strainrate              spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <normalizing_inelastic_strainrate spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <activation_energy           spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <universal_gas_constant      spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <temperature                 spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <exponent_inelastic_strainrate spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <coeff_yieldstress_saturation  spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <exponent_yieldstress          spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <coeff_yieldstress_evol        spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <exponent_dragstress         spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <coeff_dragstress_evol       spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <coeff_stress_saturation     spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <intial_drag                 spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <initial_yield               spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
+      <integration_parameter_theta spec="OPTIONAL DOUBLE" need_applies_to="type 'suvic_i'"/>
     </viscoplastic_flow_model>
 
     <equation_of_state             spec="OPTIONAL NO_DATA"
-                                     attribute1="type REQUIRED STRING 'default_hyper, default_hypo, mie_gruneisen, mie_gruneisen_energy, borja_pressure, air, water, granite'">
-      <bulk_modulus                spec="REQUIRED DOUBLE" 
-                                     need_applies_to="type default_hypo, default_hyper"/> 
-      <C_0                         spec="REQUIRED DOUBLE" 
-                                     need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
-      <Gamma_0                     spec="REQUIRED DOUBLE" 
-                                     need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
-      <S_alpha                     spec="REQUIRED DOUBLE"
-                                     need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
-      <S_2                         spec="REQUIRED DOUBLE"
-                                     need_applies_to="type mie_gruneisen_energy"/> 
-      <S_3                         spec="REQUIRED DOUBLE"
-                                     need_applies_to="type mie_gruneisen_energy"/> 
-      <rho_0                       spec="REQUIRED DOUBLE"
-                                     need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
-      <p0                          spec="REQUIRED DOUBLE 'negative'" 
-                                     need_applies_to="type borja_pressure"/>
-      <alpha                       spec="REQUIRED DOUBLE 'positive'" 
-                                     need_applies_to="type borja_pressure"/>
-      <kappatilde                  spec="REQUIRED DOUBLE 'positive'" 
-                                     need_applies_to="type borja_pressure"/>
-      <epse_v0                     spec="REQUIRED DOUBLE" 
-                                     need_applies_to="type borja_pressure"/>
+                                     attribute1="type REQUIRED STRING 'default_hyper, default_hypo, mie_gruneisen, mie_gruneisen_energy, borja_pressure, air, water, granite'"
+                                     need_applies_to="type visco_plastic elastic_plastic elastic_plastic_hp comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH camclay elastic_moduli_model"> 
+      <bulk_modulus spec="REQUIRED DOUBLE" 
+                      need_applies_to="type default_hypo, default_hyper"/> 
+      <C_0          spec="REQUIRED DOUBLE" 
+                      need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
+      <Gamma_0      spec="REQUIRED DOUBLE" 
+                      need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
+      <S_alpha      spec="REQUIRED DOUBLE"
+                      need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
+      <S_2          spec="REQUIRED DOUBLE"
+                      need_applies_to="type mie_gruneisen_energy"/> 
+      <S_3          spec="REQUIRED DOUBLE"
+                      need_applies_to="type mie_gruneisen_energy"/> 
+      <rho_0        spec="REQUIRED DOUBLE"
+                      need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
+      <p0           spec="REQUIRED DOUBLE 'negative'" 
+                      need_applies_to="type borja_pressure"/>
+      <alpha        spec="REQUIRED DOUBLE 'positive'" 
+                      need_applies_to="type borja_pressure"/>
+      <kappatilde   spec="REQUIRED DOUBLE 'positive'" 
+                      need_applies_to="type borja_pressure"/>
+      <epse_v0      spec="REQUIRED DOUBLE" 
+                      need_applies_to="type borja_pressure"/>
     </equation_of_state>
 
     <shear_modulus_model           spec="OPTIONAL NO_DATA"
-                                     attribute1="type REQUIRED STRING 'borja_shear, constant_shear, mts_shear, np_shear, ptw_shear, scg_shear'">
+                                     attribute1="type REQUIRED STRING 'borja_shear, constant_shear, mts_shear, np_shear, ptw_shear, scg_shear'"
+                                     need_applies_to="type elastic_plastic elastic_plastic_hp camclay elastic_moduli_model">
       <shear_modulus               spec="REQUIRED DOUBLE" 
                                      need_applies_to="type constant_shear"/>
-      <mu_0                        spec="OPTIONAL DOUBLE" />
-      <A                           spec="OPTIONAL DOUBLE" />
-      <B                           spec="OPTIONAL DOUBLE" />
-      <C                           spec="OPTIONAL DOUBLE" />
-      <D                           spec="OPTIONAL DOUBLE" />
-      <m                           spec="OPTIONAL DOUBLE" />
-      <slope_mu_p_over_mu0         spec="OPTIONAL DOUBLE" />
-      <T_0                         spec="OPTIONAL DOUBLE" />
-      <zeta                        spec="OPTIONAL DOUBLE" />
-      <alpha                       spec="OPTIONAL DOUBLE" />
-      <alphap                      spec="OPTIONAL DOUBLE" />
+      <mu_0                        spec="REQUIRED DOUBLE 'positive' " need_applies_to="type mts_shear np_shear ptw_shear scg_shear"/>
+      <D                           spec="REQUIRED DOUBLE" need_applies_to="type mts_shear"/>
+      <T_0                         spec="REQUIRED DOUBLE 'positive' " need_applies_to="type mts_shear"/>
+      <zeta                        spec="REQUIRED DOUBLE" need_applies_to="type np_shear"/>
+      <slope_mu_p_over_mu0         spec="REQUIRED DOUBLE" need_applies_to="type np_shear ptw_shear"/>
+      <C                           spec="REQUIRED DOUBLE" need_applies_to="type np_shear"/>
+      <m                           spec="REQUIRED DOUBLE" need_applies_to="type np_shear"/>
+      <alpha                       spec="REQUIRED DOUBLE" need_applies_to="type ptw_shear"/>
+      <alphap                      spec="REQUIRED DOUBLE" need_applies_to="type ptw_shear"/>
+      <A                           spec="REQUIRED DOUBLE" need_applies_to="type scg_shear"/>
+      <B                           spec="REQUIRED DOUBLE" need_applies_to="type scg_shear"/>
       <mu0                         spec="REQUIRED DOUBLE 'positive'" 
                                      need_applies_to="type borja_shear"/>
     </shear_modulus_model>
 
-    <specific_heat_model           spec="OPTIONAL NO_DATA"
-                                     attribute1="type REQUIRED STRING 'constant_Cp, cubic_Cp, copper_Cp, steel_Cp'">
-      <T_transition                spec="OPTIONAL DOUBLE" />
-      <A_LowT                spec="OPTIONAL DOUBLE" />
-      <B_LowT                spec="OPTIONAL DOUBLE" />
-      <C_LowT                spec="OPTIONAL DOUBLE" />
-      <n_LowT                spec="OPTIONAL DOUBLE" />
-      <A_HighT               spec="OPTIONAL DOUBLE" />
-      <B_HighT               spec="OPTIONAL DOUBLE" />
-      <C_HighT               spec="OPTIONAL DOUBLE" />
-      <n_HighT               spec="OPTIONAL DOUBLE" />
-      <a                     spec="OPTIONAL DOUBLE" />
-      <b                     spec="OPTIONAL DOUBLE" />
-      <beta                  spec="OPTIONAL DOUBLE" />
-      <c0                    spec="OPTIONAL DOUBLE" />
-      <c1                    spec="OPTIONAL DOUBLE" />
-      <c2                    spec="OPTIONAL DOUBLE" />
-      <c3                    spec="OPTIONAL DOUBLE" />
+    <specific_heat_model spec="OPTIONAL NO_DATA"
+                           attribute1="type REQUIRED STRING 'constant_Cp, cubic_Cp, copper_Cp, steel_Cp'"
+                           need_applies_to="type elastic_plastic elastic_plastic_hp">
+      <T_transition      spec="REQUIRED DOUBLE" need_applies_to="type copper_Cp steel_Cp"/>
+      <A_LowT            spec="REQUIRED DOUBLE" need_applies_to="type copper_Cp steel_Cp"/>
+      <B_LowT            spec="REQUIRED DOUBLE" need_applies_to="type copper_Cp steel_Cp"/>
+      <C_LowT            spec="REQUIRED DOUBLE" need_applies_to="type copper_Cp steel_Cp"/>
+      <n_LowT            spec="REQUIRED DOUBLE" need_applies_to="type copper_Cp steel_Cp"/>
+      <A_HighT           spec="REQUIRED DOUBLE" need_applies_to="type copper_Cp steel_Cp"/>
+      <B_HighT           spec="REQUIRED DOUBLE" need_applies_to="type copper_Cp steel_Cp"/>
+      <C_HighT           spec="REQUIRED DOUBLE" need_applies_to="type steel_Cp"/>
+      <n_HighT           spec="REQUIRED DOUBLE" need_applies_to="type steel_Cp"/>
+      <a                 spec="REQUIRED DOUBLE" need_applies_to="type cubic_Cp"/>
+      <b                 spec="REQUIRED DOUBLE" need_applies_to="type cubic_Cp"/>
+      <beta              spec="REQUIRED DOUBLE" need_applies_to="type cubic_Cp"/>
+      <c0                spec="REQUIRED DOUBLE" need_applies_to="type cubic_Cp"/>
+      <c1                spec="REQUIRED DOUBLE" need_applies_to="type cubic_Cp"/>
+      <c2                spec="REQUIRED DOUBLE" need_applies_to="type cubic_Cp"/>
+      <c3                spec="REQUIRED DOUBLE" need_applies_to="type cubic_Cp"/>
     </specific_heat_model>
 
     <stability_check spec="OPTIONAL NO_DATA"
-                     attribute1="type REQUIRED STRING 'acoustic, becker, drucker, drucker_becker, none'" />
+                     attribute1="type REQUIRED STRING 'acoustic, becker, drucker, drucker_becker, none'"
+                     need_applies_to="type visco_plastic elastic_plastic elastic_plastic_hp"/> 
 
 
     <!--______________________________________________________________________ -->    
@@ -1069,6 +1087,7 @@
                              need_applies_to="type tabular tabular_cap"/>
       <cap_ellipticity_ratio spec="REQUIRED DOUBLE"  need_applies_to="type tabular_cap"/>
     </yield_condition>
+
     <internal_variable_model  spec="REQUIRED NO_DATA"
                               attribute1="type REQUIRED STRING 'arena borja_consolidation_pressure metal_internal_var soil_model_brannon_kappa tabular_cap'"
                               need_applies_to="type camclay elastic_plastic elastic_plastic_hp soil_model_brannon tabular_plasticity_cap">
@@ -1107,22 +1126,27 @@
                              need_applies_to="type tabular_cap"/>
 
     </internal_variable_model>
+
     <kinematic_hardening_model  spec="OPTIONAL NO_DATA"
                      attribute1="type REQUIRED STRING 'none, prager, armstrong_frederick, arena'"
-                     need_applies_to="type arena">
+                     need_applies_to="type elastic_plastic elastic_plastic_hp arena">
       <fluid_pressure_initial spec="REQUIRED DOUBLE" need_applies_to="type arena" />
+      <beta spec="REQUIRED DOUBLE" need_applies_to="type prager armstrong_frederick" />
+      <hardening_modulus spec="REQUIRED DOUBLE" need_applies_to="type prager" />
+      <hardening_modulus_1 spec="REQUIRED DOUBLE" need_applies_to="type armstrong_frederick" />
+      <hardening_modulus_2 spec="REQUIRED DOUBLE" need_applies_to="type armstrong_frederick" />
     </kinematic_hardening_model>
 
-    <!-- These are for tabular_eos -->
+    <!-- These are for tabular_eos/tabular_plasticity -->
     <filename              spec="REQUIRED STRING" 
-                           need_applies_to="type tabular_eos"/>
+                           need_applies_to="type tabular_eos tabular_plasticity tabular_plasticity_cap"/>
     <independent_variables spec="REQUIRED STRING" 
-                           need_applies_to="type tabular_eos"/>
+                           need_applies_to="type tabular_eos tabular_plasticity tabular_plasticity_cap"/>
     <dependent_variables   spec="REQUIRED STRING" 
-                           need_applies_to="type tabular_eos"/>
+                           need_applies_to="type tabular_eos tabular_plasticity tabular_plasticity_cap"/>
     <interpolation         spec="REQUIRED NO_DATA" 
                            attribute1="type REQUIRED STRING 'linear, cubic'"
-                           need_applies_to="type tabular_eos"/>
+                           need_applies_to="type tabular_eos tabular_plasticity tabular_plasticity_cap"/>
   </constitutive_model>
 
 
