@@ -10,6 +10,7 @@
     <include href="JCPlastic6061T6Al.xml"/>
     <include href="JCDamage6061T6Al.xml"/>
     <include href="MieGrunEOS6061T6Al.xml"/>
+    <include href="../InternalVarMetal.xml"/>
     <initial_material_temperature>  294.0 </initial_material_temperature>
   </constitutive_model>
 </Uintah_Include>

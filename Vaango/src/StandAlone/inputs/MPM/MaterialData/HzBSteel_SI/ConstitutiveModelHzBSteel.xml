@@ -9,6 +9,7 @@
     <include href="IsoPlasticHzBSteel.xml"/>
     <include href="JohnsonCookPlasticHzBSteel.xml"/>
     <include href="MieGruneisenEOSIron.xml"/>
+    <include href="../InternalVarMetal.xml"/>
     <initial_material_temperature>  294.0 </initial_material_temperature>
   </constitutive_model>
 </Uintah_Include>

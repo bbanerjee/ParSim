@@ -10,6 +10,7 @@
     <include href="SCGShearW.xml"/>
     <include href="SCG_W.xml"/>
     <include href="MieGrunEOSW.xml"/>
+    <include href="../InternalVarMetal.xml"/>
     <initial_material_temperature>  294.0 </initial_material_temperature>
   </constitutive_model>
 </Uintah_Include>

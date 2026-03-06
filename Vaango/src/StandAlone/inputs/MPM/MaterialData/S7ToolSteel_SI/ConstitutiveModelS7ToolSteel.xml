@@ -9,6 +9,7 @@
     <include href="IsoPlasticS7ToolSteel.xml"/>
     <include href="JohnsonCookPlasticS7ToolSteel.xml"/>
     <include href="JohnsonCookDamageS7ToolSteel.xml"/>
+    <include href="../InternalVarMetal.xml"/>
     <initial_material_temperature>  294.0 </initial_material_temperature>
   </constitutive_model>
 </Uintah_Include>

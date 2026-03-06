@@ -11,6 +11,7 @@
     <include href="JohnsonCookDamageHHCopper.xml"/>
     <include href="SCGShearOFHCHHCu.xml"/>
     <include href="MieGruneisenEOSHHCopper.xml"/>
+    <include href="../InternalVarMetal.xml"/>
     <initial_material_temperature>  294.0 </initial_material_temperature>
   </constitutive_model>
 </Uintah_Include>

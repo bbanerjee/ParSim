@@ -8,9 +8,9 @@
     <include href="../DruckerStabilityCheck.xml"/>
     <include href="SCGTm304SS.xml"/>
     <include href="PTWShear304SS.xml"/>
-    <include href="IsoPlastic304SS.xml"/>
     <include href="PTWPlastic304SS.xml"/>
     <include href="MieGruneisenEOSIron.xml"/>
+    <include href="../InternalVarMetal.xml"/>
     <initial_material_temperature>  294.0 </initial_material_temperature>
   </constitutive_model>
 </Uintah_Include>
