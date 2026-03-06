@@ -260,7 +260,7 @@
     <rho0      spec="REQUIRED DOUBLE 'positive'"
                   need_applies_to="type program_burn murnaghanMPM"/>
     <viscosity spec="REQUIRED DOUBLE 'positive'"
-                  need_applies_to="type murnaghanMPM"/>
+                  need_applies_to="type murnaghanMPM water"/>
 
     <!-- type = mw_visco_elastic -->
     <e_shear_modulus          spec="REQUIRED DOUBLE 'positive'" need_applies_to="type mw_visco_elastic"/>
@@ -272,7 +272,7 @@
 
     <!-- type = ideal_gas -->
     <gamma                  spec="REQUIRED DOUBLE" 
-                              need_applies_to="type visco_scram ideal_gas"/>
+                              need_applies_to="type visco_scram ideal_gas water"/>
     <specific_heat          spec="REQUIRED DOUBLE"
                               need_applies_to="type ideal_gas"/>
     <reference_pressure     spec="REQUIRED DOUBLE" 
@@ -295,7 +295,7 @@
          & type = JWLppMPM -->
     
     <bulk_modulus       spec="OPTIONAL DOUBLE" 
-                          need_applies_to="type visco_plastic hyperelastic_plastic trans_iso_hyper visco_trans_iso_hyper elastic_plastic_hp small_strain_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH"/>
+                          need_applies_to="type visco_plastic hyperelastic_plastic trans_iso_hyper visco_trans_iso_hyper elastic_plastic_hp small_strain_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH water"/>
     <shear_modulus      spec="OPTIONAL DOUBLE" 
                           need_applies_to="type visco_plastic hyperelastic_plastic elastic_plastic_hp small_strain_plastic comp_neo_hook cnh_damage cnhp_damage comp_neo_hook_plastic UCNH"/>
     <useModifiedEOS     spec="OPTIONAL BOOLEAN" 

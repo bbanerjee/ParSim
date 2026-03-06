@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Constitutive Model for Water -->
+<Uintah_Include>
+  <include href="MatConstWater.xml"/>
+  <constitutive_model type="water">
+    <bulk_modulus>2.2e9</bulk_modulus>
+    <viscosity>8.9e-4</viscosity>
+    <gamma>7.0</gamma>
+  </constitutive_model>
+</Uintah_Include>
