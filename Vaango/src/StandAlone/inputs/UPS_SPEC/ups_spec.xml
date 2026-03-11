@@ -395,7 +395,7 @@
 
     <SimulationComponent          spec="REQUIRED NO_DATA"
                                     attribute1="type REQUIRED STRING 'burger, ice, impm, mpm, mpm_usl, uofu_mpm,
-                                                                      mpmf, mpmice, amrmpm,
+                                                                      mpmf, mpmice, amrmpm, dem_mpm,
                                                                       peridynamics,
                                                                       reduce_uda,
                                                                       advectslabs, advectslabsgpu, gpuschedulertest, unifiedschedulertest, poissongpu1,

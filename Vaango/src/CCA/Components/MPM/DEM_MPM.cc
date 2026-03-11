@@ -23,7 +23,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <CCA/Components/MPM/SerialMPM.h>
+#include <CCA/Components/MPM/DEM_MPM.h>
 
 #include <CCA/Components/MPM/CohesiveZone/CZMaterial.h>
 #include <CCA/Components/MPM/CohesiveZone/CohesiveZoneTasks.h>
@@ -132,11 +132,11 @@ using namespace Uintah;
 // Debug streams
 //__________________________________
 //  To turn on debug d_mpm_flags
-//  csh/tcsh : setenv SCI_DEBUG "MPM:+,SerialMPM:+".....
-//  bash     : export SCI_DEBUG="MPM:+,SerialMPM:+" )
+//  csh/tcsh : setenv SCI_DEBUG "MPM:+,DEMMPM:+".....
+//  bash     : export SCI_DEBUG="MPM:+,DEMMPM:+" )
 //  default is OFF
 static DebugStream cout_doing("MPM", false);
-static DebugStream cout_dbg("SerialMPM", false);
+static DebugStream cout_dbg("DEMMPM", false);
 static DebugStream cout_convert("MPMConv", false);
 static DebugStream cout_heat("MPMHeat", false);
 static DebugStream amr_doing("AMRMPM", false);
@@ -144,7 +144,7 @@ static DebugStream cout_damage("Damage", false);
 static DebugStream cout_dem("DEM", false);
 Dout mpm_delt_dbg("MPMdelt", "MPM", "Debug MPM delta t", false);
 
-SerialMPM::SerialMPM(const ProcessorGroup* myworld,
+DEMMPM::DEMMPM(const ProcessorGroup* myworld,
                      const MaterialManagerP& materialManager)
   : SimulationCommon(myworld, materialManager)
   , MPMCommon(d_materialManager)
@@ -154,7 +154,7 @@ SerialMPM::SerialMPM(const ProcessorGroup* myworld,
   d_mpm_flags  = std::make_unique<MPMFlags>(myworld);
 }
 
-SerialMPM::~SerialMPM()
+DEMMPM::~DEMMPM()
 {
   MPMPhysicalBCFactory::clean();
   d_analysisModules.clear();
@@ -164,7 +164,7 @@ SerialMPM::~SerialMPM()
  * problemSetup
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
+DEMMPM::problemSetup(const ProblemSpecP& prob_spec,
                         const ProblemSpecP& restart_prob_spec,
                         GridP& grid,
                         const std::string& input_ups_dir)
@@ -326,7 +326,7 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
  * readPrescribedDeformations
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::readPrescribedDeformations(std::string filename)
+DEMMPM::readPrescribedDeformations(std::string filename)
 {
 
   if (filename != "") {
@@ -372,7 +372,7 @@ SerialMPM::readPrescribedDeformations(std::string filename)
  * readInsertParticlesFile
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::readInsertParticlesFile(std::string filename)
+DEMMPM::readInsertParticlesFile(std::string filename)
 {
 
   if (filename != "") {
@@ -410,7 +410,7 @@ SerialMPM::readInsertParticlesFile(std::string filename)
  * outputProblemSpec
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::outputProblemSpec(ProblemSpecP& root_ps)
+DEMMPM::outputProblemSpec(ProblemSpecP& root_ps)
 {
   ProblemSpecP root = root_ps->getRootNode();
 
@@ -454,14 +454,14 @@ SerialMPM::outputProblemSpec(ProblemSpecP& root_ps)
  * scheduleInitialize
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
+DEMMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
 {
   if (!d_mpm_flags->doMPMOnLevel(level->getIndex(),
                                  level->getGrid()->numLevels())) {
     return;
   }
   Task* t = scinew Task(
-    "MPM::actuallyInitialize", this, &SerialMPM::actuallyInitialize);
+    "MPM::actuallyInitialize", this, &DEMMPM::actuallyInitialize);
 
   const PatchSet* patches = level->eachPatch();
   printSchedule(patches, cout_doing, "MPM::scheduleInitialize");
@@ -625,7 +625,7 @@ SerialMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
  * actuallyInitialize
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::actuallyInitialize(const ProcessorGroup*,
+DEMMPM::actuallyInitialize(const ProcessorGroup*,
                               const PatchSubset* patches,
                               const MaterialSubset* matls,
                               DataWarehouse*,
@@ -776,11 +776,11 @@ SerialMPM::actuallyInitialize(const ProcessorGroup*,
 }
 
 void
-SerialMPM::scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
+DEMMPM::scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
 {
   /*`==========TESTING==========*/
   Task* t = scinew Task(
-    "SerialMPM::restartInitialize", this, &SerialMPM::restartInitialize);
+    "DEMMPM::restartInitialize", this, &DEMMPM::restartInitialize);
 
   const PatchSet* patches = level->eachPatch();
 
@@ -797,12 +797,12 @@ SerialMPM::scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
   /*`==========TESTING==========*/
 }
 
-/*! Task:  SerialMPM::restartInitialize
+/*! Task:  DEMMPM::restartInitialize
  *  Purpose:  Modify variables on a restart.  You MUST schedule a
  *            computes<label> in the restartInitializeHACK.
  */
 void
-SerialMPM::restartInitialize(const ProcessorGroup*,
+DEMMPM::restartInitialize(const ProcessorGroup*,
                              const PatchSubset* patches,
                              const MaterialSubset*,
                              [[maybe_unused]] DataWarehouse* old_dw,
@@ -811,7 +811,7 @@ SerialMPM::restartInitialize(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    const std::string msg = "Doing SerialMPM::restartInitializeTask";
+    const std::string msg = "Doing DEMMPM::restartInitializeTask";
     printTask(patches, patch, cout_doing, msg);
 
     size_t numMatls = d_materialManager->getNumMaterials("MPM");
@@ -829,17 +829,17 @@ SerialMPM::restartInitialize(const ProcessorGroup*,
 }
 
 void
-SerialMPM::scheduleDeleteGeometryObjects(const LevelP& level, SchedulerP& sched)
+DEMMPM::scheduleDeleteGeometryObjects(const LevelP& level, SchedulerP& sched)
 {
   const PatchSet* patches = level->eachPatch();
 
   Task* t = scinew Task(
-    "MPM::deleteGeometryObjects", this, &SerialMPM::deleteGeometryObjects);
+    "MPM::deleteGeometryObjects", this, &DEMMPM::deleteGeometryObjects);
   sched->addTask(t, patches, d_materialManager->allMaterials("MPM"));
 }
 
 void
-SerialMPM::deleteGeometryObjects(const ProcessorGroup*,
+DEMMPM::deleteGeometryObjects(const ProcessorGroup*,
                                  [[maybe_unused]] const PatchSubset* patches,
                                  const MaterialSubset*,
                                  DataWarehouse*,
@@ -868,10 +868,10 @@ SerialMPM::deleteGeometryObjects(const ProcessorGroup*,
  * schedulePrintParticleCount
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::schedulePrintParticleCount(const LevelP& level, SchedulerP& sched)
+DEMMPM::schedulePrintParticleCount(const LevelP& level, SchedulerP& sched)
 {
   Task* t = scinew Task(
-    "MPM::printParticleCount", this, &SerialMPM::printParticleCount);
+    "MPM::printParticleCount", this, &DEMMPM::printParticleCount);
   t->needs(Task::NewDW, d_mpm_labels->partCountLabel);
   t->setType(Task::OncePerProc);
   sched->addTask(t,
@@ -883,7 +883,7 @@ SerialMPM::schedulePrintParticleCount(const LevelP& level, SchedulerP& sched)
  * printParticleCount
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::printParticleCount(const ProcessorGroup* pg,
+DEMMPM::printParticleCount(const ProcessorGroup* pg,
                               const PatchSubset*,
                               const MaterialSubset*,
                               DataWarehouse*,
@@ -899,7 +899,7 @@ SerialMPM::printParticleCount(const ProcessorGroup* pg,
 
 //  Diagnostic task: compute the total number of particles
 void
-SerialMPM::scheduleTotalParticleCount(SchedulerP& sched,
+DEMMPM::scheduleTotalParticleCount(SchedulerP& sched,
                                       const PatchSet* patches,
                                       const MaterialSet* matls)
 {
@@ -909,14 +909,14 @@ SerialMPM::scheduleTotalParticleCount(SchedulerP& sched,
   }
 
   Task* t = scinew Task(
-    "SerialMPM::totalParticleCount", this, &SerialMPM::totalParticleCount);
+    "DEMMPM::totalParticleCount", this, &DEMMPM::totalParticleCount);
   t->computes(d_mpm_labels->partCountLabel);
   sched->addTask(t, patches, matls);
 }
 
 //  Diagnostic task: compute the total number of particles
 void
-SerialMPM::totalParticleCount(const ProcessorGroup*,
+DEMMPM::totalParticleCount(const ProcessorGroup*,
                               const PatchSubset* patches,
                               const MaterialSubset* matls,
                               DataWarehouse* old_dw,
@@ -945,7 +945,7 @@ SerialMPM::totalParticleCount(const ProcessorGroup*,
  * based on the body forces (which also have to be computed)
  *------------------------------------------------------------------------*/
 void
-SerialMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
+DEMMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
                                                            SchedulerP& sched)
 {
   const PatchSet* patches = level->eachPatch();
@@ -954,7 +954,7 @@ SerialMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
 
   // First compute the body force
   Task* t1 = scinew Task(
-    "MPM::initializeBodyForce", this, &SerialMPM::initializeBodyForce);
+    "MPM::initializeBodyForce", this, &DEMMPM::initializeBodyForce);
   t1->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
   t1->modifies(d_mpm_labels->pBodyForceAccLabel);
   sched->addTask(t1, patches, d_materialManager->allMaterials("MPM"));
@@ -965,7 +965,7 @@ SerialMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
   // not worth the effort at this time. BB
   Task* t2 = scinew Task("MPM::initializeStressAndDefGradFromBodyForce",
                          this,
-                         &SerialMPM::initializeStressAndDefGradFromBodyForce);
+                         &DEMMPM::initializeStressAndDefGradFromBodyForce);
 
   t2->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
   t2->needs(Task::NewDW, d_mpm_labels->pBodyForceAccLabel, Ghost::None);
@@ -978,7 +978,7 @@ SerialMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
  * Actually initialize the body force acceleration
  *-------------------------------------------------------------------------*/
 void
-SerialMPM::initializeBodyForce(const ProcessorGroup*,
+DEMMPM::initializeBodyForce(const ProcessorGroup*,
                                const PatchSubset* patches,
                                [[maybe_unused]] const MaterialSubset* matls,
                                DataWarehouse*,
@@ -1051,7 +1051,7 @@ SerialMPM::initializeBodyForce(const ProcessorGroup*,
  *             with coordinate directions
  *--------------------------------------------------------------------------*/
 void
-SerialMPM::initializeStressAndDefGradFromBodyForce(const ProcessorGroup*,
+DEMMPM::initializeStressAndDefGradFromBodyForce(const ProcessorGroup*,
                                                    const PatchSubset* patches,
                                                    const MaterialSubset* matls,
                                                    DataWarehouse*,
@@ -1087,7 +1087,7 @@ SerialMPM::initializeStressAndDefGradFromBodyForce(const ProcessorGroup*,
  * Schedule the initialization of the external forces: Pressure
  *---------------------------------------------------------------------------*/
 void
-SerialMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
+DEMMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
 {
   const PatchSet* patches = level->eachPatch();
 
@@ -1109,7 +1109,7 @@ SerialMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
     // associated with each load curve.
     Task* t = scinew Task("MPM::countMaterialPointsPerLoadCurve",
                           this,
-                          &SerialMPM::countMaterialPointsPerLoadCurve);
+                          &DEMMPM::countMaterialPointsPerLoadCurve);
     t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_mpm_labels->materialPointsPerLoadCurveLabel,
                 d_loadCurveIndex,
@@ -1119,7 +1119,7 @@ SerialMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
     // Create a task that calculates the force to be associated with
     // each particle based on the pressure BCs
     t = scinew Task(
-      "MPM::initializePressureBC", this, &SerialMPM::initializePressureBC);
+      "MPM::initializePressureBC", this, &DEMMPM::initializePressureBC);
     t->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
     t->needs(Task::NewDW, d_mpm_labels->pSizeLabel, Ghost::None);
     t->needs(Task::NewDW, d_mpm_labels->pDispLabel, Ghost::None);
@@ -1150,7 +1150,7 @@ SerialMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
  *   Calculate the number of material points per load curve
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
+DEMMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
                                            const PatchSubset* patches,
                                            const MaterialSubset*,
                                            DataWarehouse*,
@@ -1200,7 +1200,7 @@ SerialMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
  * initializePressureBC
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::initializePressureBC(const ProcessorGroup*,
+DEMMPM::initializePressureBC(const ProcessorGroup*,
                                 const PatchSubset* patches,
                                 const MaterialSubset*,
                                 DataWarehouse*,
@@ -1335,7 +1335,7 @@ SerialMPM::initializePressureBC(const ProcessorGroup*,
  *   Schedule the initialization of the external forces: Moments
  *---------------------------------------------------------------------------*/
 void
-SerialMPM::scheduleInitializeMomentBCs(const LevelP& level, SchedulerP& sched)
+DEMMPM::scheduleInitializeMomentBCs(const LevelP& level, SchedulerP& sched)
 {
   const PatchSet* patches = level->eachPatch();
 
@@ -1357,7 +1357,7 @@ SerialMPM::scheduleInitializeMomentBCs(const LevelP& level, SchedulerP& sched)
     // associated with each load curve.
     Task* t = scinew Task("MPM::countMaterialPointsPerLoadCurve",
                           this,
-                          &SerialMPM::countMaterialPointsPerLoadCurve);
+                          &DEMMPM::countMaterialPointsPerLoadCurve);
     t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->computes(d_mpm_labels->materialPointsPerLoadCurveLabel,
                 d_loadCurveIndex,
@@ -1367,7 +1367,7 @@ SerialMPM::scheduleInitializeMomentBCs(const LevelP& level, SchedulerP& sched)
     // Create a task that calculates the force to be associated with
     // each particle based on the moment BCs
     t = scinew Task(
-      "MPM::initializeMomentBC", this, &SerialMPM::initializeMomentBC);
+      "MPM::initializeMomentBC", this, &DEMMPM::initializeMomentBC);
     t->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
     t->needs(Task::NewDW, d_mpm_labels->pSizeLabel, Ghost::None);
     t->needs(Task::NewDW, d_mpm_labels->pDefGradLabel, Ghost::None);
@@ -1396,7 +1396,7 @@ SerialMPM::scheduleInitializeMomentBCs(const LevelP& level, SchedulerP& sched)
  * initializeMomentBC
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::initializeMomentBC(const ProcessorGroup*,
+DEMMPM::initializeMomentBC(const ProcessorGroup*,
                               const PatchSubset* patches,
                               const MaterialSubset*,
                               DataWarehouse*,
@@ -1509,7 +1509,7 @@ SerialMPM::initializeMomentBC(const ProcessorGroup*,
  * scheduleComputeStableTimsetp
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
+DEMMPM::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
 {
   // Nothing to do here - delt is computed as a by-product of the
   // constitutive model
@@ -1521,7 +1521,7 @@ SerialMPM::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
 
   Task* t = scinew Task("MPM::actuallyComputeStableTimestep",
                         this,
-                        &SerialMPM::actuallyComputeStableTimestep);
+                        &DEMMPM::actuallyComputeStableTimestep);
 
   if (d_mpm_flags->d_enableDEM) {
     t->needs(Task::NewDW, d_mpm_labels->pMassLabel, Ghost::None);
@@ -1535,7 +1535,7 @@ SerialMPM::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
  * actuallyComputeStableTimestep
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
+DEMMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
                                          const PatchSubset* patches,
                                          const MaterialSubset*,
                                          DataWarehouse* old_dw,
@@ -1588,9 +1588,9 @@ SerialMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
  * scheduleTimeAdvance
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
+DEMMPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
 {
-  MALLOC_TRACE_TAG_SCOPE("SerialMPM::scheduleTimeAdvance()");
+  MALLOC_TRACE_TAG_SCOPE("DEMMPM::scheduleTimeAdvance()");
   if (!d_mpm_flags->doMPMOnLevel(level->getIndex(),
                                  level->getGrid()->numLevels())) {
     return;
@@ -1734,7 +1734,7 @@ SerialMPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
  * Outputs: p.bodyForce
  *====================================================================================*/
 void
-SerialMPM::scheduleComputeParticleBodyForce(SchedulerP& sched,
+DEMMPM::scheduleComputeParticleBodyForce(SchedulerP& sched,
                                             const PatchSet* patches,
                                             const MaterialSet* matls)
 {
@@ -1747,7 +1747,7 @@ SerialMPM::scheduleComputeParticleBodyForce(SchedulerP& sched,
 
   Task* t = scinew Task("MPM::computeParticleBodyForce",
                         this,
-                        &SerialMPM::computeParticleBodyForce);
+                        &DEMMPM::computeParticleBodyForce);
 
   t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
   t->needs(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::None);
@@ -1766,7 +1766,7 @@ SerialMPM::scheduleComputeParticleBodyForce(SchedulerP& sched,
  * Outputs: p.bodyForce
  *====================================================================================*/
 void
-SerialMPM::computeParticleBodyForce(const ProcessorGroup*,
+DEMMPM::computeParticleBodyForce(const ProcessorGroup*,
                                     const PatchSubset* patches,
                                     const MaterialSubset*,
                                     DataWarehouse* old_dw,
@@ -1902,7 +1902,7 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup*,
 }
 
 void
-SerialMPM::scheduleComputeCurrentParticleSize(SchedulerP& sched,
+DEMMPM::scheduleComputeCurrentParticleSize(SchedulerP& sched,
                                               const PatchSet* patches,
                                               const MaterialSet* matls)
 {
@@ -1915,7 +1915,7 @@ SerialMPM::scheduleComputeCurrentParticleSize(SchedulerP& sched,
 
   Task* t = scinew Task("MPM::computeCurrentParticleSize",
                         this,
-                        &SerialMPM::computeCurrentParticleSize);
+                        &DEMMPM::computeCurrentParticleSize);
 
   t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None);
   t->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::None);
@@ -1926,7 +1926,7 @@ SerialMPM::scheduleComputeCurrentParticleSize(SchedulerP& sched,
 }
 
 void
-SerialMPM::computeCurrentParticleSize(const ProcessorGroup*,
+DEMMPM::computeCurrentParticleSize(const ProcessorGroup*,
                                       const PatchSubset* patches,
                                       const MaterialSubset*,
                                       DataWarehouse* old_dw,
@@ -1994,7 +1994,7 @@ SerialMPM::computeCurrentParticleSize(const ProcessorGroup*,
 //*   out(p.externalForceNew) */
 /*====================================================================================*/
 void
-SerialMPM::scheduleApplyExternalLoads(SchedulerP& sched,
+DEMMPM::scheduleApplyExternalLoads(SchedulerP& sched,
                                       const PatchSet* patches,
                                       const MaterialSet* matls)
 {
@@ -2006,7 +2006,7 @@ SerialMPM::scheduleApplyExternalLoads(SchedulerP& sched,
   printSchedule(patches, cout_doing, "MPM::scheduleApplyExternalLoads");
 
   Task* t = scinew Task(
-    "MPM::applyExternalLoads", this, &SerialMPM::applyExternalLoads);
+    "MPM::applyExternalLoads", this, &DEMMPM::applyExternalLoads);
 
   t->needs(Task::OldDW, d_mpm_labels->simulationTimeLabel);
   t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
@@ -2034,7 +2034,7 @@ SerialMPM::scheduleApplyExternalLoads(SchedulerP& sched,
  * addExternalLoads
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::applyExternalLoads(const ProcessorGroup*,
+DEMMPM::applyExternalLoads(const ProcessorGroup*,
                               const PatchSubset* patches,
                               const MaterialSubset*,
                               DataWarehouse* old_dw,
@@ -2271,7 +2271,7 @@ SerialMPM::applyExternalLoads(const ProcessorGroup*,
  *   out(G.MASS, G.VELOCITY)
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
+DEMMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
                                               const PatchSet* patches,
                                               const MaterialSet* matls)
 {
@@ -2284,7 +2284,7 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
 
   Task* t              = scinew Task("MPM::interpolateParticlesToGrid",
                         this,
-                        &SerialMPM::interpolateParticlesToGrid);
+                        &DEMMPM::interpolateParticlesToGrid);
   Ghost::GhostType gan = Ghost::AroundNodes;
   t->needs(Task::OldDW, d_mpm_labels->pMassLabel, gan, d_numGhostParticles);
   t->needs(
@@ -2375,7 +2375,7 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
  * interpolateParticlesToGrid
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
+DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
                                       const PatchSubset* patches,
                                       const MaterialSubset*,
                                       DataWarehouse* old_dw,
@@ -2712,14 +2712,14 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
  * scheduleComputeNormals: For contact
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeNormals(SchedulerP& sched,
+DEMMPM::scheduleComputeNormals(SchedulerP& sched,
                                   const PatchSet* patches,
                                   const MaterialSet* matls)
 {
   printSchedule(patches, cout_doing, "MPM::scheduleComputeNormals");
 
   Task* t =
-    scinew Task("MPM::computeNormals", this, &SerialMPM::computeNormals);
+    scinew Task("MPM::computeNormals", this, &DEMMPM::computeNormals);
 
   auto* z_matl = scinew MaterialSubset();
   z_matl->add(0);
@@ -2768,7 +2768,7 @@ SerialMPM::scheduleComputeNormals(SchedulerP& sched,
 //______________________________________________________________________
 //
 void
-SerialMPM::computeNormals(const ProcessorGroup*,
+DEMMPM::computeNormals(const ProcessorGroup*,
                           const PatchSubset* patches,
                           const MaterialSubset*,
                           DataWarehouse* old_dw,
@@ -2933,14 +2933,14 @@ SerialMPM::computeNormals(const ProcessorGroup*,
  * scheduleFindSurfaceParticles
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
+DEMMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
                                         const PatchSet* patches,
                                         const MaterialSet* matls)
 {
   printSchedule(patches, cout_doing, "MPM::scheduleFindSurfaceParticles");
 
   Task* t = scinew Task(
-    "MPM::findSurfaceParticles", this, &SerialMPM::findSurfaceParticles);
+    "MPM::findSurfaceParticles", this, &DEMMPM::findSurfaceParticles);
 
   t->needs(Task::OldDW,
               d_mpm_labels->pStressLabel,
@@ -2956,7 +2956,7 @@ SerialMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
 }
 
 void
-SerialMPM::findSurfaceParticles(const ProcessorGroup*,
+DEMMPM::findSurfaceParticles(const ProcessorGroup*,
                                 const PatchSubset* patches,
                                 const MaterialSubset*,
                                 DataWarehouse* old_dw,
@@ -3000,7 +3000,7 @@ SerialMPM::findSurfaceParticles(const ProcessorGroup*,
  * scheduleComputeLogisticRegression
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeLogisticRegression(SchedulerP& sched,
+DEMMPM::scheduleComputeLogisticRegression(SchedulerP& sched,
                                              const PatchSet* patches,
                                              const MaterialSet* matls)
 {
@@ -3010,7 +3010,7 @@ SerialMPM::scheduleComputeLogisticRegression(SchedulerP& sched,
 
     Task* t = scinew Task("MPM::computeLogisticRegression",
                           this,
-                          &SerialMPM::computeLogisticRegression);
+                          &DEMMPM::computeLogisticRegression);
 
     Ghost::GhostType gp = Ghost::AroundNodes;
     int ngc_p           = d_numGhostParticles;
@@ -3040,7 +3040,7 @@ SerialMPM::scheduleComputeLogisticRegression(SchedulerP& sched,
 }
 
 void
-SerialMPM::computeLogisticRegression(const ProcessorGroup*,
+DEMMPM::computeLogisticRegression(const ProcessorGroup*,
                                      const PatchSubset* patches,
                                      const MaterialSubset*,
                                      DataWarehouse* old_dw,
@@ -3489,7 +3489,7 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
  * scheduleExchangeMomentumInterpolated
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleMomentumExchangeInterpolated(SchedulerP& sched,
+DEMMPM::scheduleMomentumExchangeInterpolated(SchedulerP& sched,
                                                 const PatchSet* patches,
                                                 const MaterialSet* matls)
 {
@@ -3508,7 +3508,7 @@ SerialMPM::scheduleMomentumExchangeInterpolated(SchedulerP& sched,
  * scheduleComputeContactArea
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeContactArea(SchedulerP& sched,
+DEMMPM::scheduleComputeContactArea(SchedulerP& sched,
                                       const PatchSet* patches,
                                       const MaterialSet* matls)
 {
@@ -3522,7 +3522,7 @@ SerialMPM::scheduleComputeContactArea(SchedulerP& sched,
 
     printSchedule(patches, cout_doing, "MPM::scheduleComputeContactArea");
     Task* t = scinew Task(
-      "MPM::computeContactArea", this, &SerialMPM::computeContactArea);
+      "MPM::computeContactArea", this, &DEMMPM::computeContactArea);
 
     Ghost::GhostType gnone = Ghost::None;
     t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, gnone);
@@ -3538,7 +3538,7 @@ SerialMPM::scheduleComputeContactArea(SchedulerP& sched,
  * computeContactArea
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeContactArea(const ProcessorGroup*,
+DEMMPM::computeContactArea(const ProcessorGroup*,
                               const PatchSubset* patches,
                               const MaterialSubset*,
                               DataWarehouse* /*old_dw*/,
@@ -3622,7 +3622,7 @@ SerialMPM::computeContactArea(const ProcessorGroup*,
  * out(G.F_INTERNAL)
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeInternalForce(SchedulerP& sched,
+DEMMPM::scheduleComputeInternalForce(SchedulerP& sched,
                                         const PatchSet* patches,
                                         const MaterialSet* matls)
 {
@@ -3634,7 +3634,7 @@ SerialMPM::scheduleComputeInternalForce(SchedulerP& sched,
   printSchedule(patches, cout_doing, "MPM::scheduleComputeInternalForce");
 
   Task* t = scinew Task(
-    "MPM::computeInternalForce", this, &SerialMPM::computeInternalForce);
+    "MPM::computeInternalForce", this, &DEMMPM::computeInternalForce);
 
   Ghost::GhostType gan   = Ghost::AroundNodes;
   Ghost::GhostType gnone = Ghost::None;
@@ -3688,7 +3688,7 @@ SerialMPM::scheduleComputeInternalForce(SchedulerP& sched,
  * computeInternalForce
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeInternalForce(const ProcessorGroup*,
+DEMMPM::computeInternalForce(const ProcessorGroup*,
                                 const PatchSubset* patches,
                                 const MaterialSubset*,
                                 DataWarehouse* old_dw,
@@ -4042,7 +4042,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
  * scheduleComputeAndIntegrateacceleration
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
+DEMMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
                                                    const PatchSet* patches,
                                                    const MaterialSet* matls)
 {
@@ -4056,7 +4056,7 @@ SerialMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
 
   Task* t = scinew Task("MPM::computeAndIntegrateAcceleration",
                         this,
-                        &SerialMPM::computeAndIntegrateAcceleration);
+                        &DEMMPM::computeAndIntegrateAcceleration);
 
   t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
@@ -4076,7 +4076,7 @@ SerialMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
  * computeAndIntegrateacceleration
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
+DEMMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
                                            const PatchSubset* patches,
                                            const MaterialSubset*,
                                            DataWarehouse* old_dw,
@@ -4223,7 +4223,7 @@ SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
  * scheduleMomentumExchangeIntegrated
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleMomentumExchangeIntegrated(SchedulerP& sched,
+DEMMPM::scheduleMomentumExchangeIntegrated(SchedulerP& sched,
                                               const PatchSet* patches,
                                               const MaterialSet* matls)
 {
@@ -4247,7 +4247,7 @@ SerialMPM::scheduleMomentumExchangeIntegrated(SchedulerP& sched,
  * scheduleSetGridBoundaryConditions
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleSetGridBoundaryConditions(SchedulerP& sched,
+DEMMPM::scheduleSetGridBoundaryConditions(SchedulerP& sched,
                                              const PatchSet* patches,
                                              const MaterialSet* matls)
 
@@ -4259,7 +4259,7 @@ SerialMPM::scheduleSetGridBoundaryConditions(SchedulerP& sched,
   printSchedule(patches, cout_doing, "MPM::scheduleSetGridBoundaryConditions");
   Task* t = scinew Task("MPM::setGridBoundaryConditions",
                         this,
-                        &SerialMPM::setGridBoundaryConditions);
+                        &DEMMPM::setGridBoundaryConditions);
 
   const MaterialSubset* mss = matls->getUnion();
   t->needs(Task::OldDW, d_mpm_labels->delTLabel);
@@ -4280,7 +4280,7 @@ SerialMPM::scheduleSetGridBoundaryConditions(SchedulerP& sched,
  * setGridBoundaryConditions
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::setGridBoundaryConditions(const ProcessorGroup*,
+DEMMPM::setGridBoundaryConditions(const ProcessorGroup*,
                                      const PatchSubset* patches,
                                      const MaterialSubset*,
                                      DataWarehouse* old_dw,
@@ -4351,7 +4351,7 @@ SerialMPM::setGridBoundaryConditions(const ProcessorGroup*,
  * scheduleSetPrescribedMotion
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleSetPrescribedMotion(SchedulerP& sched,
+DEMMPM::scheduleSetPrescribedMotion(SchedulerP& sched,
                                        const PatchSet* patches,
                                        const MaterialSet* matls)
 
@@ -4365,7 +4365,7 @@ SerialMPM::scheduleSetPrescribedMotion(SchedulerP& sched,
     printSchedule(patches, cout_doing, "MPM::scheduleSetPrescribedMotion");
 
     Task* t = scinew Task(
-      "MPM::setPrescribedMotion", this, &SerialMPM::setPrescribedMotion);
+      "MPM::setPrescribedMotion", this, &DEMMPM::setPrescribedMotion);
 
     const MaterialSubset* mss = matls->getUnion();
     t->modifies(d_mpm_labels->gAccelerationLabel, mss);
@@ -4385,7 +4385,7 @@ SerialMPM::scheduleSetPrescribedMotion(SchedulerP& sched,
  * setPrescribedMotion
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::setPrescribedMotion(const ProcessorGroup*,
+DEMMPM::setPrescribedMotion(const ProcessorGroup*,
                                const PatchSubset* patches,
                                const MaterialSubset*,
                                DataWarehouse* old_dw,
@@ -4595,7 +4595,7 @@ SerialMPM::setPrescribedMotion(const ProcessorGroup*,
  * scheduleComputeXPICVelocities
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeXPICVelocities(SchedulerP& sched,
+DEMMPM::scheduleComputeXPICVelocities(SchedulerP& sched,
                                          const PatchSet* patches,
                                          const MaterialSet* matls)
 {
@@ -4609,7 +4609,7 @@ SerialMPM::scheduleComputeXPICVelocities(SchedulerP& sched,
   // Particle velocities
   Task* t_part = scinew Task("MPM::computeParticleVelocityXPIC",
                              this,
-                             &SerialMPM::computeParticleVelocityXPIC);
+                             &DEMMPM::computeParticleVelocityXPIC);
 
   t_part->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
   t_part->needs(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None);
@@ -4626,7 +4626,7 @@ SerialMPM::scheduleComputeXPICVelocities(SchedulerP& sched,
 
   // Grid velocities
   Task* t_grid = scinew Task(
-    "MPM::computeGridVelocityXPIC", this, &SerialMPM::computeGridVelocityXPIC);
+    "MPM::computeGridVelocityXPIC", this, &DEMMPM::computeGridVelocityXPIC);
 
   t_grid->needs(Task::OldDW,
                    d_mpm_labels->pXLabel,
@@ -4661,7 +4661,7 @@ SerialMPM::scheduleComputeXPICVelocities(SchedulerP& sched,
  * computeParticleVelocityXPIC
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeParticleVelocityXPIC(const ProcessorGroup*,
+DEMMPM::computeParticleVelocityXPIC(const ProcessorGroup*,
                                        const PatchSubset* patches,
                                        const MaterialSubset*,
                                        DataWarehouse* old_dw,
@@ -4721,7 +4721,7 @@ SerialMPM::computeParticleVelocityXPIC(const ProcessorGroup*,
  * computeGridVelocityXPIC
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeGridVelocityXPIC(const ProcessorGroup*,
+DEMMPM::computeGridVelocityXPIC(const ProcessorGroup*,
                                    const PatchSubset* patches,
                                    const MaterialSubset*,
                                    DataWarehouse* old_dw,
@@ -4796,7 +4796,7 @@ SerialMPM::computeGridVelocityXPIC(const ProcessorGroup*,
 //  timestep Use Label->schedReductionTask( true ); to the tell scheduler to
 //  perform the reduction. The actual task is inside MPIScheduler.
 void
-SerialMPM::scheduleReduceVars(SchedulerP& sched,
+DEMMPM::scheduleReduceVars(SchedulerP& sched,
                               const PatchSet* patches,
                               const MaterialSet* matls)
 {
@@ -4842,7 +4842,7 @@ SerialMPM::scheduleReduceVars(SchedulerP& sched,
  * scheduleInterpolateToParticlesAndUpdate
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
+DEMMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
                                                    const PatchSet* patches,
                                                    const MaterialSet* matls)
 
@@ -4857,7 +4857,7 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 
   Task* t = scinew Task("MPM::interpolateToParticlesAndUpdate",
                         this,
-                        &SerialMPM::interpolateToParticlesAndUpdate);
+                        &DEMMPM::interpolateToParticlesAndUpdate);
 
   t->needs(Task::OldDW, d_mpm_labels->simulationTimeLabel);
   t->needs(Task::OldDW, d_mpm_labels->delTLabel);
@@ -4976,7 +4976,7 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
  * interpolateToParticlesAndUpdate
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
+DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                                            const PatchSubset* patches,
                                            const MaterialSubset*,
                                            DataWarehouse* old_dw,
@@ -5620,7 +5620,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
  * scheduleComputeDeformationGradient
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
+DEMMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
                                               const PatchSet* patches,
                                               const MaterialSet* matls)
 {
@@ -5635,7 +5635,7 @@ SerialMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
   int numMatls = d_materialManager->getNumMaterials("MPM");
   Task* t      = scinew Task("MPM::computeDeformationGradient",
                         this,
-                        &SerialMPM::computeDeformationGradient);
+                        &DEMMPM::computeDeformationGradient);
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
@@ -5654,7 +5654,7 @@ SerialMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
  * computeDeformationGradient
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeDeformationGradient(const ProcessorGroup*,
+DEMMPM::computeDeformationGradient(const ProcessorGroup*,
                                       const PatchSubset* patches,
                                       const MaterialSubset*,
                                       DataWarehouse* old_dw,
@@ -5706,7 +5706,7 @@ SerialMPM::computeDeformationGradient(const ProcessorGroup*,
  *               is computed here */
 /////////////////////////////////////////////////////////////////////////
 void
-SerialMPM::scheduleComputeStressTensor(SchedulerP& sched,
+DEMMPM::scheduleComputeStressTensor(SchedulerP& sched,
                                        const PatchSet* patches,
                                        const MaterialSet* matls)
 {
@@ -5723,7 +5723,7 @@ SerialMPM::scheduleComputeStressTensor(SchedulerP& sched,
 
   int numMatls = d_materialManager->getNumMaterials("MPM");
   Task* t      = scinew Task(
-    "MPM::computeStressTensor", this, &SerialMPM::computeStressTensor);
+    "MPM::computeStressTensor", this, &DEMMPM::computeStressTensor);
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
@@ -5751,7 +5751,7 @@ SerialMPM::scheduleComputeStressTensor(SchedulerP& sched,
  * scheduleUnrotateStressAndDeformationRate
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
+DEMMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
                                                     const PatchSet* patches,
                                                     const MaterialSet* matls)
 {
@@ -5766,7 +5766,7 @@ SerialMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
   int numMatls = d_materialManager->getNumMaterials("MPM");
   Task* t      = scinew Task("MPM::computeUnrotatedStressAndDeformationRate",
                         this,
-                        &SerialMPM::computeUnrotatedStressAndDeformationRate);
+                        &DEMMPM::computeUnrotatedStressAndDeformationRate);
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
@@ -5801,7 +5801,7 @@ SerialMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
  * computeUnrotatedStressAndDeformationRate
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeUnrotatedStressAndDeformationRate(const ProcessorGroup*,
+DEMMPM::computeUnrotatedStressAndDeformationRate(const ProcessorGroup*,
                                                     const PatchSubset* patches,
                                                     const MaterialSubset*,
                                                     DataWarehouse* old_dw,
@@ -5855,7 +5855,7 @@ SerialMPM::computeUnrotatedStressAndDeformationRate(const ProcessorGroup*,
  * computeStressTensor
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeStressTensor(const ProcessorGroup*,
+DEMMPM::computeStressTensor(const ProcessorGroup*,
                                const PatchSubset* patches,
                                const MaterialSubset*,
                                DataWarehouse* old_dw,
@@ -5907,7 +5907,7 @@ SerialMPM::computeStressTensor(const ProcessorGroup*,
  * scheduleRotateStress
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleRotateStress(SchedulerP& sched,
+DEMMPM::scheduleRotateStress(SchedulerP& sched,
                                 const PatchSet* patches,
                                 const MaterialSet* matls)
 {
@@ -5920,7 +5920,7 @@ SerialMPM::scheduleRotateStress(SchedulerP& sched,
 
   int numMatls = d_materialManager->getNumMaterials("MPM");
   Task* t      = scinew Task(
-    "MPM::computeRotatedStress", this, &SerialMPM::computeRotatedStress);
+    "MPM::computeRotatedStress", this, &DEMMPM::computeRotatedStress);
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
@@ -5948,7 +5948,7 @@ SerialMPM::scheduleRotateStress(SchedulerP& sched,
  * computeRotatedStress
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeRotatedStress(const ProcessorGroup*,
+DEMMPM::computeRotatedStress(const ProcessorGroup*,
                                 const PatchSubset* patches,
                                 const MaterialSubset*,
                                 DataWarehouse* old_dw,
@@ -5990,7 +5990,7 @@ SerialMPM::computeRotatedStress(const ProcessorGroup*,
  * scheduleComputeBasicDamage
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeBasicDamage(SchedulerP& sched,
+DEMMPM::scheduleComputeBasicDamage(SchedulerP& sched,
                                       const PatchSet* patches,
                                       const MaterialSet* matls)
 {
@@ -6004,7 +6004,7 @@ SerialMPM::scheduleComputeBasicDamage(SchedulerP& sched,
 
   size_t numMatls = d_materialManager->getNumMaterials("MPM");
   Task* t         = scinew Task(
-    "MPM::computeBasicDamage", this, &SerialMPM::computeBasicDamage);
+    "MPM::computeBasicDamage", this, &DEMMPM::computeBasicDamage);
   for (size_t m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
@@ -6025,7 +6025,7 @@ SerialMPM::scheduleComputeBasicDamage(SchedulerP& sched,
  * computeBasicDamage
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeBasicDamage(const ProcessorGroup*,
+DEMMPM::computeBasicDamage(const ProcessorGroup*,
                               const PatchSubset* patches,
                               const MaterialSubset*,
                               DataWarehouse* old_dw,
@@ -6067,7 +6067,7 @@ SerialMPM::computeBasicDamage(const ProcessorGroup*,
  * scheduleUpdateErosionParameter
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
+DEMMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
                                           const PatchSet* patches,
                                           const MaterialSet* matls)
 {
@@ -6079,7 +6079,7 @@ SerialMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
   printSchedule(patches, cout_doing, "MPM::scheduleUpdateErosionParameter");
 
   Task* t = scinew Task(
-    "MPM::updateErosionParameter", this, &SerialMPM::updateErosionParameter);
+    "MPM::updateErosionParameter", this, &DEMMPM::updateErosionParameter);
   int numMatls = d_materialManager->getNumMaterials("MPM");
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
@@ -6112,7 +6112,7 @@ SerialMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
  * updateErosionParameter
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::updateErosionParameter(const ProcessorGroup*,
+DEMMPM::updateErosionParameter(const ProcessorGroup*,
                                   const PatchSubset* patches,
                                   const MaterialSubset*,
                                   DataWarehouse* old_dw,
@@ -6219,7 +6219,7 @@ SerialMPM::updateErosionParameter(const ProcessorGroup*,
  * scheduleFindRogueParticles
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleFindRogueParticles(SchedulerP& sched,
+DEMMPM::scheduleFindRogueParticles(SchedulerP& sched,
                                       const PatchSet* patches,
                                       const MaterialSet* matls)
 {
@@ -6232,7 +6232,7 @@ SerialMPM::scheduleFindRogueParticles(SchedulerP& sched,
     printSchedule(patches, cout_doing, "MPM::scheduleFindRogueParticles");
 
     Task* t = scinew Task(
-      "MPM::findRogueParticles", this, &SerialMPM::findRogueParticles);
+      "MPM::findRogueParticles", this, &DEMMPM::findRogueParticles);
     Ghost::GhostType gac = Ghost::AroundCells;
     t->needs(Task::NewDW, d_mpm_labels->numLocInCellLabel, gac, 1);
     t->needs(Task::NewDW, d_mpm_labels->numInCellLabel, gac, 1);
@@ -6248,7 +6248,7 @@ SerialMPM::scheduleFindRogueParticles(SchedulerP& sched,
  * findRogueParticles
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::findRogueParticles(const ProcessorGroup*,
+DEMMPM::findRogueParticles(const ProcessorGroup*,
                               const PatchSubset* patches,
                               const MaterialSubset*,
                               DataWarehouse* old_dw,
@@ -6329,7 +6329,7 @@ SerialMPM::findRogueParticles(const ProcessorGroup*,
  *   Compute the accumulated strain energy
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeAccStrainEnergy(SchedulerP& sched,
+DEMMPM::scheduleComputeAccStrainEnergy(SchedulerP& sched,
                                           const PatchSet* patches,
                                           const MaterialSet* matls)
 {
@@ -6340,7 +6340,7 @@ SerialMPM::scheduleComputeAccStrainEnergy(SchedulerP& sched,
   printSchedule(patches, cout_doing, "MPM::scheduleComputeAccStrainEnergy");
 
   Task* t = scinew Task(
-    "MPM::computeAccStrainEnergy", this, &SerialMPM::computeAccStrainEnergy);
+    "MPM::computeAccStrainEnergy", this, &DEMMPM::computeAccStrainEnergy);
   t->needs(Task::OldDW, d_mpm_labels->AccStrainEnergyLabel);
   t->needs(Task::NewDW, d_mpm_labels->StrainEnergyLabel);
   t->computes(d_mpm_labels->AccStrainEnergyLabel);
@@ -6351,7 +6351,7 @@ SerialMPM::scheduleComputeAccStrainEnergy(SchedulerP& sched,
  * computeAccStrainEnergy
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeAccStrainEnergy(const ProcessorGroup*,
+DEMMPM::computeAccStrainEnergy(const ProcessorGroup*,
                                   const PatchSubset*,
                                   const MaterialSubset*,
                                   DataWarehouse* old_dw,
@@ -6375,7 +6375,7 @@ SerialMPM::computeAccStrainEnergy(const ProcessorGroup*,
  * scheduleFinalParticleUpdate
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleFinalParticleUpdate(SchedulerP& sched,
+DEMMPM::scheduleFinalParticleUpdate(SchedulerP& sched,
                                        const PatchSet* patches,
                                        const MaterialSet* matls)
 
@@ -6388,7 +6388,7 @@ SerialMPM::scheduleFinalParticleUpdate(SchedulerP& sched,
   printSchedule(patches, cout_doing, "MPM::scheduleFinalParticleUpdate");
 
   Task* t = scinew Task(
-    "MPM::finalParticleUpdate", this, &SerialMPM::finalParticleUpdate);
+    "MPM::finalParticleUpdate", this, &DEMMPM::finalParticleUpdate);
 
   t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
@@ -6406,7 +6406,7 @@ SerialMPM::scheduleFinalParticleUpdate(SchedulerP& sched,
  * finalParticleUpdate
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::finalParticleUpdate(const ProcessorGroup*,
+DEMMPM::finalParticleUpdate(const ProcessorGroup*,
                                const PatchSubset* patches,
                                const MaterialSubset*,
                                DataWarehouse* old_dw,
@@ -6462,7 +6462,7 @@ SerialMPM::finalParticleUpdate(const ProcessorGroup*,
  * printParticleLabels
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::printParticleLabels(std::vector<const VarLabel*> labels,
+DEMMPM::printParticleLabels(std::vector<const VarLabel*> labels,
                                DataWarehouse* dw,
                                int matID,
                                const Patch* patch)
@@ -6482,7 +6482,7 @@ SerialMPM::printParticleLabels(std::vector<const VarLabel*> labels,
  * scheduleInsertParticles
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleInsertParticles(SchedulerP& sched,
+DEMMPM::scheduleInsertParticles(SchedulerP& sched,
                                    const PatchSet* patches,
                                    const MaterialSet* matls)
 
@@ -6496,7 +6496,7 @@ SerialMPM::scheduleInsertParticles(SchedulerP& sched,
     printSchedule(patches, cout_doing, "MPM::scheduleInsertParticles");
 
     Task* t =
-      scinew Task("MPM::insertParticles", this, &SerialMPM::insertParticles);
+      scinew Task("MPM::insertParticles", this, &DEMMPM::insertParticles);
 
     t->needs(Task::OldDW, d_mpm_labels->simulationTimeLabel);
     t->needs(Task::OldDW, d_mpm_labels->delTLabel);
@@ -6513,7 +6513,7 @@ SerialMPM::scheduleInsertParticles(SchedulerP& sched,
  * insertParticles
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::insertParticles(const ProcessorGroup*,
+DEMMPM::insertParticles(const ProcessorGroup*,
                            const PatchSubset* patches,
                            const MaterialSubset*,
                            DataWarehouse* old_dw,
@@ -6586,7 +6586,7 @@ SerialMPM::insertParticles(const ProcessorGroup*,
  * scheduleAddParticles
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleAddParticles(SchedulerP& sched,
+DEMMPM::scheduleAddParticles(SchedulerP& sched,
                                 const PatchSet* patches,
                                 const MaterialSet* matls)
 
@@ -6598,7 +6598,7 @@ SerialMPM::scheduleAddParticles(SchedulerP& sched,
 
   printSchedule(patches, cout_doing, "MPM::scheduleAddParticles");
 
-  Task* t = scinew Task("MPM::addParticles", this, &SerialMPM::addParticles);
+  Task* t = scinew Task("MPM::addParticles", this, &DEMMPM::addParticles);
 
   auto* zeroth_matl = scinew MaterialSubset();
   zeroth_matl->add(0);
@@ -6632,7 +6632,7 @@ SerialMPM::scheduleAddParticles(SchedulerP& sched,
  * addParticles
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::addParticles(const ProcessorGroup*,
+DEMMPM::addParticles(const ProcessorGroup*,
                         const PatchSubset* patches,
                         const MaterialSubset*,
                         DataWarehouse* old_dw,
@@ -6855,7 +6855,7 @@ SerialMPM::addParticles(const ProcessorGroup*,
  * scheduleComputeParticleScaleFactor
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleComputeParticleScaleFactor(SchedulerP& sched,
+DEMMPM::scheduleComputeParticleScaleFactor(SchedulerP& sched,
                                               const PatchSet* patches,
                                               const MaterialSet* matls)
 
@@ -6869,7 +6869,7 @@ SerialMPM::scheduleComputeParticleScaleFactor(SchedulerP& sched,
 
   Task* t = scinew Task("MPM::computeParticleScaleFactor",
                         this,
-                        &SerialMPM::computeParticleScaleFactor);
+                        &DEMMPM::computeParticleScaleFactor);
 
   t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, Ghost::None);
   t->needs(Task::NewDW, d_mpm_labels->pDefGradLabel_preReloc, Ghost::None);
@@ -6884,7 +6884,7 @@ SerialMPM::scheduleComputeParticleScaleFactor(SchedulerP& sched,
  *   in scaling particles for the deformed particle vis feature
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::computeParticleScaleFactor(const ProcessorGroup*,
+DEMMPM::computeParticleScaleFactor(const ProcessorGroup*,
                                       const PatchSubset* patches,
                                       const MaterialSubset*,
                                       DataWarehouse* old_dw,
@@ -6933,7 +6933,7 @@ SerialMPM::computeParticleScaleFactor(const ProcessorGroup*,
 }
 
 void
-SerialMPM::scheduleParticleRelocation(SchedulerP& sched,
+DEMMPM::scheduleParticleRelocation(SchedulerP& sched,
                                       const LevelP& level,
                                       [[maybe_unused]] const PatchSet* patches,
                                       const MaterialSet* matls)
@@ -6977,10 +6977,10 @@ SerialMPM::scheduleParticleRelocation(SchedulerP& sched,
  * scheduleRefine
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
+DEMMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
 {
   printSchedule(patches, cout_doing, "MPM::scheduleRefine");
-  Task* t = scinew Task("SerialMPM::refine", this, &SerialMPM::refine);
+  Task* t = scinew Task("DEMMPM::refine", this, &DEMMPM::refine);
 
   t->computes(d_mpm_labels->pXLabel);
   t->computes(d_mpm_labels->p_qLabel);
@@ -7053,7 +7053,7 @@ SerialMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
  * refine
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::refine(const ProcessorGroup*,
+DEMMPM::refine(const ProcessorGroup*,
                   const PatchSubset* patches,
                   const MaterialSubset* /*matls*/,
                   DataWarehouse*,
@@ -7190,7 +7190,7 @@ SerialMPM::refine(const ProcessorGroup*,
  * scheduleRefineInterface
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleRefineInterface(const LevelP& /*fineLevel*/,
+DEMMPM::scheduleRefineInterface(const LevelP& /*fineLevel*/,
                                    SchedulerP& /*scheduler*/,
                                    bool,
                                    bool)
@@ -7202,7 +7202,7 @@ SerialMPM::scheduleRefineInterface(const LevelP& /*fineLevel*/,
  * scheduleCoarsen
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleCoarsen(const LevelP& /*coarseLevel*/, SchedulerP& /*sched*/)
+DEMMPM::scheduleCoarsen(const LevelP& /*coarseLevel*/, SchedulerP& /*sched*/)
 {
   // do nothing for now
 }
@@ -7212,19 +7212,19 @@ SerialMPM::scheduleCoarsen(const LevelP& /*coarseLevel*/, SchedulerP& /*sched*/)
  *   Schedule to mark d_mpm_flags for AMR regridding
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
+DEMMPM::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
 {
   // main way is to count particles, but for now we only want particles on
   // the finest level.  Thus to schedule cells for regridding during the
   // execution, we'll coarsen the flagged cells (see coarsen).
 
   if (amr_doing.active()) {
-    amr_doing << "SerialMPM::scheduleErrorEstimate on level "
+    amr_doing << "DEMMPM::scheduleErrorEstimate on level "
               << coarseLevel->getIndex() << '\n';
   }
 
   // The simulation controller should not schedule it every time step
-  Task* task = scinew Task("errorEstimate", this, &SerialMPM::errorEstimate);
+  Task* task = scinew Task("errorEstimate", this, &DEMMPM::errorEstimate);
 
   // if the finest level, compute flagged cells
   if (coarseLevel->getIndex() == coarseLevel->getGrid()->numLevels() - 1) {
@@ -7251,7 +7251,7 @@ SerialMPM::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
  * errorEstimate
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::errorEstimate(const ProcessorGroup* group,
+DEMMPM::errorEstimate(const ProcessorGroup* group,
                          const PatchSubset* coarsePatches,
                          const MaterialSubset* matls,
                          DataWarehouse* old_dw,
@@ -7323,7 +7323,7 @@ SerialMPM::errorEstimate(const ProcessorGroup* group,
  *   Schedule to mark initial d_mpm_flags for AMR regridding
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleInitialErrorEstimate(const LevelP& coarseLevel,
+DEMMPM::scheduleInitialErrorEstimate(const LevelP& coarseLevel,
                                         SchedulerP& sched)
 {
   scheduleErrorEstimate(coarseLevel, sched);
@@ -7333,7 +7333,7 @@ SerialMPM::scheduleInitialErrorEstimate(const LevelP& coarseLevel,
  * initialErrorEstimate
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::initialErrorEstimate(const ProcessorGroup*,
+DEMMPM::initialErrorEstimate(const ProcessorGroup*,
                                 const PatchSubset* patches,
                                 const MaterialSubset* /*matls*/,
                                 DataWarehouse*,
@@ -7372,7 +7372,7 @@ SerialMPM::initialErrorEstimate(const ProcessorGroup*,
  * scheduleSwitchTest
  *-----------------------------------------------------------------------*/
 void
-SerialMPM::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
+DEMMPM::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 {
   if (d_switchCriteria) {
     d_switchCriteria->scheduleSwitchTest(level, sched);
@@ -7384,7 +7384,7 @@ SerialMPM::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
  *-----------------------------------------------------------------------*/
 template<typename T>
 void
-SerialMPM::setParticleDefault(ParticleVariable<T>& pvar,
+DEMMPM::setParticleDefault(ParticleVariable<T>& pvar,
                               const VarLabel* label,
                               ParticleSubset* pset,
                               DataWarehouse* new_dw,
@@ -7398,7 +7398,7 @@ SerialMPM::setParticleDefault(ParticleVariable<T>& pvar,
 
 namespace Uintah {
 template void
-SerialMPM::setParticleDefault<>(ParticleVariable<double>& pvar,
+DEMMPM::setParticleDefault<>(ParticleVariable<double>& pvar,
                                 const VarLabel* label,
                                 ParticleSubset* pset,
                                 DataWarehouse* new_dw,

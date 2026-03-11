@@ -46,7 +46,6 @@ SET(Vaango_MPM_DiffusionTasks_SRCS
 SET(Vaango_CCA_Components_MPM_SRCS
   ${Vaango_MPM_Solvers_SRCS}
   ${Vaango_MPM_DiffusionTasks_SRCS}
-  DEM/DEMTasks.cc
   SerialMPM.cc    
   MPM_UpdateStressLast.cc    
   RigidMPM.cc     
@@ -55,6 +54,8 @@ SET(Vaango_CCA_Components_MPM_SRCS
   ShellMPM.cc     
   AMRMPM.cc       
   UofU_MPM.cc    
+  DEM_MPM.cc
+  DEM/DEMTasks.cc
 )
 
 add_subdirectory(Core)

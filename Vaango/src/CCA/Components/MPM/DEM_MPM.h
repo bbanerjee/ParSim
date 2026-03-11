@@ -24,8 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef VAANGO_CCA_COMPONENTS_MPM_SERIALMPM_H
-#define VAANGO_CCA_COMPONENTS_MPM_SERIALMPM_H
+#ifndef VAANGO_CCA_COMPONENTS_MPM_DEM_MPM_H
+#define VAANGO_CCA_COMPONENTS_MPM_DEM_MPM_H
 
 #include <CCA/Components/MPM/Core/MPMCommon.h>
 #include <CCA/Components/SimulationCommon/SimulationCommon.h>
@@ -71,7 +71,7 @@ class CohesiveZoneTasks;
 class ScalarDiffusionTasks;
 class HeatConductionTasks;
 
-class SerialMPM
+class DEMMPM
   : public SimulationCommon
   , public MPMCommon
 {
@@ -79,17 +79,17 @@ public:
   std::unique_ptr<Contact> contactModel{ nullptr };
 
 public:
-  SerialMPM(const ProcessorGroup* myworld, const MaterialManagerP& matManager);
+  DEMMPM(const ProcessorGroup* myworld, const MaterialManagerP& matManager);
 
-  virtual ~SerialMPM() noexcept(false) override;
+  virtual ~DEMMPM() noexcept(false) override;
 
   // No copy or move allowed
-  SerialMPM(const SerialMPM&) = delete;
-  SerialMPM(SerialMPM&&)      = delete;
+  DEMMPM(const DEMMPM&) = delete;
+  DEMMPM(DEMMPM&&)      = delete;
   auto
-  operator=(const SerialMPM&) -> SerialMPM& = delete;
+  operator=(const DEMMPM&) -> DEMMPM& = delete;
   auto
-  operator=(SerialMPM&&) -> SerialMPM& = delete;
+  operator=(DEMMPM&&) -> DEMMPM& = delete;
 
   virtual void
   recomputeDelT() {}
