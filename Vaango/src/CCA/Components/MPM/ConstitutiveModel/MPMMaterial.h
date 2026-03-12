@@ -213,9 +213,9 @@ public:
   }
 
   [[nodiscard]] auto
-  isDiscrete() const -> bool
+  isDEMMaterial() const -> bool
   {
-    return d_is_discrete;
+    return d_is_dem_material;
   }
 
   [[nodiscard]] auto
@@ -357,7 +357,7 @@ private:
   double d_activation_time{ 0.0 };
 
   // For discrete element modeling
-  bool d_is_discrete{ false };
+  bool d_is_dem_material{ false };
   bool d_is_sdf_based{ false };
   double d_radius{ 0.0 };
   double d_kn{ 1.0e7 };

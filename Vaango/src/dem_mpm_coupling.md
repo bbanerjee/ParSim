@@ -12,7 +12,7 @@ In this mode, DEM particles are treated as special MPM particles that bypass con
 ### Data Structures
 - **Rotational State**: New `ParticleVariable`s for `p.angularVelocity`, `p.torque`, and `p.orientation`.
 - **Geometric Properties**: `p.radius` for spherical contact.
-- **Material Identity**: `MPMMaterial` extension to include an `is_discrete` flag.
+- **Material Identity**: `MPMMaterial` extension to include an `is_dem_material` flag.
 
 ### Task Graph Workflow
 1. **Neighbor Finding**: Utilize the MPM background grid for $O(N)$ binning. Particles in neighboring cells (within $2 \times R_{max}$) are identified as potential contact pairs.
@@ -77,7 +77,7 @@ For non-discretized, irregular rock blocks, we use Signed Distance Fields (SDF) 
 2. **Hybrid Task Integration in `SerialMPM`**:
     - **`scheduleComputeDEMForces`**: This task is inserted early in the time-step. It uses ghost-cell data to detect contacts between particles.
     - **Dual Contact Logic**:
-        - **Spherical DEM**: Uses a Linear Spring-Dashpot model for pair-wise contact between particles marked as `is_discrete`.
+        - **Spherical DEM**: Uses a Linear Spring-Dashpot model for pair-wise contact between particles marked as `is_dem_material`.
         - **SDF Rigid Bodies**: Particles representing `DynamicSDFGeometry` pieces act as rigid blocks. The code queries the SDF to detect overlap with continuum MPM particles or other blocks, applying penalty forces and torques.
     - **`scheduleIntegrateDEMRotation`**: A new integration task that updates angular velocity and orientation based on computed torques and the body's inertia tensor.
 
@@ -88,7 +88,7 @@ For non-discretized, irregular rock blocks, we use Signed Distance Fields (SDF) 
 
 4. **User Control**:
     - The features are activated via the `<enable_dem>true</enable_dem>` flag in the `MPM` section of the input file.
-    - Individual materials can be designated as discrete and/or SDF-based using `<is_discrete>true</is_discrete>` and `<is_sdf_based>true</is_sdf_based>`.
+    - Individual materials can be designated as discrete and/or SDF-based using `<is_dem_material>true</is_dem_material>` and `<is_sdf_based>true</is_sdf_based>`.
 
 ### Summary of Added/Modified Files:
 - **New**: `Core/GeometryPiece/LocalSDF.h/.cc`, `Core/GeometryPiece/DynamicSDFGeometry.h/.cc`, `dem_mpm_coupling.md`
@@ -119,7 +119,7 @@ The following tags have been added to the input specification files in `StandAlo
 - `<enable_dem>`: (Boolean) Enables the Discrete Element Method infrastructure.
 
 ### Material Flags (`mpm_spec.xml`)
-- `<is_discrete>`: (Boolean) Designates a material as a discrete phase.
+- `<is_dem_material>`: (Boolean) Designates a material as a discrete phase.
 - `<is_sdf_based>`: (Boolean) Specifies that the material uses SDF-based rigid body contact.
 - `<radius>`: (Double) The characteristic radius of the discrete particles.
 - `<kn>`, `<kt>`: (Double) Normal and tangential contact stiffness.
@@ -191,7 +191,7 @@ A comprehensive unit test for the hybrid DEM-MPM implementation has been added t
 - **Location**: `CCA/Components/MPM/UnitTests/testHybridDEM.cc`
 - **Test Case: `CollisionTest`**:
     - Programmatically generates a `.ups` file using `libxml2`.
-    - Configures a simulation with a discrete material (`is_discrete = true`).
+    - Configures a simulation with a discrete material (`is_dem_material = true`).
     - Places two spherical particles such that they overlap initially.
     - Initializes the full Vaango simulation environment (`SimulationController`, `Scheduler`, etc.).
     - Runs the simulation for 2 timesteps.
@@ -322,7 +322,7 @@ Recent refinements ensure that the Slave Particles approach is robust against Va
 
 ### 1. Particle Deletion Protection
 Vaango typically deletes particles whose mass falls below a threshold (`d_minPartMass`) or whose temperature becomes unphysical. Since Slave particles are designed to have zero mass, they would normally be deleted.
-- **Fix**: Modified `SerialMPM.cc` to exempt materials flagged with `isDiscrete()` from mass-based deletion.
+- **Fix**: Modified `SerialMPM.cc` to exempt materials flagged with `isDEMMaterial()` from mass-based deletion.
 - **Benefit**: Ensures that Slave particles persist as geometric proxies throughout the simulation, regardless of their mass.
 
 ### 2. Isolated Grid Contributions
@@ -394,7 +394,7 @@ To maintain physical accuracy, the `computeDEMForces` task was modified to expli
 
 ## 18. Distinct Treatment of Rigid Materials (February 2026)
 
-To align with the physical requirements of rigid-body MPM, the implementation was updated to distinguish between `is_discrete` and `is_rigid` materials.
+To align with the physical requirements of rigid-body MPM, the implementation was updated to distinguish between `is_dem_material` and `is_rigid` materials.
 
 ### 1. Rigid Material Discretization
 - **Logic**: Materials flagged as `is_rigid` are discretized using the standard grid-based approach (multiple particles per cell).
@@ -405,7 +405,7 @@ To align with the physical requirements of rigid-body MPM, the implementation wa
 - **Rigid Enforcement**: Particle velocities are updated from the grid normally and then "rigidified" by projecting them onto the translation/rotation of the body's centroid.
 
 ### 3. Discrete vs. Rigid Summary
-| Feature | Discrete Material (`is_discrete`) | Rigid Material (`is_rigid`) |
+| Feature | Discrete Material (`is_dem_material`) | Rigid Material (`is_rigid`) |
 | :--- | :--- | :--- |
 | **Discretization** | 1 Master + N Surface Slaves | Full MPM Grid Discretization |
 | **Contact Model** | Pairwise DEM (Spring-Dashpot) | Standard MPM (Grid-Based) |
@@ -430,7 +430,7 @@ To correctly handle contact between rigid MPM tools and standard MPM materials, 
 - **Kinematic Constraints**: The "rigidification" pass in `interpolateToParticlesAndUpdate` ensures that all particles in a rigid body follow the master centroid's translation and rotation, even when interacting via grid-based contact rules.
 
 ### 3. Separation of Concerns
-- **DEM (`is_discrete`)**: Continues to use pairwise contact laws.
+- **DEM (`is_dem_material`)**: Continues to use pairwise contact laws.
 - **Rigid MPM (`is_rigid`)**: Uses standard MPM grid contact but enforces rigid kinematics and aggregates resultant forces.
 
 ---

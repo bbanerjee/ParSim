@@ -601,7 +601,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
     pvars.pRadius[i] = matl->getParticleRadius();
 
     // For discrete material, check if Master or Slave
-    if (d_matl->isDiscrete()) {
+    if (d_matl->isDEMMaterial()) {
       Point center = piece->getCenter();
       double distSq = (p - center).length2();
       if (distSq > 1.0e-9) {
@@ -665,7 +665,7 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
   }
 
   // Dispatch based on material type
-  if (d_matl->isDiscrete()) {
+  if (d_matl->isDEMMaterial()) {
     return handleDiscreteMaterial(patch, obj, obj_vars);
   }
   

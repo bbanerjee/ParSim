@@ -181,7 +181,7 @@ private:
                     int m_j,
                     const DEMParticleSets& particle_sets,
                     const DEMParticleInputData& input_data,
-                    bool j_is_discrete) const;
+                    bool j_is_dem_material) const;
 
   // Per-case contact force routines
   // Case A: rigid SDF body (i) vs. MPM particle (j)

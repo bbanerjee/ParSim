@@ -105,7 +105,7 @@ public:
     xmlNewChild(mat, nullptr, BAD_CAST "density", BAD_CAST "1000");
     xmlNewChild(mat, nullptr, BAD_CAST "thermal_conductivity", BAD_CAST "1.0");
     xmlNewChild(mat, nullptr, BAD_CAST "specific_heat", BAD_CAST "1.0");
-    xmlNewChild(mat, nullptr, BAD_CAST "is_discrete", BAD_CAST "true");
+    xmlNewChild(mat, nullptr, BAD_CAST "is_dem_material", BAD_CAST "true");
     xmlNewChild(mat, nullptr, BAD_CAST "radius", BAD_CAST "0.5");
     xmlNewChild(mat, nullptr, BAD_CAST "kn", BAD_CAST "1.0e6");
 

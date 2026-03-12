@@ -169,8 +169,8 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
   ps->get("activation_time", d_activation_time);
 
   // For discrete element modeling
-  d_is_discrete = false;
-  ps->get("is_discrete", d_is_discrete);
+  d_is_dem_material = false;
+  ps->get("is_dem_material", d_is_dem_material);
   d_is_sdf_based = false;
   ps->get("is_sdf_based", d_is_sdf_based);
   d_radius = 0.0;
@@ -293,7 +293,7 @@ MPMMaterial::outputProblemSpec(ProblemSpecP& ps) -> ProblemSpecP
                         d_is_force_transmitting_material);
   mpm_ps->appendElement("is_active", d_is_active);
   mpm_ps->appendElement("activation_time", d_activation_time);
-  mpm_ps->appendElement("is_discrete", d_is_discrete);
+  mpm_ps->appendElement("is_dem_material", d_is_dem_material);
   mpm_ps->appendElement("is_sdf_based", d_is_sdf_based);
   mpm_ps->appendElement("radius", d_radius);
   mpm_ps->appendElement("kn", d_kn);
@@ -349,7 +349,7 @@ MPMMaterial::copyWithoutGeom(ProblemSpecP& ps,
   d_is_force_transmitting_material = mat->d_is_force_transmitting_material;
   d_is_active                      = mat->d_is_active;
   d_activation_time                = mat->d_activation_time;
-  d_is_discrete                    = mat->d_is_discrete;
+  d_is_dem_material                    = mat->d_is_dem_material;
   d_is_sdf_based                   = mat->d_is_sdf_based;
   d_radius                         = mat->d_radius;
   d_kn                             = mat->d_kn;

@@ -101,7 +101,7 @@ DEMSpecifiedVelocityContact::setContactMaterialAttributes()
         << " not found.";
     throw ProblemSetupException(err.str(), __FILE__, __LINE__);
   }
-  if (!mat->isDiscrete()) {
+  if (!mat->isDEMMaterial()) {
     std::ostringstream err;
     err << "**ERROR** DEMSpecifiedVelocityContact: Material " << d_material
         << " is not a DEM (discrete) material.";

@@ -1552,7 +1552,7 @@ DEMMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (mpm_matl->isDiscrete()) {
+      if (mpm_matl->isDEMMaterial()) {
         d_demTasks->computeStableTimestep(nullptr, mpm_matl, old_dw, new_dw, dt_dem);
       } else if (mpm_matl->isRigid()) {
         dt_dem = 1.0e30;
@@ -1570,7 +1570,7 @@ DEMMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      if (mpm_matl->isDiscrete()) {
+      if (mpm_matl->isDEMMaterial()) {
         d_demTasks->computeStableTimestep(patch, mpm_matl, old_dw, new_dw, dt_dem);
       } else if (mpm_matl->isRigid()) {
         dt_dem = 1.0e30;
@@ -2394,28 +2394,28 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     std::vector<double> S(numInfluenceNodes);
     std::string interp_type = d_mpm_flags->d_interpolatorType;
 
-    NCVariable<double> gMassglobal, gTempglobal, gVolumeglobal;
-    NCVariable<Vector> gVelglobal;
-    new_dw->allocateAndPut(gMassglobal,
+    NCVariable<double> gMassGlobal, gTempGlobal, gVolGlobal;
+    NCVariable<Vector> gVelGlobal;
+    new_dw->allocateAndPut(gMassGlobal,
                            d_mpm_labels->gMassLabel,
                            d_materialManager->getAllInOneMaterial()->get(0),
                            patch);
-    new_dw->allocateAndPut(gTempglobal,
+    new_dw->allocateAndPut(gTempGlobal,
                            d_mpm_labels->gTemperatureLabel,
                            d_materialManager->getAllInOneMaterial()->get(0),
                            patch);
-    new_dw->allocateAndPut(gVolumeglobal,
+    new_dw->allocateAndPut(gVolGlobal,
                            d_mpm_labels->gVolumeLabel,
                            d_materialManager->getAllInOneMaterial()->get(0),
                            patch);
-    new_dw->allocateAndPut(gVelglobal,
+    new_dw->allocateAndPut(gVelGlobal,
                            d_mpm_labels->gVelocityLabel,
                            d_materialManager->getAllInOneMaterial()->get(0),
                            patch);
-    gMassglobal.initialize(d_SMALL_NUM_MPM);
-    gVolumeglobal.initialize(d_SMALL_NUM_MPM);
-    gTempglobal.initialize(0.0);
-    gVelglobal.initialize(Vector(0.0));
+    gMassGlobal.initialize(d_SMALL_NUM_MPM);
+    gVolGlobal.initialize(d_SMALL_NUM_MPM);
+    gTempGlobal.initialize(0.0);
+    gVelGlobal.initialize(Vector(0.0));
 
     Ghost::GhostType gan = Ghost::AroundNodes;
     size_t numMatls      = d_materialManager->getNumMaterials("MPM");
@@ -2659,11 +2659,11 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
       for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
         IntVector c = *iter;
-        gMassglobal[c] += gMass[c];
-        gVolumeglobal[c] += gVolume[c];
-        gVelglobal[c] += gVelocity[c];
+        gMassGlobal[c] += gMass[c];
+        gVolGlobal[c] += gVolume[c];
+        gVelGlobal[c] += gVelocity[c];
         gVelocity[c] /= gMass[c];
-        gTempglobal[c] += gTemperature[c];
+        gTempGlobal[c] += gTemperature[c];
         // gBodyForce[c]     /= gMass[c];
         gTemperature[c] /= gMass[c];
         gTemperatureNoBC[c] = gTemperature[c];
@@ -2701,8 +2701,8 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
     for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
       IntVector c = *iter;
-      gTempglobal[c] /= gMassglobal[c];
-      gVelglobal[c] /= gMassglobal[c];
+      gTempGlobal[c] /= gMassGlobal[c];
+      gVelGlobal[c] /= gMassGlobal[c];
     }
 
   } // End loop over patches
@@ -3724,8 +3724,8 @@ DEMMPM::computeInternalForce(const ProcessorGroup*,
     int numMPMMatls = d_materialManager->getNumMaterials("MPM");
 
     NCVariable<Matrix3> gStressglobal;
-    constNCVariable<double> gVolumeglobal;
-    new_dw->get(gVolumeglobal,
+    constNCVariable<double> gVolGlobal;
+    new_dw->get(gVolGlobal,
                 d_mpm_labels->gVolumeLabel,
                 d_materialManager->getAllInOneMaterial()->get(0),
                 patch,
@@ -4000,7 +4000,7 @@ DEMMPM::computeInternalForce(const ProcessorGroup*,
 
     for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
       IntVector c = *iter;
-      gStressglobal[c] /= gVolumeglobal[c];
+      gStressglobal[c] /= gVolGlobal[c];
     }
     // delete interpolator;
   }
@@ -5280,7 +5280,7 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
 
         // Collect master particle states for discrete or rigid materials
-        if (d_mpm_flags->d_enableDEM && (mpm_matl->isDiscrete() || mpm_matl->isRigid()) && pRadius[idx] > 0) {
+        if (d_mpm_flags->d_enableDEM && (mpm_matl->isDEMMaterial() || mpm_matl->isRigid()) && pRadius[idx] > 0) {
           master_states[pRigidBodyID[idx]] = {pX_new[idx], pX[idx], pVelocity_new[idx], pAngularVelocity[idx]};
         }
 
@@ -5290,7 +5290,7 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         // We only enforce symmetry boundary corrections if the domain is thick
         // enough to contain at least one full particle diameter. Otherwise,
         // the correction would push the particle outside the opposite boundary.
-        if (d_mpm_flags->d_enableDEM && mpm_matl->isDiscrete() && pMass[idx] > 0) {
+        if (d_mpm_flags->d_enableDEM && mpm_matl->isDEMMaterial() && pMass[idx] > 0) {
           double radius = pRadius[idx];
           for (auto face : bf) {
             if (patch->haveBC(face, matID, "symmetry", "Symmetric")) {
@@ -5411,10 +5411,10 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       } // End loop over particles
 
       // Synchronize dummy particles with master particle for discrete or rigid materials
-      if (d_mpm_flags->d_enableDEM && (mpm_matl->isDiscrete() || mpm_matl->isRigid())) {
+      if (d_mpm_flags->d_enableDEM && (mpm_matl->isDEMMaterial() || mpm_matl->isRigid())) {
         for (auto idx : *pset) {
           // If it's a dummy particle (discrete only) OR any particle in a rigid material (except the master)
-          if ((mpm_matl->isDiscrete() && pMass[idx] <= 0) || (mpm_matl->isRigid() && pRadius[idx] <= 0)) {
+          if ((mpm_matl->isDEMMaterial() && pMass[idx] <= 0) || (mpm_matl->isRigid() && pRadius[idx] <= 0)) {
             long64 rbID = pRigidBodyID[idx];
             if (master_states.count(rbID)) {
               const auto& master = master_states[rbID];
@@ -5504,12 +5504,12 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
         */
 
-        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass && !mpm_matl->isDiscrete()) ||
+        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass && !mpm_matl->isDEMMaterial()) ||
             (pTemp_new[idx] < 0.0) || (pLocalized_new[idx] == -999)) {
           if (d_mpm_flags->d_erosionAlgorithm != "none") {
             delset->addParticle(idx);
           }
-          if (mpm_matl->isDiscrete()) {
+          if (mpm_matl->isDEMMaterial()) {
              std::cout << "  DEBUG: DELETING discrete particle ID: " << pParticleID[idx]
                        << " in interpolateToParticlesAndUpdate"
                        << " mass: " << pMass_new[idx] << " temp: " << pTemp_new[idx]
@@ -5542,7 +5542,7 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
             if (d_mpm_flags->d_erosionAlgorithm != "none") {
               delset->addParticle(idx);
             }
-            if (mpm_matl->isDiscrete()) {
+            if (mpm_matl->isDEMMaterial()) {
                std::cout << "  DEBUG: DELETING discrete particle ID: " << pParticleID[idx]
                          << " hit speed ceiling. Vel: " << pVelocity_new[idx].length() << std::endl;
             }
@@ -6443,7 +6443,7 @@ DEMMPM::finalParticleUpdate(const ProcessorGroup*,
       for (auto idx : *pset) {
         pTemp_new[idx] += pdTdt[idx] * delT;
 
-        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass && !mpm_matl->isDiscrete()) ||
+        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass && !mpm_matl->isDEMMaterial()) ||
             pTemp_new[idx] < 0. || (pLocalized[idx] == -999)) {
           if (d_mpm_flags->d_erosionAlgorithm != "none") {
             delset->addParticle(idx);

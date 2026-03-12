@@ -800,9 +800,14 @@ getNeedAndTypeAndValidValues(const string& specStr,
   std::vector<std::string> specs = split_string(specStr, separators);
 
   if (specs.size() < 1 || specs.size() > 2) {
-    throw ProblemSetupException("Error in getNeedAndTypeAndValidValues()...",
-                                __FILE__,
-                                __LINE__);
+    std::ostringstream msg;
+    msg << "Error in getNeedAndTypeAndValidValues(): expected 1-2 specs, got "
+        << specs.size() << ": [";
+    for (std::size_t i = 0; i < specs.size(); ++i) {
+      msg << (i ? ", " : "") << '"' << specs[i] << '"';
+    }
+    msg << "]";
+    throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
   }
 
   separators.clear();

@@ -568,7 +568,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(
 
       // Compute the deformation gradient from velocity
       // Note that When !flag->d_enableDEM is true (DEM disabled), 
-      if (!flag->d_enableDEM && !mpm_matl->isDiscrete()) {
+      if (!flag->d_enableDEM && !mpm_matl->isDEMMaterial()) {
         computeDeformationGradientFromVelocity(pVelGrad_old[particle],
                                               velGrad_new,
                                               pDefGrad_old[particle],

@@ -12,7 +12,7 @@ To improve stability and consistency, the momentum exchange should be moved to t
 ### 1. Treat DEM Materials as Independent Velocity Fields
 Instead of applying forces directly to particles, we should allow the DEM material to project its mass and velocity to the grid, just like any other MPM material.
 
-*   **Modification**: In `DEMMPM::scheduleInterpolateParticlesToGrid`, ensure that particles belonging to DEM materials (marked as `isDiscrete` or `isRigid`) are interpolated to the grid. This is already partially done, but we must ensure they have their own material index and nodal velocity field.
+*   **Modification**: In `DEMMPM::scheduleInterpolateParticlesToGrid`, ensure that particles belonging to DEM materials (marked as `isDEMMaterial` or `isRigid`) are interpolated to the grid. This is already partially done, but we must ensure they have their own material index and nodal velocity field.
 
 ### 2. Disable Direct Force Exchange in `DEMTasks`
 The `DEMTasks::computeDEMForces` should no longer apply forces to MPM particles.
@@ -47,7 +47,7 @@ Since a DEM "rigid body" is composed of one or more particles that must move tog
 *   **`interpolateParticlesToGrid`**: Ensure DEM particles contribute to the grid mass and velocity. Rigid bodies should project velocity $v_{node} = v_{cm} + \omega \times (r_{node} - r_{cm})$.
 
 #### `DEMTasks.cc`
-*   **`computeDEMForces`**: Remove the code block that identifies MPM particles (`!matl_j->isDiscrete()`) and applies `contact.totalForce` to them.
+*   **`computeDEMForces`**: Remove the code block that identifies MPM particles (`!matl_j->isDEMMaterial()`) and applies `contact.totalForce` to them.
 *   **`applyContactForces`**: Remove the branches that modify `outputs.pExtForce_new` for non-discrete materials.
 
 ## Expected Benefits

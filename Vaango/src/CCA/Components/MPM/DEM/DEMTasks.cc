@@ -216,17 +216,17 @@ DEMTasks::computeDEMForces(const ProcessorGroup*,
 
         DEMContactProps props = getContactProps(matl_i, matl_j);
 
-        bool i_is_discrete = matl_i->isDiscrete();
-        bool j_is_discrete = matl_j->isDiscrete();
+        bool i_is_dem_material = matl_i->isDEMMaterial();
+        bool j_is_dem_material = matl_j->isDEMMaterial();
 
         for (auto idx_i : *psets.psets_real[m_i]) {
-          bool i_is_rigid = i_is_discrete && inputs.pMass_old[m_i][idx_i] > 0;
+          bool i_is_rigid = i_is_dem_material && inputs.pMass_old[m_i][idx_i] > 0;
 
           auto unique_bodies =
-            buildUniqueBodies(m_i, idx_i, m_j, psets, inputs, j_is_discrete);
+            buildUniqueBodies(m_i, idx_i, m_j, psets, inputs, j_is_dem_material);
 
           for (auto const& [rbID_j, idx_j] : unique_bodies) {
-            bool j_is_rigid = j_is_discrete;
+            bool j_is_rigid = j_is_dem_material;
 
             DEMContactResult contact;
             if (i_is_rigid && !j_is_rigid) {
@@ -355,7 +355,7 @@ DEMTasks::buildMasterParticleMap(int numMatls,
     }
     MPMMaterial* matl =
       static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
-    if (!matl->isDiscrete()) {
+    if (!matl->isDEMMaterial()) {
       continue;
     }
 
@@ -377,12 +377,12 @@ DEMTasks::buildUniqueBodies(int m_i,
                             int m_j,     
                             const DEMParticleSets& psets,
                             const DEMParticleInputData& inputs,
-                            bool j_is_discrete) const
+                            bool j_is_dem_material) const
 {
   ParticleIDToCurrentIdxMap unique_bodies;
   Point pos_i = inputs.pX_old[m_i][idx_i];
 
-  if (j_is_discrete) {
+  if (j_is_dem_material) {
     for (auto idx_j : *psets.psets_all[m_j]) {
       if (m_i == m_j && idx_i == idx_j) {
         continue;
@@ -638,7 +638,7 @@ DEMTasks::applyContactForces(const DEMContactResult& contact,
   outputs.pExtForce_new[m_i][idx_i] += contact.totalForce;
   outputs.pTorque_new[m_i][idx_i]   += Cross(contact.arm_i, contact.totalForce);
 
-  if (matl_j->isDiscrete()) {
+  if (matl_j->isDEMMaterial()) {
     if (master_particles.count(rbID_j)) {
       int master_idx = master_particles.at(rbID_j);
       if (patch->containsPoint(inputs.pX_old[m_j][master_idx])) {
@@ -737,7 +737,7 @@ DEMTasks::integrateDEMRotation(const ProcessorGroup*,
       };
       std::map<long64, RotationState> master_rotations;
 
-      if (mpm_matl->isDiscrete() || mpm_matl->isRigid()) {
+      if (mpm_matl->isDEMMaterial() || mpm_matl->isRigid()) {
         for (auto idx : *pset) {
           if (pRadius[idx] > 0.0 && pInertiaTensor[idx].Determinant() > 0.0) {
             Matrix3 invI              = pInertiaTensor[idx].Inverse();
