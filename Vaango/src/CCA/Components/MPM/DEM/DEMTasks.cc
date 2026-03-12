@@ -43,8 +43,8 @@
 
 using namespace Uintah;
 
-// Debug streams:  To turn on use  export SCI_DEBUG="MPM:+,SerialMPM:+" 
-Dout dem_dbg("DEM", "MPM", "Debug DEM contact forces", false);
+// Debug streams:  To turn on use  export SCI_DEBUG="DEM:+,SerialMPM:+" 
+Dout dem_dbg("DEMTasks", "MPM", "Debug DEM contact forces", false);
 namespace Vaango {
 
 DEMTasks::DEMTasks([[maybe_unused]] ProblemSpecP& ps,
@@ -59,6 +59,7 @@ DEMTasks::DEMTasks([[maybe_unused]] ProblemSpecP& ps,
   , d_num_ghost_particles(numGhostParticles)
   , d_num_ghost_nodes(numGhostNodes)
 {
+  DOUT(dem_dbg, "[DEMTasks::DEMTasks] Create DEMTasks object");
 }
 
 void
@@ -66,8 +67,9 @@ DEMTasks::scheduleInitialize([[maybe_unused]] SchedulerP& sched,
                              [[maybe_unused]] const PatchSet* patches,
                              [[maybe_unused]] const MaterialSet* matls)
 {
-  // Initialization of DEM labels is done within SerialMPM::actuallyInitialize
+  // Initialization of DEM labels is done within DEMMPM::actuallyInitialize
   // through the hook actuallyInitialize() called per material/patch.
+  DOUT(dem_dbg, "[DEMTasks::scheduleInitialize]");
 }
 
 void
@@ -76,6 +78,8 @@ DEMTasks::actuallyInitialize(const Patch* patch,
                              DataWarehouse* new_dw)
 {
   if (d_mpm_flags->d_enableDEM) {
+    DOUT(dem_dbg, "[DEMTasks::actuallyInitialize] Start");
+
     int matID            = mpm_matl->getDWIndex();
     ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
     ParticleVariable<Vector> pAngularVelocity, pTorque;
@@ -111,44 +115,39 @@ DEMTasks::actuallyInitialize(const Patch* patch,
         pInertiaTensor[idx] = Matrix3(0.0);
       }
     }
+    DOUT(dem_dbg, "[DEMTasks::actuallyInitialize] Done");
   }
 }
 
 void
 DEMTasks::computeStableTimestep(const Patch* patch,
                                 const MPMMaterial* mpm_matl,
-                                DataWarehouse* old_dw,
                                 DataWarehouse* new_dw,
                                 double& dt_dem)
 {
+  DOUT(dem_dbg, "[DEMTasks::computeStableTimestep] Start");
   double beta = 0.2; // Safety factor
   int matID   = mpm_matl->getDWIndex();
+  DOUT(dem_dbg, "[DEMTasks::computeStableTimestep] matID = " << matID << " patch = " << patch);
+  DOUT(dem_dbg, "[DEMTasks::computeStableTimestep] new_dw = " << new_dw);
+  DOUT(dem_dbg, "[DEMTasks::computeStableTimestep] lo = " << patch->getExtraCellLowIndex());
+  DOUT(dem_dbg, "[DEMTasks::computeStableTimestep] hi = " << patch->getExtraCellHighIndex());
 
-  ParticleSubset* pset = nullptr;
-  if (new_dw->haveParticleSubset(matID, patch)) {
-    pset = new_dw->getParticleSubset(matID, patch);
-  } else if (old_dw && old_dw->haveParticleSubset(matID, patch)) {
-    pset = old_dw->getParticleSubset(matID, patch);
-  }
+  ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
+  constParticleVariable<double> pMass;
+  new_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
 
-  if (pset) {
-    constParticleVariable<double> pMass;
-    if (new_dw->exists(d_mpm_labels->pMassLabel, matID, patch)) {
-      new_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
-    } else {
-      old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
-    }
-
-    double kn = mpm_matl->getDEMNormalStiffness();
-    for (auto idx : *pset) {
-      if (pMass[idx] > 0) {
-        double dt_particle = beta * std::sqrt(pMass[idx] / kn);
-        if (dt_particle < dt_dem) {
-          dt_dem = dt_particle;
-        }
+  double kn = mpm_matl->getDEMNormalStiffness();
+  for (auto idx : *pset) {
+    if (pMass[idx] > 0) {
+      double dt_particle = beta * std::sqrt(pMass[idx] / kn);
+      if (dt_particle < dt_dem) {
+        dt_dem = dt_particle;
       }
     }
   }
+
+  DOUT(dem_dbg, "[DEMTasks::computeStableTimestep] Done");
 }
 
 void

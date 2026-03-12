@@ -120,7 +120,6 @@ public:
   void
   computeStableTimestep(const Uintah::Patch* patch,
                         const Uintah::MPMMaterial* mpm_matl,
-                        Uintah::DataWarehouse* old_dw,
                         Uintah::DataWarehouse* new_dw,
                         double& dt_dem);
 

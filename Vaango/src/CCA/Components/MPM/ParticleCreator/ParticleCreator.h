@@ -154,7 +154,7 @@ private:
    * Handles particle creation for discrete materials.
    * Creates one master particle at center plus geometric proxy particles.
    */
-  particleIndex handleDiscreteMaterial(const Patch* patch,
+  particleIndex handleDEMMaterial(const Patch* patch,
                                       GeometryObject* obj,
                                       ObjectVars& obj_vars);
 

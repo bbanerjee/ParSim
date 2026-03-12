@@ -68,13 +68,13 @@
 
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Geometry/BBox.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
-#include <Core/Geometry/BBox.h>
-#include <Core/GeometryPiece/GeometryPieceFactory.h>
-#include <Core/GeometryPiece/GeometryObject.h>
-#include <Core/GeometryPiece/LocalSDF.h>
 #include <Core/GeometryPiece/DynamicSDFGeometry.h>
+#include <Core/GeometryPiece/GeometryObject.h>
+#include <Core/GeometryPiece/GeometryPieceFactory.h>
+#include <Core/GeometryPiece/LocalSDF.h>
 #include <Core/Grid/AMR.h>
 #include <Core/Grid/DbgOutput.h>
 #include <Core/Grid/Grid.h>
@@ -98,7 +98,6 @@
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Util/DOUT.hpp>
-#include <Core/Util/DebugStream.h>
 
 #ifdef __NVCC__
 #pragma nv_diag_suppress 20011
@@ -115,10 +114,10 @@
 #endif
 
 #include <chrono>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <format>
 
 // #define XPIC2_UPDATE
 #define CHECK_PARTICLE_DELETION
@@ -132,20 +131,21 @@ using namespace Uintah;
 // Debug streams
 //__________________________________
 //  To turn on debug d_mpm_flags
-//  csh/tcsh : setenv SCI_DEBUG "MPM:+,DEMMPM:+".....
-//  bash     : export SCI_DEBUG="MPM:+,DEMMPM:+" )
+//  csh/tcsh : setenv SCI_DEBUG "MPM:+,DEMMPMdoing:+".....
+//  bash     : export SCI_DEBUG="MPM:+,DEMMPMdoing:+" )
 //  default is OFF
-static DebugStream cout_doing("MPM", false);
-static DebugStream cout_dbg("DEMMPM", false);
-static DebugStream cout_convert("MPMConv", false);
-static DebugStream cout_heat("MPMHeat", false);
-static DebugStream amr_doing("AMRMPM", false);
-static DebugStream cout_damage("Damage", false);
-static DebugStream cout_dem("DEM", false);
-Dout mpm_delt_dbg("MPMdelt", "MPM", "Debug MPM delta t", false);
+Dout dempm_doing("DEMMPMdoing", "DEM_MPM", "Debug DEM_MPM tasks", false);
+Dout dempm_dbg("DEMMPMdbg", "DEM_MPM", "Debug DEM_MPM code", false);
+Dout dempm_heat("DEMMPMheat", "DEM_MPM", "Debug DEM_MPM heat transfer", false);
+Dout dempm_amr("DEMMPMamr",
+               "DEM_MPM",
+               "Debug DEM_MPM adaptive mesh refinement",
+               false);
+Dout dempm_damage("DEMMPMdamage", "DEM_MPM", "Debug DEM_MPM damage", false);
+Dout dempm_delt_dbg("DEMMPMdelt", "MPM", "Debug MPM delta t", false);
 
 DEMMPM::DEMMPM(const ProcessorGroup* myworld,
-                     const MaterialManagerP& materialManager)
+               const MaterialManagerP& materialManager)
   : SimulationCommon(myworld, materialManager)
   , MPMCommon(d_materialManager)
 {
@@ -165,15 +165,14 @@ DEMMPM::~DEMMPM()
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::problemSetup(const ProblemSpecP& prob_spec,
-                        const ProblemSpecP& restart_prob_spec,
-                        GridP& grid,
-                        const std::string& input_ups_dir)
+                     const ProblemSpecP& restart_prob_spec,
+                     GridP& grid,
+                     const std::string& input_ups_dir)
 {
-  cout_doing << "Doing problemSetup\t\t\t\t\t MPM"
-             << "\n";
+  DOUT(dempm_doing, "[DEMMPM] [DEMMPM::problemSetup");
   d_scheduler->setPositionVar(d_mpm_labels->pXLabel);
 
-  SimulationCommon::problemSetup( prob_spec );
+  SimulationCommon::problemSetup(prob_spec);
 
   ProblemSpecP restart_mat_ps = nullptr;
   ProblemSpecP prob_spec_mat_ps =
@@ -287,11 +286,11 @@ DEMMPM::problemSetup(const ProblemSpecP& prob_spec,
 
   // DEM
   d_demTasks = std::make_unique<Vaango::DEMTasks>(restart_mat_ps,
-                                          d_materialManager,
-                                          d_mpm_labels.get(),
-                                          d_mpm_flags.get(),
-                                          d_numGhostParticles,
-                                          d_numGhostNodes);
+                                                  d_materialManager,
+                                                  d_mpm_labels.get(),
+                                                  d_mpm_flags.get(),
+                                                  d_numGhostParticles,
+                                                  d_numGhostNodes);
 
   // Create deformation gradient computer
   d_defGradComputer = std::make_unique<DeformationGradientComputer>(
@@ -305,10 +304,10 @@ DEMMPM::problemSetup(const ProblemSpecP& prob_spec,
     for (auto& module_name : d_analysisModules) {
       module_name->setComponents(dynamic_cast<SimulationInterface*>(this));
       module_name->problemSetup(prob_spec,
-                           restart_prob_spec,
-                           grid,
-                           d_particleState,
-                           d_particleState_preReloc);
+                                restart_prob_spec,
+                                grid,
+                                d_particleState,
+                                d_particleState_preReloc);
     }
   }
 
@@ -460,11 +459,11 @@ DEMMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
                                  level->getGrid()->numLevels())) {
     return;
   }
-  Task* t = scinew Task(
-    "MPM::actuallyInitialize", this, &DEMMPM::actuallyInitialize);
+  Task* t =
+    scinew Task("DEMMPM::actuallyInitialize", this, &DEMMPM::actuallyInitialize);
 
   const PatchSet* patches = level->eachPatch();
-  printSchedule(patches, cout_doing, "MPM::scheduleInitialize");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleInitialize]");
 
   auto* zeroth_matl = scinew MaterialSubset();
   zeroth_matl->add(0);
@@ -526,11 +525,9 @@ DEMMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   }
 
   // artificial damping coeff initialized to 0.0
-  if (cout_dbg.active()) {
-    cout_dbg << "Artificial Damping Coeff = "
-             << d_mpm_flags->d_artificialDampCoeff
-             << " 8 or 27 = " << d_mpm_flags->d_8or27 << "\n";
-  }
+  DOUT(dempm_dbg,
+       "Artificial Damping Coeff = " << d_mpm_flags->d_artificialDampCoeff
+                                     << " 8 or 27 = " << d_mpm_flags->d_8or27);
 
   // Scalar diffusion
   d_diffusionTasks->scheduleInitialize(t);
@@ -548,10 +545,9 @@ DEMMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
 
     // Add damage model computes
-    if (cout_damage.active()) {
-      cout_damage << "Damage::Material = " << m << " MPMMaterial = " << mpm_matl
-                  << " Do damage = " << mpm_matl->doBasicDamage() << "\n";
-    }
+    DOUT(dempm_damage,
+         "Damage::Material = " << m << " MPMMaterial = " << mpm_matl
+                               << " Do damage = " << mpm_matl->doBasicDamage());
     if (mpm_matl->doBasicDamage()) {
       Vaango::BasicDamageModel* basicDamageModel =
         mpm_matl->getBasicDamageModel();
@@ -626,10 +622,10 @@ DEMMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::actuallyInitialize(const ProcessorGroup*,
-                              const PatchSubset* patches,
-                              const MaterialSubset* matls,
-                              DataWarehouse*,
-                              DataWarehouse* new_dw)
+                           const PatchSubset* patches,
+                           const MaterialSubset* matls,
+                           DataWarehouse*,
+                           DataWarehouse* new_dw)
 {
   particleIndex totalParticles = 0;
 
@@ -651,7 +647,7 @@ DEMMPM::actuallyInitialize(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    printTask(patches, patch, cout_doing, "Doing actuallyInitialize");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::actuallyInitialize]");
 
     CCVariable<short int> cellNAPID;
     new_dw->allocateAndPut(cellNAPID, d_mpm_labels->pCellNAPIDLabel, 0, patch);
@@ -681,10 +677,10 @@ DEMMPM::actuallyInitialize(const ProcessorGroup*,
     }
 
     for (int m = 0; m < matls->size(); m++) {
-      cout_dbg << "Before get material\n";
+      DOUT(dempm_dbg, "Before get material");
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      cout_dbg << "After get material\n";
+      DOUT(dempm_dbg, "After get material");
 
       if (!d_mpm_flags->d_doGridReset) {
         NCVariable<Vector> gDisplacement;
@@ -718,7 +714,7 @@ DEMMPM::actuallyInitialize(const ProcessorGroup*,
       // DEM
       d_demTasks->actuallyInitialize(patch, mpm_matl, new_dw);
     } // end matls loop
-  }   // end patches loop
+  } // end patches loop
 
   // Only allow axisymmetric runs if the grid is one cell
   // thick in the theta dir.
@@ -772,15 +768,15 @@ DEMMPM::actuallyInitialize(const ProcessorGroup*,
   // For diffusion
   d_diffusionTasks->actuallyInitializeReductionVars(new_dw);
 
-  cout_dbg << "Completed actuallyinitialize\n";
+  DOUT(dempm_dbg, "Completed actuallyinitialize");
 }
 
 void
 DEMMPM::scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
 {
   /*`==========TESTING==========*/
-  Task* t = scinew Task(
-    "DEMMPM::restartInitialize", this, &DEMMPM::restartInitialize);
+  Task* t =
+    scinew Task("DEMMPM::restartInitialize", this, &DEMMPM::restartInitialize);
 
   const PatchSet* patches = level->eachPatch();
 
@@ -803,16 +799,16 @@ DEMMPM::scheduleRestartInitialize(const LevelP& level, SchedulerP& sched)
  */
 void
 DEMMPM::restartInitialize(const ProcessorGroup*,
-                             const PatchSubset* patches,
-                             const MaterialSubset*,
-                             [[maybe_unused]] DataWarehouse* old_dw,
-                             DataWarehouse* new_dw)
+                          const PatchSubset* patches,
+                          const MaterialSubset*,
+                          [[maybe_unused]] DataWarehouse* old_dw,
+                          DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    const std::string msg = "Doing DEMMPM::restartInitializeTask";
-    printTask(patches, patch, cout_doing, msg);
+    const std::string msg = "[DEMMPM::restartInitialize]";
+    printTask(patches, patch, dempm_doing, msg);
 
     size_t numMatls = d_materialManager->getNumMaterials("MPM");
 
@@ -834,24 +830,24 @@ DEMMPM::scheduleDeleteGeometryObjects(const LevelP& level, SchedulerP& sched)
   const PatchSet* patches = level->eachPatch();
 
   Task* t = scinew Task(
-    "MPM::deleteGeometryObjects", this, &DEMMPM::deleteGeometryObjects);
+    "DEMMPM::deleteGeometryObjects", this, &DEMMPM::deleteGeometryObjects);
   sched->addTask(t, patches, d_materialManager->allMaterials("MPM"));
 }
 
 void
 DEMMPM::deleteGeometryObjects(const ProcessorGroup*,
-                                 [[maybe_unused]] const PatchSubset* patches,
-                                 const MaterialSubset*,
-                                 DataWarehouse*,
-                                 [[maybe_unused]] DataWarehouse* new_dw)
+                              const PatchSubset* patches,
+                              const MaterialSubset*,
+                              DataWarehouse*,
+                              [[maybe_unused]] DataWarehouse* new_dw)
 {
-  printTask(cout_doing, "Doing MPM::deleteGeometryObjects");
+  printTask(patches, dempm_doing, "[MPM::deleteGeometryObjects]");
 
   size_t numMPMMatls = d_materialManager->getNumMaterials("MPM");
   for (size_t m = 0; m < numMPMMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-    std::cout << "MPM::Deleting Geometry Objects  matl: "
+    std::cout << "DEMMPM::Deleting Geometry Objects  matl: "
               << mpm_matl->getDWIndex() << "\n";
     mpm_matl->deleteGeomObjects();
   }
@@ -870,8 +866,8 @@ DEMMPM::deleteGeometryObjects(const ProcessorGroup*,
 void
 DEMMPM::schedulePrintParticleCount(const LevelP& level, SchedulerP& sched)
 {
-  Task* t = scinew Task(
-    "MPM::printParticleCount", this, &DEMMPM::printParticleCount);
+  Task* t =
+    scinew Task("DEMMPM::printParticleCount", this, &DEMMPM::printParticleCount);
   t->needs(Task::NewDW, d_mpm_labels->partCountLabel);
   t->setType(Task::OncePerProc);
   sched->addTask(t,
@@ -884,10 +880,10 @@ DEMMPM::schedulePrintParticleCount(const LevelP& level, SchedulerP& sched)
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::printParticleCount(const ProcessorGroup* pg,
-                              const PatchSubset*,
-                              const MaterialSubset*,
-                              DataWarehouse*,
-                              DataWarehouse* new_dw)
+                           const PatchSubset*,
+                           const MaterialSubset*,
+                           DataWarehouse*,
+                           DataWarehouse* new_dw)
 {
   sumlong_vartype pcount;
   new_dw->get(pcount, d_mpm_labels->partCountLabel);
@@ -900,8 +896,8 @@ DEMMPM::printParticleCount(const ProcessorGroup* pg,
 //  Diagnostic task: compute the total number of particles
 void
 DEMMPM::scheduleTotalParticleCount(SchedulerP& sched,
-                                      const PatchSet* patches,
-                                      const MaterialSet* matls)
+                                   const PatchSet* patches,
+                                   const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
@@ -917,10 +913,10 @@ DEMMPM::scheduleTotalParticleCount(SchedulerP& sched,
 //  Diagnostic task: compute the total number of particles
 void
 DEMMPM::totalParticleCount(const ProcessorGroup*,
-                              const PatchSubset* patches,
-                              const MaterialSubset* matls,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw)
+                           const PatchSubset* patches,
+                           const MaterialSubset* matls,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -946,15 +942,15 @@ DEMMPM::totalParticleCount(const ProcessorGroup*,
  *------------------------------------------------------------------------*/
 void
 DEMMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
-                                                           SchedulerP& sched)
+                                                        SchedulerP& sched)
 {
   const PatchSet* patches = level->eachPatch();
   printSchedule(
-    patches, cout_doing, "MPM::initializeStressAndDefGradFromBodyForce");
+    patches, dempm_doing, "[DEMMPM::initializeStressAndDefGradFromBodyForce]");
 
   // First compute the body force
-  Task* t1 = scinew Task(
-    "MPM::initializeBodyForce", this, &DEMMPM::initializeBodyForce);
+  Task* t1 =
+    scinew Task("DEMMPM::initializeBodyForce", this, &DEMMPM::initializeBodyForce);
   t1->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
   t1->modifies(d_mpm_labels->pBodyForceAccLabel);
   sched->addTask(t1, patches, d_materialManager->allMaterials("MPM"));
@@ -963,7 +959,7 @@ DEMMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
   // constitutive models that have a "initializeWithBodyForce" flag as true.
   // This is because a more general implementation is quite involved and
   // not worth the effort at this time. BB
-  Task* t2 = scinew Task("MPM::initializeStressAndDefGradFromBodyForce",
+  Task* t2 = scinew Task("DEMMPM::initializeStressAndDefGradFromBodyForce",
                          this,
                          &DEMMPM::initializeStressAndDefGradFromBodyForce);
 
@@ -979,10 +975,10 @@ DEMMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
  *-------------------------------------------------------------------------*/
 void
 DEMMPM::initializeBodyForce(const ProcessorGroup*,
-                               const PatchSubset* patches,
-                               [[maybe_unused]] const MaterialSubset* matls,
-                               DataWarehouse*,
-                               DataWarehouse* new_dw)
+                            const PatchSubset* patches,
+                            [[maybe_unused]] const MaterialSubset* matls,
+                            DataWarehouse*,
+                            DataWarehouse* new_dw)
 {
   // Get the MPM d_mpm_flags and make local copies
   Uintah::Point rotation_center = d_mpm_flags->d_coordRotationCenter;
@@ -995,7 +991,7 @@ DEMMPM::initializeBodyForce(const ProcessorGroup*,
   // Loop thru patches
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing initializeBodyForce");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::initializeBodyForce]");
 
     // Loop thru materials
     int numMPMMatls = d_materialManager->getNumMaterials("MPM");
@@ -1039,8 +1035,8 @@ DEMMPM::initializeBodyForce(const ProcessorGroup*,
         } // coord rotation end if
 
       } // end particle loop
-    }   // end matl loop
-  }     // end patch loop
+    } // end matl loop
+  } // end patch loop
 }
 
 /*!--------------------------------------------------------------------------
@@ -1052,10 +1048,10 @@ DEMMPM::initializeBodyForce(const ProcessorGroup*,
  *--------------------------------------------------------------------------*/
 void
 DEMMPM::initializeStressAndDefGradFromBodyForce(const ProcessorGroup*,
-                                                   const PatchSubset* patches,
-                                                   const MaterialSubset* matls,
-                                                   DataWarehouse*,
-                                                   DataWarehouse* new_dw)
+                                                const PatchSubset* patches,
+                                                const MaterialSubset* matls,
+                                                DataWarehouse*,
+                                                DataWarehouse* new_dw)
 {
   // Loop over patches
   for (int p = 0; p < patches->size(); p++) {
@@ -1063,8 +1059,8 @@ DEMMPM::initializeStressAndDefGradFromBodyForce(const ProcessorGroup*,
 
     printTask(patches,
               patch,
-              cout_doing,
-              "Doing initializeStressAndDefGradFromBodyForce");
+              dempm_doing,
+              "[DEMPMPM::initializeStressAndDefGradFromBodyForce]");
 
     // Loop over materials
     for (int m = 0; m < matls->size(); m++) {
@@ -1103,11 +1099,11 @@ DEMMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
     }
   }
   if (pressureBCId > 0) {
-    printSchedule(patches, cout_doing, "MPM::countMaterialPointsPerLoadCurve");
-    printSchedule(patches, cout_doing, "MPM::scheduleInitializePressureBCs");
+    printSchedule(patches, dempm_doing, "DEMMPM::countMaterialPointsPerLoadCurve");
+    printSchedule(patches, dempm_doing, "DEMMPM::scheduleInitializePressureBCs");
     // Create a task that calculates the total number of particles
     // associated with each load curve.
-    Task* t = scinew Task("MPM::countMaterialPointsPerLoadCurve",
+    Task* t = scinew Task("DEMMPM::countMaterialPointsPerLoadCurve",
                           this,
                           &DEMMPM::countMaterialPointsPerLoadCurve);
     t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
@@ -1119,17 +1115,17 @@ DEMMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
     // Create a task that calculates the force to be associated with
     // each particle based on the pressure BCs
     t = scinew Task(
-      "MPM::initializePressureBC", this, &DEMMPM::initializePressureBC);
+      "DEMMPM::initializePressureBC", this, &DEMMPM::initializePressureBC);
     t->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
     t->needs(Task::NewDW, d_mpm_labels->pSizeLabel, Ghost::None);
     t->needs(Task::NewDW, d_mpm_labels->pDispLabel, Ghost::None);
     t->needs(Task::NewDW, d_mpm_labels->pDefGradLabel, Ghost::None);
     t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->needs(Task::NewDW,
-                d_mpm_labels->materialPointsPerLoadCurveLabel,
-                d_loadCurveIndex,
-                Task::OutOfDomain,
-                Ghost::None);
+             d_mpm_labels->materialPointsPerLoadCurveLabel,
+             d_loadCurveIndex,
+             Task::OutOfDomain,
+             Ghost::None);
     t->modifies(d_mpm_labels->pExternalForceLabel);
     if (d_mpm_flags->d_useCBDI) {
       t->computes(d_mpm_labels->pExternalForceCorner1Label);
@@ -1151,13 +1147,13 @@ DEMMPM::scheduleInitializePressureBCs(const LevelP& level, SchedulerP& sched)
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
-                                           const PatchSubset* patches,
-                                           const MaterialSubset*,
-                                           DataWarehouse*,
-                                           DataWarehouse* new_dw)
+                                        const PatchSubset* patches,
+                                        const MaterialSubset*,
+                                        DataWarehouse*,
+                                        DataWarehouse* new_dw)
 {
   printTask(
-    patches, patches->get(0), cout_doing, "countMaterialPointsPerLoadCurve");
+    patches, patches->get(0), dempm_doing, "countMaterialPointsPerLoadCurve");
   // Find the number of pressure BCs in the problem
   int nofPressureBCs = 0;
   for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
@@ -1201,17 +1197,16 @@ DEMMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::initializePressureBC(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset*,
-                                DataWarehouse*,
-                                DataWarehouse* new_dw)
+                             const PatchSubset* patches,
+                             const MaterialSubset*,
+                             DataWarehouse*,
+                             DataWarehouse* new_dw)
 {
   // Get the current time
   double time = 0.0;
-  printTask(patches, patches->get(0), cout_doing, "Doing initializePressureBC");
-  if (cout_dbg.active()) {
-    cout_dbg << "Current Time (Initialize Pressure BC) = " << time << "\n";
-  }
+  printTask(
+    patches, patches->get(0), dempm_doing, "[DEMMPM::initializePressureBC");
+  DOUT(dempm_dbg, "Current Time (Initialize Pressure BC) = " << time);
 
   // Calculate the force std::vector at each particle
   int pressureBCId = 0;
@@ -1233,10 +1228,9 @@ DEMMPM::initializePressureBC(const ProcessorGroup*,
       auto* pbc = dynamic_cast<PressureBC*>(bc.get());
       pbc->numMaterialPoints(numPart);
 
-      if (cout_dbg.active()) {
-        cout_dbg << "    Load Curve = " << pressureBCId
-                 << " Num Particles = " << numPart << "\n";
-      }
+      DOUT(dempm_dbg,
+           "    Load Curve = " << pressureBCId
+                               << " Num Particles = " << numPart);
 
       // Calculate the force per particle at t = 0.0
       double forcePerPart = pbc->forcePerParticle(time);
@@ -1324,7 +1318,7 @@ DEMMPM::initializePressureBC(const ProcessorGroup*,
             }
           }
         } // matl loop
-      }   // patch loop
+      } // patch loop
     }
     ++ii;
   } // bc loop
@@ -1351,11 +1345,11 @@ DEMMPM::scheduleInitializeMomentBCs(const LevelP& level, SchedulerP& sched)
     }
   }
   if (nofMomentBCs > 0) {
-    printSchedule(patches, cout_doing, "MPM::countMaterialPointsPerLoadCurve");
-    printSchedule(patches, cout_doing, "MPM::scheduleInitializeMomentBCs");
+    printSchedule(patches, dempm_doing, "DEMMPM::countMaterialPointsPerLoadCurve");
+    printSchedule(patches, dempm_doing, "DEMMPM::scheduleInitializeMomentBCs");
     // Create a task that calculates the total number of particles
     // associated with each load curve.
-    Task* t = scinew Task("MPM::countMaterialPointsPerLoadCurve",
+    Task* t = scinew Task("DEMMPM::countMaterialPointsPerLoadCurve",
                           this,
                           &DEMMPM::countMaterialPointsPerLoadCurve);
     t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
@@ -1366,17 +1360,17 @@ DEMMPM::scheduleInitializeMomentBCs(const LevelP& level, SchedulerP& sched)
 
     // Create a task that calculates the force to be associated with
     // each particle based on the moment BCs
-    t = scinew Task(
-      "MPM::initializeMomentBC", this, &DEMMPM::initializeMomentBC);
+    t =
+      scinew Task("DEMMPM::initializeMomentBC", this, &DEMMPM::initializeMomentBC);
     t->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::None);
     t->needs(Task::NewDW, d_mpm_labels->pSizeLabel, Ghost::None);
     t->needs(Task::NewDW, d_mpm_labels->pDefGradLabel, Ghost::None);
     t->needs(Task::NewDW, d_mpm_labels->pLoadCurveIDLabel, Ghost::None);
     t->needs(Task::NewDW,
-                d_mpm_labels->materialPointsPerLoadCurveLabel,
-                d_loadCurveIndex,
-                Task::OutOfDomain,
-                Ghost::None);
+             d_mpm_labels->materialPointsPerLoadCurveLabel,
+             d_loadCurveIndex,
+             Task::OutOfDomain,
+             Ghost::None);
     t->modifies(d_mpm_labels->pExternalForceLabel);
     if (d_mpm_flags->d_useCBDI) {
       t->computes(d_mpm_labels->pExternalForceCorner1Label);
@@ -1397,17 +1391,15 @@ DEMMPM::scheduleInitializeMomentBCs(const LevelP& level, SchedulerP& sched)
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::initializeMomentBC(const ProcessorGroup*,
-                              const PatchSubset* patches,
-                              const MaterialSubset*,
-                              DataWarehouse*,
-                              DataWarehouse* new_dw)
+                           const PatchSubset* patches,
+                           const MaterialSubset*,
+                           DataWarehouse*,
+                           DataWarehouse* new_dw)
 {
   // Get the current time
   double time = 0.0;
-  printTask(patches, patches->get(0), cout_doing, "Doing initializeMomentBC");
-  if (cout_dbg.active()) {
-    cout_dbg << "Current Time (Initialize Moment BC) = " << time << "\n";
-  }
+  printTask(patches, patches->get(0), dempm_doing, "[DEMMPM::initializeMomentBC]");
+  DOUT(dempm_dbg, "Current Time (Initialize Moment BC) = " << time);
 
   // Calculate the force std::vector at each particle
   int nofMomentBCs = 0;
@@ -1426,10 +1418,9 @@ DEMMPM::initializeMomentBC(const ProcessorGroup*,
       auto* pbc = dynamic_cast<MomentBC*>(bc.get());
       pbc->numMaterialPoints(numPart);
 
-      if (cout_dbg.active()) {
-        cout_dbg << "    Load Curve = " << nofMomentBCs
-                 << " Num Particles = " << numPart << "\n";
-      }
+      DOUT(dempm_dbg,
+           "    Load Curve = " << nofMomentBCs
+                               << " Num Particles = " << numPart);
 
       // Calculate the force per particle at t = 0.0
       double forcePerPart = pbc->forcePerParticle(time);
@@ -1500,7 +1491,7 @@ DEMMPM::initializeMomentBC(const ProcessorGroup*,
             }
           }
         } // matl loop
-      }   // patch loop
+      } // patch loop
     }
   }
 }
@@ -1515,11 +1506,12 @@ DEMMPM::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
   // constitutive model
   // However, this task needs to do something in the case that MPM
   // is being run on more than one level.
-  cout_doing << UintahParallelComponent::d_myworld->myRank()
-             << " MPM::scheduleComputeStableTimestep \t\t\t\tL-"
-             << level->getIndex() << "\n";
+  DOUT(dempm_doing,
+       UintahParallelComponent::d_myworld->myRank()
+         << " [DEMMPM::scheduleComputeStableTimestep] \t\t\t\tL-"
+         << level->getIndex());
 
-  Task* t = scinew Task("MPM::actuallyComputeStableTimestep",
+  Task* t = scinew Task("DEMMPM::actuallyComputeStableTimestep",
                         this,
                         &DEMMPM::actuallyComputeStableTimestep);
 
@@ -1536,10 +1528,10 @@ DEMMPM::scheduleComputeStableTimestep(const LevelP& level, SchedulerP& sched)
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
-                                         const PatchSubset* patches,
-                                         const MaterialSubset*,
-                                         DataWarehouse* old_dw,
-                                         DataWarehouse* new_dw)
+                                      const PatchSubset* patches,
+                                      const MaterialSubset*,
+                                      DataWarehouse* old_dw,
+                                      DataWarehouse* new_dw)
 {
   // The standard MPM CFL is usually computed in the constitutive models.
   // Here we compute the DEM stability limit: dt < sqrt(m/k)
@@ -1547,20 +1539,28 @@ DEMMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
 
   int numMPMMatls = d_materialManager->getNumMaterials("MPM");
 
+  DOUT(dempm_delt_dbg, "[DEMMPM:actuallyComputeStableTimestep] " 
+    << "old_dw = " << old_dw << " new_dw = " << new_dw);
+
+  // For the initial timestep, old_dw = nullptr, new_dw has data
   if (!old_dw) {
     // Initial timestep: use a conservative estimate based on minPartMass
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
       if (mpm_matl->isDEMMaterial()) {
-        d_demTasks->computeStableTimestep(nullptr, mpm_matl, old_dw, new_dw, dt_dem);
+        double kn = mpm_matl->getDEMNormalStiffness();
+        double dt_mat = std::sqrt(d_mpm_flags->d_minPartMass / kn);
+        if (dt_mat < dt_dem) {
+          dt_dem = dt_mat;
+        }
       } else if (mpm_matl->isRigid()) {
         dt_dem = 1.0e30;
       }
     }
     const Level* level = getLevel(patches);
     new_dw->put(delt_vartype(dt_dem), d_mpm_labels->delTLabel, level);
-    DOUT(mpm_delt_dbg, "Init MPM Discrete/Rigid delT = " << dt_dem );
+    DOUT(dempm_delt_dbg, "Init DEMMPM Discrete/Rigid delT = " << dt_dem);
     return;
   }
 
@@ -1571,14 +1571,14 @@ DEMMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
       if (mpm_matl->isDEMMaterial()) {
-        d_demTasks->computeStableTimestep(patch, mpm_matl, old_dw, new_dw, dt_dem);
+        d_demTasks->computeStableTimestep(patch, mpm_matl, new_dw, dt_dem);
       } else if (mpm_matl->isRigid()) {
         dt_dem = 1.0e30;
       }
     }
   }
 
-  DOUT(mpm_delt_dbg, "[MPM:ComputeStableTimestep] DEM/Rigid delt = " << dt_dem);
+  DOUT(dempm_delt_dbg, "[MPM:ComputeStableTimestep] DEM/Rigid delt = " << dt_dem);
 
   const Level* level = getLevel(patches);
   new_dw->put(delt_vartype(dt_dem), d_mpm_labels->delTLabel, level);
@@ -1735,19 +1735,18 @@ DEMMPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
  *====================================================================================*/
 void
 DEMMPM::scheduleComputeParticleBodyForce(SchedulerP& sched,
-                                            const PatchSet* patches,
-                                            const MaterialSet* matls)
+                                         const PatchSet* patches,
+                                         const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleComputeParticleBodyForce");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleComputeParticleBodyForce]");
 
-  Task* t = scinew Task("MPM::computeParticleBodyForce",
-                        this,
-                        &DEMMPM::computeParticleBodyForce);
+  Task* t = scinew Task(
+    "DEMMPM::computeParticleBodyForce", this, &DEMMPM::computeParticleBodyForce);
 
   t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
   t->needs(Task::OldDW, d_mpm_labels->pVelocityLabel, Ghost::None);
@@ -1767,10 +1766,10 @@ DEMMPM::scheduleComputeParticleBodyForce(SchedulerP& sched,
  *====================================================================================*/
 void
 DEMMPM::computeParticleBodyForce(const ProcessorGroup*,
-                                    const PatchSubset* patches,
-                                    const MaterialSubset*,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw)
+                                 const PatchSubset* patches,
+                                 const MaterialSubset*,
+                                 DataWarehouse* old_dw,
+                                 DataWarehouse* new_dw)
 {
   // Get the MPM d_mpm_flags and make local copies
   Uintah::Point rotation_center = d_mpm_flags->d_coordRotationCenter;
@@ -1785,7 +1784,7 @@ DEMMPM::computeParticleBodyForce(const ProcessorGroup*,
   // Loop thru patches
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing computeParticleBodyForce");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::computeParticleBodyForce]");
 
     // Loop thru materials
     int numMPMMatls = d_materialManager->getNumMaterials("MPM");
@@ -1882,7 +1881,7 @@ DEMMPM::computeParticleBodyForce(const ProcessorGroup*,
           }
           */
         } // particle loop
-      }   // end if coordinate rotation
+      } // end if coordinate rotation
 
       // Copy data for relocation if particles cross patch boundaries
       /*
@@ -1898,22 +1897,23 @@ DEMMPM::computeParticleBodyForce(const ProcessorGroup*,
       */
 
     } // matl loop
-  }   // patch loop
+  } // patch loop
 }
 
 void
 DEMMPM::scheduleComputeCurrentParticleSize(SchedulerP& sched,
-                                              const PatchSet* patches,
-                                              const MaterialSet* matls)
+                                           const PatchSet* patches,
+                                           const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleComputeCurrentParticleSize");
+  printSchedule(
+    patches, dempm_doing, "[DEMMPM::scheduleComputeCurrentParticleSize]");
 
-  Task* t = scinew Task("MPM::computeCurrentParticleSize",
+  Task* t = scinew Task("DEMMPM::computeCurrentParticleSize",
                         this,
                         &DEMMPM::computeCurrentParticleSize);
 
@@ -1927,16 +1927,16 @@ DEMMPM::scheduleComputeCurrentParticleSize(SchedulerP& sched,
 
 void
 DEMMPM::computeCurrentParticleSize(const ProcessorGroup*,
-                                      const PatchSubset* patches,
-                                      const MaterialSubset*,
-                                      DataWarehouse* old_dw,
-                                      DataWarehouse* new_dw)
+                                   const PatchSubset* patches,
+                                   const MaterialSubset*,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
     printTask(
-      patches, patch, cout_doing, "Doing MPM::computeCurrentParticleSize");
+      patches, patch, dempm_doing, "[DEMMPM::MPM::computeCurrentParticleSize]");
 
     size_t numMatls = d_materialManager->getNumMaterials("MPM");
 
@@ -1995,18 +1995,18 @@ DEMMPM::computeCurrentParticleSize(const ProcessorGroup*,
 /*====================================================================================*/
 void
 DEMMPM::scheduleApplyExternalLoads(SchedulerP& sched,
-                                      const PatchSet* patches,
-                                      const MaterialSet* matls)
+                                   const PatchSet* patches,
+                                   const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleApplyExternalLoads");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleApplyExternalLoads]");
 
-  Task* t = scinew Task(
-    "MPM::applyExternalLoads", this, &DEMMPM::applyExternalLoads);
+  Task* t =
+    scinew Task("DEMMPM::applyExternalLoads", this, &DEMMPM::applyExternalLoads);
 
   t->needs(Task::OldDW, d_mpm_labels->simulationTimeLabel);
   t->needs(Task::OldDW, d_mpm_labels->pXLabel, Ghost::None);
@@ -2035,19 +2035,17 @@ DEMMPM::scheduleApplyExternalLoads(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::applyExternalLoads(const ProcessorGroup*,
-                              const PatchSubset* patches,
-                              const MaterialSubset*,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw)
+                           const PatchSubset* patches,
+                           const MaterialSubset*,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw)
 {
   // Get the current time
   simTime_vartype simTimeVar;
   old_dw->get(simTimeVar, d_mpm_labels->simulationTimeLabel);
   double time = simTimeVar;
 
-  if (cout_doing.active()) {
-    cout_doing << "Current Time (applyExternalLoads) = " << time << "\n";
-  }
+  DOUT(dempm_doing, "[DEMMPM::applyExternalLoads] Current Time = " << time);
 
   // Calculate the force std::vector at each particle for each pressure bc
   std::vector<double> forcePerPart;
@@ -2075,7 +2073,7 @@ DEMMPM::applyExternalLoads(const ProcessorGroup*,
   // Loop thru patches to update external force std::vector
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing applyExternalLoads");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::applyExternalLoads]");
 
     // Place for user defined loading scenarios to be defined,
     // otherwise pExternalForce is just carried forward.
@@ -2258,8 +2256,8 @@ DEMMPM::applyExternalLoads(const ProcessorGroup*,
           }
         }
       } // end if (d_useLoadCurves)
-    }   // matl loop
-  }     // patch loop
+    } // matl loop
+  } // patch loop
 }
 
 /*!----------------------------------------------------------------------
@@ -2272,59 +2270,57 @@ DEMMPM::applyExternalLoads(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
-                                              const PatchSet* patches,
-                                              const MaterialSet* matls)
+                                           const PatchSet* patches,
+                                           const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleInterpolateParticlesToGrid");
+  printSchedule(
+    patches, dempm_doing, "[DEMMPM::scheduleInterpolateParticlesToGrid]");
 
-  Task* t              = scinew Task("MPM::interpolateParticlesToGrid",
+  Task* t              = scinew Task("DEMMPM::interpolateParticlesToGrid",
                         this,
                         &DEMMPM::interpolateParticlesToGrid);
   Ghost::GhostType gan = Ghost::AroundNodes;
   t->needs(Task::OldDW, d_mpm_labels->pMassLabel, gan, d_numGhostParticles);
-  t->needs(
-    Task::OldDW, d_mpm_labels->pVolumeLabel, gan, d_numGhostParticles);
-  t->needs(
-    Task::OldDW, d_mpm_labels->pVelocityLabel, gan, d_numGhostParticles);
+  t->needs(Task::OldDW, d_mpm_labels->pVolumeLabel, gan, d_numGhostParticles);
+  t->needs(Task::OldDW, d_mpm_labels->pVelocityLabel, gan, d_numGhostParticles);
   t->needs(Task::OldDW, d_mpm_labels->pXLabel, gan, d_numGhostParticles);
   t->needs(Task::NewDW,
-              d_mpm_labels->pBodyForceAccLabel_preReloc,
-              gan,
-              d_numGhostParticles);
+           d_mpm_labels->pBodyForceAccLabel_preReloc,
+           gan,
+           d_numGhostParticles);
   t->needs(Task::NewDW,
-              d_mpm_labels->pExtForceLabel_preReloc,
-              gan,
-              d_numGhostParticles);
+           d_mpm_labels->pExtForceLabel_preReloc,
+           gan,
+           d_numGhostParticles);
   t->needs(
     Task::OldDW, d_mpm_labels->pTemperatureLabel, gan, d_numGhostParticles);
   t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, gan, d_numGhostParticles);
-  t->needs(
-    Task::OldDW, d_mpm_labels->pDefGradLabel, gan, d_numGhostParticles);
+  t->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, gan, d_numGhostParticles);
   if (d_mpm_flags->d_useLoadCurves) {
     t->needs(
       Task::OldDW, d_mpm_labels->pLoadCurveIDLabel, gan, d_numGhostParticles);
     if (d_mpm_flags->d_useCBDI) {
       t->needs(Task::NewDW,
-                  d_mpm_labels->pExternalForceCorner1Label,
-                  gan,
-                  d_numGhostParticles);
+               d_mpm_labels->pExternalForceCorner1Label,
+               gan,
+               d_numGhostParticles);
       t->needs(Task::NewDW,
-                  d_mpm_labels->pExternalForceCorner2Label,
-                  gan,
-                  d_numGhostParticles);
+               d_mpm_labels->pExternalForceCorner2Label,
+               gan,
+               d_numGhostParticles);
       t->needs(Task::NewDW,
-                  d_mpm_labels->pExternalForceCorner3Label,
-                  gan,
-                  d_numGhostParticles);
+               d_mpm_labels->pExternalForceCorner3Label,
+               gan,
+               d_numGhostParticles);
       t->needs(Task::NewDW,
-                  d_mpm_labels->pExternalForceCorner4Label,
-                  gan,
-                  d_numGhostParticles);
+               d_mpm_labels->pExternalForceCorner4Label,
+               gan,
+               d_numGhostParticles);
     }
   }
 
@@ -2363,8 +2359,7 @@ DEMMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   d_diffusionTasks->scheduleInterpolateParticlesToGrid(t);
 
   if (d_mpm_flags->d_withColor) {
-    t->needs(
-      Task::OldDW, d_mpm_labels->pColorLabel, gan, d_numGhostParticles);
+    t->needs(Task::OldDW, d_mpm_labels->pColorLabel, gan, d_numGhostParticles);
     t->computes(d_mpm_labels->gColorLabel);
   }
 
@@ -2376,15 +2371,15 @@ DEMMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
-                                      const PatchSubset* patches,
-                                      const MaterialSubset*,
-                                      DataWarehouse* old_dw,
-                                      DataWarehouse* new_dw)
+                                   const PatchSubset* patches,
+                                   const MaterialSubset*,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    printTask(patches, patch, cout_doing, "Doing interpolateParticlesToGrid");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::interpolateParticlesToGrid]");
 
     auto interpolator        = d_mpm_flags->d_interpolator->clone(patch);
     auto linear_interpolator = std::make_unique<LinearInterpolator>(patch);
@@ -2447,9 +2442,9 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
         pBodyForceAcc, d_mpm_labels->pBodyForceAccLabel_preReloc, pset);
       new_dw->get(pExternalForce, d_mpm_labels->pExtForceLabel_preReloc, pset);
 
-      //std::cout << "patch = " << patch << " matID = " << matID
-      //          << " numparticles = " << pset->numParticles()
-      //          << "d_numGhostParticles = " << d_numGhostParticles << "\n ";
+      // std::cout << "patch = " << patch << " matID = " << matID
+      //           << " numparticles = " << pset->numParticles()
+      //           << "d_numGhostParticles = " << d_numGhostParticles << "\n ";
 
       constParticleVariable<int> pLoadCurveID;
       if (d_mpm_flags->d_useLoadCurves) {
@@ -2484,10 +2479,10 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
         old_dw->get(pColor, d_mpm_labels->pColorLabel, pset);
       }
 
-#ifdef DEBUG_WITH_PARTICLE_ID
+      // #ifdef DEBUG_WITH_PARTICLE_ID
       constParticleVariable<long64> pParticleID;
       old_dw->get(pParticleID, d_mpm_labels->pParticleIDLabel, pset);
-#endif
+      // #endif
 
       // Create arrays for the grid data
       NCVariable<double> gMass;
@@ -2497,14 +2492,14 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       NCVariable<Vector> gExternalForce;
       NCVariable<double> gExternalheatrate;
       NCVariable<double> gTemperature;
-      NCVariable<double> gSp_vol;
+      NCVariable<double> gSpecificVol;
       NCVariable<double> gTemperatureNoBC;
       NCVariable<double> gTemperatureRate;
       // NCVariable<double> gnumnearparticles;
 
       new_dw->allocateAndPut(gMass, d_mpm_labels->gMassLabel, matID, patch);
       new_dw->allocateAndPut(
-        gSp_vol, d_mpm_labels->gSpecificVolumeLabel, matID, patch);
+        gSpecificVol, d_mpm_labels->gSpecificVolumeLabel, matID, patch);
       new_dw->allocateAndPut(gVolume, d_mpm_labels->gVolumeLabel, matID, patch);
       new_dw->allocateAndPut(
         gVelocity, d_mpm_labels->gVelocityLabel, matID, patch);
@@ -2530,7 +2525,7 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       gTemperatureNoBC.initialize(0);
       gTemperatureRate.initialize(0);
       gExternalheatrate.initialize(0);
-      gSp_vol.initialize(0.);
+      gSpecificVol.initialize(0.);
       // gnumnearparticles.initialize(0.);
 
       NCVariable<double> gColor;
@@ -2554,14 +2549,24 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       // Vector from the individual mass matrix and velocity std::vector
       // GridMass * GridVelocity =  S^T*M_D*ParticleVelocity
       Vector total_mom(0.0, 0.0, 0.0);
-      double pSp_vol = 1. / mpm_matl->getInitialDensity();
+      double pSpecificVol = 1. / mpm_matl->getInitialDensity();
 
       // loop over all particles in the patch:
       for (int idx : *pset) {
 
-        if (pMass[idx] <= 0.0) continue;
+        if (pMass[idx] <= 0.0) {
+          double pExtForce_mag = pExternalForce[idx].length2();
+          if (pExtForce_mag < 1.0e-16) {
+            continue;
+          } else {
+            proc0cout << pParticleID[idx]
+                      << " pExtForce = " << pExternalForce[idx]
+                      << " pMass = " << pMass[idx] << std::endl;
+          }
+        }
 
-        // std::cout << std::format("pidx = {}, volume = {}\n", idx, pVolume[idx]);
+        // std::cout << std::format("pidx = {}, volume = {}\n", idx,
+        // pVolume[idx]);
         interpolator->findCellAndWeights(
           pX[idx], ni, S, pSize[idx], pDefGrad_old[idx]);
         auto pMom = pVelocity[idx] * pMass[idx];
@@ -2580,7 +2585,7 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
             gVolume[node] += pVolume[idx] * S[k];
             gBodyForce[node] += pBodyForceAcc[idx] * pMass[idx] * S[k];
             gTemperature[node] += pTemperature[idx] * pMass[idx] * S[k];
-            gSp_vol[node] += pSp_vol * pMass[idx] * S[k];
+            gSpecificVol[node] += pSpecificVol * pMass[idx] * S[k];
 
             if (!d_mpm_flags->d_useCBDI) {
               gExternalForce[node] += pExternalForce[idx] * S[k];
@@ -2667,7 +2672,7 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
         // gBodyForce[c]     /= gMass[c];
         gTemperature[c] /= gMass[c];
         gTemperatureNoBC[c] = gTemperature[c];
-        gSp_vol[c] /= gMass[c];
+        gSpecificVol[c] /= gMass[c];
 
         if (d_mpm_flags->d_withColor) {
           gColor[c] /= gMass[c];
@@ -2713,42 +2718,41 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleComputeNormals(SchedulerP& sched,
-                                  const PatchSet* patches,
-                                  const MaterialSet* matls)
+                               const PatchSet* patches,
+                               const MaterialSet* matls)
 {
-  printSchedule(patches, cout_doing, "MPM::scheduleComputeNormals");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleComputeNormals]");
 
-  Task* t =
-    scinew Task("MPM::computeNormals", this, &DEMMPM::computeNormals);
+  Task* t = scinew Task("DEMMPM::computeNormals", this, &DEMMPM::computeNormals);
 
   auto* z_matl = scinew MaterialSubset();
   z_matl->add(0);
   z_matl->addReference();
 
   t->needs(Task::OldDW,
-              d_mpm_labels->pXLabel,
-              Ghost::AroundNodes,
-              d_numGhostParticles);
+           d_mpm_labels->pXLabel,
+           Ghost::AroundNodes,
+           d_numGhostParticles);
   t->needs(Task::OldDW,
-              d_mpm_labels->pMassLabel,
-              Ghost::AroundNodes,
-              d_numGhostParticles);
+           d_mpm_labels->pMassLabel,
+           Ghost::AroundNodes,
+           d_numGhostParticles);
   t->needs(Task::OldDW,
-              d_mpm_labels->pVolumeLabel,
-              Ghost::AroundNodes,
-              d_numGhostParticles);
+           d_mpm_labels->pVolumeLabel,
+           Ghost::AroundNodes,
+           d_numGhostParticles);
   t->needs(Task::OldDW,
-              d_mpm_labels->pSizeLabel,
-              Ghost::AroundNodes,
-              d_numGhostParticles);
+           d_mpm_labels->pSizeLabel,
+           Ghost::AroundNodes,
+           d_numGhostParticles);
   t->needs(Task::OldDW,
-              d_mpm_labels->pStressLabel,
-              Ghost::AroundNodes,
-              d_numGhostParticles);
+           d_mpm_labels->pStressLabel,
+           Ghost::AroundNodes,
+           d_numGhostParticles);
   t->needs(Task::OldDW,
-              d_mpm_labels->pDefGradLabel,
-              Ghost::AroundNodes,
-              d_numGhostParticles);
+           d_mpm_labels->pDefGradLabel,
+           Ghost::AroundNodes,
+           d_numGhostParticles);
   t->needs(Task::NewDW, d_mpm_labels->gMassLabel, Ghost::AroundNodes, 1);
   // t->needs(Task::OldDW, d_mpm_labels->NC_CCweightLabel, z_matl,
   // Ghost::None);
@@ -2769,10 +2773,10 @@ DEMMPM::scheduleComputeNormals(SchedulerP& sched,
 //
 void
 DEMMPM::computeNormals(const ProcessorGroup*,
-                          const PatchSubset* patches,
-                          const MaterialSubset*,
-                          DataWarehouse* old_dw,
-                          DataWarehouse* new_dw)
+                       const PatchSubset* patches,
+                       const MaterialSubset*,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw)
 {
   Ghost::GhostType gan = Ghost::AroundNodes;
   // Ghost::GhostType  gnone = Ghost::None;
@@ -2788,7 +2792,7 @@ DEMMPM::computeNormals(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    printTask(patches, patch, cout_doing, "Doing MPM::computeNormals");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::computeNormals]");
 
     Vector dx = patch->dCell();
     double oodx[3];
@@ -2875,7 +2879,7 @@ DEMMPM::computeNormals(const ProcessorGroup*,
           }
         }
       } // axisymmetric conditional
-    }   // matl loop
+    } // matl loop
 
     // Make normals collinear by taking an average with the
     // other materials at a node
@@ -2897,14 +2901,14 @@ DEMMPM::computeNormals(const ProcessorGroup*,
             mWON /= (mON + 1.e-100);
             norm_temp[m] = 0.5 * (gSurfNorm[m][node] - mWON);
           } // If node has mass
-        }   // Outer loop over materials
+        } // Outer loop over materials
 
         // Now put temporary norm into main array
         for (size_t m = 0; m < numMPMMatls; m++) {
           gSurfNorm[m][node] = norm_temp[m];
         } // Outer loop over materials
-      }   // Loop over nodes
-    }     // if(flags..)
+      } // Loop over nodes
+    } // if(flags..)
 
     // Make traditional norms unit length, compute gNormTraction
     for (size_t m = 0; m < numMPMMatls; m++) {
@@ -2934,22 +2938,22 @@ DEMMPM::computeNormals(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
-                                        const PatchSet* patches,
-                                        const MaterialSet* matls)
+                                     const PatchSet* patches,
+                                     const MaterialSet* matls)
 {
-  printSchedule(patches, cout_doing, "MPM::scheduleFindSurfaceParticles");
+  printSchedule(patches, dempm_doing, "DEMMPM::scheduleFindSurfaceParticles]");
 
   Task* t = scinew Task(
-    "MPM::findSurfaceParticles", this, &DEMMPM::findSurfaceParticles);
+    "DEMMPM::findSurfaceParticles", this, &DEMMPM::findSurfaceParticles);
 
   t->needs(Task::OldDW,
-              d_mpm_labels->pStressLabel,
-              Ghost::AroundNodes,
-              d_numGhostParticles);
+           d_mpm_labels->pStressLabel,
+           Ghost::AroundNodes,
+           d_numGhostParticles);
   t->needs(Task::OldDW,
-              d_mpm_labels->pSurfLabel,
-              Ghost::AroundNodes,
-              d_numGhostParticles);
+           d_mpm_labels->pSurfLabel,
+           Ghost::AroundNodes,
+           d_numGhostParticles);
   t->computes(d_mpm_labels->pSurfLabel_preReloc);
 
   sched->addTask(t, patches, matls);
@@ -2957,17 +2961,17 @@ DEMMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
 
 void
 DEMMPM::findSurfaceParticles(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset*,
-                                DataWarehouse* old_dw,
-                                DataWarehouse* new_dw)
+                             const PatchSubset* patches,
+                             const MaterialSubset*,
+                             DataWarehouse* old_dw,
+                             DataWarehouse* new_dw)
 {
   auto numMPMMatls = d_materialManager->getNumMaterials("MPM");
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    printTask(patches, patch, cout_doing, "Doing findSurfaceParticles");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::findSurfaceParticles]");
 
     for (size_t mat = 0; mat < numMPMMatls; mat++) {
       MPMMaterial* mpm_matl =
@@ -2993,7 +2997,7 @@ DEMMPM::findSurfaceParticles(const ProcessorGroup*,
         pSurf[particle] = pSurf_old[particle];
       }
     } // matl loop
-  }   // patches
+  } // patches
 }
 
 /*!----------------------------------------------------------------------
@@ -3001,14 +3005,14 @@ DEMMPM::findSurfaceParticles(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleComputeLogisticRegression(SchedulerP& sched,
-                                             const PatchSet* patches,
-                                             const MaterialSet* matls)
+                                          const PatchSet* patches,
+                                          const MaterialSet* matls)
 {
   if (contactModel->useLogisticRegression()) {
     printSchedule(
-      patches, cout_doing, "MPM::scheduleComputeLogisticRegression");
+      patches, dempm_doing, "DEMMPM::scheduleComputeLogisticRegression]");
 
-    Task* t = scinew Task("MPM::computeLogisticRegression",
+    Task* t = scinew Task("DEMMPM::computeLogisticRegression",
                           this,
                           &DEMMPM::computeLogisticRegression);
 
@@ -3041,10 +3045,10 @@ DEMMPM::scheduleComputeLogisticRegression(SchedulerP& sched,
 
 void
 DEMMPM::computeLogisticRegression(const ProcessorGroup*,
-                                     const PatchSubset* patches,
-                                     const MaterialSubset*,
-                                     DataWarehouse* old_dw,
-                                     DataWarehouse* new_dw)
+                                  const PatchSubset* patches,
+                                  const MaterialSubset*,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw)
 {
 
   // As of 5/22/19, this uses John Nairn's and Chad Hammerquist's
@@ -3067,7 +3071,7 @@ DEMMPM::computeLogisticRegression(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     printTask(
-      patches, patch, cout_doing, "Doing MPM::computeLogisticRegression");
+      patches, patch, dempm_doing, "[DEMMPM::MPM::computeLogisticRegression]");
 
     Vector dx = patch->dCell();
 
@@ -3176,7 +3180,7 @@ DEMMPM::computeLogisticRegression(const ProcessorGroup*,
               S[k] > 1.e-100) {
             nodeList.insert(node);
           } // conditional
-        }   // loop over nodes returned by interpolator
+        } // loop over nodes returned by interpolator
 
         for (auto node : nodeList) {
           auto& particle                     = gParticleList[mat][node][399];
@@ -3255,7 +3259,7 @@ DEMMPM::computeLogisticRegression(const ProcessorGroup*,
               // g_prime_phi += xx * (psi * psi * wp - cp_fEq20 * psi_deriv);
 
             } // Loop over each material's particle list
-          }   // Loop over materials
+          } // Loop over materials
 
           Eigen::MatrixXd phi_inc =
             g_prime_phi.colPivHouseholderQr().solve(g_phi);
@@ -3289,7 +3293,7 @@ DEMMPM::computeLogisticRegression(const ProcessorGroup*,
         } // while(!converged) loop
 
       } // If this node has more than one particle on it
-    }   // Loop over nodes
+    } // Loop over nodes
 
     MPMBoundCond bc;
     bc.setBoundaryCondition(
@@ -3474,13 +3478,13 @@ DEMMPM::computeLogisticRegression(const ProcessorGroup*,
                     }
                   }
                 } // Loop over all 8 particle corners
-              }   // Only deal with nodes that this particle affects
-            }     // If node is on the patch
-          }       // Loop over nodes near this particle
+              } // Only deal with nodes that this particle affects
+            } // If node is on the patch
+          } // Loop over nodes near this particle
 #endif
         } // Is a surface particle
-      }   // end Particle loop
-    }     // loop over matls
+      } // end Particle loop
+    } // loop over matls
 
   } // patches
 }
@@ -3490,15 +3494,15 @@ DEMMPM::computeLogisticRegression(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleMomentumExchangeInterpolated(SchedulerP& sched,
-                                                const PatchSet* patches,
-                                                const MaterialSet* matls)
+                                             const PatchSet* patches,
+                                             const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
   printSchedule(
-    patches, cout_doing, "MPM::scheduleExchangeMomentumInterpolated");
+    patches, dempm_doing, "DEMMPM::scheduleExchangeMomentumInterpolated]");
 
   contactModel->addComputesAndRequires(
     sched, patches, matls, d_mpm_labels->gVelocityLabel);
@@ -3509,8 +3513,8 @@ DEMMPM::scheduleMomentumExchangeInterpolated(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleComputeContactArea(SchedulerP& sched,
-                                      const PatchSet* patches,
-                                      const MaterialSet* matls)
+                                   const PatchSet* patches,
+                                   const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
@@ -3520,9 +3524,9 @@ DEMMPM::scheduleComputeContactArea(SchedulerP& sched,
   /** computeContactArea */
   if (d_boundaryTractionFaces.size() > 0) {
 
-    printSchedule(patches, cout_doing, "MPM::scheduleComputeContactArea");
-    Task* t = scinew Task(
-      "MPM::computeContactArea", this, &DEMMPM::computeContactArea);
+    printSchedule(patches, dempm_doing, "[DEMMPM::scheduleComputeContactArea]");
+    Task* t =
+      scinew Task("DEMMPM::computeContactArea", this, &DEMMPM::computeContactArea);
 
     Ghost::GhostType gnone = Ghost::None;
     t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, gnone);
@@ -3539,17 +3543,17 @@ DEMMPM::scheduleComputeContactArea(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeContactArea(const ProcessorGroup*,
-                              const PatchSubset* patches,
-                              const MaterialSubset*,
-                              DataWarehouse* /*old_dw*/,
-                              DataWarehouse* new_dw)
+                           const PatchSubset* patches,
+                           const MaterialSubset*,
+                           DataWarehouse* /*old_dw*/,
+                           DataWarehouse* new_dw)
 {
   // six indices for each of the faces
   double bndyCArea[6] = { 0, 0, 0, 0, 0, 0 };
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing computeContactArea");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::computeContactArea]");
 
     Vector dx = patch->dCell();
 
@@ -3598,8 +3602,8 @@ DEMMPM::computeContactArea(const ProcessorGroup*,
           }
         }
       } // faces
-    }   // materials
-  }     // patches
+    } // materials
+  } // patches
 
   // be careful only to put the fields that we have built
   // that way if the user asks to output a field that has not been built
@@ -3623,35 +3627,32 @@ DEMMPM::computeContactArea(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleComputeInternalForce(SchedulerP& sched,
-                                        const PatchSet* patches,
-                                        const MaterialSet* matls)
+                                     const PatchSet* patches,
+                                     const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleComputeInternalForce");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleComputeInternalForce]");
 
   Task* t = scinew Task(
-    "MPM::computeInternalForce", this, &DEMMPM::computeInternalForce);
+    "DEMMPM::computeInternalForce", this, &DEMMPM::computeInternalForce);
 
   Ghost::GhostType gan   = Ghost::AroundNodes;
   Ghost::GhostType gnone = Ghost::None;
   t->needs(Task::NewDW, d_mpm_labels->gVolumeLabel, gnone);
   t->needs(Task::NewDW,
-              d_mpm_labels->gVolumeLabel,
-              d_materialManager->getAllInOneMaterial(),
-              Task::OutOfDomain,
-              gnone);
-  t->needs(
-    Task::OldDW, d_mpm_labels->pStressLabel, gan, d_numGhostParticles);
-  t->needs(
-    Task::OldDW, d_mpm_labels->pVolumeLabel, gan, d_numGhostParticles);
+           d_mpm_labels->gVolumeLabel,
+           d_materialManager->getAllInOneMaterial(),
+           Task::OutOfDomain,
+           gnone);
+  t->needs(Task::OldDW, d_mpm_labels->pStressLabel, gan, d_numGhostParticles);
+  t->needs(Task::OldDW, d_mpm_labels->pVolumeLabel, gan, d_numGhostParticles);
   t->needs(Task::OldDW, d_mpm_labels->pXLabel, gan, d_numGhostParticles);
   t->needs(Task::OldDW, d_mpm_labels->pSizeLabel, gan, d_numGhostParticles);
-  t->needs(
-    Task::OldDW, d_mpm_labels->pDefGradLabel, gan, d_numGhostParticles);
+  t->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, gan, d_numGhostParticles);
 #ifdef DEBUG_WITH_PARTICLE_ID
   t->needs(
     Task::OldDW, d_mpm_labels->pParticleIDLabel, gan, d_numGhostParticles);
@@ -3689,10 +3690,10 @@ DEMMPM::scheduleComputeInternalForce(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeInternalForce(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset*,
-                                DataWarehouse* old_dw,
-                                DataWarehouse* new_dw)
+                             const PatchSubset* patches,
+                             const MaterialSubset*,
+                             DataWarehouse* old_dw,
+                             DataWarehouse* new_dw)
 {
   // node based forces
   Vector bndyForce[6];
@@ -3704,7 +3705,7 @@ DEMMPM::computeInternalForce(const ProcessorGroup*,
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing computeInternalForce");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::computeInternalForce]");
 
     Vector dx = patch->dCell();
     double oodx[3];
@@ -3814,8 +3815,9 @@ DEMMPM::computeInternalForce(const ProcessorGroup*,
             pX[idx], ni, S, d_S, pSize[idx], pDefGrad_old[idx]);
           stressvol   = pStress[idx] * pVol[idx];
           stresspress = pStress[idx] + Id * (p_pressure[idx] - p_q[idx]);
-          //std::cerr << std::format("idx = {} pStress = {}\n", idx, pStress[idx]);
-          //std::cerr << std::format("stressvol = {}, stresspress = {}\n", stressvol, stresspress);
+          // std::cerr << std::format("idx = {} pStress = {}\n", idx,
+          // pStress[idx]); std::cerr << std::format("stressvol = {},
+          // stresspress = {}\n", stressvol, stresspress);
 
           for (int k = 0; k < numInfluenceNodes; k++) {
             auto node = ni[k];
@@ -3823,14 +3825,22 @@ DEMMPM::computeInternalForce(const ProcessorGroup*,
               Vector div(d_S[k].x() * oodx[0],
                          d_S[k].y() * oodx[1],
                          d_S[k].z() * oodx[2]);
-              //std::cout << std::format("node = {}, gInternalForce[node] = {}\n",
-              //  node, gInternalForce[node]);
+              // std::cout << std::format("node = {}, gInternalForce[node] =
+              // {}\n",
+              //   node, gInternalForce[node]);
               gInternalForce[node] -= (div * stresspress) * pVol[idx];
               gStress[node] += stressvol * S[k];
               if (!std::isfinite(gInternalForce[node].x())) {
                 std::cout << std::format(
-                  "idx = {}, k = {}, div = {}, S[k] = {}, pVol[idx] = {}, stresspress = {}, stressvol = {}\n",
-                  idx, k, div, S[k], pVol[idx], stresspress, stressvol);
+                  "idx = {}, k = {}, div = {}, S[k] = {}, pVol[idx] = {}, "
+                  "stresspress = {}, stressvol = {}\n",
+                  idx,
+                  k,
+                  div,
+                  S[k],
+                  pVol[idx],
+                  stresspress,
+                  stressvol);
               }
 
 #ifdef DEBUG_WITH_PARTICLE_ID
@@ -4043,8 +4053,8 @@ DEMMPM::computeInternalForce(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
-                                                   const PatchSet* patches,
-                                                   const MaterialSet* matls)
+                                                const PatchSet* patches,
+                                                const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
@@ -4052,9 +4062,9 @@ DEMMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
   }
 
   printSchedule(
-    patches, cout_doing, "MPM::scheduleComputeAndIntegrateAcceleration");
+    patches, dempm_doing, "[DEMMPM::scheduleComputeAndIntegrateAcceleration]");
 
-  Task* t = scinew Task("MPM::computeAndIntegrateAcceleration",
+  Task* t = scinew Task("DEMMPM::computeAndIntegrateAcceleration",
                         this,
                         &DEMMPM::computeAndIntegrateAcceleration);
 
@@ -4077,15 +4087,15 @@ DEMMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
-                                           const PatchSubset* patches,
-                                           const MaterialSubset*,
-                                           DataWarehouse* old_dw,
-                                           DataWarehouse* new_dw)
+                                        const PatchSubset* patches,
+                                        const MaterialSubset*,
+                                        DataWarehouse* old_dw,
+                                        DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
     printTask(
-      patches, patch, cout_doing, "Doing computeAndIntegrateAcceleration");
+      patches, patch, dempm_doing, "[DEMMPM::computeAndIntegrateAcceleration]");
 
     Ghost::GhostType gnone = Ghost::None;
     // Vector gravity = d_mpm_flags->d_gravity;
@@ -4133,10 +4143,12 @@ DEMMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
       if (mpm_matl->isRigid()) {
         Vector total_force(0, 0, 0);
         double total_mass = 0;
-        for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+        for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
+             iter++) {
           IntVector c = *iter;
           if (gMass[c] > d_mpm_flags->d_minMassForAcceleration) {
-            total_force += gInternalForce[c] + gExternalForce[c] + gBodyForce[c];
+            total_force +=
+              gInternalForce[c] + gExternalForce[c] + gBodyForce[c];
             total_mass += gMass[c];
           }
         }
@@ -4146,7 +4158,8 @@ DEMMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
           rigid_acc = total_force / total_mass;
         }
 
-        for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+        for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
+             iter++) {
           IntVector c = *iter;
           Vector acc(0., 0., 0.);
           if (gMass[c] > d_mpm_flags->d_minMassForAcceleration) {
@@ -4170,7 +4183,8 @@ DEMMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
 #ifdef DEBUG_WITH_PARTICLE_ID
           IntVector node(3, 38, 0);
           if (c == node) {
-            proc0cout << "Node = " << node << " fint_g = " << gInternalForce[node]
+            proc0cout << "Node = " << node
+                      << " fint_g = " << gInternalForce[node]
                       << " fext_g = " << gExternalForce[node]
                       << " fbod_g = " << gBodyForce[node]
                       << " acc = " << gAcceleration[node] << "\n";
@@ -4184,8 +4198,8 @@ DEMMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
 
           Vector acc(0., 0., 0.);
           if (gMass[c] > d_mpm_flags->d_minMassForAcceleration) {
-            acc =
-              (gInternalForce[c] + gExternalForce[c] + gBodyForce[c]) / gMass[c];
+            acc = (gInternalForce[c] + gExternalForce[c] + gBodyForce[c]) /
+                  gMass[c];
             acc -= damp_coef * gVelocity[c];
           }
           // gAcceleration[c] = acc +  gravity;
@@ -4207,7 +4221,8 @@ DEMMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
 #ifdef DEBUG_WITH_PARTICLE_ID
           IntVector node(3, 38, 0);
           if (c == node) {
-            proc0cout << "Node = " << node << " fint_g = " << gInternalForce[node]
+            proc0cout << "Node = " << node
+                      << " fint_g = " << gInternalForce[node]
                       << " fext_g = " << gExternalForce[node]
                       << " fbod_g = " << gBodyForce[node]
                       << " acc = " << gAcceleration[node] << "\n";
@@ -4224,8 +4239,8 @@ DEMMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleMomentumExchangeIntegrated(SchedulerP& sched,
-                                              const PatchSet* patches,
-                                              const MaterialSet* matls)
+                                           const PatchSet* patches,
+                                           const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
@@ -4238,7 +4253,8 @@ DEMMPM::scheduleMomentumExchangeIntegrated(SchedulerP& sched,
    *              velocity fields to feel the influence of the
    *              the others according to specific rules)
    *   out(G.VELOCITY_STAR, G.ACCELERATION) */
-  printSchedule(patches, cout_doing, "MPM::scheduleMomentumExchangeIntegrated");
+  printSchedule(
+    patches, dempm_doing, "[DEMMPM::scheduleMomentumExchangeIntegrated]");
   contactModel->addComputesAndRequires(
     sched, patches, matls, d_mpm_labels->gVelocityStarLabel);
 }
@@ -4248,18 +4264,17 @@ DEMMPM::scheduleMomentumExchangeIntegrated(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleSetGridBoundaryConditions(SchedulerP& sched,
-                                             const PatchSet* patches,
-                                             const MaterialSet* matls)
+                                          const PatchSet* patches,
+                                          const MaterialSet* matls)
 
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
-  printSchedule(patches, cout_doing, "MPM::scheduleSetGridBoundaryConditions");
-  Task* t = scinew Task("MPM::setGridBoundaryConditions",
-                        this,
-                        &DEMMPM::setGridBoundaryConditions);
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleSetGridBoundaryConditions]");
+  Task* t = scinew Task(
+    "DEMMPM::setGridBoundaryConditions", this, &DEMMPM::setGridBoundaryConditions);
 
   const MaterialSubset* mss = matls->getUnion();
   t->needs(Task::OldDW, d_mpm_labels->delTLabel);
@@ -4281,14 +4296,14 @@ DEMMPM::scheduleSetGridBoundaryConditions(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::setGridBoundaryConditions(const ProcessorGroup*,
-                                     const PatchSubset* patches,
-                                     const MaterialSubset*,
-                                     DataWarehouse* old_dw,
-                                     DataWarehouse* new_dw)
+                                  const PatchSubset* patches,
+                                  const MaterialSubset*,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing setGridBoundaryConditions");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::setGridBoundaryConditions]");
 
     int numMPMMatls = d_materialManager->getNumMaterials("MPM");
 
@@ -4343,8 +4358,8 @@ DEMMPM::setGridBoundaryConditions(const ProcessorGroup*,
           displacement[c] = displacementOld[c] + gVelocity_star[c] * delT;
         }
       } // d_doGridReset
-    }   // matl loop
-  }     // patch loop
+    } // matl loop
+  } // patch loop
 }
 
 /*!----------------------------------------------------------------------
@@ -4352,8 +4367,8 @@ DEMMPM::setGridBoundaryConditions(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleSetPrescribedMotion(SchedulerP& sched,
-                                       const PatchSet* patches,
-                                       const MaterialSet* matls)
+                                    const PatchSet* patches,
+                                    const MaterialSet* matls)
 
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
@@ -4362,10 +4377,10 @@ DEMMPM::scheduleSetPrescribedMotion(SchedulerP& sched,
   }
 
   if (d_mpm_flags->d_prescribeDeformation) {
-    printSchedule(patches, cout_doing, "MPM::scheduleSetPrescribedMotion");
+    printSchedule(patches, dempm_doing, "[DEMMPM::scheduleSetPrescribedMotion]");
 
     Task* t = scinew Task(
-      "MPM::setPrescribedMotion", this, &DEMMPM::setPrescribedMotion);
+      "DEMMPM::setPrescribedMotion", this, &DEMMPM::setPrescribedMotion);
 
     const MaterialSubset* mss = matls->getUnion();
     t->modifies(d_mpm_labels->gAccelerationLabel, mss);
@@ -4386,14 +4401,14 @@ DEMMPM::scheduleSetPrescribedMotion(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::setPrescribedMotion(const ProcessorGroup*,
-                               const PatchSubset* patches,
-                               const MaterialSubset*,
-                               DataWarehouse* old_dw,
-                               DataWarehouse* new_dw)
+                            const PatchSubset* patches,
+                            const MaterialSubset*,
+                            DataWarehouse* old_dw,
+                            DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing setPrescribedMotion");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::setPrescribedMotion]");
 
     // Get the current time
     simTime_vartype simTimeVar;
@@ -4588,7 +4603,7 @@ DEMMPM::setPrescribedMotion(const ProcessorGroup*,
       } // d_doGridReset
 
     } // matl loop
-  }   // patch loop
+  } // patch loop
 }
 
 /*!----------------------------------------------------------------------
@@ -4596,18 +4611,18 @@ DEMMPM::setPrescribedMotion(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleComputeXPICVelocities(SchedulerP& sched,
-                                         const PatchSet* patches,
-                                         const MaterialSet* matls)
+                                      const PatchSet* patches,
+                                      const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleComputeXPICVelocities");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleComputeXPICVelocities]");
 
   // Particle velocities
-  Task* t_part = scinew Task("MPM::computeParticleVelocityXPIC",
+  Task* t_part = scinew Task("DEMMPM::computeParticleVelocityXPIC",
                              this,
                              &DEMMPM::computeParticleVelocityXPIC);
 
@@ -4616,9 +4631,9 @@ DEMMPM::scheduleComputeXPICVelocities(SchedulerP& sched,
   t_part->needs(Task::OldDW, d_mpm_labels->pDefGradLabel, Ghost::None);
 
   t_part->needs(Task::NewDW,
-                   d_mpm_labels->gVelocityLabel,
-                   Ghost::AroundCells,
-                   d_numGhostNodes);
+                d_mpm_labels->gVelocityLabel,
+                Ghost::AroundCells,
+                d_numGhostNodes);
 
   t_part->computes(d_mpm_labels->pVelocityXPICLabel);
 
@@ -4626,28 +4641,28 @@ DEMMPM::scheduleComputeXPICVelocities(SchedulerP& sched,
 
   // Grid velocities
   Task* t_grid = scinew Task(
-    "MPM::computeGridVelocityXPIC", this, &DEMMPM::computeGridVelocityXPIC);
+    "DEMMPM::computeGridVelocityXPIC", this, &DEMMPM::computeGridVelocityXPIC);
 
   t_grid->needs(Task::OldDW,
-                   d_mpm_labels->pXLabel,
-                   Ghost::AroundNodes,
-                   d_numGhostParticles);
+                d_mpm_labels->pXLabel,
+                Ghost::AroundNodes,
+                d_numGhostParticles);
   t_grid->needs(Task::OldDW,
-                   d_mpm_labels->pMassLabel,
-                   Ghost::AroundNodes,
-                   d_numGhostParticles);
+                d_mpm_labels->pMassLabel,
+                Ghost::AroundNodes,
+                d_numGhostParticles);
   t_grid->needs(Task::OldDW,
-                   d_mpm_labels->pSizeLabel,
-                   Ghost::AroundNodes,
-                   d_numGhostParticles);
+                d_mpm_labels->pSizeLabel,
+                Ghost::AroundNodes,
+                d_numGhostParticles);
   t_grid->needs(Task::OldDW,
-                   d_mpm_labels->pDefGradLabel,
-                   Ghost::AroundNodes,
-                   d_numGhostParticles);
+                d_mpm_labels->pDefGradLabel,
+                Ghost::AroundNodes,
+                d_numGhostParticles);
   t_grid->needs(Task::NewDW,
-                   d_mpm_labels->pVelocityXPICLabel,
-                   Ghost::AroundNodes,
-                   d_numGhostParticles);
+                d_mpm_labels->pVelocityXPICLabel,
+                Ghost::AroundNodes,
+                d_numGhostParticles);
 
   t_grid->needs(
     Task::NewDW, d_mpm_labels->gMassLabel, Ghost::AroundCells, d_numGhostNodes);
@@ -4662,13 +4677,13 @@ DEMMPM::scheduleComputeXPICVelocities(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeParticleVelocityXPIC(const ProcessorGroup*,
-                                       const PatchSubset* patches,
-                                       const MaterialSubset*,
-                                       DataWarehouse* old_dw,
-                                       DataWarehouse* new_dw)
+                                    const PatchSubset* patches,
+                                    const MaterialSubset*,
+                                    DataWarehouse* old_dw,
+                                    DataWarehouse* new_dw)
 {
   for (auto patch : *patches) {
-    printTask(patches, patch, cout_doing, "Doing computeParticleVelocityXPIC");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::computeParticleVelocityXPIC]");
 
     auto interpolator      = d_mpm_flags->d_interpolator->clone(patch);
     auto numInfluenceNodes = interpolator->size();
@@ -4722,13 +4737,13 @@ DEMMPM::computeParticleVelocityXPIC(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeGridVelocityXPIC(const ProcessorGroup*,
-                                   const PatchSubset* patches,
-                                   const MaterialSubset*,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw)
+                                const PatchSubset* patches,
+                                const MaterialSubset*,
+                                DataWarehouse* old_dw,
+                                DataWarehouse* new_dw)
 {
   for (auto patch : *patches) {
-    printTask(patches, patch, cout_doing, "Doing computeGridVelocityXPIC");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::computeGridVelocityXPIC]");
 
     auto interpolator      = d_mpm_flags->d_interpolator->clone(patch);
     auto numInfluenceNodes = interpolator->size();
@@ -4797,16 +4812,16 @@ DEMMPM::computeGridVelocityXPIC(const ProcessorGroup*,
 //  perform the reduction. The actual task is inside MPIScheduler.
 void
 DEMMPM::scheduleReduceVars(SchedulerP& sched,
-                              const PatchSet* patches,
-                              const MaterialSet* matls)
+                           const PatchSet* patches,
+                           const MaterialSet* matls)
 {
   if (!d_mpm_flags->d_reductionVars->sumTransmittedForce) {
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleReduceVars");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleReduceVars]");
 
-  Task* t = scinew Task("MPM::reductionTask", Task::Reduction);
+  Task* t = scinew Task("DEMMPM::reductionTask", Task::Reduction);
 
   // Create reductionMatlSubSet that includes all mpm matls
   // and the global matl.
@@ -4843,8 +4858,8 @@ DEMMPM::scheduleReduceVars(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
-                                                   const PatchSet* patches,
-                                                   const MaterialSet* matls)
+                                                const PatchSet* patches,
+                                                const MaterialSet* matls)
 
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
@@ -4853,9 +4868,9 @@ DEMMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   }
 
   printSchedule(
-    patches, cout_doing, "MPM::scheduleInterpolateToParticlesAndUpdate");
+    patches, dempm_doing, "[DEMMPM::scheduleInterpolateToParticlesAndUpdate]");
 
-  Task* t = scinew Task("MPM::interpolateToParticlesAndUpdate",
+  Task* t = scinew Task("DEMMPM::interpolateToParticlesAndUpdate",
                         this,
                         &DEMMPM::interpolateToParticlesAndUpdate);
 
@@ -4864,10 +4879,8 @@ DEMMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 
   Ghost::GhostType gac   = Ghost::AroundCells;
   Ghost::GhostType gnone = Ghost::None;
-  t->needs(
-    Task::NewDW, d_mpm_labels->gAccelerationLabel, gac, d_numGhostNodes);
-  t->needs(
-    Task::NewDW, d_mpm_labels->gVelocityStarLabel, gac, d_numGhostNodes);
+  t->needs(Task::NewDW, d_mpm_labels->gAccelerationLabel, gac, d_numGhostNodes);
+  t->needs(Task::NewDW, d_mpm_labels->gVelocityStarLabel, gac, d_numGhostNodes);
   if (d_mpm_flags->d_useXPIC) {
     t->needs(
       Task::NewDW, d_mpm_labels->gVelocityXPICLabel, gac, d_numGhostNodes);
@@ -4977,10 +4990,10 @@ DEMMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
-                                           const PatchSubset* patches,
-                                           const MaterialSubset*,
-                                           DataWarehouse* old_dw,
-                                           DataWarehouse* new_dw)
+                                        const PatchSubset* patches,
+                                        const MaterialSubset*,
+                                        DataWarehouse* old_dw,
+                                        DataWarehouse* new_dw)
 {
   Ghost::GhostType gnone = Ghost::None;
   Ghost::GhostType gac   = Ghost::AroundCells;
@@ -4988,7 +5001,7 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
     printTask(
-      patches, patch, cout_doing, "Doing interpolateToParticlesAndUpdate");
+      patches, patch, dempm_doing, "[DEMMPM::interpolateToParticlesAndUpdate]");
 
     auto interpolator      = d_mpm_flags->d_interpolator->clone(patch);
     auto numInfluenceNodes = interpolator->size();
@@ -5005,8 +5018,8 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     double partvoldef     = 0.;
     Vector CMX(0.0, 0.0, 0.0);
     Vector totalMom(0.0, 0.0, 0.0);
-    double ke       = 0;
-    int numMPMMatls = d_materialManager->getNumMaterials("MPM");
+    double ke          = 0;
+    int numMPMMatls    = d_materialManager->getNumMaterials("MPM");
     const Level* level = getLevel(patches);
     delt_vartype delT;
     old_dw->get(delT, d_mpm_labels->delTLabel, level);
@@ -5092,7 +5105,8 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       if (d_mpm_flags->d_enableDEM) {
         old_dw->get(pRadius, d_mpm_labels->pRadiusLabel, pset);
         old_dw->get(pRigidBodyID, d_mpm_labels->pRigidBodyIDLabel, pset);
-        old_dw->get(pAngularVelocity, d_mpm_labels->pAngularVelocityLabel, pset);
+        old_dw->get(
+          pAngularVelocity, d_mpm_labels->pAngularVelocityLabel, pset);
       }
 
       constParticleVariable<Vector> pVelocityXPIC;
@@ -5200,7 +5214,8 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       auto* delset = scinew ParticleSubset(0, matID, patch);
 
       // Map to store master particle kinematics for synchronization
-      struct MasterState {
+      struct MasterState
+      {
         Point pos;
         Point pos_old;
         Vector vel;
@@ -5280,17 +5295,23 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
 
         // Collect master particle states for discrete or rigid materials
-        if (d_mpm_flags->d_enableDEM && (mpm_matl->isDEMMaterial() || mpm_matl->isRigid()) && pRadius[idx] > 0) {
-          master_states[pRigidBodyID[idx]] = {pX_new[idx], pX[idx], pVelocity_new[idx], pAngularVelocity[idx]};
+        if (d_mpm_flags->d_enableDEM &&
+            (mpm_matl->isDEMMaterial() || mpm_matl->isRigid()) &&
+            pRadius[idx] > 0) {
+          master_states[pRigidBodyID[idx]] = {
+            pX_new[idx], pX[idx], pVelocity_new[idx], pAngularVelocity[idx]
+          };
         }
 
         // Explicit boundary enforcement for discrete particles
-        // In quasi-2D simulations, the domain thickness in one dimension (e.g., Y)
-        // might be much smaller than the physical radius of a discrete object.
-        // We only enforce symmetry boundary corrections if the domain is thick
-        // enough to contain at least one full particle diameter. Otherwise,
-        // the correction would push the particle outside the opposite boundary.
-        if (d_mpm_flags->d_enableDEM && mpm_matl->isDEMMaterial() && pMass[idx] > 0) {
+        // In quasi-2D simulations, the domain thickness in one dimension (e.g.,
+        // Y) might be much smaller than the physical radius of a discrete
+        // object. We only enforce symmetry boundary corrections if the domain
+        // is thick enough to contain at least one full particle diameter.
+        // Otherwise, the correction would push the particle outside the
+        // opposite boundary.
+        if (d_mpm_flags->d_enableDEM && mpm_matl->isDEMMaterial() &&
+            pMass[idx] > 0) {
           double radius = pRadius[idx];
           for (auto face : bf) {
             if (patch->haveBC(face, matID, "symmetry", "Symmetric")) {
@@ -5299,9 +5320,8 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                   pX_new[idx].x() - radius < domain_low.x()) {
                 pVelocity_new[idx] =
                   Vector(0, pVelocity_new[idx].y(), pVelocity_new[idx].z());
-                pX_new[idx] = Point(domain_low.x() + radius,
-                                    pX_new[idx].y(),
-                                    pX_new[idx].z());
+                pX_new[idx] = Point(
+                  domain_low.x() + radius, pX_new[idx].y(), pX_new[idx].z());
                 pDisp_new[idx] = pX_new[idx] - pX[idx];
               }
               if (face == Patch::xplus &&
@@ -5309,9 +5329,8 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                   pX_new[idx].x() + radius > domain_high.x()) {
                 pVelocity_new[idx] =
                   Vector(0, pVelocity_new[idx].y(), pVelocity_new[idx].z());
-                pX_new[idx] = Point(domain_high.x() - radius,
-                                    pX_new[idx].y(),
-                                    pX_new[idx].z());
+                pX_new[idx] = Point(
+                  domain_high.x() - radius, pX_new[idx].y(), pX_new[idx].z());
                 pDisp_new[idx] = pX_new[idx] - pX[idx];
               }
               if (face == Patch::yminus &&
@@ -5319,9 +5338,8 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                   pX_new[idx].y() - radius < domain_low.y()) {
                 pVelocity_new[idx] =
                   Vector(pVelocity_new[idx].x(), 0, pVelocity_new[idx].z());
-                pX_new[idx] = Point(pX_new[idx].x(),
-                                    domain_low.y() + radius,
-                                    pX_new[idx].z());
+                pX_new[idx] = Point(
+                  pX_new[idx].x(), domain_low.y() + radius, pX_new[idx].z());
                 pDisp_new[idx] = pX_new[idx] - pX[idx];
               }
               if (face == Patch::yplus &&
@@ -5329,9 +5347,8 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                   pX_new[idx].y() + radius > domain_high.y()) {
                 pVelocity_new[idx] =
                   Vector(pVelocity_new[idx].x(), 0, pVelocity_new[idx].z());
-                pX_new[idx] = Point(pX_new[idx].x(),
-                                    domain_high.y() - radius,
-                                    pX_new[idx].z());
+                pX_new[idx] = Point(
+                  pX_new[idx].x(), domain_high.y() - radius, pX_new[idx].z());
                 pDisp_new[idx] = pX_new[idx] - pX[idx];
               }
               if (face == Patch::zminus &&
@@ -5339,9 +5356,8 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                   pX_new[idx].z() - radius < domain_low.z()) {
                 pVelocity_new[idx] =
                   Vector(pVelocity_new[idx].x(), pVelocity_new[idx].y(), 0);
-                pX_new[idx] = Point(pX_new[idx].x(),
-                                    pX_new[idx].y(),
-                                    domain_low.z() + radius);
+                pX_new[idx] = Point(
+                  pX_new[idx].x(), pX_new[idx].y(), domain_low.z() + radius);
                 pDisp_new[idx] = pX_new[idx] - pX[idx];
               }
               if (face == Patch::zplus &&
@@ -5349,9 +5365,8 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                   pX_new[idx].z() + radius > domain_high.z()) {
                 pVelocity_new[idx] =
                   Vector(pVelocity_new[idx].x(), pVelocity_new[idx].y(), 0);
-                pX_new[idx] = Point(pX_new[idx].x(),
-                                    pX_new[idx].y(),
-                                    domain_high.z() - radius);
+                pX_new[idx] = Point(
+                  pX_new[idx].x(), pX_new[idx].y(), domain_high.z() - radius);
                 pDisp_new[idx] = pX_new[idx] - pX[idx];
               }
             }
@@ -5380,12 +5395,11 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           pTemp_new[idx] = pTemperature[idx];
         }
 
-        if (cout_heat.active()) {
-          cout_heat << "MPM::Particle = " << pParticleID[idx]
-                    << " T_old = " << pTemperature[idx]
-                    << " Tdot = " << tempRate << " dT = " << (tempRate * delT)
-                    << " T_new = " << pTemp_new[idx] << "\n";
-        }
+        DOUT(dempm_heat,
+             "DEMMPM::Particle = " << pParticleID[idx] << " T_old = "
+                                << pTemperature[idx] << " Tdot = " << tempRate
+                                << " dT = " << (tempRate * delT)
+                                << " T_new = " << pTemp_new[idx]);
 
         double rho;
         if (pVolume_new[idx] > 0.) {
@@ -5410,31 +5424,35 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
       } // End loop over particles
 
-      // Synchronize dummy particles with master particle for discrete or rigid materials
-      if (d_mpm_flags->d_enableDEM && (mpm_matl->isDEMMaterial() || mpm_matl->isRigid())) {
+      // Synchronize dummy particles with master particle for discrete or rigid
+      // materials
+      if (d_mpm_flags->d_enableDEM &&
+          (mpm_matl->isDEMMaterial() || mpm_matl->isRigid())) {
         for (auto idx : *pset) {
-          // If it's a dummy particle (discrete only) OR any particle in a rigid material (except the master)
-          if ((mpm_matl->isDEMMaterial() && pMass[idx] <= 0) || (mpm_matl->isRigid() && pRadius[idx] <= 0)) {
+          // If it's a dummy particle (discrete only) OR any particle in a rigid
+          // material (except the master)
+          if ((mpm_matl->isDEMMaterial() && pMass[idx] <= 0) ||
+              (mpm_matl->isRigid() && pRadius[idx] <= 0)) {
             long64 rbID = pRigidBodyID[idx];
             if (master_states.count(rbID)) {
               const auto& master = master_states[rbID];
-              Vector arm = pX[idx] - master.pos_old;
-              double arm_len = arm.length();
-              
+              Vector arm         = pX[idx] - master.pos_old;
+              double arm_len     = arm.length();
+
               if (master.omega.length2() > 1e-12) {
-                 // Predict new position with explicit rotation
-                 Vector arm_new = arm + Cross(master.omega, arm) * delT;
-                 
-                 // Corrector: Enforce rigid body distance constraint
-                 if (arm_new.length() > 1e-12) {
-                    arm_new = arm_new * (arm_len / arm_new.length());
-                 }
-                 
-                 pX_new[idx] = master.pos + arm_new;
-                 pVelocity_new[idx] = (pX_new[idx] - pX[idx]) / delT;
+                // Predict new position with explicit rotation
+                Vector arm_new = arm + Cross(master.omega, arm) * delT;
+
+                // Corrector: Enforce rigid body distance constraint
+                if (arm_new.length() > 1e-12) {
+                  arm_new = arm_new * (arm_len / arm_new.length());
+                }
+
+                pX_new[idx]        = master.pos + arm_new;
+                pVelocity_new[idx] = (pX_new[idx] - pX[idx]) / delT;
               } else {
-                 pX_new[idx] = master.pos + arm;
-                 pVelocity_new[idx] = master.vel;
+                pX_new[idx]        = master.pos + arm;
+                pVelocity_new[idx] = master.vel;
               }
               pDisp_new[idx] = pX_new[idx] - pX[idx];
             }
@@ -5504,16 +5522,19 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
         */
 
-        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass && !mpm_matl->isDEMMaterial()) ||
+        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass &&
+             !mpm_matl->isDEMMaterial()) ||
             (pTemp_new[idx] < 0.0) || (pLocalized_new[idx] == -999)) {
           if (d_mpm_flags->d_erosionAlgorithm != "none") {
             delset->addParticle(idx);
           }
           if (mpm_matl->isDEMMaterial()) {
-             std::cout << "  DEBUG: DELETING discrete particle ID: " << pParticleID[idx]
-                       << " in interpolateToParticlesAndUpdate"
-                       << " mass: " << pMass_new[idx] << " temp: " << pTemp_new[idx]
-                       << " localized: " << pLocalized_new[idx] << std::endl;
+            std::cout << "  DEBUG: DELETING discrete particle ID: "
+                      << pParticleID[idx]
+                      << " in interpolateToParticlesAndUpdate"
+                      << " mass: " << pMass_new[idx]
+                      << " temp: " << pTemp_new[idx]
+                      << " localized: " << pLocalized_new[idx] << std::endl;
           }
           proc0cout
             << "\n Warning: particle " << pParticleID[idx]
@@ -5543,8 +5564,9 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
               delset->addParticle(idx);
             }
             if (mpm_matl->isDEMMaterial()) {
-               std::cout << "  DEBUG: DELETING discrete particle ID: " << pParticleID[idx]
-                         << " hit speed ceiling. Vel: " << pVelocity_new[idx].length() << std::endl;
+              std::cout << "  DEBUG: DELETING discrete particle ID: "
+                        << pParticleID[idx] << " hit speed ceiling. Vel: "
+                        << pVelocity_new[idx].length() << std::endl;
             }
             std::cout << "\n Warning: particle " << pParticleID[idx]
                       << " hit speed ceiling #1. Deleting particle."
@@ -5621,8 +5643,8 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
-                                              const PatchSet* patches,
-                                              const MaterialSet* matls)
+                                           const PatchSet* patches,
+                                           const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
@@ -5630,10 +5652,11 @@ DEMMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
   }
 
   /* Create a task for computing the deformation gradient */
-  printSchedule(patches, cout_doing, "MPM::scheduleComputeDeformationGradient");
+  printSchedule(
+    patches, dempm_doing, "[DEMMPM::scheduleComputeDeformationGradient]");
 
   int numMatls = d_materialManager->getNumMaterials("MPM");
-  Task* t      = scinew Task("MPM::computeDeformationGradient",
+  Task* t      = scinew Task("DEMMPM::computeDeformationGradient",
                         this,
                         &DEMMPM::computeDeformationGradient);
   for (int m = 0; m < numMatls; m++) {
@@ -5655,24 +5678,26 @@ DEMMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeDeformationGradient(const ProcessorGroup*,
-                                      const PatchSubset* patches,
-                                      const MaterialSubset*,
-                                      DataWarehouse* old_dw,
-                                      DataWarehouse* new_dw)
+                                   const PatchSubset* patches,
+                                   const MaterialSubset*,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw)
 {
-  printTask(
-    patches, patches->get(0), cout_doing, "Doing computeDeformationGradient");
+  printTask(patches,
+            patches->get(0),
+            dempm_doing,
+            "[DEMMPM] [DEMMPM::computeDeformationGradient");
 
-  if (cout_doing.active()) {
-    cout_doing << "Before compute def grad: old_dw\n";
+  DOUT(dempm_dbg, "Before compute def grad: old_dw");
+  if (dempm_dbg.active()) {
     old_dw->print();
   }
 
   // Compute deformation gradient
   d_defGradComputer->computeDeformationGradient(patches, old_dw, new_dw);
 
-  if (cout_doing.active()) {
-    cout_doing << "After compute def grad: new_dw\n";
+  DOUT(dempm_dbg, "After compute def grad: new_dw");
+  if (dempm_dbg.active()) {
     new_dw->print();
   }
 
@@ -5707,8 +5732,8 @@ DEMMPM::computeDeformationGradient(const ProcessorGroup*,
 /////////////////////////////////////////////////////////////////////////
 void
 DEMMPM::scheduleComputeStressTensor(SchedulerP& sched,
-                                       const PatchSet* patches,
-                                       const MaterialSet* matls)
+                                    const PatchSet* patches,
+                                    const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
@@ -5719,11 +5744,11 @@ DEMMPM::scheduleComputeStressTensor(SchedulerP& sched,
   scheduleUnrotateStressAndDeformationRate(sched, patches, matls);
 
   /* Create a task for computing the stress tensor */
-  printSchedule(patches, cout_doing, "MPM::scheduleComputeStressTensor");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleComputeStressTensor]");
 
   int numMatls = d_materialManager->getNumMaterials("MPM");
-  Task* t      = scinew Task(
-    "MPM::computeStressTensor", this, &DEMMPM::computeStressTensor);
+  Task* t =
+    scinew Task("DEMMPM::computeStressTensor", this, &DEMMPM::computeStressTensor);
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
@@ -5752,8 +5777,8 @@ DEMMPM::scheduleComputeStressTensor(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
-                                                    const PatchSet* patches,
-                                                    const MaterialSet* matls)
+                                                 const PatchSet* patches,
+                                                 const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
@@ -5761,10 +5786,10 @@ DEMMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
   }
 
   printSchedule(
-    patches, cout_doing, "MPM::scheduleUnrotateStressAndDeformationRate");
+    patches, dempm_doing, "[DEMMPM::scheduleUnrotateStressAndDeformationRate]");
 
   int numMatls = d_materialManager->getNumMaterials("MPM");
-  Task* t      = scinew Task("MPM::computeUnrotatedStressAndDeformationRate",
+  Task* t      = scinew Task("DEMMPM::computeUnrotatedStressAndDeformationRate",
                         this,
                         &DEMMPM::computeUnrotatedStressAndDeformationRate);
   for (int m = 0; m < numMatls; m++) {
@@ -5782,12 +5807,11 @@ DEMMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
         Task::OldDW, d_mpm_labels->pPolarDecompRLabel, matlset, Ghost::None);
       t->needs(
         Task::NewDW, d_mpm_labels->pPolarDecompRMidLabel, matlset, Ghost::None);
-      t->needs(
-        Task::OldDW, d_mpm_labels->pStressLabel, matlset, Ghost::None);
+      t->needs(Task::OldDW, d_mpm_labels->pStressLabel, matlset, Ghost::None);
       t->needs(Task::NewDW,
-                  d_mpm_labels->pVelGradLabel_preReloc,
-                  matlset,
-                  Ghost::None);
+               d_mpm_labels->pVelGradLabel_preReloc,
+               matlset,
+               Ghost::None);
 
       t->computes(d_mpm_labels->pDeformRateMidLabel, matlset);
       t->computes(d_mpm_labels->pStressUnrotatedLabel, matlset);
@@ -5802,12 +5826,12 @@ DEMMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeUnrotatedStressAndDeformationRate(const ProcessorGroup*,
-                                                    const PatchSubset* patches,
-                                                    const MaterialSubset*,
-                                                    DataWarehouse* old_dw,
-                                                    DataWarehouse* new_dw)
+                                                 const PatchSubset* patches,
+                                                 const MaterialSubset*,
+                                                 DataWarehouse* old_dw,
+                                                 DataWarehouse* new_dw)
 {
-  printTask(patches, patches->get(0), cout_doing, "Doing computeUnrotate");
+  printTask(patches, patches->get(0), dempm_doing, "[DEMMPM::computeUnrotate]");
 
   int numMatls = d_materialManager->getNumMaterials("MPM");
   for (int m = 0; m < numMatls; m++) {
@@ -5856,34 +5880,28 @@ DEMMPM::computeUnrotatedStressAndDeformationRate(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeStressTensor(const ProcessorGroup*,
-                               const PatchSubset* patches,
-                               const MaterialSubset*,
-                               DataWarehouse* old_dw,
-                               DataWarehouse* new_dw)
+                            const PatchSubset* patches,
+                            const MaterialSubset*,
+                            DataWarehouse* old_dw,
+                            DataWarehouse* new_dw)
 {
 
-  printTask(patches, patches->get(0), cout_doing, "Doing computeStressTensor");
+  printTask(patches, patches->get(0), dempm_doing, "[DEMMPM::computeStressTensor]");
 
   for (size_t m = 0; m < d_materialManager->getNumMaterials("MPM"); m++) {
 
-    if (cout_dbg.active()) {
-      cout_dbg << " Patch = " << (patches->get(0))->getID();
-      cout_dbg << " Mat = " << m;
-    }
+    DOUT(dempm_dbg, " Patch = " << (patches->get(0))->getID());
+    DOUT(dempm_dbg, " Mat = " << m);
 
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
 
-    if (cout_dbg.active()) {
-      cout_dbg << " MPM_Mat = " << mpm_matl;
-    }
+    DOUT(dempm_dbg, " MPM_Mat = " << mpm_matl);
 
     // Compute stress
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
-    if (cout_dbg.active()) {
-      cout_dbg << " CM = " << cm;
-    }
+    DOUT(dempm_dbg, " CM = " << cm);
 
     cm->setWorld(UintahParallelComponent::d_myworld);
 #ifdef TIME_COMPUTE_STRESS
@@ -5897,9 +5915,7 @@ DEMMPM::computeStressTensor(const ProcessorGroup*,
               << std::chrono::duration<double>(end - start).count() << "\n";
 #endif
 
-    if (cout_dbg.active()) {
-      cout_dbg << " Exit\n";
-    }
+    DOUT(dempm_dbg, " Exit");
   }
 }
 
@@ -5908,19 +5924,19 @@ DEMMPM::computeStressTensor(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleRotateStress(SchedulerP& sched,
-                                const PatchSet* patches,
-                                const MaterialSet* matls)
+                             const PatchSet* patches,
+                             const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleRotateStress");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleRotateStress]");
 
   int numMatls = d_materialManager->getNumMaterials("MPM");
   Task* t      = scinew Task(
-    "MPM::computeRotatedStress", this, &DEMMPM::computeRotatedStress);
+    "DEMMPM::computeRotatedStress", this, &DEMMPM::computeRotatedStress);
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
@@ -5933,9 +5949,9 @@ DEMMPM::scheduleRotateStress(SchedulerP& sched,
       t->needs(
         Task::OldDW, d_mpm_labels->pParticleIDLabel, matlset, Ghost::None);
       t->needs(Task::NewDW,
-                  d_mpm_labels->pPolarDecompRLabel_preReloc,
-                  matlset,
-                  Ghost::None);
+               d_mpm_labels->pPolarDecompRLabel_preReloc,
+               matlset,
+               Ghost::None);
 
       t->modifies(d_mpm_labels->pStressLabel_preReloc, matlset);
     }
@@ -5949,12 +5965,12 @@ DEMMPM::scheduleRotateStress(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeRotatedStress(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset*,
-                                DataWarehouse* old_dw,
-                                DataWarehouse* new_dw)
+                             const PatchSubset* patches,
+                             const MaterialSubset*,
+                             DataWarehouse* old_dw,
+                             DataWarehouse* new_dw)
 {
-  printTask(patches, patches->get(0), cout_doing, "Doing computeRotate");
+  printTask(patches, patches->get(0), dempm_doing, "[DEMMPM::computeRotate]");
 
   int numMatls = d_materialManager->getNumMaterials("MPM");
   for (int m = 0; m < numMatls; m++) {
@@ -5991,8 +6007,8 @@ DEMMPM::computeRotatedStress(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleComputeBasicDamage(SchedulerP& sched,
-                                      const PatchSet* patches,
-                                      const MaterialSet* matls)
+                                   const PatchSet* patches,
+                                   const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
@@ -6000,11 +6016,11 @@ DEMMPM::scheduleComputeBasicDamage(SchedulerP& sched,
   }
 
   /* Create a task for computing the damage variables */
-  printSchedule(patches, cout_doing, "MPM::scheduleComputeBasicDamage");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleComputeBasicDamage]");
 
   size_t numMatls = d_materialManager->getNumMaterials("MPM");
-  Task* t         = scinew Task(
-    "MPM::computeBasicDamage", this, &DEMMPM::computeBasicDamage);
+  Task* t =
+    scinew Task("DEMMPM::computeBasicDamage", this, &DEMMPM::computeBasicDamage);
   for (size_t m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
@@ -6026,25 +6042,22 @@ DEMMPM::scheduleComputeBasicDamage(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeBasicDamage(const ProcessorGroup*,
-                              const PatchSubset* patches,
-                              const MaterialSubset*,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw)
+                           const PatchSubset* patches,
+                           const MaterialSubset*,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw)
 {
 
-  printTask(patches, patches->get(0), cout_doing, "Doing computeBasicDamage");
+  printTask(patches, patches->get(0), dempm_doing, "[DEMMPM::computeBasicDamage]");
 
   for (size_t m = 0; m < d_materialManager->getNumMaterials("MPM"); m++) {
 
-    if (cout_dbg.active()) {
-      cout_dbg << " Patch = " << (patches->get(0))->getID() << " Mat = " << m;
-    }
+    DOUT(dempm_dbg,
+         " Patch = " << (patches->get(0))->getID() << " Mat = " << m);
 
     MPMMaterial* mpm_matl =
       static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-    if (cout_dbg.active()) {
-      cout_dbg << " MPM_Mat = " << mpm_matl;
-    }
+    DOUT(dempm_dbg, " MPM_Mat = " << mpm_matl);
 
     // Compute basic damage
     if (mpm_matl->doBasicDamage()) {
@@ -6052,14 +6065,10 @@ DEMMPM::computeBasicDamage(const ProcessorGroup*,
         mpm_matl->getBasicDamageModel();
       basicDamageModel->computeBasicDamage(
         patches, mpm_matl, old_dw, new_dw, d_mpm_labels.get());
-      if (cout_dbg.active()) {
-        cout_dbg << " Damage model = " << basicDamageModel;
-      }
+      DOUT(dempm_dbg, " Damage model = " << basicDamageModel);
     }
 
-    if (cout_dbg.active()) {
-      cout_dbg << " Exit\n";
-    }
+    DOUT(dempm_dbg, " Exit");
   }
 }
 
@@ -6068,18 +6077,18 @@ DEMMPM::computeBasicDamage(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
-                                          const PatchSet* patches,
-                                          const MaterialSet* matls)
+                                       const PatchSet* patches,
+                                       const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleUpdateErosionParameter");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleUpdateErosionParameter]");
 
   Task* t = scinew Task(
-    "MPM::updateErosionParameter", this, &DEMMPM::updateErosionParameter);
+    "DEMMPM::updateErosionParameter", this, &DEMMPM::updateErosionParameter);
   int numMatls = d_materialManager->getNumMaterials("MPM");
   for (int m = 0; m < numMatls; m++) {
     MPMMaterial* mpm_matl =
@@ -6113,31 +6122,28 @@ DEMMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::updateErosionParameter(const ProcessorGroup*,
-                                  const PatchSubset* patches,
-                                  const MaterialSubset*,
-                                  DataWarehouse* old_dw,
-                                  DataWarehouse* new_dw)
+                               const PatchSubset* patches,
+                               const MaterialSubset*,
+                               DataWarehouse* old_dw,
+                               DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing updateErosionParameter");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::updateErosionParameter]");
 
     int numMPMMatls = d_materialManager->getNumMaterials("MPM");
     for (int m = 0; m < numMPMMatls; m++) {
 
-      if (cout_dbg.active()) {
-        cout_dbg << "updateErosionParameter:: material # = " << m << "\n";
-      }
+      DOUT(dempm_dbg, "updateErosionParameter:: material # = " << m);
 
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
       int matID            = mpm_matl->getDWIndex();
       ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
-      if (cout_dbg.active()) {
-        cout_dbg << "updateErosionParameter:: mpm_matl* = " << mpm_matl
-                 << " matID = " << matID << " pset* = " << pset << "\n";
-      }
+      DOUT(dempm_dbg,
+           "updateErosionParameter:: mpm_matl* = "
+             << mpm_matl << " matID = " << matID << " pset* = " << pset);
 
       // Get the localization info
       ParticleVariable<int> isLocalized;
@@ -6170,10 +6176,7 @@ DEMMPM::updateErosionParameter(const ProcessorGroup*,
       }
       */
 
-      if (cout_dbg.active()) {
-        cout_dbg << "updateErosionParameter:: Got Damage Parameter"
-                 << "\n";
-      }
+      DOUT(dempm_dbg, "updateErosionParameter:: Got Damage Parameter");
 
       if (d_mpm_flags->d_deleteRogueParticles) {
         // The following looks for localized particles that are isolated
@@ -6201,17 +6204,11 @@ DEMMPM::updateErosionParameter(const ProcessorGroup*,
         }
       } // if d_deleteRogueParticles
 
-      if (cout_dbg.active()) {
-        cout_dbg << "updateErosionParameter:: Updated Erosion "
-                 << "\n";
-      }
+      DOUT(dempm_dbg, "updateErosionParameter:: Updated Erosion ");
     }
 
-    if (cout_dbg.active()) {
-      cout_dbg << "Done updateErosionParamter on patch " << patch->getID()
-               << "\t MPM"
-               << "\n";
-    }
+    DOUT(dempm_dbg,
+         "Done updateErosionParamter on patch " << patch->getID() << "\t MPM");
   }
 }
 
@@ -6220,8 +6217,8 @@ DEMMPM::updateErosionParameter(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleFindRogueParticles(SchedulerP& sched,
-                                      const PatchSet* patches,
-                                      const MaterialSet* matls)
+                                   const PatchSet* patches,
+                                   const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
@@ -6229,10 +6226,10 @@ DEMMPM::scheduleFindRogueParticles(SchedulerP& sched,
   }
 
   if (d_mpm_flags->d_deleteRogueParticles) {
-    printSchedule(patches, cout_doing, "MPM::scheduleFindRogueParticles");
+    printSchedule(patches, dempm_doing, "[DEMMPM::scheduleFindRogueParticles]");
 
-    Task* t = scinew Task(
-      "MPM::findRogueParticles", this, &DEMMPM::findRogueParticles);
+    Task* t =
+      scinew Task("DEMMPM::findRogueParticles", this, &DEMMPM::findRogueParticles);
     Ghost::GhostType gac = Ghost::AroundCells;
     t->needs(Task::NewDW, d_mpm_labels->numLocInCellLabel, gac, 1);
     t->needs(Task::NewDW, d_mpm_labels->numInCellLabel, gac, 1);
@@ -6249,14 +6246,14 @@ DEMMPM::scheduleFindRogueParticles(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::findRogueParticles(const ProcessorGroup*,
-                              const PatchSubset* patches,
-                              const MaterialSubset*,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw)
+                           const PatchSubset* patches,
+                           const MaterialSubset*,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing findRogueParticles");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::findRogueParticles]");
 
     int numMPMMatls = d_materialManager->getNumMaterials("MPM");
     for (int m = 0; m < numMPMMatls; m++) {
@@ -6320,8 +6317,8 @@ DEMMPM::findRogueParticles(const ProcessorGroup*,
         }
         */
       } // particles
-    }   // matls
-  }     // patches
+    } // matls
+  } // patches
 }
 
 /*!----------------------------------------------------------------------
@@ -6330,17 +6327,17 @@ DEMMPM::findRogueParticles(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleComputeAccStrainEnergy(SchedulerP& sched,
-                                          const PatchSet* patches,
-                                          const MaterialSet* matls)
+                                       const PatchSet* patches,
+                                       const MaterialSet* matls)
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                                  getLevel(patches)->getGrid()->numLevels())) {
     return;
   }
-  printSchedule(patches, cout_doing, "MPM::scheduleComputeAccStrainEnergy");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleComputeAccStrainEnergy]");
 
   Task* t = scinew Task(
-    "MPM::computeAccStrainEnergy", this, &DEMMPM::computeAccStrainEnergy);
+    "DEMMPM::computeAccStrainEnergy", this, &DEMMPM::computeAccStrainEnergy);
   t->needs(Task::OldDW, d_mpm_labels->AccStrainEnergyLabel);
   t->needs(Task::NewDW, d_mpm_labels->StrainEnergyLabel);
   t->computes(d_mpm_labels->AccStrainEnergyLabel);
@@ -6352,10 +6349,10 @@ DEMMPM::scheduleComputeAccStrainEnergy(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeAccStrainEnergy(const ProcessorGroup*,
-                                  const PatchSubset*,
-                                  const MaterialSubset*,
-                                  DataWarehouse* old_dw,
-                                  DataWarehouse* new_dw)
+                               const PatchSubset*,
+                               const MaterialSubset*,
+                               DataWarehouse* old_dw,
+                               DataWarehouse* new_dw)
 {
   // Get the totalStrainEnergy from the old datawarehouse
   max_vartype accStrainEnergy;
@@ -6376,8 +6373,8 @@ DEMMPM::computeAccStrainEnergy(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleFinalParticleUpdate(SchedulerP& sched,
-                                       const PatchSet* patches,
-                                       const MaterialSet* matls)
+                                    const PatchSet* patches,
+                                    const MaterialSet* matls)
 
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
@@ -6385,10 +6382,10 @@ DEMMPM::scheduleFinalParticleUpdate(SchedulerP& sched,
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleFinalParticleUpdate");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleFinalParticleUpdate]");
 
-  Task* t = scinew Task(
-    "MPM::finalParticleUpdate", this, &DEMMPM::finalParticleUpdate);
+  Task* t =
+    scinew Task("DEMMPM::finalParticleUpdate", this, &DEMMPM::finalParticleUpdate);
 
   t->needs(Task::OldDW, d_mpm_labels->delTLabel);
 
@@ -6407,14 +6404,14 @@ DEMMPM::scheduleFinalParticleUpdate(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::finalParticleUpdate(const ProcessorGroup*,
-                               const PatchSubset* patches,
-                               const MaterialSubset*,
-                               DataWarehouse* old_dw,
-                               DataWarehouse* new_dw)
+                            const PatchSubset* patches,
+                            const MaterialSubset*,
+                            DataWarehouse* old_dw,
+                            DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing finalParticleUpdate");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::finalParticleUpdate]");
 
     delt_vartype delT;
     old_dw->get(delT, d_mpm_labels->delTLabel, getLevel(patches));
@@ -6443,7 +6440,8 @@ DEMMPM::finalParticleUpdate(const ProcessorGroup*,
       for (auto idx : *pset) {
         pTemp_new[idx] += pdTdt[idx] * delT;
 
-        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass && !mpm_matl->isDEMMaterial()) ||
+        if ((pMass_new[idx] <= d_mpm_flags->d_minPartMass &&
+             !mpm_matl->isDEMMaterial()) ||
             pTemp_new[idx] < 0. || (pLocalized[idx] == -999)) {
           if (d_mpm_flags->d_erosionAlgorithm != "none") {
             delset->addParticle(idx);
@@ -6455,7 +6453,7 @@ DEMMPM::finalParticleUpdate(const ProcessorGroup*,
       new_dw->deleteParticles(delset);
 
     } // materials
-  }   // patches
+  } // patches
 }
 
 /*!----------------------------------------------------------------------
@@ -6463,9 +6461,9 @@ DEMMPM::finalParticleUpdate(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::printParticleLabels(std::vector<const VarLabel*> labels,
-                               DataWarehouse* dw,
-                               int matID,
-                               const Patch* patch)
+                            DataWarehouse* dw,
+                            int matID,
+                            const Patch* patch)
 {
   for (auto label : labels) {
     if (dw->exists(label, matID, patch)) {
@@ -6483,8 +6481,8 @@ DEMMPM::printParticleLabels(std::vector<const VarLabel*> labels,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleInsertParticles(SchedulerP& sched,
-                                   const PatchSet* patches,
-                                   const MaterialSet* matls)
+                                const PatchSet* patches,
+                                const MaterialSet* matls)
 
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
@@ -6493,10 +6491,10 @@ DEMMPM::scheduleInsertParticles(SchedulerP& sched,
   }
 
   if (d_mpm_flags->d_insertParticles) {
-    printSchedule(patches, cout_doing, "MPM::scheduleInsertParticles");
+    printSchedule(patches, dempm_doing, "[DEMMPM::scheduleInsertParticles]");
 
     Task* t =
-      scinew Task("MPM::insertParticles", this, &DEMMPM::insertParticles);
+      scinew Task("DEMMPM::insertParticles", this, &DEMMPM::insertParticles);
 
     t->needs(Task::OldDW, d_mpm_labels->simulationTimeLabel);
     t->needs(Task::OldDW, d_mpm_labels->delTLabel);
@@ -6514,15 +6512,15 @@ DEMMPM::scheduleInsertParticles(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::insertParticles(const ProcessorGroup*,
-                           const PatchSubset* patches,
-                           const MaterialSubset*,
-                           DataWarehouse* old_dw,
-                           DataWarehouse* new_dw)
+                        const PatchSubset* patches,
+                        const MaterialSubset*,
+                        DataWarehouse* old_dw,
+                        DataWarehouse* new_dw)
 {
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing insertParticles");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::insertParticles]");
 
     // Get current time and timestep size
     simTime_vartype simTimeVar;
@@ -6587,8 +6585,8 @@ DEMMPM::insertParticles(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleAddParticles(SchedulerP& sched,
-                                const PatchSet* patches,
-                                const MaterialSet* matls)
+                             const PatchSet* patches,
+                             const MaterialSet* matls)
 
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
@@ -6596,9 +6594,9 @@ DEMMPM::scheduleAddParticles(SchedulerP& sched,
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleAddParticles");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleAddParticles]");
 
-  Task* t = scinew Task("MPM::addParticles", this, &DEMMPM::addParticles);
+  Task* t = scinew Task("DEMMPM::addParticles", this, &DEMMPM::addParticles);
 
   auto* zeroth_matl = scinew MaterialSubset();
   zeroth_matl->add(0);
@@ -6633,14 +6631,14 @@ DEMMPM::scheduleAddParticles(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::addParticles(const ProcessorGroup*,
-                        const PatchSubset* patches,
-                        const MaterialSubset*,
-                        DataWarehouse* old_dw,
-                        DataWarehouse* new_dw)
+                     const PatchSubset* patches,
+                     const MaterialSubset*,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing addParticles");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::addParticles]");
     int numMPMMatls = d_materialManager->getNumMaterials("MPM");
 
     // Carry forward CellNAPID
@@ -6827,7 +6825,7 @@ DEMMPM::addParticles(const ProcessorGroup*,
           }
           numRefPar++;
         } // if particle flagged for refinement
-      }   // for particles
+      } // for particles
 
       // put back temporary data
       new_dw->put(
@@ -6848,7 +6846,7 @@ DEMMPM::addParticles(const ProcessorGroup*,
       new_dw->put(ploctmp, d_mpm_labels->pLocalizedMPMLabel_preReloc, true);
       new_dw->put(pvgradtmp, d_mpm_labels->pVelGradLabel_preReloc, true);
     } // for matls
-  }   // for patches
+  } // for patches
 }
 
 /*!----------------------------------------------------------------------
@@ -6856,8 +6854,8 @@ DEMMPM::addParticles(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleComputeParticleScaleFactor(SchedulerP& sched,
-                                              const PatchSet* patches,
-                                              const MaterialSet* matls)
+                                           const PatchSet* patches,
+                                           const MaterialSet* matls)
 
 {
   if (!d_mpm_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
@@ -6865,9 +6863,10 @@ DEMMPM::scheduleComputeParticleScaleFactor(SchedulerP& sched,
     return;
   }
 
-  printSchedule(patches, cout_doing, "MPM::scheduleComputeParticleScaleFactor");
+  printSchedule(
+    patches, dempm_doing, "[DEMMPM::scheduleComputeParticleScaleFactor]");
 
-  Task* t = scinew Task("MPM::computeParticleScaleFactor",
+  Task* t = scinew Task("DEMMPM::computeParticleScaleFactor",
                         this,
                         &DEMMPM::computeParticleScaleFactor);
 
@@ -6885,15 +6884,15 @@ DEMMPM::scheduleComputeParticleScaleFactor(SchedulerP& sched,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::computeParticleScaleFactor(const ProcessorGroup*,
-                                      const PatchSubset* patches,
-                                      const MaterialSubset*,
-                                      DataWarehouse* old_dw,
-                                      DataWarehouse* new_dw)
+                                   const PatchSubset* patches,
+                                   const MaterialSubset*,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw)
 {
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing computeParticleScaleFactor");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::computeParticleScaleFactor]");
 
     int numMPMMatls = d_materialManager->getNumMaterials("MPM");
     for (int m = 0; m < numMPMMatls; m++) {
@@ -6928,15 +6927,15 @@ DEMMPM::computeParticleScaleFactor(const ProcessorGroup*,
           } // for particles
         }
       } // isOutputTimestep
-    }   // matls
-  }     // patches
+    } // matls
+  } // patches
 }
 
 void
 DEMMPM::scheduleParticleRelocation(SchedulerP& sched,
-                                      const LevelP& level,
-                                      [[maybe_unused]] const PatchSet* patches,
-                                      const MaterialSet* matls)
+                                   const LevelP& level,
+                                   [[maybe_unused]] const PatchSet* patches,
+                                   const MaterialSet* matls)
 {
   //  Unmodified labels and matls subset
   std::vector<std::vector<const VarLabel*>> old_labels =
@@ -6979,7 +6978,7 @@ DEMMPM::scheduleParticleRelocation(SchedulerP& sched,
 void
 DEMMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
 {
-  printSchedule(patches, cout_doing, "MPM::scheduleRefine");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleRefine]");
   Task* t = scinew Task("DEMMPM::refine", this, &DEMMPM::refine);
 
   t->computes(d_mpm_labels->pXLabel);
@@ -7054,17 +7053,17 @@ DEMMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::refine(const ProcessorGroup*,
-                  const PatchSubset* patches,
-                  const MaterialSubset* /*matls*/,
-                  DataWarehouse*,
-                  DataWarehouse* new_dw)
+               const PatchSubset* patches,
+               const MaterialSubset* /*matls*/,
+               DataWarehouse*,
+               DataWarehouse* new_dw)
 {
   // just create a particle subset if one doesn't exist
   // and initialize NC_CCweights
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing refine");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::refine]");
 
     int numMPMMatls = d_materialManager->getNumMaterials("MPM");
 
@@ -7099,10 +7098,9 @@ DEMMPM::refine(const ProcessorGroup*,
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
       int matID = mpm_matl->getDWIndex();
 
-      if (cout_doing.active()) {
-        cout_doing << "Doing refine on patch " << patch->getID()
-                   << " material # = " << matID << "\n";
-      }
+      DOUT(dempm_dbg,
+           "[DEMMPM::refine on patch " << patch->getID()
+                                    << " material # = " << matID);
 
       // this is a new patch, so create empty particle variables.
       if (!new_dw->haveParticleSubset(matID, patch)) {
@@ -7191,9 +7189,9 @@ DEMMPM::refine(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleRefineInterface(const LevelP& /*fineLevel*/,
-                                   SchedulerP& /*scheduler*/,
-                                   bool,
-                                   bool)
+                                SchedulerP& /*scheduler*/,
+                                bool,
+                                bool)
 {
   //  do nothing for now
 }
@@ -7218,10 +7216,8 @@ DEMMPM::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
   // the finest level.  Thus to schedule cells for regridding during the
   // execution, we'll coarsen the flagged cells (see coarsen).
 
-  if (amr_doing.active()) {
-    amr_doing << "DEMMPM::scheduleErrorEstimate on level "
-              << coarseLevel->getIndex() << '\n';
-  }
+  DOUT(dempm_amr,
+       "DEMMPM::scheduleErrorEstimate on level " << coarseLevel->getIndex());
 
   // The simulation controller should not schedule it every time step
   Task* task = scinew Task("errorEstimate", this, &DEMMPM::errorEstimate);
@@ -7231,13 +7227,13 @@ DEMMPM::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
     task->needs(Task::NewDW, d_mpm_labels->pXLabel, Ghost::AroundCells, 0);
   } else {
     task->needs(Task::NewDW,
-                   d_regridder->getRefineFlagLabel(),
-                   nullptr,
-                   Task::FineLevel,
-                   d_regridder->refineFlagMaterials(),
-                   Task::NormalDomain,
-                   Ghost::None,
-                   0);
+                d_regridder->getRefineFlagLabel(),
+                nullptr,
+                Task::FineLevel,
+                d_regridder->refineFlagMaterials(),
+                Task::NormalDomain,
+                Ghost::None,
+                0);
   }
   task->modifies(d_regridder->getRefineFlagLabel(),
                  d_regridder->refineFlagMaterials());
@@ -7252,10 +7248,10 @@ DEMMPM::scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched)
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::errorEstimate(const ProcessorGroup* group,
-                         const PatchSubset* coarsePatches,
-                         const MaterialSubset* matls,
-                         DataWarehouse* old_dw,
-                         DataWarehouse* new_dw)
+                      const PatchSubset* coarsePatches,
+                      const MaterialSubset* matls,
+                      DataWarehouse* old_dw,
+                      DataWarehouse* new_dw)
 {
   const Level* coarseLevel = getLevel(coarsePatches);
   if (coarseLevel->getIndex() == coarseLevel->getGrid()->numLevels() - 1) {
@@ -7267,7 +7263,7 @@ DEMMPM::errorEstimate(const ProcessorGroup* group,
 
     for (int p = 0; p < coarsePatches->size(); p++) {
       const Patch* coarsePatch = coarsePatches->get(p);
-      printTask(coarsePatches, coarsePatch, cout_doing, "Doing errorEstimate");
+      printTask(coarsePatches, coarsePatch, dempm_doing, "[DEMMPM::errorEstimate]");
 
       CCVariable<int> refineFlag;
       PerPatch<PatchFlagP> refinePatchFlag;
@@ -7314,7 +7310,7 @@ DEMMPM::errorEstimate(const ProcessorGroup* group,
           }
         }
       } // fine patch loop
-    }   // coarse patch loop
+    } // coarse patch loop
   }
 }
 
@@ -7324,7 +7320,7 @@ DEMMPM::errorEstimate(const ProcessorGroup* group,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::scheduleInitialErrorEstimate(const LevelP& coarseLevel,
-                                        SchedulerP& sched)
+                                     SchedulerP& sched)
 {
   scheduleErrorEstimate(coarseLevel, sched);
 }
@@ -7334,14 +7330,14 @@ DEMMPM::scheduleInitialErrorEstimate(const LevelP& coarseLevel,
  *-----------------------------------------------------------------------*/
 void
 DEMMPM::initialErrorEstimate(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset* /*matls*/,
-                                DataWarehouse*,
-                                DataWarehouse* new_dw)
+                             const PatchSubset* patches,
+                             const MaterialSubset* /*matls*/,
+                             DataWarehouse*,
+                             DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing initialErrorEstimate");
+    printTask(patches, patch, dempm_doing, "[DEMMPM::initialErrorEstimate]");
 
     CCVariable<int> refineFlag;
     PerPatch<PatchFlagP> refinePatchFlag;
@@ -7385,10 +7381,10 @@ DEMMPM::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 template<typename T>
 void
 DEMMPM::setParticleDefault(ParticleVariable<T>& pvar,
-                              const VarLabel* label,
-                              ParticleSubset* pset,
-                              DataWarehouse* new_dw,
-                              const T& val)
+                           const VarLabel* label,
+                           ParticleSubset* pset,
+                           DataWarehouse* new_dw,
+                           const T& val)
 {
   new_dw->allocateAndPut(pvar, label, pset);
   for (auto idx : *pset) {
@@ -7399,8 +7395,8 @@ DEMMPM::setParticleDefault(ParticleVariable<T>& pvar,
 namespace Uintah {
 template void
 DEMMPM::setParticleDefault<>(ParticleVariable<double>& pvar,
-                                const VarLabel* label,
-                                ParticleSubset* pset,
-                                DataWarehouse* new_dw,
-                                const double& val);
+                             const VarLabel* label,
+                             ParticleSubset* pset,
+                             DataWarehouse* new_dw,
+                             const double& val);
 }

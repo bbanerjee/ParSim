@@ -1413,8 +1413,7 @@ OnDemandDataWarehouse::createParticleSubset(
   particleIndex numParticles,
   int matlIndex,
   const Patch* patch,
-  IntVector low /* = IntVector(0,0,0) */
-  ,
+  IntVector low, /* = IntVector(0,0,0) */
   IntVector high /* = IntVector(0,0,0) */
 )
 {

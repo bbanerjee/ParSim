@@ -666,7 +666,7 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
 
   // Dispatch based on material type
   if (d_matl->isDEMMaterial()) {
-    return handleDiscreteMaterial(patch, obj, obj_vars);
+    return handleDEMMaterial(patch, obj, obj_vars);
   }
   
   if (d_matl->isRigid()) {
@@ -965,7 +965,7 @@ ParticleCreator::checkForSurface2(const GeometryPieceP piece,
 }
 
 particleIndex
-ParticleCreator::handleDiscreteMaterial(const Patch* patch,
+ParticleCreator::handleDEMMaterial(const Patch* patch,
                                         GeometryObject* obj,
                                         ObjectVars& obj_vars)
 {
