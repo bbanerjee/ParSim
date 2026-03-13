@@ -55,12 +55,12 @@ SET(Vaango_CCA_Components_MPM_SRCS
   AMRMPM.cc       
   UofU_MPM.cc    
   DEM_MPM.cc
-  DEM/DEMTasks.cc
 )
 
 add_subdirectory(Core)
 add_subdirectory(Contact)
 add_subdirectory(ConstitutiveModel)
+add_subdirectory(DEM)
 add_subdirectory(ThermalContact)
 add_subdirectory(PhysicalBC)
 add_subdirectory(ParticleCreator)

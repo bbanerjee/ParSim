@@ -111,7 +111,7 @@ public:
   outputProblemSpec(ProblemSpecP& ps) override;
 
   virtual void
-  scheduleInitialize(const LevelP& level, SchedulerP&) override;
+  scheduleInitialize(const LevelP& level, SchedulerP& sched) override;
 
   virtual void
   scheduleRestartInitialize(const LevelP& level, SchedulerP& sched) override;

@@ -25,6 +25,9 @@
 #ifndef __VAANGO_CCA_COMPONENTS_MPM_DEM_TASKS_H__
 #define __VAANGO_CCA_COMPONENTS_MPM_DEM_TASKS_H__
 
+#include <CCA/Components/MPM/DEM/DEMCommon.h>
+#include <CCA/Components/MPM/DEM/DEMRigidBodySpatialIndex.h>
+
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/SchedulerP.h>
 #include <Core/Grid/MaterialManager.h>
@@ -36,64 +39,9 @@ namespace Uintah {
 class MPMFlags;
 class MPMLabel;
 class MPMMaterial;
+class Task;
 }
 namespace Vaango {
-
-using constParticleVarPoint = Uintah::constParticleVariable<Uintah::Point>;
-using constParticleVarVector = Uintah::constParticleVariable<Uintah::Vector>;
-using constParticleVarMatrix3 = Uintah::constParticleVariable<Uintah::Matrix3>;
-using constParticleVarLong64 = Uintah::constParticleVariable<Uintah::long64>;
-using constParticleVarDouble = Uintah::constParticleVariable<double>;
-using ParticleVarVector = Uintah::ParticleVariable<Uintah::Vector>;
-using ParticleVarLong64 = Uintah::ParticleVariable<Uintah::long64>;
-using ParticleIDToCurrentIdxMap = std::map<Uintah::long64, int>;
-
-// DEM force calculation data structures
-struct DEMParticleInputData {
-  explicit DEMParticleInputData(int num_mats)
-    : pX_old(num_mats), pX0_old(num_mats), 
-      pMass_old(num_mats), pRadius_old(num_mats), pSize_old(num_mats),
-      pOrientation_old(num_mats), pVelocity_old(num_mats), pAngVel_old(num_mats),
-      pRigidBodyID_old(num_mats) 
-  {}
-
-  std::vector<constParticleVarPoint>   pX_old, pX0_old;
-  std::vector<constParticleVarDouble>  pMass_old, pRadius_old;
-  std::vector<constParticleVarMatrix3> pSize_old, pOrientation_old;
-  std::vector<constParticleVarVector>  pVelocity_old, pAngVel_old;
-  std::vector<constParticleVarLong64>  pRigidBodyID_old;
-};
-
-struct DEMParticleSets {
-  explicit DEMParticleSets(int num_mats)
-    : psets_all(num_mats, nullptr), psets_real(num_mats, nullptr)
-  {}
-
-  std::vector<Uintah::ParticleSubset*>  psets_all;
-  std::vector<Uintah::ParticleSubset*>  psets_real;
-};
-
-struct DEMParticleOutputData {
-  explicit DEMParticleOutputData(int num_mats)
-    : pExtForce_new(num_mats), pTorque_new(num_mats), pRigidBodyID_new(num_mats)
-  {}
-
-  std::vector<ParticleVarVector> pExtForce_new;
-  std::vector<ParticleVarVector> pTorque_new;
-  std::vector<ParticleVarLong64> pRigidBodyID_new;
-};
-
-struct DEMContactResult {
-  Vector totalForce   { 0, 0, 0 };
-  Vector arm_i        { 0, 0, 0 };
-  Vector arm_j_center { 0, 0, 0 };
-  bool   collision    { false };
-};
-
-// Contact property helpers 
-struct DEMContactProps {
-  double kn, kt, gamma, mu;
-};
 
 class DEMTasks final
 {
@@ -108,9 +56,7 @@ public:
   ~DEMTasks() = default;
 
   void
-  scheduleInitialize(Uintah::SchedulerP& sched,
-                     const Uintah::PatchSet* patches,
-                     const Uintah::MaterialSet* matls);
+  scheduleInitialize(Uintah::Task* task);
 
   void
   actuallyInitialize(const Uintah::Patch* patch,
@@ -178,9 +124,9 @@ private:
   buildUniqueBodies(int m_i,
                     Uintah::particleIndex idx_i,
                     int m_j,
-                    const DEMParticleSets& particle_sets,
                     const DEMParticleInputData& input_data,
-                    bool j_is_dem_material) const;
+                    const DEMRigidBodySpatialIndex& spatial_index,
+                    const Uintah::Vector& cell_size) const;
 
   // Per-case contact force routines
   // Case A: rigid SDF body (i) vs. MPM particle (j)

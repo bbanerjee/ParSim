@@ -486,17 +486,6 @@ DEMMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   t->computes(d_mpm_labels->pSizeLabel);
   t->computes(d_mpm_labels->pRefinedLabel);
 
-  // DEM labels
-  if (d_mpm_flags->d_enableDEM) {
-    t->computes(d_mpm_labels->pX0Label);
-    t->computes(d_mpm_labels->pRigidBodyIDLabel);
-    t->computes(d_mpm_labels->pAngularVelocityLabel);
-    t->computes(d_mpm_labels->pTorqueLabel);
-    t->computes(d_mpm_labels->pOrientationLabel);
-    t->computes(d_mpm_labels->pRadiusLabel);
-    t->computes(d_mpm_labels->pInertiaTensorLabel);
-  }
-
   t->computes(d_mpm_labels->delTLabel, level.get_rep());
   t->computes(d_mpm_labels->pCellNAPIDLabel, zeroth_matl);
   t->computes(d_mpm_labels->NC_CCweightLabel, zeroth_matl);
@@ -528,6 +517,9 @@ DEMMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   DOUT(dempm_dbg,
        "Artificial Damping Coeff = " << d_mpm_flags->d_artificialDampCoeff
                                      << " 8 or 27 = " << d_mpm_flags->d_8or27);
+
+  // Discrete element method
+  d_demTasks->scheduleInitialize(t);
 
   // Scalar diffusion
   d_diffusionTasks->scheduleInitialize(t);
@@ -708,11 +700,12 @@ DEMMPM::actuallyInitialize(const ProcessorGroup*,
           patch, mpm_matl, new_dw, d_mpm_labels.get());
       }
 
+      // DEM
+      d_demTasks->actuallyInitialize(patch, mpm_matl, new_dw);
+
       // Diffusion
       d_diffusionTasks->actuallyInitialize(patch, mpm_matl, new_dw);
 
-      // DEM
-      d_demTasks->actuallyInitialize(patch, mpm_matl, new_dw);
     } // end matls loop
   } // end patches loop
 
@@ -1550,7 +1543,7 @@ DEMMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
       if (mpm_matl->isDEMMaterial()) {
         double kn = mpm_matl->getDEMNormalStiffness();
-        double dt_mat = std::sqrt(d_mpm_flags->d_minPartMass / kn);
+        double dt_mat =  std::sqrt(d_mpm_flags->d_minPartMass / kn);
         if (dt_mat < dt_dem) {
           dt_dem = dt_mat;
         }
@@ -2324,10 +2317,10 @@ DEMMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
     }
   }
 
-#ifdef DEBUG_WITH_PARTICLE_ID
+//#ifdef DEBUG_WITH_PARTICLE_ID
   t->needs(
     Task::OldDW, d_mpm_labels->pParticleIDLabel, gan, d_numGhostParticles);
-#endif
+//#endif
 
   t->computes(d_mpm_labels->gMassLabel);
   t->computes(d_mpm_labels->gMassLabel,
@@ -2941,7 +2934,7 @@ DEMMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
                                      const PatchSet* patches,
                                      const MaterialSet* matls)
 {
-  printSchedule(patches, dempm_doing, "DEMMPM::scheduleFindSurfaceParticles]");
+  printSchedule(patches, dempm_doing, "[DEMMPM::scheduleFindSurfaceParticles]");
 
   Task* t = scinew Task(
     "DEMMPM::findSurfaceParticles", this, &DEMMPM::findSurfaceParticles);
@@ -3010,7 +3003,7 @@ DEMMPM::scheduleComputeLogisticRegression(SchedulerP& sched,
 {
   if (contactModel->useLogisticRegression()) {
     printSchedule(
-      patches, dempm_doing, "DEMMPM::scheduleComputeLogisticRegression]");
+      patches, dempm_doing, "[DEMMPM::scheduleComputeLogisticRegression]");
 
     Task* t = scinew Task("DEMMPM::computeLogisticRegression",
                           this,
@@ -3502,7 +3495,7 @@ DEMMPM::scheduleMomentumExchangeInterpolated(SchedulerP& sched,
     return;
   }
   printSchedule(
-    patches, dempm_doing, "DEMMPM::scheduleExchangeMomentumInterpolated]");
+    patches, dempm_doing, "[DEMMPM::scheduleExchangeMomentumInterpolated]");
 
   contactModel->addComputesAndRequires(
     sched, patches, matls, d_mpm_labels->gVelocityLabel);
@@ -5686,7 +5679,7 @@ DEMMPM::computeDeformationGradient(const ProcessorGroup*,
   printTask(patches,
             patches->get(0),
             dempm_doing,
-            "[DEMMPM] [DEMMPM::computeDeformationGradient");
+            "[DEMMPM::computeDeformationGradient");
 
   DOUT(dempm_dbg, "Before compute def grad: old_dw");
   if (dempm_dbg.active()) {
