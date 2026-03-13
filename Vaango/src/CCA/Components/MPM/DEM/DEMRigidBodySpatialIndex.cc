@@ -146,4 +146,54 @@ DEMRigidBodySpatialIndex::query(const Uintah::Point& pos_i,
   return unique_bodies;
 }
 
+void 
+DEMRigidBodySpatialIndex::print(std::ostream& out) const
+{
+  out << "DEMRigidBodySpatialIndex:"
+      << " mat_j=" << d_mat_j
+      << " is_dem=" << std::boolalpha << d_is_dem
+      << " num_cells=" << d_cell_to_particles.size()
+      << "\n";
+
+  // Sort cells for deterministic output
+  std::vector<IntVector> cells;
+  cells.reserve(d_cell_to_particles.size());
+  for (const auto& [cell, _] : d_cell_to_particles) {
+    cells.push_back(cell);
+  }
+  std::sort(cells.begin(), cells.end(), [](const IntVector& a, const IntVector& b) {
+    if (a.x() != b.x()) return a.x() < b.x();
+    if (a.y() != b.y()) return a.y() < b.y();
+    return a.z() < b.z();
+  });
+
+  for (const auto& cell : cells) {
+    const auto& particles = d_cell_to_particles.at(cell);
+    out << "  cell=(" << cell.x() << "," << cell.y() << "," << cell.z() << ")"
+        << " num_particles=" << particles.size() << "\n";
+    for (auto pidx_j : particles) {
+      out << "    pidx_j=" << pidx_j;
+      if (d_is_dem) {
+        out << " rbID=" << d_inputs.pRigidBodyID_old[d_mat_j][pidx_j]
+            << " pos="  << d_inputs.pX_old[d_mat_j][pidx_j];
+      }
+      out << "\n";
+    }
+  }
+
+  if (!d_is_dem && !d_non_dem_full_map.empty()) {
+    out << "  non_dem_full_map size=" << d_non_dem_full_map.size() << "\n";
+    for (const auto& [rbID, pidx] : d_non_dem_full_map) {
+      out << "    rbID=" << rbID << " pidx=" << pidx << "\n";
+    }
+  }
+}
+
+std::ostream& 
+operator<<(std::ostream& out, const DEMRigidBodySpatialIndex& idx)
+{
+  idx.print(out);
+  return out;
+}
+
 } // end namespace Vaango

@@ -26,6 +26,7 @@
 #define __VAANGO_CCA_COMPONENTS_MPM_DEM_SPATIAL_INDEX_H__
 
 #include <CCA/Components/MPM/DEM/DEMCommon.h>
+#include <iostream>
 #include <unordered_map>
 
 namespace Uintah {
@@ -48,6 +49,12 @@ public:
         int mat_i,
         Uintah::particleIndex pidx_i,
         int cell_radius = 1) const;
+
+  void 
+  print(std::ostream& out = std::cout) const;
+
+  friend std::ostream& 
+  operator<<(std::ostream& out, const DEMRigidBodySpatialIndex& idx);
 
 private:
   int d_mat_j;

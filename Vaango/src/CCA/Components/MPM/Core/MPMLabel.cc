@@ -229,32 +229,6 @@ MPMLabel::MPMLabel()
   pSizeLabel_preReloc = VarLabel::create(
     "p.size+", ParticleVariable<Matrix3>::getTypeDescription());
 
-  // DEM labels
-  pAngularVelocityLabel = VarLabel::create(
-    "p.angularVelocity", ParticleVariable<Vector>::getTypeDescription());
-  pAngularVelocityLabel_preReloc = VarLabel::create(
-    "p.angularVelocity+", ParticleVariable<Vector>::getTypeDescription());
-  pTorqueLabel = VarLabel::create(
-    "p.torque", ParticleVariable<Vector>::getTypeDescription());
-  pTorqueLabel_preReloc = VarLabel::create(
-    "p.torque+", ParticleVariable<Vector>::getTypeDescription());
-  pOrientationLabel = VarLabel::create(
-    "p.orientation", ParticleVariable<Matrix3>::getTypeDescription());
-  pOrientationLabel_preReloc = VarLabel::create(
-    "p.orientation+", ParticleVariable<Matrix3>::getTypeDescription());
-  pRadiusLabel = VarLabel::create(
-    "p.radius", ParticleVariable<double>::getTypeDescription());
-  pRadiusLabel_preReloc = VarLabel::create(
-    "p.radius+", ParticleVariable<double>::getTypeDescription());
-  pInertiaTensorLabel = VarLabel::create(
-    "p.inertiaTensor", ParticleVariable<Matrix3>::getTypeDescription());
-  pInertiaTensorLabel_preReloc = VarLabel::create(
-    "p.inertiaTensor+", ParticleVariable<Matrix3>::getTypeDescription());
-  pRigidBodyIDLabel = VarLabel::create(
-    "p.rigidBodyID", ParticleVariable<long64>::getTypeDescription());
-  pRigidBodyIDLabel_preReloc = VarLabel::create(
-    "p.rigidBodyID+", ParticleVariable<long64>::getTypeDescription());
-
   pFiberDirLabel = VarLabel::create(
     "p.fiberdir", ParticleVariable<Vector>::getTypeDescription());
 
@@ -335,6 +309,36 @@ MPMLabel::MPMLabel()
 
   pParticleIDLabel_preReloc = VarLabel::create(
     "p.particleID+", ParticleVariable<long64>::getTypeDescription());
+
+  // DEM labels
+  pAngularVelocityLabel = VarLabel::create(
+    "p.angularVelocity", ParticleVariable<Vector>::getTypeDescription());
+  pAngularVelocityLabel_preReloc = VarLabel::create(
+    "p.angularVelocity+", ParticleVariable<Vector>::getTypeDescription());
+  pTorqueLabel = VarLabel::create(
+    "p.torque", ParticleVariable<Vector>::getTypeDescription());
+  pTorqueLabel_preReloc = VarLabel::create(
+    "p.torque+", ParticleVariable<Vector>::getTypeDescription());
+  pOrientationLabel = VarLabel::create(
+    "p.orientation", ParticleVariable<Matrix3>::getTypeDescription());
+  pOrientationLabel_preReloc = VarLabel::create(
+    "p.orientation+", ParticleVariable<Matrix3>::getTypeDescription());
+  pRadiusLabel = VarLabel::create(
+    "p.radius", ParticleVariable<double>::getTypeDescription());
+  pRadiusLabel_preReloc = VarLabel::create(
+    "p.radius+", ParticleVariable<double>::getTypeDescription());
+  pInertiaTensorLabel = VarLabel::create(
+    "p.inertiaTensor", ParticleVariable<Matrix3>::getTypeDescription());
+  pInertiaTensorLabel_preReloc = VarLabel::create(
+    "p.inertiaTensor+", ParticleVariable<Matrix3>::getTypeDescription());
+  pRigidBodyIDLabel = VarLabel::create(
+    "p.rigidBodyID", ParticleVariable<long64>::getTypeDescription());
+  pRigidBodyIDLabel_preReloc = VarLabel::create(
+    "p.rigidBodyID+", ParticleVariable<long64>::getTypeDescription());
+  pDEMNearLabel = VarLabel::create(
+    "p.demNear", ParticleVariable<int>::getTypeDescription());
+  pDEMNearLabel_preReloc = VarLabel::create(
+    "p.demNear+", ParticleVariable<int>::getTypeDescription());
 
   // Node Centered Variables
   gColorLabel =
@@ -900,6 +904,8 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pInertiaTensorLabel_preReloc);
   VarLabel::destroy(pRigidBodyIDLabel);
   VarLabel::destroy(pRigidBodyIDLabel_preReloc);
+  VarLabel::destroy(pDEMNearLabel);
+  VarLabel::destroy(pDEMNearLabel_preReloc);
 
   VarLabel::destroy(gColorLabel);
   VarLabel::destroy(gMassLabel);

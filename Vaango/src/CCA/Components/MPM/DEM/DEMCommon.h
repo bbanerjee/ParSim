@@ -41,6 +41,7 @@ using constParticleVarLong64 = Uintah::constParticleVariable<Uintah::long64>;
 using constParticleVarDouble = Uintah::constParticleVariable<double>;
 using ParticleVarVector = Uintah::ParticleVariable<Uintah::Vector>;
 using ParticleVarLong64 = Uintah::ParticleVariable<Uintah::long64>;
+using ParticleVarInt = Uintah::ParticleVariable<int>;
 using ParticleIDToCurrentIdxMap = std::map<Uintah::long64, int>;
 
 // DEM force calculation data structures
@@ -70,12 +71,14 @@ struct DEMParticleSets {
 
 struct DEMParticleOutputData {
   explicit DEMParticleOutputData(int num_mats)
-    : pExtForce_new(num_mats), pTorque_new(num_mats), pRigidBodyID_new(num_mats)
+    : pExtForce_new(num_mats), pTorque_new(num_mats), pRigidBodyID_new(num_mats),
+      pDEMNear_new(num_mats)
   {}
 
   std::vector<ParticleVarVector> pExtForce_new;
   std::vector<ParticleVarVector> pTorque_new;
   std::vector<ParticleVarLong64> pRigidBodyID_new;
+  std::vector<ParticleVarInt> pDEMNear_new;
 };
 
 struct DEMContactResult {

@@ -77,6 +77,7 @@ DEMTasks::scheduleInitialize(Task* task)
     task->computes(d_mpm_labels->pOrientationLabel);
     task->computes(d_mpm_labels->pRadiusLabel);
     task->computes(d_mpm_labels->pInertiaTensorLabel);
+    task->computes(d_mpm_labels->pDEMNearLabel);
   }
 }
 
@@ -93,6 +94,7 @@ DEMTasks::actuallyInitialize(const Patch* patch,
     ParticleVariable<Vector> pAngularVelocity, pTorque;
     ParticleVariable<Matrix3> pOrientation, pInertiaTensor;
     ParticleVariable<double> pRadius;
+    ParticleVariable<int> pDEMNear;
 
     new_dw->getModifiable(
       pAngularVelocity, d_mpm_labels->pAngularVelocityLabel, pset);
@@ -101,6 +103,7 @@ DEMTasks::actuallyInitialize(const Patch* patch,
     new_dw->getModifiable(pRadius, d_mpm_labels->pRadiusLabel, pset);
     new_dw->getModifiable(
       pInertiaTensor, d_mpm_labels->pInertiaTensorLabel, pset);
+    new_dw->allocateAndPut(pDEMNear, d_mpm_labels->pDEMNearLabel, pset);
 
     double radius = mpm_matl->getParticleRadius();
     constParticleVariable<double> pMass;
@@ -122,6 +125,7 @@ DEMTasks::actuallyInitialize(const Patch* patch,
         pRadius[idx]        = 0.0;
         pInertiaTensor[idx] = Matrix3(0.0);
       }
+      pDEMNear[idx] = 0; // Initialize to zero; will be set to 1 if near a contact
     }
     DOUT(dem_doing, "[DEMTasks::actuallyInitialize] Done");
   }
@@ -183,6 +187,7 @@ DEMTasks::scheduleComputeDEMForces(SchedulerP& sched,
   t->modifies(d_mpm_labels->pExtForceLabel_preReloc);
   t->computes(d_mpm_labels->pTorqueLabel_preReloc);
   t->computes(d_mpm_labels->pRigidBodyIDLabel_preReloc);
+  t->computes(d_mpm_labels->pDEMNearLabel_preReloc);
 
   sched->addTask(t, patches, matls);
 }
@@ -234,9 +239,11 @@ DEMTasks::computeDEMForces(const ProcessorGroup*,
 
         DEMContactProps props = getContactProps(matl_i, matl_j);
 
-        // Once per (mat_j, timestep) — mirrors the numInCell build pattern
+        // Once per (mat_j, timestep) 
         DEMRigidBodySpatialIndex spatial_index(mat_j, psets, inputs, patch,
                                                j_is_dem_material);
+        std::cout << "Built spatial index for mat_j = " << mat_j << std::endl;
+        std::cout << spatial_index << std::endl;
 
         // Loop over real (non-ghost) particles in material i
         for (auto pidx_i : *psets.psets_real[mat_i]) {
@@ -246,6 +253,8 @@ DEMTasks::computeDEMForces(const ProcessorGroup*,
 
           auto unique_bodies = buildUniqueBodies(mat_i, pidx_i, mat_j,
                                                  inputs, spatial_index, cell_size);
+          std::cout << "Found " << unique_bodies.size() << " particles near with mat_i=" 
+                    << mat_i << " pidx_i=" << pidx_i << std::endl;
 
           for (auto const& [rbID_j, pidx_j] : unique_bodies) {
             bool j_is_rigid = j_is_dem_material;
@@ -358,10 +367,14 @@ DEMTasks::getAndAllocateParticleData(const Patch* patch,
       new_dw->allocateAndPut(outputs.pRigidBodyID_new[m],
                              d_mpm_labels->pRigidBodyIDLabel_preReloc,
                              psets.psets_real[m]);
+      new_dw->allocateAndPut(outputs.pDEMNear_new[m],
+                             d_mpm_labels->pDEMNearLabel_preReloc,
+                             psets.psets_real[m]);
 
       outputs.pRigidBodyID_new[m].copyData(inputs.pRigidBodyID_old[m]);
       for (auto idx : *psets.psets_real[m]) {
         outputs.pTorque_new[m][idx] = Vector(0, 0, 0);
+        outputs.pDEMNear_new[m][idx] = 0; // Initialize to zero; will be set to 1 if near a contact
       }
     }
   }
@@ -411,12 +424,15 @@ DEMTasks::buildUniqueBodies(int mat_i,
                             const DEMRigidBodySpatialIndex& spatial_index,
                             const Uintah::Vector& cell_size) const
 {
-  DOUT(dem_doing_fn, "[DEMTasks::buildUniqueBodies]" 
-    << " mat_i=" << mat_i << " pidx_i=" << pidx_i << " mat_j=" << mat_j);
-  double cell_radius = 1.5 * std::sqrt(3) * cell_size.maxComponent(); // Diagonal of a cell
+  DOUT(dem_doing_fn, "[DEMTasks::buildUniqueBodies]")
 
-  return spatial_index.query(inputs.pX_old[mat_i][pidx_i], mat_i, pidx_i,
-                             cell_radius);
+  double cell_radius = cell_size.maxComponent();
+  const auto& pos_i = inputs.pX_old[mat_i][pidx_i];  
+  DOUT(dem_dbg, " mat_i=" << mat_i << " pidx_i=" << pidx_i  
+                << " pos_i=" << pos_i << " mat_j=" << mat_j
+                << " cell_radius=" << cell_radius);
+
+  return spatial_index.query(pos_i, mat_i, pidx_i, cell_radius);
 }
 
 // ─── Per-case contact force routines ─────────────────────────────────────────
