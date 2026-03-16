@@ -44,7 +44,7 @@ public:
                            const Uintah::Patch* patch,
                            bool is_dem_material);
 
-  ParticleIDToCurrentIdxMap
+  DEMBodyIDToCurrentParticleIdxMap
   query(const Uintah::Point& pos_i,
         int mat_i,
         Uintah::particleIndex pidx_i,
@@ -58,7 +58,7 @@ public:
 
 private:
   int d_mat_j;
-  bool d_is_dem;
+  bool d_j_is_dem;
   const DEMParticleInputData& d_inputs;
   const Uintah::Patch* d_patch;
 
@@ -68,7 +68,7 @@ private:
                      IntVectorHash> d_cell_to_particles;
 
   // Non-DEM cross-material only: identity map built once, returned in O(1)
-  ParticleIDToCurrentIdxMap d_non_dem_full_map;
+  DEMBodyIDToCurrentParticleIdxMap d_non_dem_full_map;
 };
 
 } // namespace Vaango

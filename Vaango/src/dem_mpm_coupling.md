@@ -171,10 +171,10 @@ The "Slave Particles" approach has been implemented to ensure that large rigid b
     - **8 Slaves**: Located at the corners of the bounding box, acting as "geometric proxies" with zero mass.
 2. **Rigid Body Identification**:
     - A new `p.rigidBodyID` label was added to the permanent particle state.
-    - All 9 particles belonging to the same block are assigned the same unique `rbID` (derived from material index and geometry object index).
+    - All 9 particles belonging to the same block are assigned the same unique `pDEMBodyID` (derived from material index and geometry object index).
 3. **Contact Filtering**:
     - `SerialMPM::computeDEMForces` was updated to pre-fetch `p.rigidBodyID`.
-    - A collision check `if (rbID_i == rbID_j) continue;` ensures that master and slave particles belonging to the same rigid body do not interact with each other.
+    - A collision check `if (pDEMBodyID_i == pDEMBodyID_j) continue;` ensures that master and slave particles belonging to the same rigid body do not interact with each other.
 4. **MPI Visibility**:
     - Because the 8 slave particles are at the object's extremities, they trigger Vaango's standard ghost-cell and relocation logic in any patch the block physically touches.
     - This ensures that neighbor patches "see" the rigid block and can calculate contact forces between their local particles and the block's proxy particles.

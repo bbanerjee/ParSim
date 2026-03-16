@@ -71,7 +71,7 @@ DEMTasks::scheduleInitialize(Task* task)
   if (d_mpm_flags->d_enableDEM) {
     DOUT(dem_doing, "[DEMTasks::scheduleInitialize]");
     task->computes(d_mpm_labels->pX0Label);
-    task->computes(d_mpm_labels->pRigidBodyIDLabel);
+    task->computes(d_mpm_labels->pDEMBodyIDLabel);
     task->computes(d_mpm_labels->pAngularVelocityLabel);
     task->computes(d_mpm_labels->pTorqueLabel);
     task->computes(d_mpm_labels->pOrientationLabel);
@@ -182,11 +182,11 @@ DEMTasks::scheduleComputeDEMForces(SchedulerP& sched,
   t->needs(Task::OldDW, d_mpm_labels->pVelocityLabel, gan, num_ghost);
   t->needs(Task::OldDW, d_mpm_labels->pAngularVelocityLabel, gan, num_ghost);
   t->needs(Task::OldDW, d_mpm_labels->pOrientationLabel, gan, num_ghost);
-  t->needs(Task::OldDW, d_mpm_labels->pRigidBodyIDLabel, gan, num_ghost);
+  t->needs(Task::OldDW, d_mpm_labels->pDEMBodyIDLabel, gan, num_ghost);
 
   t->modifies(d_mpm_labels->pExtForceLabel_preReloc);
   t->computes(d_mpm_labels->pTorqueLabel_preReloc);
-  t->computes(d_mpm_labels->pRigidBodyIDLabel_preReloc);
+  t->computes(d_mpm_labels->pDEMBodyIDLabel_preReloc);
   t->computes(d_mpm_labels->pDEMNearLabel_preReloc);
 
   sched->addTask(t, patches, matls);
@@ -237,43 +237,71 @@ DEMTasks::computeDEMForces(const ProcessorGroup*,
           static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", mat_j));
         bool j_is_dem_material = matl_j->isDEMMaterial();
 
+        // For non-DEM, we allow self-contact via standard contact algorithms, 
+        // so no need to filter here.
+        if (!(i_is_dem_material || j_is_dem_material)) {
+          DOUT(dem_dbg, "[DEMTasks::computeDEMForces] Both materials are non-DEM; skipping mat_i=" << mat_i 
+                       << " mat_j=" << mat_j);
+          continue;
+        }
+
         DEMContactProps props = getContactProps(matl_i, matl_j);
 
         // Once per (mat_j, timestep) 
-        DEMRigidBodySpatialIndex spatial_index(mat_j, psets, inputs, patch,
-                                               j_is_dem_material);
+        DEMRigidBodySpatialIndex spatial_index_j(mat_j, psets, inputs, patch,
+                                                 j_is_dem_material);
         std::cout << "Built spatial index for mat_j = " << mat_j << std::endl;
-        std::cout << spatial_index << std::endl;
+        // std::cout << spatial_index_j << std::endl;
 
         // Loop over real (non-ghost) particles in material i
         for (auto pidx_i : *psets.psets_real[mat_i]) {
 
-          // Identify master DEM particles and flag them
-          bool i_is_rigid = i_is_dem_material && inputs.pMass_old[mat_i][pidx_i] > 0;
+          // Identify master DEM particles and ignore them during contact detection
+          // bool i_is_dem_master = i_is_dem_material && inputs.pMass_old[mat_i][pidx_i] > 0;
+          bool i_is_rigid = i_is_dem_material;
 
-          auto unique_bodies = buildUniqueBodies(mat_i, pidx_i, mat_j,
-                                                 inputs, spatial_index, cell_size);
-          std::cout << "Found " << unique_bodies.size() << " particles near with mat_i=" 
-                    << mat_i << " pidx_i=" << pidx_i << std::endl;
+          auto close_particles = buildParticleInteractionMap(mat_i, pidx_i, 
+                                                 inputs, spatial_index_j, cell_size);
+          if (close_particles.size() > 0) { 
+            std::cout << "All mat_j=" << mat_j << " particles that mat_i=" 
+                      << mat_i << " pidx_i=" << pidx_i << " should interact with"
+                      << std::endl;
+            for (auto const& [pDEMID_j, pidx_j] : close_particles) {
+              std::cout << "  pidx_j=" << pidx_j << " pDEMID_j=" << pDEMID_j << std::endl;
+              outputs.pDEMNear_new[mat_i][pidx_i] = 1;
+              if (patch->containsPoint(inputs.pX_old[mat_j][pidx_j])) {
+                outputs.pDEMNear_new[mat_j][pidx_j] = 1;
+              }
+            }
+          }
 
-          for (auto const& [rbID_j, pidx_j] : unique_bodies) {
+          for (auto const& [pDEMID_j, pidx_j] : close_particles) {
             bool j_is_rigid = j_is_dem_material;
 
             DEMContactResult contact;
             if (i_is_rigid && !j_is_rigid) {
+              DOUT(dem_dbg, "[DEMTasks::computeDEMForces] Rigid vs non-rigid contact: "
+                           << "mat_i=" << mat_i << " pidx_i=" << pidx_i 
+                           << " mat_j=" << mat_j << " pidx_j=" << pidx_j);
               contact = computeRigidVsParticle(
                 pidx_i, mat_i, pidx_j, mat_j, props, inputs, matl_i);
             } else if (!i_is_rigid && j_is_rigid) {
+              DOUT(dem_dbg, "[DEMTasks::computeDEMForces] Non-rigid vs rigid contact: "
+                           << "mat_i=" << mat_i << " pidx_i=" << pidx_i 
+                           << " mat_j=" << mat_j << " pidx_j=" << pidx_j);
               contact = computeParticleVsRigid(pidx_i,
                                                mat_i,
                                                pidx_j,
                                                mat_j,
-                                               rbID_j,
+                                               pDEMID_j,
                                                props,
                                                inputs,
                                                matl_j,
                                                master_particles);
             } else if (i_is_rigid && j_is_rigid) {
+              DOUT(dem_dbg, "[DEMTasks::computeDEMForces] Rigid vs rigid contact: "
+                           << "mat_i=" << mat_i << " pidx_i=" << pidx_i 
+                           << " mat_j=" << mat_j << " pidx_j=" << pidx_j);
               contact =
                 computeRigidVsRigid(pidx_i, mat_i, pidx_j, mat_j, props, inputs);
             }
@@ -282,7 +310,7 @@ DEMTasks::computeDEMForces(const ProcessorGroup*,
               applyContactForces(contact,
                                  pidx_i,
                                  mat_i,
-                                 rbID_j,
+                                 pDEMID_j,
                                  mat_j,
                                  inputs,
                                  matl_j,
@@ -350,8 +378,8 @@ DEMTasks::getAndAllocateParticleData(const Patch* patch,
       old_dw->get(inputs.pOrientation_old[m],
                   d_mpm_labels->pOrientationLabel,
                   psets.psets_all[m]);
-      old_dw->get(inputs.pRigidBodyID_old[m],
-                  d_mpm_labels->pRigidBodyIDLabel,
+      old_dw->get(inputs.pDEMBodyID_old[m],
+                  d_mpm_labels->pDEMBodyIDLabel,
                   psets.psets_all[m]);
     }
 
@@ -364,14 +392,14 @@ DEMTasks::getAndAllocateParticleData(const Patch* patch,
       new_dw->allocateAndPut(outputs.pTorque_new[m],
                              d_mpm_labels->pTorqueLabel_preReloc,
                              psets.psets_real[m]);
-      new_dw->allocateAndPut(outputs.pRigidBodyID_new[m],
-                             d_mpm_labels->pRigidBodyIDLabel_preReloc,
+      new_dw->allocateAndPut(outputs.pDEMBodyID_new[m],
+                             d_mpm_labels->pDEMBodyIDLabel_preReloc,
                              psets.psets_real[m]);
       new_dw->allocateAndPut(outputs.pDEMNear_new[m],
                              d_mpm_labels->pDEMNearLabel_preReloc,
                              psets.psets_real[m]);
 
-      outputs.pRigidBodyID_new[m].copyData(inputs.pRigidBodyID_old[m]);
+      outputs.pDEMBodyID_new[m].copyData(inputs.pDEMBodyID_old[m]);
       for (auto idx : *psets.psets_real[m]) {
         outputs.pTorque_new[m][idx] = Vector(0, 0, 0);
         outputs.pDEMNear_new[m][idx] = 0; // Initialize to zero; will be set to 1 if near a contact
@@ -381,13 +409,13 @@ DEMTasks::getAndAllocateParticleData(const Patch* patch,
 }
 
 // Master particle map
-ParticleIDToCurrentIdxMap
+DEMBodyIDToCurrentParticleIdxMap
 DEMTasks::buildMasterParticleMap(int numMatls,
                                  const DEMParticleSets& psets,
                                  const DEMParticleInputData& inputs) const
 {
   DOUT(dem_doing, "[DEMTasks::buildMasterParticleMap]");
-  ParticleIDToCurrentIdxMap master_particles;
+  DEMBodyIDToCurrentParticleIdxMap master_particles;
   for (int m = 0; m < numMatls; m++) {
     // If there are no non-ghost particles for this material, skip it 
     if (!psets.psets_real[m]) {
@@ -404,35 +432,37 @@ DEMTasks::buildMasterParticleMap(int numMatls,
 
     for (auto idx : *psets.psets_real[m]) {
       if (inputs.pMass_old[m][idx] > 0) {
-        master_particles[inputs.pRigidBodyID_old[m][idx]] = idx;
+        master_particles[inputs.pDEMBodyID_old[m][idx]] = idx;
         DOUT(dem_dbg, "[DEM: buildMasterParticleMap] m=" << m << " idx=" << idx
-                     << " rbID=" << inputs.pRigidBodyID_old[m][idx]);
+                     << " pDEMBodyID=" << inputs.pDEMBodyID_old[m][idx]);
       }
     }
   }
   return master_particles;
 }
 
-// Unique body selection
-// Returns a map from rigid-body ID -> representative particle index for
+// Particle interaction map: for a given particle pidx_i of material mat_i, 
+// query the spatial index for material mat_j to find nearby particles that 
+// should interact with pidx_i.
+// Returns a map from DEM ID -> representative particle index for
 // all j-material bodies that particle pidx_i should interact with.
-ParticleIDToCurrentIdxMap
-DEMTasks::buildUniqueBodies(int mat_i,
+DEMBodyIDToCurrentParticleIdxMap
+DEMTasks::buildParticleInteractionMap(int mat_i,
                             particleIndex pidx_i,
-                            int mat_j,     
                             const DEMParticleInputData& inputs,
-                            const DEMRigidBodySpatialIndex& spatial_index,
+                            const DEMRigidBodySpatialIndex& spatial_index_j,
                             const Uintah::Vector& cell_size) const
 {
-  DOUT(dem_doing_fn, "[DEMTasks::buildUniqueBodies]")
+  DOUT(dem_doing_fn, "[DEMTasks::buildParticleInteractionMap]")
 
   double cell_radius = cell_size.maxComponent();
   const auto& pos_i = inputs.pX_old[mat_i][pidx_i];  
-  DOUT(dem_dbg, " mat_i=" << mat_i << " pidx_i=" << pidx_i  
-                << " pos_i=" << pos_i << " mat_j=" << mat_j
-                << " cell_radius=" << cell_radius);
+  // DOUT(dem_dbg, "[DEMTasks::buildParticleInteractionMap]"
+  //      << " mat_i=" << mat_i << " pidx_i=" << pidx_i  
+  //      << " pos_i=" << pos_i << " mat_j=" << mat_j
+  //      << " cell_radius=" << cell_radius);
 
-  return spatial_index.query(pos_i, mat_i, pidx_i, cell_radius);
+  return spatial_index_j.query(pos_i, mat_i, pidx_i, cell_radius);
 }
 
 // ─── Per-case contact force routines ─────────────────────────────────────────
@@ -449,7 +479,7 @@ DEMTasks::computeRigidVsParticle(particleIndex pidx_i,
   DOUT(dem_doing_fn, "[DEMTasks::computeRigidVsParticle]");
   DEMContactResult res;
 
-  int objIdx_i                = (int)(inputs.pRigidBodyID_old[mat_i][pidx_i] & 0xFFFFFFFF);
+  int objIdx_i                = (int)(inputs.pDEMBodyID_old[mat_i][pidx_i] & 0xFFFFFFFF);
   const GeometryObject* obj_i = matl_i->getGeometryObject(objIdx_i);
   if (!obj_i) {
     return res;
@@ -514,23 +544,23 @@ DEMTasks::computeParticleVsRigid(
   int mat_i,
   particleIndex pidx_j,
   int mat_j,
-  long64 rbID_j,
+  long64 pDEMID_j,
   const DEMContactProps& props,
   const DEMParticleInputData& inputs,
   const MPMMaterial* matl_j,
-  const ParticleIDToCurrentIdxMap& master_particles) const
+  const DEMBodyIDToCurrentParticleIdxMap& master_particles) const
 {
   DOUT(dem_dbg, "[DEMTasks::computeParticleVsRigid]");
   DEMContactResult res;
 
-  int objIdx_j                = (int)(rbID_j & 0xFFFFFFFF);
+  int objIdx_j                = (int)(pDEMID_j & 0xFFFFFFFF);
   const GeometryObject* obj_j = matl_j->getGeometryObject(objIdx_j);
   if (!obj_j) {
     return res;
   }
 
   int master_pidx_j =
-    master_particles.count(rbID_j) ? master_particles.at(rbID_j) : pidx_j;
+    master_particles.count(pDEMID_j) ? master_particles.at(pDEMID_j) : pidx_j;
 
   const GeometryPieceP piece_j = obj_j->getPiece();
   Point pos0_master_j          = inputs.pX0_old[mat_j][master_pidx_j];
@@ -635,38 +665,39 @@ void
 DEMTasks::applyContactForces(const DEMContactResult& contact,
                              particleIndex pidx_i,
                              int mat_i,
-                             long64 rbID_j,
+                             long64 pDEMID_j,
                              int mat_j,
                              const DEMParticleInputData& inputs,
                              const MPMMaterial* matl_j,
                              const Patch* patch,
-                             const ParticleIDToCurrentIdxMap& master_particles,
+                             const DEMBodyIDToCurrentParticleIdxMap& master_particles,
                              DEMParticleOutputData& outputs)
 {
   DOUT(dem_doing, "[DEMTasks::applyContactForces]");
   DOUT(dem_dbg, "Collision detected between mat " << mat_i
              << " particle " << pidx_i << " and mat " << mat_j
-             << " body " << rbID_j);
+             << " body " << pDEMID_j);
 
   outputs.pExtForce_new[mat_i][pidx_i] += contact.totalForce;
   outputs.pTorque_new[mat_i][pidx_i]   += Cross(contact.arm_i, contact.totalForce);
 
   if (matl_j->isDEMMaterial()) {
-    if (master_particles.count(rbID_j)) {
-      int master_idx = master_particles.at(rbID_j);
+    if (master_particles.count(pDEMID_j)) {
+      int master_idx = master_particles.at(pDEMID_j);
       if (patch->containsPoint(inputs.pX_old[mat_j][master_idx])) {
         outputs.pExtForce_new[mat_j][master_idx] -= contact.totalForce;
         outputs.pTorque_new[mat_j][master_idx]   -= Cross(contact.arm_j_center, contact.totalForce);
       }
     }
-  } else {
-    // Find the real particle index for pidx_j
-    // (caller passes the representative pidx_j from unique_bodies)
-    int pidx_j_real = (int)rbID_j; // non-discrete: rbID == pidx_j (see buildUniqueBodies)
-    if (patch->containsPoint(inputs.pX_old[mat_j][pidx_j_real])) {
-      outputs.pExtForce_new[mat_j][pidx_j_real] -= contact.totalForce;
-    }
-  }
+  } 
+  // else {
+  //   // Find the real particle index for pidx_j
+  //   // (caller passes the representative pidx_j from close_particles)
+  //   int pidx_j_real = (int)pDEMID_j; // non-discrete: pDEMID == pidx_j (see buildParticleInteractionMap)
+  //   if (patch->containsPoint(inputs.pX_old[mat_j][pidx_j_real])) {
+  //     outputs.pExtForce_new[mat_j][pidx_j_real] -= contact.totalForce;
+  //   }
+  // }
 }
 
 void
@@ -684,7 +715,7 @@ DEMTasks::scheduleIntegrateDEMRotation(SchedulerP& sched,
   t->needs(Task::OldDW, d_mpm_labels->pOrientationLabel, Ghost::None);
   t->needs(Task::OldDW, d_mpm_labels->pInertiaTensorLabel, Ghost::None);
   t->needs(Task::OldDW, d_mpm_labels->pMassLabel, Ghost::None);
-  t->needs(Task::OldDW, d_mpm_labels->pRigidBodyIDLabel, Ghost::None);
+  t->needs(Task::OldDW, d_mpm_labels->pDEMBodyIDLabel, Ghost::None);
   t->needs(Task::NewDW, d_mpm_labels->pTorqueLabel_preReloc, Ghost::None);
 
   t->computes(d_mpm_labels->pAngularVelocityLabel_preReloc);
@@ -721,7 +752,7 @@ DEMTasks::integrateDEMRotation(const ProcessorGroup*,
       constParticleVariable<Vector> pAngularVelocity, pTorque;
       constParticleVariable<Matrix3> pOrientation, pInertiaTensor;
       constParticleVariable<double> pRadius, pMass;
-      constParticleVariable<long64> pRigidBodyID;
+      constParticleVariable<long64> pDEMBodyID;
       ParticleVariable<Vector> pAngularVelocity_new;
       ParticleVariable<Matrix3> pOrientation_new, pInertiaTensor_new;
       ParticleVariable<double> pRadius_new;
@@ -731,7 +762,7 @@ DEMTasks::integrateDEMRotation(const ProcessorGroup*,
       old_dw->get(pInertiaTensor, d_mpm_labels->pInertiaTensorLabel, pset);
       old_dw->get(pRadius, d_mpm_labels->pRadiusLabel, pset);
       old_dw->get(pMass, d_mpm_labels->pMassLabel, pset);
-      old_dw->get(pRigidBodyID, d_mpm_labels->pRigidBodyIDLabel, pset);
+      old_dw->get(pDEMBodyID, d_mpm_labels->pDEMBodyIDLabel, pset);
       new_dw->get(pTorque, d_mpm_labels->pTorqueLabel_preReloc, pset);
 
       new_dw->allocateAndPut(pAngularVelocity_new,
@@ -773,7 +804,7 @@ DEMTasks::integrateDEMRotation(const ProcessorGroup*,
             pOrientation_new[idx] = deltaR * pOrientation[idx];
             pInertiaTensor_new[idx] =
               GeometryPiece::rotateInertiaTensor(pInertiaTensor[idx], deltaR);
-            master_rotations[pRigidBodyID[idx]] = { pAngularVelocity_new[idx],
+            master_rotations[pDEMBodyID[idx]] = { pAngularVelocity_new[idx],
                                                     pOrientation_new[idx],
                                                     pInertiaTensor_new[idx] };
           } else {
@@ -785,11 +816,11 @@ DEMTasks::integrateDEMRotation(const ProcessorGroup*,
         }
         for (auto idx : *pset) {
           if (pRadius[idx] <= 0.0) {
-            long64 rbID = pRigidBodyID[idx];
-            if (master_rotations.count(rbID)) {
-              pAngularVelocity_new[idx] = master_rotations[rbID].omega;
-              pOrientation_new[idx]     = master_rotations[rbID].orient;
-              pInertiaTensor_new[idx]   = master_rotations[rbID].inertia;
+            long64 pDEMID = pDEMBodyID[idx];
+            if (master_rotations.count(pDEMID)) {
+              pAngularVelocity_new[idx] = master_rotations[pDEMID].omega;
+              pOrientation_new[idx]     = master_rotations[pDEMID].orient;
+              pInertiaTensor_new[idx]   = master_rotations[pDEMID].inertia;
             }
           }
         }

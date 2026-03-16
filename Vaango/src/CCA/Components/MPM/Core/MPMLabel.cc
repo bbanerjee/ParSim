@@ -331,9 +331,9 @@ MPMLabel::MPMLabel()
     "p.inertiaTensor", ParticleVariable<Matrix3>::getTypeDescription());
   pInertiaTensorLabel_preReloc = VarLabel::create(
     "p.inertiaTensor+", ParticleVariable<Matrix3>::getTypeDescription());
-  pRigidBodyIDLabel = VarLabel::create(
+  pDEMBodyIDLabel = VarLabel::create(
     "p.rigidBodyID", ParticleVariable<long64>::getTypeDescription());
-  pRigidBodyIDLabel_preReloc = VarLabel::create(
+  pDEMBodyIDLabel_preReloc = VarLabel::create(
     "p.rigidBodyID+", ParticleVariable<long64>::getTypeDescription());
   pDEMNearLabel = VarLabel::create(
     "p.demNear", ParticleVariable<int>::getTypeDescription());
@@ -902,8 +902,8 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pRadiusLabel_preReloc);
   VarLabel::destroy(pInertiaTensorLabel);
   VarLabel::destroy(pInertiaTensorLabel_preReloc);
-  VarLabel::destroy(pRigidBodyIDLabel);
-  VarLabel::destroy(pRigidBodyIDLabel_preReloc);
+  VarLabel::destroy(pDEMBodyIDLabel);
+  VarLabel::destroy(pDEMBodyIDLabel_preReloc);
   VarLabel::destroy(pDEMNearLabel);
   VarLabel::destroy(pDEMNearLabel_preReloc);
 

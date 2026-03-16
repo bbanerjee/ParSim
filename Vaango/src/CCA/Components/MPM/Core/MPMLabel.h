@@ -156,8 +156,8 @@ public:
   const VarLabel* pRadiusLabel_preReloc;
   const VarLabel* pInertiaTensorLabel;
   const VarLabel* pInertiaTensorLabel_preReloc;
-  const VarLabel* pRigidBodyIDLabel;
-  const VarLabel* pRigidBodyIDLabel_preReloc;
+  const VarLabel* pDEMBodyIDLabel;
+  const VarLabel* pDEMBodyIDLabel_preReloc;
   const VarLabel* pDEMNearLabel;
   const VarLabel* pDEMNearLabel_preReloc;
 

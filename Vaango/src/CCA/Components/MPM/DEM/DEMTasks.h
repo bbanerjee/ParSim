@@ -114,18 +114,17 @@ private:
                              DEMParticleOutputData& output_data);
 
   // Master particle map
-  ParticleIDToCurrentIdxMap
+  DEMBodyIDToCurrentParticleIdxMap
   buildMasterParticleMap(int numMatls,
                          const DEMParticleSets& particle_sets,
                          const DEMParticleInputData& input_data) const;
 
   // Unique body selection
-  ParticleIDToCurrentIdxMap
-  buildUniqueBodies(int m_i,
+  DEMBodyIDToCurrentParticleIdxMap
+  buildParticleInteractionMap(int m_i,
                     Uintah::particleIndex idx_i,
-                    int m_j,
                     const DEMParticleInputData& input_data,
-                    const DEMRigidBodySpatialIndex& spatial_index,
+                    const DEMRigidBodySpatialIndex& spatial_index_j,
                     const Uintah::Vector& cell_size) const;
 
   // Per-case contact force routines
@@ -146,11 +145,11 @@ private:
     int m_i,
     Uintah::particleIndex idx_j,
     int m_j,
-    Uintah::long64 rbID_j,
+    Uintah::long64 pDEMBodyID_j,
     const DEMContactProps& cp,
     const DEMParticleInputData& pd,
     const Uintah::MPMMaterial* matl_j,
-    const ParticleIDToCurrentIdxMap& master_particles) const;
+    const DEMBodyIDToCurrentParticleIdxMap& master_particles) const;
 
   // Case C: rigid sphere (i) vs. rigid sphere (j)
   DEMContactResult
@@ -166,12 +165,12 @@ private:
   applyContactForces(const DEMContactResult& contact,
                      Uintah::particleIndex idx_i,
                      int m_i,
-                     Uintah::long64 rbID_j,
+                     Uintah::long64 pDEMBodyID_j,
                      int m_j,
                      const DEMParticleInputData& inputs,
                      const Uintah::MPMMaterial* matl_j,
                      const Uintah::Patch* patch,
-                     const ParticleIDToCurrentIdxMap& master_particles,
+                     const DEMBodyIDToCurrentParticleIdxMap& master_particles,
                      DEMParticleOutputData& outputs);
 
   // Disallow copy and move

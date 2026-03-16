@@ -28,7 +28,7 @@
 
 using namespace Uintah;
 
-// Debug streams:  To turn on use  export SCI_DEBUG="DEM:+,SerialMPM:+" 
+// Debug streams:  To turn on use  export SCI_DEBUG="DEMdbg:+,SerialMPM:+" 
 extern Dout dem_doing;
 extern Dout dem_doing_fn;
 extern Dout dem_dbg;
@@ -44,9 +44,9 @@ DEMRigidBodySpatialIndex::DEMRigidBodySpatialIndex(
   const DEMParticleSets& psets,
   const DEMParticleInputData& inputs,
   const Uintah::Patch* patch,
-  bool is_dem_material)
+  bool j_is_dem_material)
   : d_mat_j(mat_j)
-  , d_is_dem(is_dem_material)
+  , d_j_is_dem(j_is_dem_material)
   , d_inputs(inputs)
   , d_patch(patch)
 {
@@ -55,7 +55,7 @@ DEMRigidBodySpatialIndex::DEMRigidBodySpatialIndex(
     d_patch->findCell(inputs.pX_old[mat_j][pidx_j], c);
     d_cell_to_particles[c].push_back(pidx_j);
 
-    if (!is_dem_material) {
+    if (!d_j_is_dem) {
       d_non_dem_full_map[(Uintah::long64)pidx_j] = pidx_j;
     }
   }
@@ -63,34 +63,29 @@ DEMRigidBodySpatialIndex::DEMRigidBodySpatialIndex(
 
 // -----------------------------------------------------------------------
 // Query: walk the (2*cell_radius+1)^3 neighbourhood around pos_i's cell,
-// applying identical skip logic to the original per-particle loops.
+// Returns a map from DEM ID -> representative particle index for
+// all j-material bodies that particle pidx_i should interact with. 
 // -----------------------------------------------------------------------
-ParticleIDToCurrentIdxMap
+DEMBodyIDToCurrentParticleIdxMap
 DEMRigidBodySpatialIndex::query(const Uintah::Point& pos_i,
                                 int mat_i,
                                 Uintah::particleIndex pidx_i,
                                 int cell_radius) const
 {
-  // Cross-material non-DEM: no per-particle filtering needed — O(1)
-  if (!d_is_dem && mat_i != d_mat_j) {
-    return d_non_dem_full_map;
-  }
+  // DEM ID for particle i
+  const Uintah::long64 pDEMID_i = d_inputs.pDEMBodyID_old[mat_i][pidx_i];
 
-  // Find the cell that pos_i lives in, matching patch->findCell convention
+  // Find the cell that pos_i lives in
   IntVector center;
   d_patch->findCell(pos_i, center);
 
-  const Uintah::long64 rbID_i =
-    d_is_dem ? d_inputs.pRigidBodyID_old[mat_i][pidx_i] : -1;
-
-  ParticleIDToCurrentIdxMap unique_bodies;
+  DEMBodyIDToCurrentParticleIdxMap close_particles;
 
   for (int dx = -cell_radius; dx <= cell_radius; ++dx) {
     for (int dy = -cell_radius; dy <= cell_radius; ++dy) {
       for (int dz = -cell_radius; dz <= cell_radius; ++dz) {
 
         IntVector cell = center + IntVector(dx, dy, dz);
-
         auto cell_it = d_cell_to_particles.find(cell);
         if (cell_it == d_cell_to_particles.end()) {
           continue;
@@ -98,38 +93,53 @@ DEMRigidBodySpatialIndex::query(const Uintah::Point& pos_i,
 
         for (auto pidx_j : cell_it->second) {
 
-          // ---- same skip logic as the original buildUniqueBodies ----
-          if (d_is_dem) {
-            if (mat_i == d_mat_j &&
-                (pidx_j <= pidx_i ||
-                 rbID_i == d_inputs.pRigidBodyID_old[d_mat_j][pidx_j])) {
-              // DOUT(dem_dbg, "[DEMRigidBodySpatialIndex::query] Skipping mat_i=" 
-              //      << mat_i << " pidx_i=" << pidx_i 
-              //      << " mat_j=" << d_mat_j << " pidx_j=" << pidx_j);
-              continue;
-            }
-          } else {
-            // Same-material non-DEM: only process upper triangle
-            if (mat_i == d_mat_j && pidx_i <= pidx_j) {
-              continue;
-            }
-          }
-          // -----------------------------------------------------------
+          // DEM ID for particle j
+          const auto pDEMID_j = d_inputs.pDEMBodyID_old[d_mat_j][pidx_j];
+          bool same_dem_body_id = (pDEMID_i == pDEMID_j);
+          // if (mat_i != d_mat_j) {
+          //   DOUT(dem_dbg, "[DEMRigidBodySpatialIndex::query] DEM IDs: "
+          //                << "i: [mat, pidx, demID]=" << mat_i << " " << pidx_i << " " << pDEMID_i
+          //                << " j: [mat, pidx, demID]=" << d_mat_j << " " << pidx_j << " " << pDEMID_j);
+          // }
 
-          if (!d_is_dem) {
-            unique_bodies[(Uintah::long64)pidx_j] = pidx_j;
+          if (same_dem_body_id) {
             continue;
           }
 
+          // Look only at upper triangle particle index 
+          // bool skip_pidx_j = (pidx_j <= pidx_i);
+          // bool skip_pidx_i = (pidx_i <= pidx_j);
+          // if (d_j_is_dem) {
+          //   if (skip_pidx_j) {
+          //     DOUT(dem_dbg, "[DEMRigidBodySpatialIndex::query:DEM mat] Skipping mat_i=" 
+          //          << mat_i << " pidx_i=" << pidx_i 
+          //          << " mat_j=" << d_mat_j << " pidx_j=" << pidx_j);
+          //     continue;
+          //   }
+          // } else {
+          //   // Same-material non-DEM: only process upper triangle
+          //   if (skip_pidx_i) {
+          //     DOUT(dem_dbg, "[DEMRigidBodySpatialIndex::query:MPM mat] Skipping mat_i=" 
+          //          << mat_i << " pidx_i=" << pidx_i 
+          //          << " mat_j=" << d_mat_j << " pidx_j=" << pidx_j);
+          //     continue;
+          //   }
+          // }
+          // -----------------------------------------------------------
+
+          // if (!d_j_is_dem) {
+          //   close_particles[(Uintah::long64)pidx_j] = pidx_j;
+          //   continue;
+          // }
+
           // DEM: keep the closest representative per rigid body
-          const Uintah::long64 rbID_j = d_inputs.pRigidBodyID_old[d_mat_j][pidx_j];
-          DOUT(dem_dbg, "[DEMRigidBodySpatialIndex::query] " 
-                        << "mat_i=" << mat_i << " mat_j=" << d_mat_j 
-                        << " pidx_i=" << pidx_i << " pidx_j=" << pidx_j 
-                        << " rbID[j]=" << rbID_j);
-          auto rb_it          = unique_bodies.find(rbID_j);
-          if (rb_it == unique_bodies.end()) {
-            unique_bodies[rbID_j] = pidx_j;
+          // DOUT(dem_dbg, "[DEMRigidBodySpatialIndex::query] " 
+          //               << "mat_i=" << mat_i << " mat_j=" << d_mat_j 
+          //               << " pidx_i=" << pidx_i << " pidx_j=" << pidx_j 
+          //               << " pDEMID[j]=" << pDEMID_j);
+          auto rb_it          = close_particles.find(pDEMID_j);
+          if (rb_it == close_particles.end()) {
+            close_particles[pDEMID_j] = pidx_j;
           } else {
             double d2_new =
               (pos_i - d_inputs.pX_old[d_mat_j][pidx_j]).length2();
@@ -143,7 +153,7 @@ DEMRigidBodySpatialIndex::query(const Uintah::Point& pos_i,
       }
     }
   }
-  return unique_bodies;
+  return close_particles;
 }
 
 void 
@@ -151,7 +161,7 @@ DEMRigidBodySpatialIndex::print(std::ostream& out) const
 {
   out << "DEMRigidBodySpatialIndex:"
       << " mat_j=" << d_mat_j
-      << " is_dem=" << std::boolalpha << d_is_dem
+      << " j_is_dem=" << std::boolalpha << d_j_is_dem
       << " num_cells=" << d_cell_to_particles.size()
       << "\n";
 
@@ -173,18 +183,18 @@ DEMRigidBodySpatialIndex::print(std::ostream& out) const
         << " num_particles=" << particles.size() << "\n";
     for (auto pidx_j : particles) {
       out << "    pidx_j=" << pidx_j;
-      if (d_is_dem) {
-        out << " rbID=" << d_inputs.pRigidBodyID_old[d_mat_j][pidx_j]
+      if (d_j_is_dem) {
+        out << " pDEMBodyID=" << d_inputs.pDEMBodyID_old[d_mat_j][pidx_j]
             << " pos="  << d_inputs.pX_old[d_mat_j][pidx_j];
       }
       out << "\n";
     }
   }
 
-  if (!d_is_dem && !d_non_dem_full_map.empty()) {
+  if (!d_j_is_dem && !d_non_dem_full_map.empty()) {
     out << "  non_dem_full_map size=" << d_non_dem_full_map.size() << "\n";
-    for (const auto& [rbID, pidx] : d_non_dem_full_map) {
-      out << "    rbID=" << rbID << " pidx=" << pidx << "\n";
+    for (const auto& [pDEMID, pidx] : d_non_dem_full_map) {
+      out << "    pDEMID=" << pDEMID << " pidx=" << pidx << "\n";
     }
   }
 }

@@ -42,7 +42,7 @@ using constParticleVarDouble = Uintah::constParticleVariable<double>;
 using ParticleVarVector = Uintah::ParticleVariable<Uintah::Vector>;
 using ParticleVarLong64 = Uintah::ParticleVariable<Uintah::long64>;
 using ParticleVarInt = Uintah::ParticleVariable<int>;
-using ParticleIDToCurrentIdxMap = std::map<Uintah::long64, int>;
+using DEMBodyIDToCurrentParticleIdxMap = std::map<Uintah::long64, int>;
 
 // DEM force calculation data structures
 struct DEMParticleInputData {
@@ -50,14 +50,14 @@ struct DEMParticleInputData {
     : pX_old(num_mats), pX0_old(num_mats), 
       pMass_old(num_mats), pRadius_old(num_mats), pSize_old(num_mats),
       pOrientation_old(num_mats), pVelocity_old(num_mats), pAngVel_old(num_mats),
-      pRigidBodyID_old(num_mats) 
+      pDEMBodyID_old(num_mats) 
   {}
 
   std::vector<constParticleVarPoint>   pX_old, pX0_old;
   std::vector<constParticleVarDouble>  pMass_old, pRadius_old;
   std::vector<constParticleVarMatrix3> pSize_old, pOrientation_old;
   std::vector<constParticleVarVector>  pVelocity_old, pAngVel_old;
-  std::vector<constParticleVarLong64>  pRigidBodyID_old;
+  std::vector<constParticleVarLong64>  pDEMBodyID_old;
 };
 
 struct DEMParticleSets {
@@ -71,13 +71,13 @@ struct DEMParticleSets {
 
 struct DEMParticleOutputData {
   explicit DEMParticleOutputData(int num_mats)
-    : pExtForce_new(num_mats), pTorque_new(num_mats), pRigidBodyID_new(num_mats),
+    : pExtForce_new(num_mats), pTorque_new(num_mats), pDEMBodyID_new(num_mats),
       pDEMNear_new(num_mats)
   {}
 
   std::vector<ParticleVarVector> pExtForce_new;
   std::vector<ParticleVarVector> pTorque_new;
-  std::vector<ParticleVarLong64> pRigidBodyID_new;
+  std::vector<ParticleVarLong64> pDEMBodyID_new;
   std::vector<ParticleVarInt> pDEMNear_new;
 };
 

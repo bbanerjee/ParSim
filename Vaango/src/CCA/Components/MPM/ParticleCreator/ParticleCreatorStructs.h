@@ -100,7 +100,7 @@ struct ParticleVars
     pErosion;
   ParticleVariable<double> pColor, pTempPrevious, p_q;
   ParticleVariable<long64> pParticleID;
-  ParticleVariable<long64> pRigidBodyID;
+  ParticleVariable<long64> pDEMBodyID;
   ParticleVariable<Vector> pAngularVelocity, pTorque;
   ParticleVariable<Matrix3> pOrientation, pInertiaTensor;
   ParticleVariable<double> pRadius;

@@ -112,10 +112,11 @@ createBoxSurfacePoints(const Uintah::BoxGeometryPiece* box_piece,
   Uintah::Box box    = box_piece->getBoundingBox();
   Uintah::Point low  = box.lower();
   Uintah::Point high = box.upper();
+  auto cell_spacing = patch->dCell();
 
-  const int n_x = 8;
-  const int n_y = 8;
-  const int n_z = 8;
+  const int n_x = (high.x() - low.x()) / cell_spacing.x();
+  const int n_y = (high.y() - low.y()) / cell_spacing.y();
+  const int n_z = (high.z() - low.z()) / cell_spacing.z();
 
   auto add_point = [&](const Point& p) {
     if (patch->containsPoint(p)) {

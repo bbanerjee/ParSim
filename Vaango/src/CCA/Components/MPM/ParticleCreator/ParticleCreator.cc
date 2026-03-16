@@ -263,7 +263,7 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   if (d_flags->d_enableDEM) {
     new_dw->allocateAndPut(pvars.pX0, d_mpm_labels->pX0Label, subset);
     new_dw->allocateAndPut(
-      pvars.pRigidBodyID, d_mpm_labels->pRigidBodyIDLabel, subset);
+      pvars.pDEMBodyID, d_mpm_labels->pDEMBodyIDLabel, subset);
     new_dw->allocateAndPut(
       pvars.pAngularVelocity, d_mpm_labels->pAngularVelocityLabel, subset);
     new_dw->allocateAndPut(pvars.pTorque, d_mpm_labels->pTorqueLabel, subset);
@@ -590,9 +590,9 @@ ParticleCreator::initializeParticle(const Patch* patch,
     pvars.pX0[i] = p;
     // Rigid Body ID
     int objIdx = matl->getGeometryObjectIndex(obj);
-    long64 rbID =
+    long64 pDEMBodyID =
       ((long64)matl->getDWIndex() << 32) | (long64)(objIdx >= 0 ? objIdx : 0);
-    pvars.pRigidBodyID[i] = rbID;
+    pvars.pDEMBodyID[i] = pDEMBodyID;
 
     // Initialize other DEM variables
     pvars.pAngularVelocity[i] = Vector(0, 0, 0);
@@ -801,8 +801,8 @@ ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
     particle_state.push_back(d_mpm_labels->pX0Label);
     particle_state_preReloc.push_back(d_mpm_labels->pX0Label_preReloc);
 
-    particle_state.push_back(d_mpm_labels->pRigidBodyIDLabel);
-    particle_state_preReloc.push_back(d_mpm_labels->pRigidBodyIDLabel_preReloc);
+    particle_state.push_back(d_mpm_labels->pDEMBodyIDLabel);
+    particle_state_preReloc.push_back(d_mpm_labels->pDEMBodyIDLabel_preReloc);
 
     particle_state.push_back(d_mpm_labels->pAngularVelocityLabel);
     particle_state_preReloc.push_back(
@@ -819,6 +819,9 @@ ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
 
     particle_state.push_back(d_mpm_labels->pInertiaTensorLabel);
     particle_state_preReloc.push_back(d_mpm_labels->pInertiaTensorLabel_preReloc);
+
+    particle_state.push_back(d_mpm_labels->pDEMNearLabel);
+    particle_state_preReloc.push_back(d_mpm_labels->pDEMNearLabel_preReloc);
   }
 
   // For scalar diffusion

@@ -4895,7 +4895,7 @@ DEMMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   if (d_mpm_flags->d_enableDEM) {
     t->needs(Task::OldDW, d_mpm_labels->pRadiusLabel, gnone);
     t->needs(Task::OldDW, d_mpm_labels->pX0Label, gnone);
-    t->needs(Task::OldDW, d_mpm_labels->pRigidBodyIDLabel, gnone);
+    t->needs(Task::OldDW, d_mpm_labels->pDEMBodyIDLabel, gnone);
     t->needs(Task::OldDW, d_mpm_labels->pAngularVelocityLabel, gnone);
   }
   t->needs(Task::NewDW, d_mpm_labels->pdTdtLabel_preReloc, gnone);
@@ -5093,11 +5093,11 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       old_dw->get(pDisp, d_mpm_labels->pDispLabel, pset);
 
       constParticleVariable<double> pRadius;
-      constParticleVariable<long64> pRigidBodyID;
+      constParticleVariable<long64> pDEMBodyID;
       constParticleVariable<Vector> pAngularVelocity;
       if (d_mpm_flags->d_enableDEM) {
         old_dw->get(pRadius, d_mpm_labels->pRadiusLabel, pset);
-        old_dw->get(pRigidBodyID, d_mpm_labels->pRigidBodyIDLabel, pset);
+        old_dw->get(pDEMBodyID, d_mpm_labels->pDEMBodyIDLabel, pset);
         old_dw->get(
           pAngularVelocity, d_mpm_labels->pAngularVelocityLabel, pset);
       }
@@ -5291,7 +5291,7 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         if (d_mpm_flags->d_enableDEM &&
             (mpm_matl->isDEMMaterial() || mpm_matl->isRigid()) &&
             pRadius[idx] > 0) {
-          master_states[pRigidBodyID[idx]] = {
+          master_states[pDEMBodyID[idx]] = {
             pX_new[idx], pX[idx], pVelocity_new[idx], pAngularVelocity[idx]
           };
         }
@@ -5426,9 +5426,9 @@ DEMMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           // material (except the master)
           if ((mpm_matl->isDEMMaterial() && pMass[idx] <= 0) ||
               (mpm_matl->isRigid() && pRadius[idx] <= 0)) {
-            long64 rbID = pRigidBodyID[idx];
-            if (master_states.count(rbID)) {
-              const auto& master = master_states[rbID];
+            long64 pDEMID = pDEMBodyID[idx];
+            if (master_states.count(pDEMID)) {
+              const auto& master = master_states[pDEMID];
               Vector arm         = pX[idx] - master.pos_old;
               double arm_len     = arm.length();
 
@@ -6991,7 +6991,7 @@ DEMMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
   // DEM labels
   if (d_mpm_flags->d_enableDEM) {
     t->computes(d_mpm_labels->pX0Label);
-    t->computes(d_mpm_labels->pRigidBodyIDLabel);
+    t->computes(d_mpm_labels->pDEMBodyIDLabel);
     t->computes(d_mpm_labels->pAngularVelocityLabel);
     t->computes(d_mpm_labels->pTorqueLabel);
     t->computes(d_mpm_labels->pOrientationLabel);
@@ -7125,7 +7125,7 @@ DEMMPM::refine(const ProcessorGroup*,
 
         // DEM labels
         ParticleVariable<Point> pX0;
-        ParticleVariable<long64> pRigidBodyID;
+        ParticleVariable<long64> pDEMBodyID;
         ParticleVariable<Vector> pAngularVelocity, pTorque;
         ParticleVariable<Matrix3> pOrientation, pInertiaTensor;
         ParticleVariable<double> pRadius;
@@ -7133,7 +7133,7 @@ DEMMPM::refine(const ProcessorGroup*,
           new_dw->allocateAndPut(pX0, d_mpm_labels->pX0Label, pset);
           pX0.copyData(pX);
           new_dw->allocateAndPut(
-            pRigidBodyID, d_mpm_labels->pRigidBodyIDLabel, pset);
+            pDEMBodyID, d_mpm_labels->pDEMBodyIDLabel, pset);
           new_dw->allocateAndPut(
             pAngularVelocity, d_mpm_labels->pAngularVelocityLabel, pset);
           new_dw->allocateAndPut(pTorque, d_mpm_labels->pTorqueLabel, pset);
