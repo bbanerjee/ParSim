@@ -690,14 +690,14 @@ DEMTasks::applyContactForces(const DEMContactResult& contact,
       }
     }
   } 
-  // else {
-  //   // Find the real particle index for pidx_j
-  //   // (caller passes the representative pidx_j from close_particles)
-  //   int pidx_j_real = (int)pDEMID_j; // non-discrete: pDEMID == pidx_j (see buildParticleInteractionMap)
-  //   if (patch->containsPoint(inputs.pX_old[mat_j][pidx_j_real])) {
-  //     outputs.pExtForce_new[mat_j][pidx_j_real] -= contact.totalForce;
-  //   }
-  // }
+  else {
+    // Find the real particle index for pidx_j
+    // (caller passes the representative pidx_j from close_particles)
+    int pidx_j_real = (int)pDEMID_j; // non-discrete: pDEMID == pidx_j (see buildParticleInteractionMap)
+    if (patch->containsPoint(inputs.pX_old[mat_j][pidx_j_real])) {
+      outputs.pExtForce_new[mat_j][pidx_j_real] -= contact.totalForce;
+    }
+  }
 }
 
 void

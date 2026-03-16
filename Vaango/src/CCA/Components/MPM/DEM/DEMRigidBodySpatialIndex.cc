@@ -106,31 +106,10 @@ DEMRigidBodySpatialIndex::query(const Uintah::Point& pos_i,
             continue;
           }
 
-          // Look only at upper triangle particle index 
-          // bool skip_pidx_j = (pidx_j <= pidx_i);
-          // bool skip_pidx_i = (pidx_i <= pidx_j);
-          // if (d_j_is_dem) {
-          //   if (skip_pidx_j) {
-          //     DOUT(dem_dbg, "[DEMRigidBodySpatialIndex::query:DEM mat] Skipping mat_i=" 
-          //          << mat_i << " pidx_i=" << pidx_i 
-          //          << " mat_j=" << d_mat_j << " pidx_j=" << pidx_j);
-          //     continue;
-          //   }
-          // } else {
-          //   // Same-material non-DEM: only process upper triangle
-          //   if (skip_pidx_i) {
-          //     DOUT(dem_dbg, "[DEMRigidBodySpatialIndex::query:MPM mat] Skipping mat_i=" 
-          //          << mat_i << " pidx_i=" << pidx_i 
-          //          << " mat_j=" << d_mat_j << " pidx_j=" << pidx_j);
-          //     continue;
-          //   }
-          // }
-          // -----------------------------------------------------------
-
-          // if (!d_j_is_dem) {
-          //   close_particles[(Uintah::long64)pidx_j] = pidx_j;
-          //   continue;
-          // }
+          if (!d_j_is_dem) {
+            close_particles[(Uintah::long64)pidx_j] = pidx_j;
+            continue;
+          }
 
           // DEM: keep the closest representative per rigid body
           // DOUT(dem_dbg, "[DEMRigidBodySpatialIndex::query] " 
