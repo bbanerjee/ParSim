@@ -68,8 +68,10 @@ DEMRigidBodySpatialIndex::DEMRigidBodySpatialIndex(
 // -----------------------------------------------------------------------
 DEMBodyIDToCurrentParticleIdxMap
 DEMRigidBodySpatialIndex::query(const Uintah::Point& pos_i,
+                                double mass_i,
                                 int mat_i,
                                 Uintah::particleIndex pidx_i,
+                                bool i_is_dem_material,
                                 int cell_radius) const
 {
   // DEM ID for particle i
@@ -81,6 +83,11 @@ DEMRigidBodySpatialIndex::query(const Uintah::Point& pos_i,
 
   DEMBodyIDToCurrentParticleIdxMap close_particles;
 
+  // If it's a master particle, then don't add any close particles
+  if (i_is_dem_material && mass_i > 0) {
+    return close_particles;
+  }
+
   for (int dx = -cell_radius; dx <= cell_radius; ++dx) {
     for (int dy = -cell_radius; dy <= cell_radius; ++dy) {
       for (int dz = -cell_radius; dz <= cell_radius; ++dz) {
@@ -88,6 +95,7 @@ DEMRigidBodySpatialIndex::query(const Uintah::Point& pos_i,
         IntVector cell = center + IntVector(dx, dy, dz);
         auto cell_it = d_cell_to_particles.find(cell);
         if (cell_it == d_cell_to_particles.end()) {
+          // DOUT(dem_dbg, "[DEMRigidBodySpatialIndex::query] cell not found." << cell);
           continue;
         }
 
@@ -103,6 +111,11 @@ DEMRigidBodySpatialIndex::query(const Uintah::Point& pos_i,
           // }
 
           if (same_dem_body_id) {
+            continue;
+          }
+
+          // If it's a master particle, then don't add any close particles
+          if (d_j_is_dem && d_inputs.pMass_old[d_mat_j][pidx_j] > 0) {
             continue;
           }
 

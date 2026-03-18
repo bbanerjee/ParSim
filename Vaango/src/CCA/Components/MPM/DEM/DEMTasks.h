@@ -123,9 +123,10 @@ private:
   DEMBodyIDToCurrentParticleIdxMap
   buildParticleInteractionMap(int m_i,
                     Uintah::particleIndex idx_i,
+                    bool i_is_dem_material,
                     const DEMParticleInputData& input_data,
                     const DEMRigidBodySpatialIndex& spatial_index_j,
-                    const Uintah::Vector& cell_size) const;
+                    int num_cells_around_point) const;
 
   // Per-case contact force routines
   // Case A: rigid SDF body (i) vs. MPM particle (j)

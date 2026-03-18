@@ -2539,7 +2539,7 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       // Interpolate particle data to Grid data.
       // This currently consists of the particle velocity and mass
       // Need to compute the lumped global mass matrix and velocity
-      // Vector from the individual mass matrix and velocity std::vector
+      // Vector from the individual mass matrix and velocity vector
       // GridMass * GridVelocity =  S^T*M_D*ParticleVelocity
       Vector total_mom(0.0, 0.0, 0.0);
       double pSpecificVol = 1. / mpm_matl->getInitialDensity();
@@ -2547,23 +2547,41 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       // loop over all particles in the patch:
       for (int idx : *pset) {
 
-        if (pMass[idx] <= 0.0) {
+        if (pMass[idx] <= 0.0 && !mpm_matl->isDEMMaterial()) {
+          // MPM particles that have lost mass can have zero mass. Ignore them.
+          continue;
+        }
+
+        if (mpm_matl->isDEMMaterial()) {
           double pExtForce_mag = pExternalForce[idx].length2();
           if (pExtForce_mag < 1.0e-16) {
             continue;
           } else {
-            proc0cout << pParticleID[idx]
+            proc0cout << "Mat = " << m << " ID = " << pParticleID[idx]
                       << " pExtForce = " << pExternalForce[idx]
                       << " pMass = " << pMass[idx] << std::endl;
           }
         }
 
-        // std::cout << std::format("pidx = {}, volume = {}\n", idx,
-        // pVolume[idx]);
+        // std::cout << std::format("pidx = {}, volume = {}\n", idx, pVolume[idx]);
         interpolator->findCellAndWeights(
           pX[idx], ni, S, pSize[idx], pDefGrad_old[idx]);
-        auto pMom = pVelocity[idx] * pMass[idx];
-        total_mom += pMom;
+
+        Vector pExtForce = pExternalForce[idx];
+        Vector pMom(0.0, 0.0, 0.0);
+        if (mpm_matl->isDEMMaterial()) {
+          // Slave DEM particles have zero mass.  These cannot be ignored.
+          // For these the momentum variable contains only the velocity and doesn't 
+          // contribute to the total momentum of the system.
+          pMom = pVelocity[idx];
+          if (pMass[idx] > 0.0) { // Only the master particle contributes
+            total_mom += pMom*pMass[idx];
+            pExtForce = Vector(0.0, 0.0, 0.0);
+          }
+        } else {
+          pMom = pVelocity[idx] * pMass[idx];
+          total_mom += pMom;
+        }
 
         // Add each particles contribution to the local mass & velocity
         // Must use the node indices
@@ -2581,7 +2599,7 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
             gSpecificVol[node] += pSpecificVol * pMass[idx] * S[k];
 
             if (!d_mpm_flags->d_useCBDI) {
-              gExternalForce[node] += pExternalForce[idx] * S[k];
+              gExternalForce[node] += pExtForce * S[k];
             }
 
             if (d_mpm_flags->d_withColor) {
@@ -2656,19 +2674,21 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       } // End of particle loop
 
       for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
-        IntVector c = *iter;
-        gMassGlobal[c] += gMass[c];
-        gVolGlobal[c] += gVolume[c];
-        gVelGlobal[c] += gVelocity[c];
-        gVelocity[c] /= gMass[c];
-        gTempGlobal[c] += gTemperature[c];
-        // gBodyForce[c]     /= gMass[c];
-        gTemperature[c] /= gMass[c];
-        gTemperatureNoBC[c] = gTemperature[c];
-        gSpecificVol[c] /= gMass[c];
+        IntVector node = *iter;
+        gMassGlobal[node] += gMass[node];
+        gVolGlobal[node] += gVolume[node];
+        gVelGlobal[node] += gVelocity[node];
+        if (!mpm_matl->isDEMMaterial()) {
+          gVelocity[node] /= gMass[node];
+        }
+        gTempGlobal[node] += gTemperature[node];
+        // gBodyForce[node] /= gMass[node];
+        gTemperature[node] /= gMass[node];
+        gTemperatureNoBC[node] = gTemperature[node];
+        gSpecificVol[node] /= gMass[node];
 
         if (d_mpm_flags->d_withColor) {
-          gColor[c] /= gMass[c];
+          gColor[node] /= gMass[node];
         }
       }
 
@@ -2698,9 +2718,9 @@ DEMMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     } // End loop over materials
 
     for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
-      IntVector c = *iter;
-      gTempGlobal[c] /= gMassGlobal[c];
-      gVelGlobal[c] /= gMassGlobal[c];
+      IntVector node = *iter;
+      gTempGlobal[node] /= gMassGlobal[node];
+      gVelGlobal[node] /= gMassGlobal[node];
     }
 
   } // End loop over patches

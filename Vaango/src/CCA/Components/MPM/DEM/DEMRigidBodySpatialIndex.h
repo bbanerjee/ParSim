@@ -44,10 +44,15 @@ public:
                            const Uintah::Patch* patch,
                            bool is_dem_material);
 
+  int matIndex() const {return d_mat_j;}
+  bool demMaterial() const {return d_j_is_dem;}
+  
   DEMBodyIDToCurrentParticleIdxMap
   query(const Uintah::Point& pos_i,
+        double mass_i,
         int mat_i,
         Uintah::particleIndex pidx_i,
+        bool i_is_dem_material,
         int cell_radius = 1) const;
 
   void 

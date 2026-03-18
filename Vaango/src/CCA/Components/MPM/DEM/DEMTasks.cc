@@ -205,7 +205,7 @@ DEMTasks::computeDEMForces(const ProcessorGroup*,
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    Vector cell_size = patch->dCell();
+    // Vector cell_size = patch->dCell();
 
     DEMParticleSets psets(numMatls);
     DEMParticleInputData inputs(numMatls);
@@ -260,8 +260,11 @@ DEMTasks::computeDEMForces(const ProcessorGroup*,
           // bool i_is_dem_master = i_is_dem_material && inputs.pMass_old[mat_i][pidx_i] > 0;
           bool i_is_rigid = i_is_dem_material;
 
+          int num_cells_around_for_search = 1;
           auto close_particles = buildParticleInteractionMap(mat_i, pidx_i, 
-                                                 inputs, spatial_index_j, cell_size);
+                                                 i_is_dem_material, 
+                                                 inputs, spatial_index_j, 
+                                                 num_cells_around_for_search);
           if (close_particles.size() > 0) { 
             std::cout << "All mat_j=" << mat_j << " particles that mat_i=" 
                       << mat_i << " pidx_i=" << pidx_i << " should interact with"
@@ -449,20 +452,21 @@ DEMTasks::buildMasterParticleMap(int numMatls,
 DEMBodyIDToCurrentParticleIdxMap
 DEMTasks::buildParticleInteractionMap(int mat_i,
                             particleIndex pidx_i,
+                            bool i_is_dem_material,
                             const DEMParticleInputData& inputs,
                             const DEMRigidBodySpatialIndex& spatial_index_j,
-                            const Uintah::Vector& cell_size) const
+                            int num_cells_around_point) const
 {
   DOUT(dem_doing_fn, "[DEMTasks::buildParticleInteractionMap]")
 
-  double cell_radius = cell_size.maxComponent();
   const auto& pos_i = inputs.pX_old[mat_i][pidx_i];  
+  double mass_i = inputs.pMass_old[mat_i][pidx_i];
   // DOUT(dem_dbg, "[DEMTasks::buildParticleInteractionMap]"
   //      << " mat_i=" << mat_i << " pidx_i=" << pidx_i  
-  //      << " pos_i=" << pos_i << " mat_j=" << mat_j
-  //      << " cell_radius=" << cell_radius);
-
-  return spatial_index_j.query(pos_i, mat_i, pidx_i, cell_radius);
+  //      << " pos_i=" << pos_i << " mat_j=" << spatial_index_j.matIndex());
+  int cell_search_radius = num_cells_around_point;
+  return spatial_index_j.query(pos_i, mass_i, mat_i, pidx_i, i_is_dem_material, 
+    cell_search_radius);
 }
 
 // ─── Per-case contact force routines ─────────────────────────────────────────
