@@ -86,66 +86,73 @@ public:
   ImpMPM&
   operator=(ImpMPM&&) = delete;
 
-  virtual void
-  problemSetup(const ProblemSpecP& params)
+  using SimulationCommon::problemSetup;
+  using SimulationCommon::recomputeDelT;
+
+  void
+  setupForSwitching() override
   {
-    SimulationCommon::problemSetup(params);
+    MPMCommon::setupForSwitching();
   }
-  virtual void
+
+  void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& mat_ps,
                GridP& grid,
-               const std::string& input_ups_dir = "");
+               const std::string& input_ups_dir = "") override;
 
-  virtual void
-  outputProblemSpec(ProblemSpecP& ps);
+  void
+  outputProblemSpec(ProblemSpecP& ps) override;
 
-  virtual void
-  scheduleInitialize(const LevelP& level, SchedulerP&);
+  void
+  scheduleInitialize(const LevelP& level, SchedulerP&) override;
 
-  virtual void
-  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched);
+  void
+  scheduleRestartInitialize(const LevelP& level, SchedulerP& sched) override;
 
-  virtual void
-  scheduleSwitchInitialization(const LevelP& level, SchedulerP&);
+  void
+  scheduleSwitchInitialization(const LevelP& level, SchedulerP&) override;
 
-  virtual void restartInitialize() {}
+  void
+  restartInitialize() override
+  {
+  }
 
-  virtual void
-  scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);
+  void
+  scheduleComputeStableTimestep(const LevelP& level, SchedulerP&) override;
 
-  virtual void
-  scheduleTimeAdvance(const LevelP& level, SchedulerP&);
+  void
+  scheduleTimeAdvance(const LevelP& level, SchedulerP&) override;
 
-  virtual void
-  scheduleRefine(const PatchSet* patches, SchedulerP& scheduler);
+  void
+  scheduleRefine(const PatchSet* patches, SchedulerP& scheduler) override;
 
-  virtual void
+  void
   scheduleRefineInterface(const LevelP& fineLevel,
                           SchedulerP& scheduler,
                           bool needCoarse,
-                          bool needFine);
+                          bool needFine) override;
 
-  virtual void
-  scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched);
+  void
+  scheduleCoarsen(const LevelP& coarseLevel, SchedulerP& sched) override;
 
   /// Schedule to mark flags for AMR regridding
-  virtual void
-  scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched);
+  void
+  scheduleErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched) override;
 
   /// Schedule to mark initial flags for AMR regridding
   void
-  scheduleInitialErrorEstimate(const LevelP& coarseLevel, SchedulerP& sched);
+  scheduleInitialErrorEstimate(const LevelP& coarseLevel,
+                               SchedulerP& sched) override;
 
-  virtual void
-  recomputeDelT() {}
-  virtual double
-  recomputeDelT(double dt) {
+  double
+  recomputeDelT(double dt) override
+  {
     return dt * d_mpm_flags->d_delTDecreaseFactor;
   }
 
   void
-  scheduleSwitchTest(const LevelP& level, SchedulerP& sched);
+  scheduleSwitchTest(const LevelP& level, SchedulerP& sched) override;
 
   enum IntegratorType
   {
