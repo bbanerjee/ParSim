@@ -90,7 +90,8 @@ void MPMPetscSolver::solve([[maybe_unused]] vector<double>& guess)
 }
 
 void MPMPetscSolver::createMatrix([[maybe_unused]] const ProcessorGroup* d_myworld,
-                                  [[maybe_unused]] const  std::map< int,int>& dof_diag)
+                                  [[maybe_unused]] const std::map<int, int>& dof_diag,
+                                  [[maybe_unused]] const std::map<int, int>& dof_offdiag)
 {
   throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::createMatrix()!", __FILE__, __LINE__ );
 }
@@ -109,6 +110,14 @@ void MPMPetscSolver::flushMatrix()
 
 
 void MPMPetscSolver::fillVector([[maybe_unused]] int i,[[maybe_unused]] double v,[[maybe_unused]] bool add)
+{
+ throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::fillVector()!", __FILE__, __LINE__ );
+}
+
+void MPMPetscSolver::fillVector([[maybe_unused]] int count,
+                                [[maybe_unused]] const int indices[],
+                                [[maybe_unused]] const double values[],
+                                [[maybe_unused]] bool add)
 {
  throw InternalError( "Don't have PETSc so shouldn't be calling MPMPetscSolver::fillVector()!", __FILE__, __LINE__ );
 }

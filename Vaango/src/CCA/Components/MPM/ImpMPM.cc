@@ -1921,14 +1921,30 @@ ImpMPM::createMatrix(const ProcessorGroup*,
                      DataWarehouse* new_dw)
 {
   std::map<int, int> dof_diag;
+  std::map<int, int> dof_offdiag;
   d_solver->createLocalToGlobalMapping(UintahParallelComponent::d_myworld,
                                        d_perprocPatches,
                                        patches,
                                        3,
                                        d_mpm_flags->d_8or27);
   int global_offset = 0;
+  int local_num_rows = 0;
   int numMatls      = d_materialManager->getNumMaterials("MPM");
   int n8or27        = d_mpm_flags->d_8or27;
+
+  for (int pp = 0; pp < patches->size(); pp++) {
+    const Patch* patch = patches->get(pp);
+    IntVector low, high;
+    if (n8or27 == 8) {
+      low  = patch->getNodeLowIndex();
+      high = patch->getNodeHighIndex();
+    } else {
+      low  = patch->getExtraNodeLowIndex();
+      high = patch->getExtraNodeHighIndex();
+    }
+    IntVector dimensions = high - low;
+    local_num_rows += 3 * dimensions.x() * dimensions.y() * dimensions.z();
+  }
 
   for (int pp = 0; pp < patches->size(); pp++) {
     const Patch* patch = patches->get(pp);
@@ -1969,19 +1985,33 @@ ImpMPM::createMatrix(const ProcessorGroup*,
         if (visited[cell] == 0) {
           visited[cell] = 1;
           patch->findNodesFromCell(cell, ni);
-          int nodes_in_cell = 0;
+          int cell_dofs[81];
+          int num_cell_dofs = 0;
           for (int k = 0; k < n8or27; k++) {
             if (patch->containsNode(ni[k])) {
-              ++nodes_in_cell;
+              int node_dof = l2g[ni[k]];
+              cell_dofs[num_cell_dofs++] = node_dof;
+              cell_dofs[num_cell_dofs++] = node_dof + 1;
+              cell_dofs[num_cell_dofs++] = node_dof + 2;
             }
           }
-          int dofs_in_cell = 3 * nodes_in_cell;
-          for (int k = 0; k < n8or27; k++) {
-            if (patch->containsNode(ni[k])) {
-              // subtract global offset in order to map into array correctly
-              int l2g_node_num = l2g[ni[k]] - global_offset;
-              for (int component = 0; component < 3; ++component) {
-                dof_diag[l2g_node_num + component] += dofs_in_cell;
+          int local_columns = 0;
+          for (int i = 0; i < num_cell_dofs; ++i) {
+            int dof = cell_dofs[i];
+            if (dof >= global_offset &&
+                dof < global_offset + local_num_rows) {
+              ++local_columns;
+            }
+          }
+          int off_process_columns = num_cell_dofs - local_columns;
+          for (int i = 0; i < num_cell_dofs; ++i) {
+            int row_dof = cell_dofs[i];
+            if (row_dof >= global_offset &&
+                row_dof < global_offset + local_num_rows) {
+              int local_row = row_dof - global_offset;
+              dof_diag[local_row] += local_columns;
+              if (off_process_columns > 0) {
+                dof_offdiag[local_row] += off_process_columns;
               }
             }
           }
@@ -1989,7 +2019,8 @@ ImpMPM::createMatrix(const ProcessorGroup*,
       }
     }
   }
-  d_solver->createMatrix(UintahParallelComponent::d_myworld, dof_diag);
+  d_solver->createMatrix(
+    UintahParallelComponent::d_myworld, dof_diag, dof_offdiag);
 }
 
 void
@@ -3206,6 +3237,8 @@ ImpMPM::formQ(const ProcessorGroup*,
         double fodt  = 4. / dt;
 
         double Q = 0.;
+        std::vector<int> rhs_dofs;
+        std::vector<double> rhs_values;
 
         for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
           IntVector node   = *iter;
@@ -3227,9 +3260,12 @@ ImpMPM::formQ(const ProcessorGroup*,
             v[1] -= damping.y();
             v[2] -= damping.z();
           }
-          d_solver->fillVector(l2g_node_num, double(v[0]));
-          d_solver->fillVector(l2g_node_num + 1, double(v[1]));
-          d_solver->fillVector(l2g_node_num + 2, double(v[2]));
+          rhs_dofs.push_back(l2g_node_num);
+          rhs_dofs.push_back(l2g_node_num + 1);
+          rhs_dofs.push_back(l2g_node_num + 2);
+          rhs_values.push_back(v[0]);
+          rhs_values.push_back(v[1]);
+          rhs_values.push_back(v[2]);
           Q += v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
         }
         if (std::isnan(Q)) {
@@ -3240,6 +3276,9 @@ ImpMPM::formQ(const ProcessorGroup*,
                       VarLabel::find(recomputeTimestep_name));
           return;
         }
+        d_solver->fillVector(static_cast<int>(rhs_dofs.size()),
+                             rhs_dofs.data(),
+                             rhs_values.data());
       } // first time through non-rigid
     }   // matls
   }     // patches

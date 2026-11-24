@@ -161,7 +161,8 @@ void SimpleSolver::solve([[maybe_unused]] vector<double>& guess)
 }
 
 void SimpleSolver::createMatrix([[maybe_unused]] const ProcessorGroup* d_myworld,
-                                [[maybe_unused]] const  std::map< int,int>& diag)
+                                [[maybe_unused]] const std::map<int, int>& diag,
+                                [[maybe_unused]] const std::map<int, int>& offdiag)
 {
   int globalrows = (int)d_totalNodes;
   int globalcolumns = (int)d_totalNodes;
@@ -204,6 +205,17 @@ void SimpleSolver::fillVector(int i,double v,bool add)
     Q[i] += v;
   else
     Q[i] = v;
+}
+
+void
+SimpleSolver::fillVector(int count,
+                         const int indices[],
+                         const double values[],
+                         bool add)
+{
+  for (int i = 0; i < count; ++i) {
+    fillVector(indices[i], values[i], add);
+  }
 }
 
 void SimpleSolver::assembleVector()

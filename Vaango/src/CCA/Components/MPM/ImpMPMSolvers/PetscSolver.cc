@@ -37,6 +37,7 @@
 #include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 
@@ -61,6 +62,10 @@ using namespace Uintah;
 // #define OUTPUT_A_B  // output A matrix and B vector to files.
 #undef OUTPUT_A_B
 
+#ifdef HAVE_PETSC
+static bool petscLogSummaryWritten = false;
+#endif
+
 MPMPetscSolver::MPMPetscSolver()
 {
   d_A         = 0;
@@ -69,10 +74,20 @@ MPMPetscSolver::MPMPetscSolver()
   d_x         = 0;
   d_t         = 0;
   d_flux      = 0;
+  d_ksp       = 0;
   d_iteration = 0;
 }
 
-MPMPetscSolver::~MPMPetscSolver() {}
+MPMPetscSolver::~MPMPetscSolver()
+{
+  if (d_ksp) {
+    KSPDestroy(&d_ksp);
+  }
+  if (d_profileEnabled && !petscLogSummaryWritten) {
+    PetscLogView(PETSC_VIEWER_STDOUT_WORLD);
+    petscLogSummaryWritten = true;
+  }
+}
 
 void
 MPMPetscSolver::initialize()
@@ -113,6 +128,13 @@ MPMPetscSolver::initialize()
     }
   }
   PetscInitialize(&argc, &argv, PETSC_NULLPTR, PETSC_NULLPTR);
+  PetscBool profile = PETSC_FALSE;
+  PetscOptionsGetBool(
+    nullptr, nullptr, "-mpm_petsc_profile", &profile, nullptr);
+  d_profileEnabled = profile == PETSC_TRUE;
+  if (d_profileEnabled) {
+    PetscLogDefaultBegin();
+  }
 #ifdef USE_SPOOLES
   PetscOptionsSetValue("-mat_spooles_ordering", "BestOfNDandMS");
   PetscOptionsSetValue("-mat_spooles_symmetryflag", "0");
@@ -273,8 +295,6 @@ void
 MPMPetscSolver::solve(vector<double>& guess)
 {
   // TAU_PROFILE("MPMPetscSolver::solve", " ", TAU_USER);
-  PC precond;
-  KSP solver;
 #if 0
   if(d_DOFsPerNode<3){
     PetscViewerSetFormat(PETSC_VIEWER_STDOUT_WORLD,PETSC_VIEWER_ASCII_DENSE);
@@ -282,53 +302,83 @@ MPMPetscSolver::solve(vector<double>& guess)
   }
 #endif
 
-  KSPCreate(PETSC_COMM_WORLD, &solver);
-#if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 6))
-  KSPSetOperators(solver, d_A, d_A);
-#else
-  KSPSetOperators(solver, d_A, d_A, DIFFERENT_NONZERO_PATTERN);
-#endif
-  KSPGetPC(solver, &precond);
+  if (!d_ksp) {
+    PC precond;
+    KSPCreate(PETSC_COMM_WORLD, &d_ksp);
+    KSPGetPC(d_ksp, &precond);
 
 #if defined(USE_SPOOLES) || defined(USE_SUPERLU)
-  KSPSetType(solver, KSPPREONLY);
-  KSPSetFromOptions(solver);
-  PCSetType(precond, PCLU);
+    KSPSetType(d_ksp, KSPPREONLY);
+    PCSetType(precond, PCLU);
 #else
-  KSPSetType(solver, KSPCG);
-  PCSetType(precond, PCJACOBI);
+    KSPSetType(d_ksp, KSPCG);
+    PCSetType(precond, PCJACOBI);
 #endif
 
-  KSPSetTolerances(
-    solver, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
+    KSPSetTolerances(
+      d_ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
+    KSPSetFromOptions(d_ksp);
+  }
 
+#if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 6))
+  KSPSetOperators(d_ksp, d_A, d_A);
+#else
+  KSPSetOperators(d_ksp, d_A, d_A, DIFFERENT_NONZERO_PATTERN);
+#endif
+
+  PetscBool warm_start = PETSC_FALSE;
+  PetscOptionsGetBool(
+    nullptr, nullptr, "-mpm_petsc_warm_start", &warm_start, nullptr);
+  bool use_initial_guess =
+    warm_start == PETSC_TRUE && d_hasPreviousSolution;
   if (!guess.empty()) {
-    KSPSetInitialGuessNonzero(solver, PETSC_TRUE);
+    use_initial_guess = true;
     for (int i = 0; i < (int)guess.size(); i++) {
       VecSetValues(d_x, 1, &i, &guess[i], INSERT_VALUES);
     }
+    VecAssemblyBegin(d_x);
+    VecAssemblyEnd(d_x);
   }
+
+  KSPSetInitialGuessNonzero(
+    d_ksp, use_initial_guess ? PETSC_TRUE : PETSC_FALSE);
+
+  PetscLogDouble start_time = 0.0;
+  PetscLogDouble end_time   = 0.0;
+  if (d_profileEnabled) {
+    PetscTime(&start_time);
+  }
+
   // TAU_PROFILE_TIMER(solve, "Petsc:KPSolve()", "", TAU_USER);
   // TAU_PROFILE_START(solve);
-  KSPSolve(solver, d_B, d_x);
+  KSPSolve(d_ksp, d_B, d_x);
   // TAU_PROFILE_STOP(solve);
-#ifdef LOG
-  KSPView(solver, PETSC_VIEWER_STDOUT_WORLD);
-  int its;
-  KSPGetIterationNumber(solver, &its);
-  PetscPrintf(PETSC_COMM_WORLD, "Iterations %d\n", its);
-  VecView(d_x, PETSC_VIEWER_STDOUT_WORLD);
-#endif
 
-#if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))
-  KSPDestroy(&solver);
-#else
-  KSPDestroy(solver);
-#endif
+  KSPConvergedReason reason;
+  PetscInt iterations = 0;
+  PetscReal residual  = 0.0;
+  KSPGetConvergedReason(d_ksp, &reason);
+  KSPGetIterationNumber(d_ksp, &iterations);
+  KSPGetResidualNorm(d_ksp, &residual);
+  d_hasPreviousSolution = reason > 0;
+
+  if (d_profileEnabled) {
+    PetscTime(&end_time);
+    PetscPrintf(PETSC_COMM_WORLD,
+                "MPM PETSc solve: %.6f s, iterations=%lld, residual=%.6e, "
+                "reason=%d%s\n",
+                static_cast<double>(end_time - start_time),
+                static_cast<long long>(iterations),
+                static_cast<double>(residual),
+                static_cast<int>(reason),
+                use_initial_guess ? ", warm start" : "");
+  }
+
 }
 void
 MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
-                             const std::map<int, int>& dof_diag)
+                             const std::map<int, int>& dof_diag,
+                             const std::map<int, int>& dof_offdiag)
 {
   // TAU_PROFILE("MPMPetscSolver::createMatrix", " ", TAU_USER);
   int me       = d_myworld->myRank();
@@ -400,29 +450,15 @@ MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
                     PETSC_DEFAULT,PETSC_NULLPTR, &d_A);
 #endif
 
-  // This one is much faster
-  int ONNZ_MAX = 57;
-  int DIAG_MAX = 81;
-  if (d_DOFsPerNode == 1) {
-    ONNZ_MAX = 19;
-    DIAG_MAX = 27;
-  }
-
-  if (numlcolumns < ONNZ_MAX) {
-    ONNZ_MAX = numlcolumns;
-  }
-
-  if (numlcolumns < DIAG_MAX) {
-    DIAG_MAX = numlcolumns;
-  }
-
   for (int i = 0; i < numlrows; i++) {
-    ASSERT(diag[i] > 0);
-    onnz[i] = ONNZ_MAX;
-    if (diag[i] == 1) {
-      onnz[i] = 0;
-    }
-    diag[i] = std::min(diag[i], DIAG_MAX);
+    diag[i] = std::min(std::max(diag[i], 1), numlcolumns);
+    onnz[i] = 0;
+  }
+  for (itr = dof_offdiag.begin(); itr != dof_offdiag.end(); ++itr) {
+    ASSERTRANGE(itr->first, 0, numlrows);
+    ASSERT(itr->second > 0);
+    onnz[itr->first] =
+      std::min(itr->second, globalcolumns - numlcolumns);
   }
 
 #if defined(USE_SPOOLES) || defined(USE_SUPERLU)
@@ -475,11 +511,6 @@ MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
   //    MatGetType(d_A, &type);
   //    std::cout << "MatType = " << type << std::endl;
 
-  // set the initial stash size.
-  // for now set it to be 1M
-  // it should be counted and set dynamically
-  // the stash is used by nodes that neighbor my patches on the + faces.
-  MatStashSetInitialSize(d_A, 1000000, 0);
   if (d_DOFsPerNode >= 1) {
 #if (PETSC_VERSION_MAJOR == 3)
     MatSetOption(d_A, MAT_USE_INODES, PETSC_TRUE);
@@ -513,6 +544,7 @@ MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
   VecDuplicate(d_B, &d_x);
   VecDuplicate(d_B, &d_t);
   VecDuplicate(d_B, &d_flux);
+  d_hasPreviousSolution = false;
 
   delete[] diag;
   delete[] onnz;
@@ -528,17 +560,19 @@ MPMPetscSolver::destroyMatrix(bool recursion)
 #if (PETSC_VERSION_MAJOR == 2 && PETSC_VERSION_MINOR == 2)
     VecSet(&zero, d_B);
     VecSet(&zero, d_diagonal);
-    VecSet(&zero, d_x);
     VecSet(&zero, d_t);
     VecSet(&zero, d_flux);
 #else
     VecSet(d_B, zero);
     VecSet(d_diagonal, zero);
-    VecSet(d_x, zero);
     VecSet(d_t, zero);
     VecSet(d_flux, zero);
 #endif
   } else {
+    if (d_ksp) {
+      KSPDestroy(&d_ksp);
+    }
+    d_hasPreviousSolution = false;
 #if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))
     PetscBool exists = PETSC_FALSE;
 #else
@@ -609,6 +643,23 @@ MPMPetscSolver::fillVector(int i, double v, bool add)
   } else {
     VecSetValues(d_B, 1, &i, &value, INSERT_VALUES);
   }
+}
+
+void
+MPMPetscSolver::fillVector(int count,
+                           const int indices[],
+                           const double values[],
+                           bool add)
+{
+  std::vector<PetscScalar> petsc_values(count);
+  for (int i = 0; i < count; ++i) {
+    petsc_values[i] = values[i];
+  }
+  VecSetValues(d_B,
+               count,
+               indices,
+               petsc_values.data(),
+               add ? ADD_VALUES : INSERT_VALUES);
 }
 
 void

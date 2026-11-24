@@ -81,13 +81,19 @@ namespace Uintah {
     virtual void solve(vector<double>& guess) = 0;
 
     virtual void createMatrix(const ProcessorGroup* pg, 
-                              const  std::map< int,int>& diag) = 0;
+                              const std::map<int, int>& diag,
+                              const std::map<int, int>& offdiag = {}) = 0;
 
     virtual void destroyMatrix(bool recursion) = 0;
     
     virtual void fillMatrix(int, int[], int, int j[],double v[]) = 0;
 
     virtual void fillVector(int, double,bool add = false) = 0;
+
+    virtual void fillVector(int count,
+                            const int indices[],
+                            const double values[],
+                            bool add = false) = 0;
 
     virtual void fillTemporaryVector(int, double) = 0;
 

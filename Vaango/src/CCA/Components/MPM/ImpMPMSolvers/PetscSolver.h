@@ -68,13 +68,20 @@ namespace Uintah {
     
     void solve(vector<double>& guess);
 
-    void createMatrix(const ProcessorGroup* pg, const  std::map< int,int>& dof_diag);
+    void createMatrix(const ProcessorGroup* pg,
+                      const std::map<int, int>& dof_diag,
+                      const std::map<int, int>& dof_offdiag = {});
 
     void destroyMatrix(bool recursion);
 
     inline void fillMatrix(int,int[],int,int j[],double v[]);
 
     void fillVector(int, double,bool add = false);
+
+    void fillVector(int count,
+                    const int indices[],
+                    const double values[],
+                    bool add = false);
 
     void fillTemporaryVector(int, double);
 
@@ -114,12 +121,15 @@ namespace Uintah {
 
     // Petsc matrix and vectors
 #ifdef HAVE_PETSC
-    Mat d_A,d_C;
+    Mat d_A, d_C;
     Vec d_B;
     Vec d_diagonal;
     Vec d_x;
-    Vec d_t,d_flux;
+    Vec d_t, d_flux;
+    KSP d_ksp;
+    bool d_profileEnabled{ false };
 #endif
+    bool d_hasPreviousSolution{ false };
 
     inline bool compare(double num1, double num2)
       {
