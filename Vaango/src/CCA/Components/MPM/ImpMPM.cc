@@ -1918,7 +1918,7 @@ ImpMPM::createMatrix(const ProcessorGroup*,
                      const PatchSubset* patches,
                      const MaterialSubset*,
                      DataWarehouse* old_dw,
-                     DataWarehouse* new_dw)
+                     [[maybe_unused]] DataWarehouse* new_dw)
 {
   std::map<int, int> dof_diag;
   std::map<int, int> dof_offdiag;
@@ -1956,25 +1956,21 @@ ImpMPM::createMatrix(const ProcessorGroup*,
 
     Array3<int> l2g(lowIndex, highIndex);
     d_solver->copyL2G(l2g, patch);
+    const IntVector map_low  = l2g.getLowIndex();
+    const IntVector map_high = l2g.getHighIndex();
 
     // set the global offset if this is the first patch
     if (pp == 0) {
       global_offset = l2g[lowIndex];
     }
 
-    CCVariable<int> visited;
-    new_dw->allocateTemporary(visited, patch, Ghost::AroundCells, 1);
-    visited.initialize(0);
-
+    std::set<IntVector> visited_cells;
     for (int m = 0; m < numMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_materialManager->getMaterial("MPM", m));
-      int matID            = mpm_matl->getDWIndex();
-      ParticleSubset* pset = old_dw->getParticleSubset(matID,
-                                                       patch,
-                                                       Ghost::AroundNodes,
-                                                       1,
-                                                       d_mpm_labels->pXLabel);
+      int matID = mpm_matl->getDWIndex();
+      ParticleSubset* pset = old_dw->getParticleSubset(
+        matID, patch, Ghost::AroundNodes, 1, d_mpm_labels->pXLabel);
 
       constParticleVariable<Point> pX;
       old_dw->get(pX, d_mpm_labels->pXLabel, pset);
@@ -1982,36 +1978,45 @@ ImpMPM::createMatrix(const ProcessorGroup*,
       for (auto idx : *pset) {
         IntVector cell, ni[27];
         patch->findCell(pX[idx], cell);
-        if (visited[cell] == 0) {
-          visited[cell] = 1;
-          patch->findNodesFromCell(cell, ni);
-          int cell_dofs[81];
-          int num_cell_dofs = 0;
-          for (int k = 0; k < n8or27; k++) {
-            if (patch->containsNode(ni[k])) {
-              int node_dof = l2g[ni[k]];
-              cell_dofs[num_cell_dofs++] = node_dof;
-              cell_dofs[num_cell_dofs++] = node_dof + 1;
-              cell_dofs[num_cell_dofs++] = node_dof + 2;
-            }
+        if (!visited_cells.insert(cell).second) {
+          continue;
+        }
+        patch->findNodesFromCell(cell, ni);
+        bool stencil_mapped = true;
+        for (int k = 0; k < n8or27; k++) {
+          stencil_mapped =
+            stencil_mapped && ni[k].x() >= map_low.x() &&
+            ni[k].y() >= map_low.y() && ni[k].z() >= map_low.z() &&
+            ni[k].x() < map_high.x() && ni[k].y() < map_high.y() &&
+            ni[k].z() < map_high.z();
+        }
+        for (int k = 0; k < n8or27; k++) {
+          if (!patch->containsNode(ni[k])) {
+            continue;
           }
-          int local_columns = 0;
-          for (int i = 0; i < num_cell_dofs; ++i) {
-            int dof = cell_dofs[i];
-            if (dof >= global_offset &&
-                dof < global_offset + local_num_rows) {
-              ++local_columns;
+          const int node_dof = l2g[ni[k]];
+          for (int component = 0; component < 3; ++component) {
+            const int local_row = node_dof + component - global_offset;
+            if (local_row < 0 || local_row >= local_num_rows) {
+              continue;
             }
-          }
-          int off_process_columns = num_cell_dofs - local_columns;
-          for (int i = 0; i < num_cell_dofs; ++i) {
-            int row_dof = cell_dofs[i];
-            if (row_dof >= global_offset &&
-                row_dof < global_offset + local_num_rows) {
-              int local_row = row_dof - global_offset;
-              dof_diag[local_row] += local_columns;
-              if (off_process_columns > 0) {
-                dof_offdiag[local_row] += off_process_columns;
+            if (!stencil_mapped) {
+              const int stencil_dofs = 3 * n8or27;
+              dof_diag[local_row] += stencil_dofs;
+              dof_offdiag[local_row] += stencil_dofs;
+              continue;
+            }
+            for (int j = 0; j < n8or27; ++j) {
+              const int local_column_node = l2g[ni[j]] - global_offset;
+              for (int column_component = 0; column_component < 3;
+                   ++column_component) {
+                const int local_column =
+                  local_column_node + column_component;
+                if (local_column >= 0 && local_column < local_num_rows) {
+                  dof_diag[local_row] += 1;
+                } else {
+                  dof_offdiag[local_row] += 1;
+                }
               }
             }
           }

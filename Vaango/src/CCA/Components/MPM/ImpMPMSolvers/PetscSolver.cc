@@ -364,12 +364,27 @@ MPMPetscSolver::solve(vector<double>& guess)
 
   if (d_profileEnabled) {
     PetscTime(&end_time);
+    PetscScalar rhs_solution_dot = 0.0;
+    PetscReal rhs_norm           = 0.0;
+    PetscReal true_residual_norm = 0.0;
+    Vec true_residual             = nullptr;
+    VecDot(d_B, d_x, &rhs_solution_dot);
+    VecNorm(d_B, NORM_2, &rhs_norm);
+    VecDuplicate(d_B, &true_residual);
+    MatMult(d_A, d_x, true_residual);
+    VecAYPX(true_residual, -1.0, d_B);
+    VecNorm(true_residual, NORM_2, &true_residual_norm);
+    VecDestroy(&true_residual);
+    PetscReal relative_true_residual =
+      rhs_norm > 0.0 ? true_residual_norm / rhs_norm : true_residual_norm;
     PetscPrintf(PETSC_COMM_WORLD,
                 "MPM PETSc solve: %.6f s, iterations=%lld, residual=%.6e, "
-                "reason=%d%s\n",
+                "true_relative_residual=%.6e, b_dot_x=%.6e, reason=%d%s\n",
                 static_cast<double>(end_time - start_time),
                 static_cast<long long>(iterations),
                 static_cast<double>(residual),
+                static_cast<double>(relative_true_residual),
+                static_cast<double>(PetscRealPart(rhs_solution_dot)),
                 static_cast<int>(reason),
                 use_initial_guess ? ", warm start" : "");
   }
@@ -744,19 +759,20 @@ MPMPetscSolver::removeFixedDOF()
 
   // Make sure the nodes that are outside of the material have values
   // assigned and solved for.  The solutions will be 0.
-  int low = 0, high = 0;
+  PetscInt low = 0, high = 0;
   MatGetOwnershipRange(d_A, &low, &high);
-  int size = high - low;
+  PetscInt size = high - low;
 
   MatGetDiagonal(d_A, d_diagonal);
   PetscScalar* diag;
   VecGetArray(d_diagonal, &diag);
 
-  for (int j = 0; j < size; j++) {
+  for (PetscInt j = 0; j < size; j++) {
     if (compare(diag[j], 0.)) {
-      VecSetValues(d_diagonal, 1, &j, &one, INSERT_VALUES);
+      diag[j] = one;
       PetscScalar v = 0.;
-      VecSetValues(d_B, 1, &j, &v, INSERT_VALUES);
+      PetscInt global_index = low + j;
+      VecSetValues(d_B, 1, &global_index, &v, INSERT_VALUES);
     }
   }
   VecRestoreArray(d_diagonal, &diag);
@@ -778,9 +794,31 @@ MPMPetscSolver::removeFixedDOF()
 #if (PETSC_VERSION_MAJOR == 2 && PETSC_VERSION_MINOR == 2)
   MatZeroRows(d_A, is, &one);
 #elif ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))
-  MatZeroRowsIS(d_A, is, one, 0, 0);
+  // d_DOF constrains the displacement correction; contact's prescribed
+  // displacement is imposed separately in updateGridKinematics().
+  int ierr = MatZeroRowsColumnsIS(d_A, is, one, 0, 0);
+  if (ierr) {
+    throw UintahPetscError(
+      ierr, "MatZeroRowsColumnsIS", __FILE__, __LINE__);
+  }
 #else
   MatZeroRowsIS(d_A, is, one);
+#endif
+
+#if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))
+  PetscBool check_symmetry = PETSC_FALSE;
+  PetscOptionsGetBool(
+    nullptr, nullptr, "-mpm_petsc_check_symmetry", &check_symmetry, nullptr);
+  if (check_symmetry == PETSC_TRUE) {
+    PetscBool symmetric = PETSC_FALSE;
+    int ierr = MatIsSymmetric(d_A, 1.e-12, &symmetric);
+    if (ierr) {
+      throw UintahPetscError(ierr, "MatIsSymmetric", __FILE__, __LINE__);
+    }
+    PetscPrintf(PETSC_COMM_WORLD,
+                "MPM PETSc matrix symmetry after constraints: %s\n",
+                symmetric == PETSC_TRUE ? "yes" : "no");
+  }
 #endif
 
 #if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))

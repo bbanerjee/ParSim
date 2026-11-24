@@ -45,6 +45,7 @@
 #include <Core/Math/Short27.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Util/DebugStream.h>
+#include <set>
 #include <vector>
 
 using namespace Uintah;
@@ -303,13 +304,30 @@ ImplicitHeatConduction::createHCMatrix(const ProcessorGroup* pg,
                                        const PatchSubset* patches,
                                        const MaterialSubset*,
                                        DataWarehouse* old_dw,
-                                       DataWarehouse* new_dw)
+                                       [[maybe_unused]] DataWarehouse* new_dw)
 {
   int numMatls = d_mat_manager->getNumMaterials("MPM");
 
   std::map<int, int> dof_diag;
+  std::map<int, int> dof_offdiag;
+  int local_num_rows = 0;
   d_HC_solver->createLocalToGlobalMapping(
     pg, d_perproc_patches, patches, 1, d_mpm_flags->d_8or27);
+  for (int pp = 0; pp < patches->size(); pp++) {
+    const Patch* patch = patches->get(pp);
+    IntVector lowIndex, highIndex;
+    if (d_mpm_flags->d_8or27 == 8) {
+      lowIndex  = patch->getNodeLowIndex();
+      highIndex = patch->getNodeHighIndex() + IntVector(1, 1, 1);
+    } else if (d_mpm_flags->d_8or27 == 27) {
+      lowIndex  = patch->getExtraNodeLowIndex();
+      highIndex = patch->getExtraNodeHighIndex() + IntVector(1, 1, 1);
+    }
+    local_num_rows += (highIndex.x() - lowIndex.x() - 1) *
+                      (highIndex.y() - lowIndex.y() - 1) *
+                      (highIndex.z() - lowIndex.z() - 1);
+  }
+
   int global_offset = 0;
   for (int pp = 0; pp < patches->size(); pp++) {
     const Patch* patch = patches->get(pp);
@@ -331,54 +349,65 @@ ImplicitHeatConduction::createHCMatrix(const ProcessorGroup* pg,
 
     Array3<int> l2g(lowIndex, highIndex);
     d_HC_solver->copyL2G(l2g, patch);
-    // set global offset if this is the first patch
+    const IntVector map_low  = l2g.getLowIndex();
+    const IntVector map_high = l2g.getHighIndex();
     if (pp == 0) {
       global_offset = l2g[lowIndex];
     }
-    CCVariable<int> visited;
-    new_dw->allocateTemporary(visited, patch, Ghost::AroundCells, 1);
-    visited.initialize(0);
 
+    std::set<IntVector> visited_cells;
     for (int m = 0; m < numMatls; m++) {
       MPMMaterial* mpm_matl =
         static_cast<MPMMaterial*>(d_mat_manager->getMaterial("MPM", m));
       int dwi = mpm_matl->getDWIndex();
       constParticleVariable<Point> px;
-      ParticleSubset* pset;
-
-      pset = old_dw->getParticleSubset(
+      ParticleSubset* pset = old_dw->getParticleSubset(
         dwi, patch, Ghost::AroundNodes, 1, d_mpm_labels->pXLabel);
       old_dw->get(px, d_mpm_labels->pXLabel, pset);
 
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
            iter++) {
-        particleIndex idx = *iter;
         IntVector cell, ni[8];
-        patch->findCell(px[idx], cell);
-        if (visited[cell] == 0) {
-          visited[cell] = 1;
-          patch->findNodesFromCell(cell, ni);
-          std::vector<int> dof(0);
-          int l2g_node_num;
-          for (int k = 0; k < 8; k++) {
-            if (patch->containsNode(ni[k])) {
-              l2g_node_num =
-                l2g[ni[k]] - global_offset; // subtract global offset to map
-                                            // into array correctly
-              dof.push_back(l2g_node_num);
-            }
+        patch->findCell(px[*iter], cell);
+        if (!visited_cells.insert(cell).second) {
+          continue;
+        }
+
+        patch->findNodesFromCell(cell, ni);
+        bool stencil_mapped = true;
+        for (int k = 0; k < 8; k++) {
+          stencil_mapped =
+            stencil_mapped && ni[k].x() >= map_low.x() &&
+            ni[k].y() >= map_low.y() && ni[k].z() >= map_low.z() &&
+            ni[k].x() < map_high.x() && ni[k].y() < map_high.y() &&
+            ni[k].z() < map_high.z();
+        }
+        for (int k = 0; k < 8; k++) {
+          if (!patch->containsNode(ni[k])) {
+            continue;
           }
-          for (int I = 0; I < (int)dof.size(); I++) {
-            int dofi = dof[I];
-            for (int J = 0; J < (int)dof.size(); J++) {
-              dof_diag[dofi] += 1;
+          const int local_row = l2g[ni[k]] - global_offset;
+          if (local_row < 0 || local_row >= local_num_rows) {
+            continue;
+          }
+          if (!stencil_mapped) {
+            dof_diag[local_row] += 8;
+            dof_offdiag[local_row] += 8;
+            continue;
+          }
+          for (int j = 0; j < 8; j++) {
+            const int local_column = l2g[ni[j]] - global_offset;
+            if (local_column >= 0 && local_column < local_num_rows) {
+              dof_diag[local_row] += 1;
+            } else {
+              dof_offdiag[local_row] += 1;
             }
           }
         }
       }
     }
   }
-  d_HC_solver->createMatrix(pg, dof_diag);
+  d_HC_solver->createMatrix(pg, dof_diag, dof_offdiag);
 }
 
 void
@@ -658,7 +687,6 @@ ImplicitHeatConduction::formHCStiffnessMatrix(const ProcessorGroup*,
             }
           }
         }
-
         for (int I = 0; I < 8; I++) {
           for (int J = 0; J < 8; J++) {
             v[8 * I + J] = kHC[I][J];
