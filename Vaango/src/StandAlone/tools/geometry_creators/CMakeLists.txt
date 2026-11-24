@@ -35,6 +35,7 @@ add_executable(rawToUniqueGrains rawToUniqueGrains.cc)
 SET(GEOM_CREATE_LIBS
   Vaango_Core_Exceptions
   Vaango_Core_Grid
+  Vaango_Core_Malloc
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_Util

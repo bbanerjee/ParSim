@@ -117,7 +117,9 @@ public:
   const VarLabel* pExtForceCorner3Label_preReloc;
   const VarLabel* pExtForceCorner4Label_preReloc;
   const VarLabel* pXLabel;
+  const VarLabel* pX0Label;
   const VarLabel* pXLabel_preReloc;
+  const VarLabel* pX0Label_preReloc;
   const VarLabel* pSurfLabel;
   const VarLabel* pSurfLabel_preReloc;
   const VarLabel* pTemperatureLabel;               // for heat conduction
@@ -142,6 +144,22 @@ public:
 
   const VarLabel* pScaleFactorLabel;
   const VarLabel* pScaleFactorLabel_preReloc;
+
+  // DEM labels
+  const VarLabel* pAngularVelocityLabel;
+  const VarLabel* pAngularVelocityLabel_preReloc;
+  const VarLabel* pTorqueLabel;
+  const VarLabel* pTorqueLabel_preReloc;
+  const VarLabel* pOrientationLabel;
+  const VarLabel* pOrientationLabel_preReloc;
+  const VarLabel* pRadiusLabel;
+  const VarLabel* pRadiusLabel_preReloc;
+  const VarLabel* pInertiaTensorLabel;
+  const VarLabel* pInertiaTensorLabel_preReloc;
+  const VarLabel* pDEMBodyIDLabel;
+  const VarLabel* pDEMBodyIDLabel_preReloc;
+  const VarLabel* pDEMNearLabel;
+  const VarLabel* pDEMNearLabel_preReloc;
 
   const VarLabel* gColorLabel;
   const VarLabel* gLambdaDotLabel;

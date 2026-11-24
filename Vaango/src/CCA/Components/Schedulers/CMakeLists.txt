@@ -74,10 +74,16 @@ target_link_libraries(Vaango_CCA_Components_Schedulers PRIVATE
   LibXml2::LibXml2
   $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
   $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
-  $<$<BOOL:${HAVE_CUDA}>:Kokkos::kokkos>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
   MPI::MPI_CXX
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_CCA_Components_Schedulers)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_CCA_Components_Schedulers PRIVATE BUILD_Vaango_CCA_Components_Schedulers)
+endif()
+
+install(TARGETS
+  Vaango_CCA_Components_Schedulers
+)
+
+add_subdirectory(UnitTests)

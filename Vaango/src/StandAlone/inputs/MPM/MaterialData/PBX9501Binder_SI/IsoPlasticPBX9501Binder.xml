@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Uintah_Include>
+  <flow_model type="linear">
+    <sigma_0> 5.0e5 </sigma_0>
+    <K> 1.0e5 </K>
+  </flow_model>
+</Uintah_Include>

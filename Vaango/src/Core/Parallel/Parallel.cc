@@ -467,14 +467,14 @@ Parallel::printManagerSettings()
         if (s_num_partitions > 1) {
           proc0cout << "Kokkos::OpenMP::partition_master thread partitions per "
                        "MPI process: \t"
-                    << s_num_partitions < < < <
+                    << s_num_partitions <<
             std::endl;
         }
 
         if (s_threads_per_partition > 1) {
           proc0cout << "Kokkos::OpenMP::partition_master threads per thread "
                        "partition: \t\t"
-                    << s_threads_per_partition < < < <
+                    << s_threads_per_partition <<
             std::endl;
         }
       }

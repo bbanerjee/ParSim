@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Uintah_Include>
+  <density>              2710.0 </density>
+  <thermal_conductivity> 225.0  </thermal_conductivity>
+  <specific_heat>        900.0  </specific_heat>
+  <C_p>                  900.0  </C_p>
+  <room_temp>            294.0  </room_temp>
+  <melt_temp>            923.0  </melt_temp>
+</Uintah_Include>

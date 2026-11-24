@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- SandArena -->
+<!-- Arena dry sand -->
+<Uintah_Include>
+  <include href="MatConstArenaDrySand.xml"/>
+  <constitutive_model type="arena">
+    <initial_porosity> 0.4 </initial_porosity>
+    <initial_saturation> 0.0 </initial_saturation>
+	  <subcycling_characteristic_number>256</subcycling_characteristic_number>
+    <include href="ElasticModuliArenaDrySand.xml"/>
+    <include href="InternalVariableArenaDrySand.xml"/>
+    <include href="KinematicHardeningArenaDrySand.xml"/>
+    <include href="YieldConditionArenaDrySand.xml"/>
+  </constitutive_model>
+</Uintah_Include>
+

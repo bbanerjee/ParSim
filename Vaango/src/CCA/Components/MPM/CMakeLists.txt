@@ -54,11 +54,13 @@ SET(Vaango_CCA_Components_MPM_SRCS
   ShellMPM.cc     
   AMRMPM.cc       
   UofU_MPM.cc    
+  DEM_MPM.cc
 )
 
 add_subdirectory(Core)
 add_subdirectory(Contact)
 add_subdirectory(ConstitutiveModel)
+add_subdirectory(DEM)
 add_subdirectory(ThermalContact)
 add_subdirectory(PhysicalBC)
 add_subdirectory(ParticleCreator)
@@ -68,6 +70,7 @@ add_subdirectory(HeatConduction)
 add_subdirectory(MMS)
 add_subdirectory(GradientComputer)
 add_subdirectory(ReactionDiffusion)
+add_subdirectory(UnitTests)
 
 SET(LIBS
   ${LIBS}
@@ -104,6 +107,6 @@ if (HAVE_CUDA)
   target_compile_options(Vaango_CCA_Components_MPM PUBLIC -Wno-unknown-pragmas --expt-relaxed-constexpr)
 endif()
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_CCA_Components_MPM)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_CCA_Components_MPM PRIVATE BUILD_Vaango_CCA_Components_MPM)
+endif()

@@ -301,6 +301,13 @@ HeatConduction::computeInternalHeatRate(const ProcessorGroup*,
            iter++) {
         particleIndex idx = *iter;
 
+        if (!(pMass[idx] > 0.0)) continue;
+
+        if (std::isnan(px[idx].x()) || std::isnan(px[idx].y()) || std::isnan(px[idx].z())) {
+          // std::cout << "Particle " << idx << " has NaN position: " << px[idx] << std::endl;
+          continue;
+        }
+
         // Get the node indices that surround the cell
         interpolator->findCellAndShapeDerivatives(
           px[idx], ni, d_S, pSize[idx], pDefGrad[idx]);
@@ -355,6 +362,13 @@ HeatConduction::computeInternalHeatRate(const ProcessorGroup*,
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
            iter++) {
         particleIndex idx = *iter;
+
+        if (!(pMass[idx] > 0.0)) continue;
+
+        if (std::isnan(px[idx].x()) || std::isnan(px[idx].y()) || std::isnan(px[idx].z())) {
+          // std::cout << "Particle " << idx << " has NaN position: " << px[idx] << std::endl;
+          continue;
+        }
 
         // Get the node indices that surround the cell
         interpolator->findCellAndShapeDerivatives(
@@ -513,6 +527,13 @@ HeatConduction::computeNodalHeatFlux(const ProcessorGroup*,
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
            iter++) {
         particleIndex idx = *iter;
+
+        if (!(pMass[idx] > 0.0)) continue;
+
+        if (std::isnan(px[idx].x()) || std::isnan(px[idx].y()) || std::isnan(px[idx].z())) {
+          // std::cout << "Particle " << idx << " has NaN position: " << px[idx] << std::endl;
+          continue;
+        }
 
         // Get the node indices that surround the cell
         interpolator->findCellAndWeights(

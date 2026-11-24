@@ -60,6 +60,7 @@
 #include <CCA/Components/MPM/ShellMPM.h>
 #include <CCA/Components/MPM/UofU_MPM.h>
 #include <CCA/Components/MPMICE/MPMICE.h>
+#include <CCA/Components/MPM/DEM_MPM.h>
 #include <CCA/Components/Peridynamics/Peridynamics.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -74,9 +75,9 @@
 #endif
 
 #include <iosfwd>
-#include <string>
-
 #include <locale>
+#include <ranges>
+#include <string>
 
 using namespace Uintah;
 
@@ -125,35 +126,68 @@ ComponentFactory::create(ProblemSpecP& ps,
     return std::make_unique<Vaango::Peridynamics>(world, mat_manager);
   }
 
+// #ifndef NO_MPM
+//   if (sim_comp == "mpm" || sim_comp == "MPM") {
+//     return std::make_unique<SerialMPM>(world, mat_manager);
+//   }
+//   if (sim_comp == "mpm_usl" || sim_comp == "MPM_USL") {
+//     return std::make_unique<MPM_UpdateStressLast>(world, mat_manager);
+//   }
+//   if (sim_comp == "uofu_mpm" || sim_comp == "UofU_MPM") {
+//     return std::make_unique<UofU_MPM>(world, mat_manager);
+//   }
+//   if (sim_comp == "mpmf" || sim_comp == "fracturempm" ||
+//       sim_comp == "FRACTUREMPM") {
+//     return std::make_unique<FractureMPM>(world, mat_manager);
+//   }
+//   if (sim_comp == "rmpm" || sim_comp == "rigidmpm" || sim_comp == "RIGIDMPM") {
+//     return std::make_unique<RigidMPM>(world, mat_manager);
+//   }
+//   if (sim_comp == "amrmpm" || sim_comp == "AMRmpm" || sim_comp == "AMRMPM") {
+//     return std::make_unique<AMRMPM>(world, mat_manager);
+//   }
+//   if (sim_comp == "smpm" || sim_comp == "shellmpm" || sim_comp == "SHELLMPM") {
+//     return std::make_unique<ShellMPM>(world, mat_manager);
+//   }
+//   if (sim_comp == "impm" || sim_comp == "IMPM") {
+//     return std::make_unique<ImpMPM>(world, mat_manager);
+//   }
+//   if (sim_comp == "dem_mpm" || sim_comp == "DEM_MPM") {
+//     return std::make_unique<DEMMPM>(world, mat_manager);
+//   }
+// #else
+//   turned_off_options += "MPM ";
+// #endif
+
 #ifndef NO_MPM
-  if (sim_comp == "mpm" || sim_comp == "MPM") {
-    return std::make_unique<SerialMPM>(world, mat_manager);
-  }
-  if (sim_comp == "mpm_usl" || sim_comp == "MPM_USL") {
-    return std::make_unique<MPM_UpdateStressLast>(world, mat_manager);
-  }
-  if (sim_comp == "uofu_mpm" || sim_comp == "UofU_MPM") {
-    return std::make_unique<UofU_MPM>(world, mat_manager);
-  }
-  if (sim_comp == "mpmf" || sim_comp == "fracturempm" ||
-      sim_comp == "FRACTUREMPM") {
-    return std::make_unique<FractureMPM>(world, mat_manager);
-  }
-  if (sim_comp == "rmpm" || sim_comp == "rigidmpm" || sim_comp == "RIGIDMPM") {
-    return std::make_unique<RigidMPM>(world, mat_manager);
-  }
-  if (sim_comp == "amrmpm" || sim_comp == "AMRmpm" || sim_comp == "AMRMPM") {
-    return std::make_unique<AMRMPM>(world, mat_manager);
-  }
-  if (sim_comp == "smpm" || sim_comp == "shellmpm" || sim_comp == "SHELLMPM") {
-    return std::make_unique<ShellMPM>(world, mat_manager);
-  }
-  if (sim_comp == "impm" || sim_comp == "IMPM") {
-    return std::make_unique<ImpMPM>(world, mat_manager);
+  std::string key = sim_comp;
+  std::ranges::transform(key, key.begin(), ::tolower);
+
+  using MakeFn = std::function<std::unique_ptr<UintahParallelComponent>(
+      const ProcessorGroup*, const MaterialManagerP&)>;
+
+  static const std::unordered_map<std::string, MakeFn> factories {
+    {"mpm",         [](auto* w, auto& m){ return std::make_unique<SerialMPM>(w, m); }},
+    {"mpm_usl",     [](auto* w, auto& m){ return std::make_unique<MPM_UpdateStressLast>(w, m); }},
+    {"uofu_mpm",    [](auto* w, auto& m){ return std::make_unique<UofU_MPM>(w, m); }},
+    {"mpmf",        [](auto* w, auto& m){ return std::make_unique<FractureMPM>(w, m); }},
+    {"fracturempm", [](auto* w, auto& m){ return std::make_unique<FractureMPM>(w, m); }},
+    {"rmpm",        [](auto* w, auto& m){ return std::make_unique<RigidMPM>(w, m); }},
+    {"rigidmpm",    [](auto* w, auto& m){ return std::make_unique<RigidMPM>(w, m); }},
+    {"amrmpm",      [](auto* w, auto& m){ return std::make_unique<AMRMPM>(w, m); }},
+    {"smpm",        [](auto* w, auto& m){ return std::make_unique<ShellMPM>(w, m); }},
+    {"shellmpm",    [](auto* w, auto& m){ return std::make_unique<ShellMPM>(w, m); }},
+    {"impm",        [](auto* w, auto& m){ return std::make_unique<ImpMPM>(w, m); }},
+    {"dem_mpm",     [](auto* w, auto& m){ return std::make_unique<DEMMPM>(w, m); }},
+  };
+
+  if (auto it = factories.find(key); it != factories.end()) {
+    return it->second(world, mat_manager);
   }
 #else
   turned_off_options += "MPM ";
 #endif
+
 #ifndef NO_ICE
   if (sim_comp == "ice" || sim_comp == "ICE") {
     ProblemSpecP cfd_ps   = ps->findBlock("CFD");

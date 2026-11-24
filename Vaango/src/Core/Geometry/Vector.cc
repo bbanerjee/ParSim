@@ -74,7 +74,7 @@ Vector::fromString(const string& source) // Creates a Vector from a string that
 }
 
 void
-Vector::find_orthogonal(Vector& v1, Vector& v2) const
+Vector::findOrthogonal(Vector& v1, Vector& v2) const
 {
   Vector v0(Cross(*this, Vector(1, 0, 0)));
   if (v0.length2() == 0) {
@@ -87,7 +87,7 @@ Vector::find_orthogonal(Vector& v1, Vector& v2) const
 }
 
 bool
-Vector::check_find_orthogonal(Vector& v1, Vector& v2) const
+Vector::checkFindOrthogonal(Vector& v1, Vector& v2) const
 {
   Vector v0(Cross(*this, Vector(1, 0, 0)));
   if (v0.length2() == 0) {

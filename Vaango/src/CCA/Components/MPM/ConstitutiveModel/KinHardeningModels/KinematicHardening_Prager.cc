@@ -50,7 +50,7 @@ void
 KinematicHardening_Prager::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP plastic_ps = ps->appendChild("kinematic_hardening_model");
-  plastic_ps->setAttribute("type", "prager_hardening");
+  plastic_ps->setAttribute("type", "prager");
 
   plastic_ps->appendElement("beta", d_cm.beta);
   plastic_ps->appendElement("hardening_modulus", d_cm.hardening_modulus);

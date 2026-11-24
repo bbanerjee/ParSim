@@ -31,13 +31,12 @@
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-              
         Vaango_Core_Util        
         Vaango_Core_Math        
+        Vaango_Core_Malloc        
         Vaango_Core_Exceptions  
         Vaango_Core_OS  
         Vaango_CCA_Ports        
@@ -57,9 +56,9 @@ SET(VAANGO_LIBS
 #------------------------
 # Google tests
 #------------------------
-set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
+
 set(GTEST_LIB gtest_main gtest)
-include_directories(${GTEST_INCLUDE_DIR})
+
 
 set(TEST testShearModulus_BorjaT)
 add_executable(${TEST} ${TEST}.cc)
@@ -72,9 +71,11 @@ target_link_libraries(${TEST} PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST ${TEST})
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 

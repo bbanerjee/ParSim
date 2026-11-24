@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Soft Elastomer -->
+<Uintah_Include>
+  <K>1666.67e6</K>
+  <G>172.41e6</G>
+</Uintah_Include>
+

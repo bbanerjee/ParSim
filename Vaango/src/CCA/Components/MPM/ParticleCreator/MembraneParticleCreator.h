@@ -40,7 +40,7 @@ namespace Uintah {
                                             CCVariable<short int>& cellNAPID,
                                             const Patch*, 
                                             DataWarehouse* new_dw,
-                                            std::vector<GeometryObject*>&);
+                                            const VecGeometryObjectSP&);
 
     virtual void registerPermanentParticleState(MPMMaterial* matl);
 

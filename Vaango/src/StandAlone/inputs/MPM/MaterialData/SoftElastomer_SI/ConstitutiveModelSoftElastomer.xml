@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- SoftElastomer -->
+<!-- Soft Elastomer -->
+<Uintah_Include>
+  <include href="MatConstSoftElastomer.xml"/>
+  <constitutive_model type="viscoelastic_fortran">
+    <include href="IsoElasticSoftElastomer.xml"/>
+    <include href="ViscoElasticPronySeriesSoftElastomer.xml"/>
+  </constitutive_model>
+</Uintah_Include>

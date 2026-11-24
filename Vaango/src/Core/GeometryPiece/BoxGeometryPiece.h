@@ -101,10 +101,29 @@ class BoxGeometryPiece : public GeometryPiece {
   virtual bool
   inside(const Point& p) const;
 
+  virtual double
+  getSDF(const Point& p) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const override;
+
   //////////
   //  Returns the bounding box surrounding the box (ie, the box itself).
   virtual Box
   getBoundingBox() const;
+
+  /**
+   * Returns the center of the box.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the box.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
 
   //////////
   //  Returns the volume of the box

@@ -84,6 +84,20 @@ SphereGeometryPiece::inside(const Point& p) const {
     return true;
 }
 
+double
+SphereGeometryPiece::getSDF(const Point& p) const {
+  Vector diff = p - d_origin;
+  return diff.length() - d_radius;
+}
+
+Vector
+SphereGeometryPiece::getSDFGradient(const Point& p) const {
+  Vector diff = p - d_origin;
+  double len = diff.length();
+  if (len > 1.0e-12) return diff / len;
+  return Vector(0, 0, 1);
+}
+
 Box
 SphereGeometryPiece::getBoundingBox() const {
   Point lo(d_origin.x() - d_radius,
@@ -95,6 +109,18 @@ SphereGeometryPiece::getBoundingBox() const {
            d_origin.z() + d_radius);
 
   return Box(lo, hi);
+}
+
+Point
+SphereGeometryPiece::getCenter() const {
+  return d_origin;
+}
+
+Matrix3
+SphereGeometryPiece::getInertiaTensor() const {
+  double mass = volume(); // Unit density
+  double i = (2.0 / 5.0) * mass * d_radius * d_radius;
+  return Matrix3(i, 0, 0, 0, i, 0, 0, 0, i);
 }
 
 } // end namespace Uintah

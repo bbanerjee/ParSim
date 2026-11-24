@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Arena dry sand -->
+<Uintah_Include>
+  <elastic_moduli_model type="arena">
+    <b0>  0.0029  </b0>
+    <b1>  0.4731  </b1>
+    <b2>  1.5057  </b2>
+    <b3>  2.5728  </b3>
+    <b4>  2.0799  </b4>
+    <G0>  7.0e8   </G0>
+    <nu1> 0.0     </nu1>
+    <nu2> 0.0     </nu2>
+  </elastic_moduli_model>
+</Uintah_Include>
+

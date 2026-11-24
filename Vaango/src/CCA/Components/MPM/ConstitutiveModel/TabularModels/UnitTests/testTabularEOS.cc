@@ -81,7 +81,6 @@ public:
   virtual void
   SetUp()
   {
-    // Uintah::Parallel::determineIfRunningUnderMPI(d_argc, d_argv);
     Uintah::Parallel::initializeManager(d_argc, d_argv);
     Uintah::create_sci_environment(d_env, 0, true);
   }
@@ -266,15 +265,6 @@ public:
   }
 };
 
-int
-main(int argc, char** argv, char* env[])
-{
-
-  ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new VaangoEnv(argc, argv, env));
-  return RUN_ALL_TESTS();
-}
-
 TEST(TabularEOSTest, singleParticleTest)
 {
   char currPath[2000];
@@ -395,4 +385,12 @@ TEST(TabularEOSTest, singleParticleTest)
     }
     Uintah::Parallel::exitAll(1);
   }
+}
+
+int
+main(int argc, char** argv, char* env[])
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::AddGlobalTestEnvironment(new VaangoEnv(argc, argv, env));
+  return RUN_ALL_TESTS();
 }

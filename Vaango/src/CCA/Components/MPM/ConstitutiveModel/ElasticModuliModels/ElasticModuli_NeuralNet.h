@@ -59,10 +59,11 @@ public:
 
   ElasticModuli_NeuralNet() = delete;
   ElasticModuli_NeuralNet(const ElasticModuli_NeuralNet& smm) = delete;
-  ~ElasticModuli_NeuralNet() = default;
 
   ElasticModuli_NeuralNet(Uintah::ProblemSpecP& ps);
   ElasticModuli_NeuralNet(const ElasticModuli_NeuralNet* smm);
+  ~ElasticModuli_NeuralNet();
+
   ElasticModuli_NeuralNet& operator=(const ElasticModuli_NeuralNet& smm) = delete;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;

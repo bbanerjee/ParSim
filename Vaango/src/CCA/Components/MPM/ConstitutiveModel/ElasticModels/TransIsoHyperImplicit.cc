@@ -177,7 +177,7 @@ TransIsoHyperImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     double K_vec[576];
     double D[6][6]; // stiffness matrix
 
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (int idx : *pset) {
         pStress[idx] = Vaango::Util::Zero;
       }
@@ -531,7 +531,7 @@ TransIsoHyperImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     new_dw->allocateAndPut(pFiberDir_copy, lb->pFiberDirLabel_preReloc, pset);
     new_dw->allocateAndPut(pStress, lb->pStressLabel_preReloc, pset);
 
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (int idx : *pset) {
         pStress[idx] = Vaango::Util::Zero;
       }

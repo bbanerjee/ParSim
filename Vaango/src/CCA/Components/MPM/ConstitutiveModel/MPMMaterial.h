@@ -61,6 +61,7 @@ class ConstitutiveModel;
 class MPMLabel;
 class ParticleCreator;
 class ScalarDiffusionModel;
+class DynamicSDFGeometry;
 
 class MPMMaterial final : public Material
 {
@@ -122,6 +123,21 @@ public:
   getParticleCreator() -> ParticleCreator*;
 
   [[nodiscard]] auto
+  getSDFGeometry() const -> const DynamicSDFGeometry*;
+
+  auto
+  getGeometryObjectIndex(const GeometryObject* obj) const -> int;
+
+  [[nodiscard]] auto
+  getGeometryObject(int index) const -> const GeometryObject*
+  {
+    if (index >= 0 && index < static_cast<int>(d_geom_objs.size())) {
+      return d_geom_objs[index].get();
+    }
+    return nullptr;
+  }
+
+  [[nodiscard]] auto
   getInitialDensity() const -> double;
 
   // Get the specific heats at room temperature
@@ -137,7 +153,7 @@ public:
   getMeltTemperature() const -> double;
 
   [[nodiscard]] auto
-  getIsRigid() const -> bool
+  isRigid() const -> bool
   {
     return d_is_rigid;
   }
@@ -194,6 +210,48 @@ public:
   setActive(bool flag)
   {
     d_is_active = flag;
+  }
+
+  [[nodiscard]] auto
+  isDEMMaterial() const -> bool
+  {
+    return d_is_dem_material;
+  }
+
+  [[nodiscard]] auto
+  isSDFBased() const -> bool
+  {
+    return d_is_sdf_based;
+  }
+
+  [[nodiscard]] auto
+  getParticleRadius() const -> double
+  {
+    return d_radius;
+  }
+
+  [[nodiscard]] auto
+  getDEMNormalStiffness() const -> double
+  {
+    return d_kn;
+  }
+
+  [[nodiscard]] auto
+  getDEMTangentialStiffness() const -> double
+  {
+    return d_kt;
+  }
+
+  [[nodiscard]] auto
+  getDEMFrictionCoefficient() const -> double
+  {
+    return d_mu;
+  }
+
+  [[nodiscard]] auto
+  getDEMDampingCoefficient() const -> double
+  {
+    return d_gamma;
   }
 
   // Rigid material that transmitss force
@@ -297,6 +355,15 @@ private:
   // For activating inserted particles
   bool d_is_active{ true };
   double d_activation_time{ 0.0 };
+
+  // For discrete element modeling
+  bool d_is_dem_material{ false };
+  bool d_is_sdf_based{ false };
+  double d_radius{ 0.0 };
+  double d_kn{ 1.0e7 };
+  double d_kt{ 1.0e6 };
+  double d_mu{ 0.5 };
+  double d_gamma{ 0.1 };
 
   // For hydromechanical coupling
   double d_waterdensity{ 0.0 }, d_porosity{ 0.0 }, d_permeability{ 0.0 },

@@ -115,10 +115,35 @@ class DifferenceGeometryPiece : public GeometryPiece {
   virtual bool
   inside(const Point& p) const;
 
+  virtual double
+  getSDF(const Point& p) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const override;
+
   //////////
   // Returns the bounding box surrounding the union Piece.
   virtual Box
   getBoundingBox() const;
+
+  /**
+   * Returns the volume of the difference.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the difference.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the difference.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
 
  private:
   virtual void

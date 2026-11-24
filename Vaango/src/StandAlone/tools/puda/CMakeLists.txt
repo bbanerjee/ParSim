@@ -49,6 +49,7 @@ target_link_libraries(puda
   Vaango_Core_DataArchive
   Vaango_Core_Exceptions
   Vaango_Core_Grid
+  Vaango_Core_Malloc
   Vaango_Core_ProblemSpec
   Vaango_Core_Util
   Vaango_CCA_Components_Schedulers

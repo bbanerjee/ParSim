@@ -51,6 +51,6 @@ target_link_libraries(Vaango_CCA_Components_Solvers_AMR PRIVATE
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_CCA_Components_Solvers_AMR)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_CCA_Components_Solvers_AMR PRIVATE BUILD_Vaango_CCA_Components_Solvers_AMR)
+endif()

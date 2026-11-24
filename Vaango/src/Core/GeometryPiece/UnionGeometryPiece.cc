@@ -86,6 +86,29 @@ UnionGeometryPiece::inside(const Point& p) const {
   return false;
 }
 
+double
+UnionGeometryPiece::getSDF(const Point& p) const {
+  double min_sdf = 1.0e30;
+  for (const auto& child : d_children) {
+    min_sdf = std::min(min_sdf, child->getSDF(p));
+  }
+  return min_sdf;
+}
+
+Vector
+UnionGeometryPiece::getSDFGradient(const Point& p) const {
+  double min_sdf = 1.0e30;
+  size_t min_idx = 0;
+  for (size_t i = 0; i < d_children.size(); ++i) {
+    double s = d_children[i]->getSDF(p);
+    if (s < min_sdf) {
+      min_sdf = s;
+      min_idx = i;
+    }
+  }
+  return d_children[min_idx]->getSDFGradient(p);
+}
+
 Box
 UnionGeometryPiece::getBoundingBox() const {
   Point lo, hi;
@@ -102,6 +125,51 @@ UnionGeometryPiece::getBoundingBox() const {
   }
 
   return Box(lo, hi);
+}
+
+double
+UnionGeometryPiece::volume() const {
+  double vol = 0;
+  for (const auto& child : d_children) {
+    vol += child->volume();
+  }
+  return vol;
+}
+
+Point
+UnionGeometryPiece::getCenter() const {
+  Point center(0, 0, 0);
+  double total_vol = 0;
+  for (const auto& child : d_children) {
+    double vol = child->volume();
+    center    = center + child->getCenter().asVector() * vol;
+    total_vol += vol;
+  }
+  if (total_vol > 1e-12) {
+    center = center / total_vol;
+  }
+  return center;
+}
+
+Matrix3
+UnionGeometryPiece::getInertiaTensor() const {
+  Matrix3 I(0.0);
+  Point center = getCenter();
+  for (const auto& child : d_children) {
+    double vol = child->volume();
+    Point c_i = child->getCenter();
+    Vector d = c_i - center;
+    Matrix3 I_i = child->getInertiaTensor();
+    
+    // Parallel axis theorem: I = I_cm + M * (d.d * I - d cross d)
+    // Here I is the identity matrix, and d cross d is dyadic product d*d^T
+    double d_dot_d = d.length2();
+    Matrix3 d_dyad_d(d, d);
+    Matrix3 identity; identity.Identity();
+    Matrix3 I_shifted = I_i + (identity * d_dot_d - d_dyad_d) * vol;
+    I += I_shifted;
+  }
+  return I;
 }
 
 }  // end namespace Uintah

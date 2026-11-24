@@ -367,6 +367,88 @@ TriGeometryPiece::getBoundingBox() const
   return d_box;
 }
 
+double
+TriGeometryPiece::volume() const
+{
+  double vol = 0;
+  for (const auto& tri : d_triangles) {
+    const Point& v1 = d_points[tri.x()];
+    const Point& v2 = d_points[tri.y()];
+    const Point& v3 = d_points[tri.z()];
+    vol += (1.0 / 6.0) * Dot(v1.asVector(), Cross(v2.asVector(), v3.asVector()));
+  }
+  return std::abs(vol);
+}
+
+Point
+TriGeometryPiece::getCenter() const
+{
+  Vector center(0, 0, 0);
+  double total_vol = 0;
+  for (const auto& tri : d_triangles) {
+    const Point& v1 = d_points[tri.x()];
+    const Point& v2 = d_points[tri.y()];
+    const Point& v3 = d_points[tri.z()];
+    double vol = (1.0 / 6.0) * Dot(v1.asVector(), Cross(v2.asVector(), v3.asVector()));
+    center    = center + (v1.asVector() + v2.asVector() + v3.asVector()) * (vol / 4.0);
+    total_vol += vol;
+  }
+  if (std::abs(total_vol) > 1e-12) {
+    center = center / total_vol;
+  }
+  return Point(center);
+}
+
+Matrix3
+TriGeometryPiece::getInertiaTensor() const
+{
+  Matrix3 I(0.0);
+  Point center = getCenter();
+  Matrix3 identity;
+  identity.Identity();
+
+  for (const auto& tri : d_triangles) {
+    Vector a = d_points[tri.x()] - center;
+    Vector b = d_points[tri.y()] - center;
+    Vector c = d_points[tri.z()] - center;
+
+    double vol = (1.0 / 6.0) * Dot(a, Cross(b, c));
+    
+    // Inertia tensor of tetrahedron with vertices (0, a, b, c) relative to origin (center)
+    double s = Dot(a, a) + Dot(b, b) + Dot(c, c) + Dot(a, b) + Dot(a, c) + Dot(b, c);
+    Matrix3 dyad = Matrix3(a, a) + Matrix3(b, b) + Matrix3(c, c) +
+                   (Matrix3(a, b) + Matrix3(b, a)) * 0.5 +
+                   (Matrix3(a, c) + Matrix3(c, a)) * 0.5 +
+                   (Matrix3(b, c) + Matrix3(c, b)) * 0.5;
+    
+    I += (identity * s - dyad) * (vol / 20.0);
+  }
+  
+  if (I(0,0) < 0) I = I * -1.0;
+
+  return I;
+}
+
+double
+TriGeometryPiece::getSDF(const Point& p) const {
+  // Rough estimate using rays if we don't have a fast distance query
+  int cross = 0;
+  double min_dist = 1.0e10;
+  
+  // Cast a ray towards a point far away to get some distance estimate
+  Point p_away = p + Vector(1.0e6, 1.0e6, 1.0e6);
+  d_grid->countIntersections(p, p_away, cross, min_dist);
+  
+  bool is_inside = inside(p);
+  return is_inside ? -min_dist : min_dist;
+}
+
+Vector
+TriGeometryPiece::getSDFGradient(const Point& p) const
+{
+  return GeometryPiece::getSDFGradient(p);
+}
+
 void
 TriGeometryPiece::readPoints(const string& file)
 {

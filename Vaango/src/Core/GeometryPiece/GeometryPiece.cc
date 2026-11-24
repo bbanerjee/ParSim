@@ -58,4 +58,15 @@ GeometryPiece::outputProblemSpec(ProblemSpecP& ps) const {
   }
 }
 
+Vector
+GeometryPiece::getSDFGradient(const Point& p) const {
+  double eps = 1.0e-6; 
+  double dx = (getSDF(p + Vector(eps, 0, 0)) - getSDF(p - Vector(eps, 0, 0))) / (2 * eps);
+  double dy = (getSDF(p + Vector(0, eps, 0)) - getSDF(p - Vector(0, eps, 0))) / (2 * eps);
+  double dz = (getSDF(p + Vector(0, 0, eps)) - getSDF(p - Vector(0, 0, eps))) / (2 * eps);
+  Vector grad(dx, dy, dz);
+  if (grad.length2() > 1e-12) grad.normalize();
+  return grad;
+}
+
 }  // end namespace Uintah

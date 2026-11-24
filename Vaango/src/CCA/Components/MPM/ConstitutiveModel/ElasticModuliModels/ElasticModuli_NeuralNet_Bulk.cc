@@ -41,10 +41,17 @@ using namespace Vaango;
 ElasticModuli_NeuralNet_Bulk::ElasticModuli_NeuralNet_Bulk(Uintah::ProblemSpecP& ps)
   : d_bulk(ps)
 {
+  // std::cout << "DEBUG: In ElasticModuli_NeuralNet_Bulk constructor" << std::endl;
   ps->require("G0", d_shear.G0);
   ps->require("nu", d_shear.nu);
 
   checkInputParameters();
+  // std::cout << "DEBUG: ElasticModuli_NeuralNet_Bulk constructor finished" << std::endl;
+}
+
+ElasticModuli_NeuralNet_Bulk::~ElasticModuli_NeuralNet_Bulk()
+{
+  // std::cout << "DEBUG: ~ElasticModuli_NeuralNet_Bulk destructor" << std::endl;
 }
 
 //--------------------------------------------------------------
@@ -273,6 +280,7 @@ ElasticModuli_NeuralNet_Bulk::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const
     #ifdef DEBUG_HDF5_READ
     std::cout << "Read weights and biases from hdf5 \n";
     #endif
+    // std::cout << "DEBUG: layers.size() = " << layers.size() << std::endl;
     // Reads the weights and biases (HDF5)
     auto mw_group = file.openGroup("/model_weights");
     auto mw_attribute = mw_group.openAttribute("layer_names");
@@ -282,6 +290,7 @@ ElasticModuli_NeuralNet_Bulk::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const
     int rank = mw_dataspace.getSimpleExtentNdims();
     hsize_t dims;
     mw_dataspace.getSimpleExtentDims(&dims, nullptr);
+    // std::cout << "DEBUG: layer_names dims = " << dims << std::endl;
 
     // Create a 2D buffer
     std::vector<std::vector<char>> layer_names_buffer(dims);
@@ -320,6 +329,11 @@ ElasticModuli_NeuralNet_Bulk::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const
     */
     // C++20 compliant version
     for (std::size_t ii = 0; ii < layer_names.size(); ++ii) {
+      // std::cout << "DEBUG: processing layer_name[" << ii << "] = " << layer_names[ii] << std::endl;
+      if (ii >= layers.size()) {
+        // std::cout << "DEBUG: WARNING: ii >= layers.size(), skipping" << std::endl;
+        continue;
+      }
       auto ln_group = file.openGroup(std::format("/model_weights/{}", layer_names[ii]));
       auto ln_attribute = ln_group.openAttribute("weight_names");
       auto ln_datatype = ln_attribute.getDataType();
@@ -436,6 +450,7 @@ ElasticModuli_NeuralNet_Bulk::NeuralNetworkModel<T>::predict(double elasticVolSt
   input(0, 0) = static_cast<T>(eps_e_v);
   input(1, 0) = static_cast<T>(eps_p_v);
   
+  // std::cout << "DEBUG: predict: layers.size() = " << layers.size() << std::endl;
   for (const auto& layer : layers) {
     EigenMatrixRowMajor output = layer.weights * input + layer.bias;
     if (layer.activation == "sigmoid") { 

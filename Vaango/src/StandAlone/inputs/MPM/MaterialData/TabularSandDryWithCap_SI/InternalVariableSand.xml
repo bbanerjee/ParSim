@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Tabular Sand with Cap -->
+<Uintah_Include>
+  <internal_variable_model type="tabular_cap">
+    <filename>TabularCapTest_11_Cap.json</filename>
+    <independent_variables>PlasticStrainVol</independent_variables>
+    <dependent_variables>Pressure</dependent_variables>
+    <interpolation type="linear"/>
+  </internal_variable_model>
+</Uintah_Include>
+
+

@@ -76,13 +76,14 @@ function(configure_hypre)
     add_library(${HYPRE_INTERFACE_TARGET_NAME} INTERFACE)
     target_include_directories(${HYPRE_INTERFACE_TARGET_NAME} INTERFACE ${HYPRE_INSTALL_DIR}/include)
     target_link_directories(${HYPRE_INTERFACE_TARGET_NAME} INTERFACE ${HYPRE_INSTALL_DIR}/lib) # Add link directories
-    target_link_libraries(${HYPRE_INTERFACE_TARGET_NAME} INTERFACE HYPRE) # Link against the library name
+    target_link_libraries(${HYPRE_INTERFACE_TARGET_NAME} INTERFACE ${HYPRE_INSTALL_DIR}/lib/libHYPRE.so) # Link against the library path
 
     # Make sure the imported target depends on the external project
     add_dependencies(${HYPRE_INTERFACE_TARGET_NAME} ${HYPRE_TARGET_NAME})
 
     # Export hypre variables to parent scope
     set(HYPRE_INCLUDE_DIR ${HYPRE_INSTALL_DIR}/include PARENT_SCOPE)
+    set(HYPRE_INSTALL_DIR ${HYPRE_INSTALL_DIR} PARENT_SCOPE)
     set(HYPRE_LIBRARY ${HYPRE_INSTALL_DIR}/lib/libHYPRE.so PARENT_SCOPE)
     set(HYPRE_LIBRARIES ${HYPRE_INSTALL_DIR}/lib/libHYPRE.so PARENT_SCOPE)
     set(HYPRE_FOUND TRUE PARENT_SCOPE)

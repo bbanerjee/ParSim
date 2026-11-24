@@ -146,6 +146,25 @@ TorusGeometryPiece::inside(const Point& p) const {
   return false;
 }
 
+double
+TorusGeometryPiece::getSDF(const Point& p) const {
+  Vector pTrans = p - d_center;
+  pTrans = d_rotation * pTrans;
+  double x = pTrans.x();
+  double y = pTrans.y();
+  double z = pTrans.z();
+  
+  double r_xy = std::sqrt(x*x + y*y);
+  double dist_q_x = r_xy - d_major_radius;
+  double dist_q_y = z;
+  return std::sqrt(dist_q_x*dist_q_x + dist_q_y*dist_q_y) - d_minor_radius;
+}
+
+Vector
+TorusGeometryPiece::getSDFGradient(const Point& p) const {
+  return GeometryPiece::getSDFGradient(p);
+}
+
 Box
 TorusGeometryPiece::getBoundingBox() const {
   // This is an overly generous bounding box.
@@ -154,6 +173,26 @@ TorusGeometryPiece::getBoundingBox() const {
   Point maxBB = Point(d_center.x() + R, d_center.y() + R, d_center.z() + R);
 
   return Box(minBB, maxBB);
+}
+
+Point
+TorusGeometryPiece::getCenter() const {
+  return d_center;
+}
+
+Matrix3
+TorusGeometryPiece::getInertiaTensor() const {
+  double R = d_major_radius;
+  double r = d_minor_radius;
+  double mass = volume();
+  
+  double izz_local = mass * (R * R + 0.75 * r * r);
+  double ixx_local = mass * (0.5 * R * R + 0.625 * r * r);
+  double iyy_local = ixx_local;
+  
+  Matrix3 I_local(ixx_local, 0, 0, 0, iyy_local, 0, 0, 0, izz_local);
+  
+  return rotateInertiaTensor(I_local, d_rotation.Transpose());
 }
 
 //////////

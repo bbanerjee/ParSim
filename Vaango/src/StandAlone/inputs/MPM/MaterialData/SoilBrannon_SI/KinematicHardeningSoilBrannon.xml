@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Soil Brannon model -->
+<Uintah_Include>
+  <kinematic_hardening_constant> 0.0 </kinematic_hardening_constant>
+</Uintah_Include>
+

@@ -117,6 +117,19 @@ class ConeGeometryPiece : public CylinderGeometryPiece {
   virtual Box
   getBoundingBox() const;
 
+  /**
+   * Returns the center of the cone.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the cone.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
+
   //////////
   // Calculate the lateral surface area of the cone
   virtual double

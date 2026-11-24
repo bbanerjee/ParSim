@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Soil Brannon model -->
+<Uintah_Include>
+  <internal_variable_model type="soil_model_brannon_kappa">
+    <soil_model_brannon_fSlope> 0.235702260395516 </soil_model_brannon_fSlope>
+    <soil_model_brannon_peakI1> 150.0 </soil_model_brannon_peakI1>
+    <soil_model_brannon_Cr> 6.0 </soil_model_brannon_Cr>
+    <soil_model_brannon_B0> 0.0 </soil_model_brannon_B0>
+    <soil_model_brannon_p0> -1.0e99 </soil_model_brannon_p0>
+    <soil_model_brannon_p1> -1.0e99 </soil_model_brannon_p1>
+    <soil_model_brannon_p3> 0.5 </soil_model_brannon_p3>
+    <soil_model_brannon_p4> 0.2 </soil_model_brannon_p4>
+  </internal_variable_model>
+</Uintah_Include>

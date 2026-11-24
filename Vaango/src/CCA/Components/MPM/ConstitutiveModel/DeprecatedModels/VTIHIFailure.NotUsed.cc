@@ -535,7 +535,7 @@ ViscoTransIsoHyperImplicit::computeStressTensor(const PatchSubset* patches,
     double Bnl[3][24];
     double v[576];
 
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
            iter++) {
         particleIndex idx = *iter;
@@ -1324,7 +1324,7 @@ ViscoTransIsoHyperImplicit::computeStressTensor(const PatchSubset* patches,
     double t5 = d_initialData.t5;
     double t6 = d_initialData.t6;
 
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
            iter++) {
         particleIndex idx = *iter;

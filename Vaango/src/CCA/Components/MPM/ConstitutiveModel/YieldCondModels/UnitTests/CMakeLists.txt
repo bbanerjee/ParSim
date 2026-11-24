@@ -38,11 +38,10 @@ configure_file(DrySand_HydrostaticCapData.json DrySand_HydrostaticCapData.json C
 # Vaango libs
 #------------------------
 SET(VAANGO_LIBS 
-               
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
-              
+        Vaango_Core_Malloc      
         Vaango_Core_Util        
         Vaango_Core_Math        
         Vaango_Core_Exceptions  
@@ -64,9 +63,9 @@ SET(VAANGO_LIBS
 #------------------------
 # Google tests
 #------------------------
-set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
+
 set(GTEST_LIB gtest_main gtest)
-include_directories(${GTEST_INCLUDE_DIR})
+
 
 add_executable(testYieldCond_Tabular testYieldCond_Tabular.cc)
 target_link_libraries(testYieldCond_Tabular PRIVATE
@@ -78,11 +77,13 @@ target_link_libraries(testYieldCond_Tabular PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testYieldCond_Tabular)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 
 add_executable(testYieldCond_TabularCap testYieldCond_TabularCap.cc)
 target_link_libraries(testYieldCond_TabularCap PRIVATE
@@ -94,8 +95,10 @@ target_link_libraries(testYieldCond_TabularCap PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testYieldCond_TabularCap)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()

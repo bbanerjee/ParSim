@@ -111,9 +111,32 @@ SmoothSphereGeomPiece::inside(const Point& pt) const
   return false;
 }
 
-/////////////////////////////////////////////////////////////////////////////
-/*! Find the bounding box for the _sphere */
-/////////////////////////////////////////////////////////////////////////////
+double
+SmoothSphereGeomPiece::getSDF(const Point& p) const {
+  Vector vec = p - d_center;
+  double dist = vec.length();
+  double sdf_outer = dist - d_outerRadius;
+  if (d_innerRadius > 0) {
+    double sdf_inner = d_innerRadius - dist;
+    return std::max(sdf_outer, sdf_inner);
+  }
+  return sdf_outer;
+}
+
+Vector
+SmoothSphereGeomPiece::getSDFGradient(const Point& p) const {
+  Vector vec = p - d_center;
+  double dist = vec.length();
+  if (dist < 1e-12) return Vector(0, 0, 1);
+  Vector grad = vec / dist;
+  if (d_innerRadius > 0) {
+    double sdf_outer = dist - d_outerRadius;
+    double sdf_inner = d_innerRadius - dist;
+    if (sdf_inner > sdf_outer) return -grad;
+  }
+  return grad;
+}
+
 Box
 SmoothSphereGeomPiece::getBoundingBox() const
 {
@@ -126,6 +149,31 @@ SmoothSphereGeomPiece::getBoundingBox() const
            d_center.z() + d_outerRadius);
 
   return Box(lo, hi);
+}
+
+double
+SmoothSphereGeomPiece::volume() const
+{
+  return (4.0 / 3.0) * M_PI *
+         (std::pow(d_outerRadius, 3.0) - std::pow(d_innerRadius, 3.0));
+}
+
+Point
+SmoothSphereGeomPiece::getCenter() const
+{
+  return d_center;
+}
+
+Matrix3
+SmoothSphereGeomPiece::getInertiaTensor() const
+{
+  double mass  = volume();
+  double r_out = d_outerRadius;
+  double r_in  = d_innerRadius;
+  double i     = (2.0 / 5.0) * mass *
+             (std::pow(r_out, 5.0) - std::pow(r_in, 5.0)) /
+             (std::pow(r_out, 3.0) - std::pow(r_in, 3.0));
+  return Matrix3(i, 0, 0, 0, i, 0, 0, 0, i);
 }
 
 //////////////////////////////////////////////////////////////////////////

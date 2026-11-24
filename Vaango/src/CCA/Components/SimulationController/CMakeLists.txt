@@ -48,6 +48,6 @@ target_link_libraries(Vaango_CCA_Components_SimulationController PRIVATE
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_CCA_Components_SimulationController)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_CCA_Components_SimulationController PRIVATE BUILD_Vaango_CCA_Components_SimulationController)
+endif()

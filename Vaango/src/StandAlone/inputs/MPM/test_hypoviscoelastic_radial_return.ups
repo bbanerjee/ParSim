@@ -99,9 +99,9 @@
 	    <yield_condition type="vonMises">
 	    </yield_condition>
 	    
-	    <flow_model type="isotropic_hardening">
+	    <flow_model type="linear">
 	      <K>10.0</K>
-	      <sigma_Y>250.0</sigma_Y>
+	      <sigma_0>250.0</sigma_0>
 	    </flow_model>
 
           </constitutive_model>

@@ -82,6 +82,6 @@ target_link_libraries(StandAlone_tools_uda2vis PRIVATE
   Vaango::Warnings
 )
 	
-if (BUILD_SHARED_LIBS)  
-  add_definitions(-DBUILD_StandAlone_tools_uda2vis)
-endif (BUILD_SHARED_LIBS)  
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(StandAlone_tools_uda2vis PRIVATE BUILD_StandAlone_tools_uda2vis)
+endif()  

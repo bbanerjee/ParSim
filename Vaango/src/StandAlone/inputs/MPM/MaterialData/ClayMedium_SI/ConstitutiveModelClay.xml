@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- ClayMedium -->
+<!-- Camclay medium clay-->
+<Uintah_Include>
+  <include href="MatConstMediumClay.xml"/>
+  <constitutive_model type="camclay">
+    <include href="EOSMediumClay.xml"/>
+    <include href="ShearModulusMediumClay.xml"/>
+    <include href="YieldConditionMediumClay.xml"/>
+    <include href="ConsolidationPressureMediumClay.xml"/>
+  </constitutive_model>
+</Uintah_Include>

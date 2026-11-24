@@ -34,9 +34,7 @@ SET(VAANGO_LIBS
 #------------------------
 # Google tests
 #------------------------
-set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
 set(GTEST_LIB GTest::gtest_main)
-include_directories(${GTEST_INCLUDE_DIR})
 
 add_executable(testDir testDir.cc)
 target_include_directories(testDir PRIVATE
@@ -52,10 +50,27 @@ target_link_libraries(testDir PRIVATE
   Vaango::Warnings
   MPI::MPI_CXX
 )
-set(UNIT_TEST testDir)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
+#---------------------------------------------------------
+# testProcessInfo
+#---------------------------------------------------------
+set(UNIT_TEST testProcessInfo)
+add_executable(${UNIT_TEST} testProcessInfo.cc)
+target_link_libraries(${UNIT_TEST} PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  ${CMAKE_DL_LIBS}
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cuda_driver>
+  $<$<BOOL:${HAVE_CUDA}>:CUDA::cudart>
+  $<$<BOOL:${HAVE_KOKKOS}>:Kokkos::kokkos>
+  Vaango::Options
+  Vaango::Warnings
+  MPI::MPI_CXX
 )
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 gtest_discover_tests(${UNIT_TEST})

@@ -69,16 +69,15 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
                                       CCVariable<short int>& cellNAPID,
                                       const Patch* patch,
                                       DataWarehouse* new_dw,
-                                      std::vector<GeometryObject*>& d_geom_objs)
+                                      const VecGeometryObjectSP& d_geom_objs)
 {
   // Print the physical boundary conditions
   printPhysicalBCs();
 
   ObjectVars vars;
   particleIndex numParticles = 0;
-  std::vector<GeometryObject*>::const_iterator geom;
-  for (geom = d_geom_objs.begin(); geom != d_geom_objs.end(); ++geom) {
-    numParticles += countAndCreateParticles(patch, *geom, vars);
+  for (const auto& geom : d_geom_objs) {
+    numParticles += countAndCreateParticles(patch, geom.get(), vars);
   }
 
   // Get datawarehouse index
@@ -106,15 +105,14 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
   particleIndex start = 0;
 
   // Loop thru the geometry objects
-  std::vector<GeometryObject*>::const_iterator obj;
-  for (obj = d_geom_objs.begin(); obj != d_geom_objs.end(); ++obj) {
+  for (const auto& obj : d_geom_objs) {
 
     // Initialize the per geometryObject particle count
     particleIndex count = 0;
 
     // If the geometry piece is outside the patch, look
     // for the next geometry piece
-    GeometryPieceP piece = (*obj)->getPiece();
+    GeometryPieceP piece = obj->getPiece();
     Box b = (piece->getBoundingBox()).intersect(patch->getExtraBox());
     if (b.degenerate()) {
       count = 0;
@@ -123,8 +121,8 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
 
     // Find volume of influence of each particle as a
     // fraction of the cell size
-    IntVector ppc  = (*obj)->getInitialData_IntVector("res");
-    Vector dxpp    = patch->dCell() / (*obj)->getInitialData_IntVector("res");
+    IntVector ppc  = obj->getInitialData_IntVector("res");
+    Vector dxpp    = patch->dCell() / obj->getInitialData_IntVector("res");
     Vector dcorner = dxpp * 0.5;
     Matrix3 size(1. / ((double)ppc.x()),
                  0.,
@@ -159,8 +157,8 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
       // (declared in the ParticleCreator class)
       for (int idx = 0; idx < numP; idx++) {
         particleIndex pidx       = start + idx;
-        pvars.pVelocity[pidx]    = (*obj)->getInitialData_Vector("velocity");
-        pvars.pTemperature[pidx] = (*obj)->getInitialData_double("temperature");
+        pvars.pVelocity[pidx]    = obj->getInitialData_Vector("velocity");
+        pvars.pTemperature[pidx] = obj->getInitialData_double("temperature");
         pvars.pDisp[pidx]        = Vector(0., 0., 0.);
         pvars.pFiberDir[pidx]    = Vector(0.0, 0.0, 0.0);
 
@@ -279,9 +277,9 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
                 pvars.pDisp[pidx]    = Vector(0., 0., 0.);
                 pvars.pVolume[pidx]  = dxpp.x() * dxpp.y() * dxpp.z();
                 pvars.pVelocity[pidx] =
-                  (*obj)->getInitialData_Vector("velocity");
+                  obj->getInitialData_Vector("velocity");
                 pvars.pTemperature[pidx] =
-                  (*obj)->getInitialData_double("temperature");
+                  obj->getInitialData_double("temperature");
                 pvars.pSpecificVolume[pidx] = 1.0 / matl->getInitialDensity();
                 pvars.pFiberDir[pidx]       = Vector(0.0, 0.0, 0.0);
 

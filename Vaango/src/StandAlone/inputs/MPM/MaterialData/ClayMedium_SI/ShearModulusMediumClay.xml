@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Camclay medium clay -->
+<Uintah_Include>
+  <shear_modulus_model type="borja_shear">
+    <mu0> 5.4e6 </mu0>
+  </shear_modulus_model>
+</Uintah_Include>

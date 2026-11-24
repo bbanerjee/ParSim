@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Arena dry sand -->
+<Uintah_Include>
+  <kinematic_hardening_model type="arena">
+    <fluid_pressure_initial> 0.0 </fluid_pressure_initial>
+  </kinematic_hardening_model>
+</Uintah_Include>
+

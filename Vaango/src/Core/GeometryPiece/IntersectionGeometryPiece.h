@@ -112,10 +112,37 @@ class IntersectionGeometryPiece final : public GeometryPiece {
   bool
   inside(const Point& p) const;
 
+  virtual double
+  getSDF(const Point& p) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const override;
+
   //////////
   // Returns the bounding box surrounding the intersection piece.
   Box
   getBoundingBox() const;
+
+  /**
+   * Returns the volume of the intersection.
+   * Approximation: Returns the minimum volume among children.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the intersection.
+   * Approximation: Returns the center of the child with minimum volume.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the intersection.
+   * Approximation: Returns the inertia tensor of the child with minimum volume.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
 
  private:
   void

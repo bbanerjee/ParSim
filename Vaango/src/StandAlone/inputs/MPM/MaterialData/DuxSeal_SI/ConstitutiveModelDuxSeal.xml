@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- DuxSeal -->
+<Uintah_Include>
+  <include href="MatConstDuxSeal.xml"/>
+  <constitutive_model type="viscoelastic_fortran">
+    <include href="IsoElasticDuxSeal.xml"/>
+    <include href="ViscoElasticPronySeriesDuxSeal.xml"/>
+  </constitutive_model>
+</Uintah_Include>

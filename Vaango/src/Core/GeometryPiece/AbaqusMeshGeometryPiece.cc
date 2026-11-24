@@ -785,6 +785,42 @@ AbaqusMeshGeometryPiece::inside(const Point& p) const
     return false;
   }
 }
+
+double
+AbaqusMeshGeometryPiece::getSDF(const Point& p) const {
+  Point center = d_box.lower() + (d_box.upper() - d_box.lower()) * 0.5;
+  Vector b = (d_box.upper() - d_box.lower()) * 0.5;
+  Vector p_v = p - center;
+  Vector q = Vector(std::abs(p_v.x()), std::abs(p_v.y()), std::abs(p_v.z())) - b;
+  
+  Vector q_max = Vector(std::max(q.x(), 0.0), std::max(q.y(), 0.0), std::max(q.z(), 0.0));
+  double outside_dist = q_max.length();
+  double inside_dist = std::min(std::max({q.x(), q.y(), q.z()}), 0.0);
+  
+  return outside_dist + inside_dist;
+}
+
+Vector
+AbaqusMeshGeometryPiece::getSDFGradient(const Point& p) const {
+  Point center = d_box.lower() + (d_box.upper() - d_box.lower()) * 0.5;
+  Vector b = (d_box.upper() - d_box.lower()) * 0.5;
+  Vector p_v = p - center;
+  Vector q = Vector(std::abs(p_v.x()), std::abs(p_v.y()), std::abs(p_v.z())) - b;
+  
+  if (std::max({q.x(), q.y(), q.z()}) > 0) {
+    Vector grad(
+      (p_v.x() > 0 ? 1 : -1) * std::max(q.x(), 0.0),
+      (p_v.y() > 0 ? 1 : -1) * std::max(q.y(), 0.0),
+      (p_v.z() > 0 ? 1 : -1) * std::max(q.z(), 0.0)
+    );
+    if (grad.length2() > 1e-12) grad.normalize();
+    return grad;
+  } else {
+    if (q.x() > q.y() && q.x() > q.z()) return Vector(p_v.x() > 0 ? 1 : -1, 0, 0);
+    if (q.y() > q.z()) return Vector(0, p_v.y() > 0 ? 1 : -1, 0);
+    return Vector(0, 0, p_v.z() > 0 ? 1 : -1);
+  }
+}
 //______________________________________________________________________
 //
 Box

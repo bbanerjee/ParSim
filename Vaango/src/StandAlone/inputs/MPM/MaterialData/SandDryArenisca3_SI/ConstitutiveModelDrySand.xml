@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- SandDryArenisca3 -->
+<!-- Arenisca 3 dry mason sand-->
+<Uintah_Include>
+  <include href="MatConstDryMasonSand.xml"/>
+  <constitutive_model type="Arenisca3">
+    <include href="BulkModulusDryMasonSand.xml"/>
+    <include href="ShearModulusDryMasonSand.xml"/>
+    <include href="CrushCurveDryMasonSand.xml"/>
+    <include href="YieldFunctionDryMasonSand.xml"/>
+    <include href="FlowRuleDryMasonSand.xml"/>
+    <include href="PorePressureDryMasonSand.xml"/>
+    <include href="RateDependenceDryMasonSand.xml"/>
+    <!-- Numerical control knob -->
+    <subcycling_characteristic_number>256</subcycling_characteristic_number>
+</constitutive_model>
+</Uintah_Include>

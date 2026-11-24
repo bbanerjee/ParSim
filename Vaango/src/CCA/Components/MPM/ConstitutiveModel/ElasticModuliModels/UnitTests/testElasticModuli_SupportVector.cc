@@ -49,7 +49,8 @@ TEST(ElasticModuliSVRTest, constructorTest)
               BAD_CAST "0.2");
 
   // Print the document to stdout
-  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  // xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  // std::cout << "Created doc" << std::endl;
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -59,9 +60,12 @@ TEST(ElasticModuliSVRTest, constructorTest)
     exit(-1);
   }
 
+  // std::cout << "Created problemspec " << std::endl;
+
   // Create a model
   try {
     ElasticModuli_SupportVector model_test(ps);
+    // std::cout << "Created model_test" << std::endl;
   } catch (Uintah::ProblemSetupException& e) {
     std::cout << e.message() << "\n";
     throw;
@@ -75,11 +79,12 @@ TEST(ElasticModuliSVRTest, constructorTest)
     std::cout << "**ERROR** Unknown exception\n";
     throw;
   }
+  // std::cout << "Creating another model" << std::endl;
 
   ElasticModuli_SupportVector model(ps);
   try {
     ElasticModuli moduli = model.getInitialElasticModuli();
-    //std::cout << "Initial moduli = " << moduli.bulkModulus << ", " << moduli.shearModulus << "\n";
+    // std::cout << "Initial moduli = " << moduli.bulkModulus << ", " << moduli.shearModulus << "\n";
     EXPECT_DOUBLE_EQ(moduli.bulkModulus, 609627624.19871962);
 
     ModelState_Tabular state_init;
@@ -95,6 +100,7 @@ TEST(ElasticModuliSVRTest, constructorTest)
   } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
   }
+  // std::cout << "Creating a copy model" << std::endl;
 
   // Copy
   ElasticModuli_SupportVector modelCopy(&model);
@@ -107,6 +113,7 @@ TEST(ElasticModuliSVRTest, constructorTest)
   } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
   }
+  // std::cout << "Testing modelstate" << std::endl;
 
   // Modelstate test
   ModelState_Tabular state;
@@ -143,5 +150,6 @@ TEST(ElasticModuliSVRTest, constructorTest)
   } catch (const Uintah::InvalidValue& e) {
     std::cout << e.message() << std::endl;
   }
+  // std::cout << "Done testing" << std::endl;
   
 }

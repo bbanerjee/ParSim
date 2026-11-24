@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Arenisca 3 dry mason sand-->
+<Uintah_Include>
+  <!-- Yield function -->
+  <FSLOPE> 0.453 </FSLOPE>
+  <PEAKI1> 1000 </PEAKI1>
+  <!--
+  <YSLOPE> 0.143 </YSLOPE>
+  <STREN>  5.56e5 </STREN>
+  -->
+  <YSLOPE> 0.31 </YSLOPE>
+  <STREN>  1.00e7 </STREN>
+  <CR> 0.5 </CR>
+</Uintah_Include>

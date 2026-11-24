@@ -95,6 +95,12 @@ class GUVSphereShellPiece : public ShellGeometryPiece {
   virtual bool
   inside(const Point& p) const;
 
+  virtual double
+  getSDF(const Point& p) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const override;
+
   //////////////////////////////////////////////////////////////////////
   /*! Returns the bounding box surrounding the box. */
   //////////////////////////////////////////////////////////////////////

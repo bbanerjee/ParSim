@@ -646,7 +646,7 @@ public:
     return d_wallTimeMax;
   }
 
-private:
+protected:
   // The classes are private because only the top level application
   // should be changing them. This only really matters when there are
   // applications built upon multiple applications. The children

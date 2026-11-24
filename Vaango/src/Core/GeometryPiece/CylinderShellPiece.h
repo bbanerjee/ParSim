@@ -96,11 +96,36 @@ class CylinderShellPiece : public ShellGeometryPiece {
   virtual bool
   inside(const Point& p) const;
 
+  virtual double
+  getSDF(const Point& p) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const override;
+
   //////////////////////////////////////////////////////////////////////
   /*! \brief Returns the bounding box surrounding the box. */
   //////////////////////////////////////////////////////////////////////
   virtual Box
   getBoundingBox() const;
+
+  /**
+   * Returns the volume of the cylinder shell.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the cylinder shell.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the cylinder shell.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
 
   //////////////////////////////////////////////////////////////////////
   /*! \brief Returns the number of particles */

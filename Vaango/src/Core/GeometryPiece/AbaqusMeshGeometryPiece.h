@@ -92,6 +92,12 @@ class AbaqusMeshGeometryPiece final : public SpecialGeomPiece {
   bool
   inside(const Point& p) const override;
 
+  virtual double
+  getSDF(const Point& p) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const override;
+
   //////////
   //  Returns the bounding box surrounding the object.
   Box

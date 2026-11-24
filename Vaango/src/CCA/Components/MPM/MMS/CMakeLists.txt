@@ -44,9 +44,9 @@ if (PETSC)
   target_link_petsc(MPM_MMS PRIVATE)
 endif()
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_MPM_MMS)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(MPM_MMS PRIVATE BUILD_MPM_MMS)
+endif()
 
 install(TARGETS
   MPM_MMS

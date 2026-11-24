@@ -36,6 +36,7 @@ SET(Vaango_CCA_Components_MPM_Contact_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/NodalSVFContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/NullContact.cc      
   ${CMAKE_CURRENT_SOURCE_DIR}/SpecifiedBodyContact.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEMSpecifiedVelocityContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/SpecifiedBodyFrictionContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/SingleVelContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ContactFactory.cc   
@@ -61,9 +62,9 @@ target_link_libraries(MPM_Contact
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_MPM_Contact)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(MPM_Contact PRIVATE BUILD_MPM_Contact)
+endif()
 
 install(TARGETS
   MPM_Contact

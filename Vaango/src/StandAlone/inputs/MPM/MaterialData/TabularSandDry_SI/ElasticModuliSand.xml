@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Tabular Sand with Cap -->
+<Uintah_Include>
+  <elastic_moduli_model type="tabular">
+    <filename>DrySand_ElasticData.json</filename>
+    <independent_variables>PlasticStrainVol, TotalStrainVol</independent_variables>
+    <dependent_variables>Pressure</dependent_variables>
+    <interpolation type="linear"/>
+    <G0>3500</G0>
+    <nu>0.189</nu>
+  </elastic_moduli_model>
+</Uintah_Include>
+
+

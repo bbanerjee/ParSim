@@ -213,6 +213,25 @@ FileGeometryPiece::inside(const Point& p) const
   }
 }
 
+double
+FileGeometryPiece::getSDF(const Point& p) const {
+  Point center = d_box.lower() + (d_box.upper() - d_box.lower()) * 0.5;
+  Vector b = (d_box.upper() - d_box.lower()) * 0.5;
+  Vector p_v = p - center;
+  Vector q = Vector(std::abs(p_v.x()), std::abs(p_v.y()), std::abs(p_v.z())) - b;
+  
+  Vector q_max = Vector(std::max(q.x(), 0.0), std::max(q.y(), 0.0), std::max(q.z(), 0.0));
+  double outside_dist = q_max.length();
+  double inside_dist = std::min(std::max({q.x(), q.y(), q.z()}), 0.0);
+  
+  return outside_dist + inside_dist;
+}
+
+Vector
+FileGeometryPiece::getSDFGradient(const Point& p) const {
+  return GeometryPiece::getSDFGradient(p);
+}
+
 Box
 FileGeometryPiece::getBoundingBox() const
 {

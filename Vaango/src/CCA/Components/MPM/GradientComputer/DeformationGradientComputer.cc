@@ -463,6 +463,9 @@ DeformationGradientComputer::computeDeformationGradientExplicit(
   constParticleVariable<Matrix3> pDefGrad_old, pVelGrad_old, pDispGrad_old;
   constParticleVariable<Matrix3> pSize;
 
+  // For d_enableDEM
+  constParticleVariable<double> pRadius;
+
   // Set up variables to store new particle and grid data
   // for vel grad and def grad calculation
   ParticleVariable<double> pVolume_new;
@@ -486,6 +489,10 @@ DeformationGradientComputer::computeDeformationGradientExplicit(
   old_dw->get(pSize, lb->pSizeLabel, pset);
   old_dw->get(pDefGrad_old, lb->pDefGradLabel, pset);
   old_dw->get(pVelGrad_old, lb->pVelGradLabel, pset);
+
+  if (flag->d_enableDEM) {
+    old_dw->get(pRadius, lb->pRadiusLabel, pset);
+  }
 
   constParticleVariable<long64> pParticleID;
   old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
@@ -512,12 +519,20 @@ DeformationGradientComputer::computeDeformationGradientExplicit(
   double J = 1.0;
   for (auto particle : *pset) {
 
-    // std::cout << "particle = " << particle
-    //           << " px = " << px[particle]
-    //           << " pSize = " << pSize[particle] << "\n";
     // Initialize variables
-    Matrix3 defGrad_new(0.0); // **WARNING** should be one and not zero
-    Matrix3 defGrad_inc(0.0); // **WARNING** should be one and not zero
+    pDefGrad_new[particle]  = pDefGrad_old[particle];
+    pVelGrad_new[particle]  = Zero;
+    pDispGrad_new[particle] = Zero;
+    pVolume_new[particle]   = pMass[particle] / rho_orig;
+
+    if (!(pMass[particle] > 0.0)) {
+      continue;
+    }
+
+    Matrix3 defGrad_new(0.0);
+    defGrad_new.Identity();
+    Matrix3 defGrad_inc(0.0);
+    defGrad_inc.Identity();
 
     if (flag->d_doGridReset) {
       // Compute velocity gradient
@@ -539,14 +554,28 @@ DeformationGradientComputer::computeDeformationGradientExplicit(
                               GVelocityStar,
                               velGrad_new);
       // std::cout << "Six . After compute vel grad." << "\n";
+      // if (flag->d_enableDEM) {
+      //   if (pRadius[particle] > 0.0) { // DEM/Rigid particle
+      //     std::cerr << "deformation gradient computer: Rigid/DEM :"
+      //       << " Radius: " << pRadius[particle] << " in material # ="
+      //       << dwi << " and particle " << pParticleID[particle] << std::endl;
+      //   } else {
+      //     std::cerr << "deformation gradient computer: MPM :"
+      //       << " Radius: " << pRadius[particle] << " in material # ="
+      //       << dwi << " and particle " << pParticleID[particle] << std::endl;
+      //   }
+      // }
 
       // Compute the deformation gradient from velocity
-      computeDeformationGradientFromVelocity(pVelGrad_old[particle],
-                                             velGrad_new,
-                                             pDefGrad_old[particle],
-                                             delT,
-                                             defGrad_new,
-                                             defGrad_inc);
+      // Note that When !flag->d_enableDEM is true (DEM disabled), 
+      if (!flag->d_enableDEM && !mpm_matl->isDEMMaterial()) {
+        computeDeformationGradientFromVelocity(pVelGrad_old[particle],
+                                              velGrad_new,
+                                              pDefGrad_old[particle],
+                                              delT,
+                                              defGrad_new,
+                                              defGrad_inc);
+      }
 
       // std::cout << "Seven . After compute def grad." << "\n";
       //  Update velocity gradient
@@ -581,6 +610,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(
       pVelGrad_new[particle] = dispGrad_new / delT;
     }
 
+
     // Update deformation gradient
     pDefGrad_new[particle] = defGrad_new;
 
@@ -593,9 +623,10 @@ DeformationGradientComputer::computeDeformationGradientExplicit(
     //  Check 1: Look at Jacobian
     double J = defGrad_new.Determinant();
     if (!(J > 0.0)) {
-      std::cerr << "matl = " << mpm_matl << " dwi = " << dwi
+      std::cerr << "delT = " << delT << " matl = " << mpm_matl << " dwi = " << dwi
                 << " particle = " << particle
                 << " particleID = " << pParticleID[particle] << "\n";
+      std::cerr << "position = " << px[particle] << "\n";
       std::cerr << "velGrad = " << pVelGrad_new[particle] << "\n";
       std::cerr << "F_old = " << pDefGrad_old[particle] << "\n";
       std::cerr << "F_inc = " << defGrad_inc << "\n";
@@ -840,7 +871,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
   }
 
   // Rigid material
-  if (mpm_matl->getIsRigid()) {
+  if (mpm_matl->isRigid()) {
     for (auto particle : *pset) {
       pVolume_new[particle]   = pVolume_old[particle];
       pDefGrad_new[particle]  = pDefGrad_old[particle];
@@ -859,6 +890,14 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
     new_dw->get(dispNew, lb->dispNewLabel, dwi, patch, gac, 1);
 
     for (auto particle : *pset) {
+      pVolume_new[particle]   = pVolume_old[particle];
+      pDefGrad_new[particle]  = pDefGrad_old[particle];
+      pVelGrad_new[particle]  = Zero;
+      pDispGrad_new[particle] = Zero;
+
+      if (!(pMass[particle] > 0.0)) {
+        continue;
+      }
 
       // Compute incremental displacement gradient
       DisplacementGradientComputer gradComp(flag);
@@ -909,6 +948,14 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
     new_dw->get(gDisp, lb->gDisplacementLabel, dwi, patch, gac, 1);
 
     for (auto particle : *pset) {
+      pVolume_new[particle]   = pVolume_old[particle];
+      pDefGrad_new[particle]  = pDefGrad_old[particle];
+      pVelGrad_new[particle]  = Zero;
+      pDispGrad_new[particle] = Zero;
+
+      if (!(pMass[particle] > 0.0)) {
+        continue;
+      }
 
       // Compute total displacement gradient
       DisplacementGradientComputer gradComp(flag);
@@ -1097,7 +1144,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
   }
 
   // Rigid material
-  if (mpm_matl->getIsRigid()) {
+  if (mpm_matl->isRigid()) {
     for (auto particle : *pset) {
       pVolume_new[particle]  = pVolume_old[particle];
       pDefGrad_new[particle] = pDefGrad_old[particle];
@@ -1116,6 +1163,14 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
     constNCVariable<Vector> gDisp;
     old_dw->get(gDisp, lb->dispNewLabel, dwi, patch, gac, 1);
     for (auto particle : *pset) {
+      pVolume_new[particle]   = pVolume_old[particle];
+      pDefGrad_new[particle]  = pDefGrad_old[particle];
+      pVelGrad_new[particle]  = Zero;
+      pDispGrad_new[particle] = Zero;
+
+      if (!(pMass[particle] > 0.0)) {
+        continue;
+      }
 
       // Compute incremental displacement gradient
       DisplacementGradientComputer gradComp(flag);
@@ -1161,6 +1216,14 @@ DeformationGradientComputer::computeDeformationGradientImplicit(
     constNCVariable<Vector> gDisp;
     old_dw->get(gDisp, lb->gDisplacementLabel, dwi, patch, gac, 1);
     for (auto particle : *pset) {
+      pVolume_new[particle]   = pVolume_old[particle];
+      pDefGrad_new[particle]  = pDefGrad_old[particle];
+      pVelGrad_new[particle]  = Zero;
+      pDispGrad_new[particle] = Zero;
+
+      if (!(pMass[particle] > 0.0)) {
+        continue;
+      }
 
       // Compute total displacement gradient
       DisplacementGradientComputer gradComp(flag);

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Soil Brannon model -->
+<Uintah_Include>
+  <fluid_B0> 0.0 </fluid_B0>
+  <fluid_pressure_initial> 0.0 </fluid_pressure_initial>
+</Uintah_Include>
+

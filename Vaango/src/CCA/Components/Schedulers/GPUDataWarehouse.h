@@ -609,7 +609,94 @@ public:
   KOKKOS_FUNCTION void
   copyGpuGhostCellsToGpuVars( const int threadIdxX,
                               const int threadIdxY,
-                              const int threadIdxZ);
+                              const int threadIdxZ)
+  {
+    int blockDimX = 32;
+    int blockDimY = 16;
+    int blockDimZ = 1;
+
+    int blockID = 0;
+    // int blockID = (blockIdx.x +     // blockID on the grid
+    //                blockIdx.y * gridDim.x +
+    //                blockIdx.z * gridDim.x * gridDim.y);
+    int threadID = (threadIdxX +   // threadID in the block
+                    threadIdxY * blockDimX +
+                    threadIdxZ * blockDimX * blockDimY);
+    int numThreads = blockDimX * blockDimY * blockDimZ;
+    int totalThreads = numThreads; // * gridDim.x * gridDim.y * gridDim.z;
+    int assignedCellID = blockID * numThreads + threadID;
+
+    // Go through every ghost cell var we need
+    for (int i = 0; i < d_numVarDBItems; i++) {
+      // Some things in d_varDB are meta data for simulation variables
+      // other things in d_varDB are meta data for how to copy ghost
+      // cells.  Make sure we're only dealing with ghost cells here
+      if(d_varDB[i].ghostItem.dest_varDB_index != -1) {
+        int tmpAssignedCellID = assignedCellID;
+        int destIndex = d_varDB[i].ghostItem.dest_varDB_index;
+
+        int3 ghostCellSize;
+        ghostCellSize.x = d_varDB[i].ghostItem.sharedHighCoordinates.x - d_varDB[i].ghostItem.sharedLowCoordinates.x;
+        ghostCellSize.y = d_varDB[i].ghostItem.sharedHighCoordinates.y - d_varDB[i].ghostItem.sharedLowCoordinates.y;
+        ghostCellSize.z = d_varDB[i].ghostItem.sharedHighCoordinates.z - d_varDB[i].ghostItem.sharedLowCoordinates.z;
+
+        // While there's still work to do (this assigned ID is still
+        // within the ghost cell)
+        int totalGhostCellSize = ghostCellSize.x * ghostCellSize.y * ghostCellSize.z;
+        while (tmpAssignedCellID < totalGhostCellSize) {
+          int z = tmpAssignedCellID / (ghostCellSize.x * ghostCellSize.y);
+          int t = tmpAssignedCellID % (ghostCellSize.x * ghostCellSize.y);
+          int y = t / ghostCellSize.x;
+          int x = t % ghostCellSize.x;
+
+          tmpAssignedCellID += totalThreads;
+
+          // If we're in a valid x,y,z space for the variable.  (It's
+          // unlikely every cell will perfectly map onto every available
+          // thread.)
+          if (x < ghostCellSize.x && y < ghostCellSize.y && z < ghostCellSize.z) {
+
+            // Offset them to their true array coordinates, not relative
+            // simulation cell coordinates. When using virtual addresses,
+            // the virtual offset is always applied to the source, but
+            // the destination is correct.
+            int x_source_real = x + d_varDB[i].ghostItem.sharedLowCoordinates.x - d_varDB[i].ghostItem.virtualOffset.x - d_varDB[i].var_offset.x;
+            int y_source_real = y + d_varDB[i].ghostItem.sharedLowCoordinates.y - d_varDB[i].ghostItem.virtualOffset.y - d_varDB[i].var_offset.y;
+            int z_source_real = z + d_varDB[i].ghostItem.sharedLowCoordinates.z - d_varDB[i].ghostItem.virtualOffset.z - d_varDB[i].var_offset.z;
+            // count over array slots.
+            int sourceOffset = x_source_real + d_varDB[i].var_size.x * (y_source_real  + z_source_real * d_varDB[i].var_size.y);
+
+            int x_dest_real = x + d_varDB[i].ghostItem.sharedLowCoordinates.x - d_varDB[destIndex].var_offset.x;
+            int y_dest_real = y + d_varDB[i].ghostItem.sharedLowCoordinates.y - d_varDB[destIndex].var_offset.y;
+            int z_dest_real = z + d_varDB[i].ghostItem.sharedLowCoordinates.z - d_varDB[destIndex].var_offset.z;
+
+
+            int destOffset = x_dest_real + d_varDB[destIndex].var_size.x * (y_dest_real + z_dest_real * d_varDB[destIndex].var_size.y);
+
+            // Copy all 8 bytes of a double in one shot.
+            if (d_varDB[i].sizeOfDataType == sizeof(double)) {
+              *((double*)(d_varDB[destIndex].var_ptr) + destOffset) =
+                *((double*)(d_varDB[i].var_ptr) + sourceOffset);
+            }
+            // Or copy all 4 bytes of an int in one shot.
+            else if (d_varDB[i].sizeOfDataType == sizeof(int)) {
+              *(((int*)d_varDB[destIndex].var_ptr) + destOffset) =
+                *((int*)(d_varDB[i].var_ptr) + sourceOffset);
+              // Copy each byte until we've copied all for this data type.
+            } else {
+
+              for (unsigned int j = 0; j < d_varDB[i].sizeOfDataType; j++) {
+                *(((char*)d_varDB[destIndex].var_ptr) +
+                  (destOffset * d_varDB[destIndex].sizeOfDataType + j)) =
+                  *(((char*)d_varDB[i].var_ptr) +
+                    (sourceOffset * d_varDB[i].sizeOfDataType + j));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
   __host__ bool ghostCellCopiesNeeded();
   __host__ void getSizes(int3& low, int3& high, int3& siz, GhostType& gtype, int& numGhostCells, char const* label, int patchID, int matlIndx, int levelIndx = 0);
@@ -622,6 +709,7 @@ public:
   __device__ void print();
 
 private:
+
   __device__ dataItem* getItem(char const* label, const int patchID, const int8_t matlIndx, const int8_t levelIndx);
   GPU_FUNCTION void resetdVarDB();
 
@@ -699,6 +787,16 @@ __host__ void GPUDataWarehouse::copyGpuGhostCellsToGpuVarsInvoker<Kokkos::Defaul
 
 template<>
 __host__ void GPUDataWarehouse::syncto_device<Kokkos::DefaultExecutionSpace>(Kokkos::DefaultExecutionSpace instance);
+
+#if defined(KOKKOS_USING_GPU)
+#if defined(KOKKOS_ENABLE_CUDA)
+template <>
+__host__ void GPUDataWarehouse::copyGpuGhostCellsToGpuVarsInvoker<Kokkos::Cuda>(Kokkos::Cuda instance);
+
+template<>
+__host__ void GPUDataWarehouse::syncto_device<Kokkos::Cuda>(Kokkos::Cuda instance);
+#endif
+#endif
 
 //______________________________________________________________________
 //  Deep copies (not shallow copies or moves) an entry from one data

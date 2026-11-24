@@ -28,6 +28,8 @@
 SET(Vaango_CCA_Components_MPM_ParticleCreator_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ParticleCreator.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/ParticleCreatorFactory.cc  
+  ${CMAKE_CURRENT_SOURCE_DIR}/ParticleGeometryHelpers.cc  
+  ${CMAKE_CURRENT_SOURCE_DIR}/SGPDataManager.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/ImplicitParticleCreator.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/FractureParticleCreator.cc  
   ${CMAKE_CURRENT_SOURCE_DIR}/MembraneParticleCreator.cc  
@@ -50,9 +52,9 @@ target_link_libraries(MPM_ParticleCreator PRIVATE
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-	add_definitions(-DBUILD_MPM_ParticleCreator)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(MPM_ParticleCreator PRIVATE BUILD_MPM_ParticleCreator)
+endif()
 
 install(TARGETS
   MPM_ParticleCreator

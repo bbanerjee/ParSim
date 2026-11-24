@@ -49,6 +49,14 @@ set_source_files_properties(
     COMPILE_OPTIONS "${FORTRAN_CM_FLAGS};-Wno-unused-dummy-argument;-Wno-unused-parameter"
 )
 
+add_library(MPM_ConstitutiveModel_FORTRAN_Utils ${FORTRAN_CM_CPP_SRC})
+target_link_libraries(MPM_ConstitutiveModel_FORTRAN_Utils PRIVATE
+  Vaango_Core_Parallel
+  Vaango_Core_Util
+  Vaango::Options
+  Vaango::Warnings
+)
+
 add_library(MPM_ConstitutiveModel_FORTRAN ${FORTRAN_CM_SRC})
 
 target_compile_definitions(MPM_ConstitutiveModel_FORTRAN PRIVATE

@@ -30,6 +30,8 @@
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
+#include <algorithm>
+#include <cmath>
 #include <sstream>
 #include <memory>
 
@@ -92,9 +94,64 @@ BoxGeometryPiece::inside(const Point& p) const {
     return false;
 }
 
+double
+BoxGeometryPiece::getSDF(const Point& p) const {
+  Point center = d_box.lower() + (d_box.upper() - d_box.lower()) * 0.5;
+  Vector b = (d_box.upper() - d_box.lower()) * 0.5;
+  Vector p_v = p - center;
+  Vector q = Vector(std::abs(p_v.x()), std::abs(p_v.y()), std::abs(p_v.z())) - b;
+  
+  Vector q_max = Vector(std::max(q.x(), 0.0), std::max(q.y(), 0.0), std::max(q.z(), 0.0));
+  double outside_dist = q_max.length();
+  double inside_dist = std::min(std::max({q.x(), q.y(), q.z()}), 0.0);
+  
+  return outside_dist + inside_dist;
+}
+
+Vector
+BoxGeometryPiece::getSDFGradient(const Point& p) const {
+  Point center = d_box.lower() + (d_box.upper() - d_box.lower()) * 0.5;
+  Vector b = (d_box.upper() - d_box.lower()) * 0.5;
+  Vector p_v = p - center;
+  Vector q = Vector(std::abs(p_v.x()), std::abs(p_v.y()), std::abs(p_v.z())) - b;
+  
+  if (std::max({q.x(), q.y(), q.z()}) > 0) {
+    // Outside
+    Vector grad(
+      (p_v.x() > 0 ? 1 : -1) * std::max(q.x(), 0.0),
+      (p_v.y() > 0 ? 1 : -1) * std::max(q.y(), 0.0),
+      (p_v.z() > 0 ? 1 : -1) * std::max(q.z(), 0.0)
+    );
+    if (grad.length2() > 1e-12) grad.normalize();
+    return grad;
+  } else {
+    // Inside: normal to closest face
+    if (q.x() > q.y() && q.x() > q.z()) return Vector(p_v.x() > 0 ? 1 : -1, 0, 0);
+    if (q.y() > q.z()) return Vector(0, p_v.y() > 0 ? 1 : -1, 0);
+    return Vector(0, 0, p_v.z() > 0 ? 1 : -1);
+  }
+}
+
 Box
 BoxGeometryPiece::getBoundingBox() const {
   return d_box;
+}
+
+Point
+BoxGeometryPiece::getCenter() const {
+  return d_box.lower() + (d_box.upper() - d_box.lower()) * 0.5;
+}
+
+Matrix3
+BoxGeometryPiece::getInertiaTensor() const {
+  double w = (d_box.upper()).x() - (d_box.lower()).x();
+  double h = (d_box.upper()).y() - (d_box.lower()).y();
+  double d = (d_box.upper()).z() - (d_box.lower()).z();
+  double mass = w * h * d; // Unit density
+  double ixx = (1.0 / 12.0) * mass * (h * h + d * d);
+  double iyy = (1.0 / 12.0) * mass * (w * w + d * d);
+  double izz = (1.0 / 12.0) * mass * (w * w + h * h);
+  return Matrix3(ixx, 0, 0, 0, iyy, 0, 0, 0, izz);
 }
 
 double

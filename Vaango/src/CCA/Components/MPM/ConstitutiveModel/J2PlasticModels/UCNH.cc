@@ -907,7 +907,7 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
     new_dw->allocateTemporary(pBeBar_new, pset);
 
     double volold = 0.0, volnew = 0.0;
-    if (matl->getIsRigid()) { // Rigid test
+    if (matl->isRigid()) { // Rigid test
       for (auto idx : *pset) {
         pStress[idx] = Matrix3(0.0);
       }
@@ -1279,14 +1279,14 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
     new_dw->allocateAndPut(pBeBar_new, bElBarLabel_preReloc, pset);
     new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
 
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (iter = pset->begin(); iter != pset->end(); iter++) {
         particleIndex idx = *iter;
         // Assign zero internal heating by default - modify if necessary.
         pdTdt[idx]       = 0.0;
         pStress_new[idx] = Matrix3(0.0);
       }
-    } else { /*if(!matl->getIsRigid()) */
+    } else { /*if(!matl->isRigid()) */
       // Compute the displacement gradient and the deformation gradient
       auto interpolator = flag->d_interpolator->clone(patch);
       std::vector<IntVector> ni(interpolator->size());

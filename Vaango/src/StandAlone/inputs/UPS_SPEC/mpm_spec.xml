@@ -219,7 +219,7 @@
         <!--295.0 -->
         <room_temp spec="OPTIONAL DOUBLE"/>
         <!--294.0 -->
-        <is_discrete spec="OPTIONAL BOOLEAN"/>
+        <is_dem_material spec="OPTIONAL BOOLEAN"/>
         <is_sdf_based spec="OPTIONAL BOOLEAN"/>
         <radius spec="OPTIONAL DOUBLE"/>
         <kn spec="OPTIONAL DOUBLE"/>

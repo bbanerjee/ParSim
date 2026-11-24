@@ -71,7 +71,7 @@
         <constitutive_model type="tabular_plasticity_cap">
 
           <elastic_moduli_model type="tabular">
-            <filefile_name_prefix>DrySand_ElasticDataLinear.json</filefile_name_prefix>
+            <filename>DrySand_ElasticDataLinear.json</filename>
             <independent_variables>PlasticStrainVol, TotalStrainVol</independent_variables>
             <dependent_variables>Pressure</dependent_variables>
             <interpolation type="linear"/>
@@ -80,7 +80,7 @@
           </elastic_moduli_model>
 
           <yield_condition type="tabular_cap">
-            <filefile_name_prefix>DrySand_YieldData.json</filefile_name_prefix>
+            <filename>DrySand_YieldData.json</filename>
             <independent_variables>Pressure</independent_variables>
             <dependent_variables>SqrtJ2</dependent_variables>
             <interpolation type="linear"/>
@@ -88,14 +88,14 @@
           </yield_condition>
 
           <internal_variable_model type="tabular_cap">
-            <filefile_name_prefix>DrySand_HydrostaticCapData.json</filefile_name_prefix>
+            <filename>DrySand_HydrostaticCapData.json</filename>
             <independent_variables>PlasticStrainVol</independent_variables>
             <dependent_variables>Pressure</dependent_variables>
             <interpolation type="linear"/>
           </internal_variable_model>
 
           <!-- Hydrostat -->
-          <filefile_name_prefix>DrySand_HydrostatData.json</filefile_name_prefix>
+          <filename>DrySand_HydrostatData.json</filename>
           <independent_variables>TotalStrainVol</independent_variables>
           <dependent_variables>Pressure</dependent_variables>
           <interpolation type="linear"/>

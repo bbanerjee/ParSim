@@ -22,6 +22,7 @@
  * IN THE SOFTWARE.
  */
 #include <CCA/Components/Schedulers/Relocate.h>
+#include <iostream>
 #include <CCA/Ports/LoadBalancer.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Containers/Array2.h>

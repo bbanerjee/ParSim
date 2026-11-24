@@ -110,10 +110,35 @@ class NaaBoxGeometryPiece : public GeometryPiece {
   virtual bool
   inside(const Point& pt) const;
 
+  virtual double
+  getSDF(const Point& pt) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& pt) const override;
+
   //////////
   //  Returns the bounding box surrounding the NaaBox
   virtual Box
   getBoundingBox() const;
+
+  /**
+   * Returns the volume of the box.
+   */
+  virtual double
+  volume() const override;
+
+  /**
+   * Returns the center of the box.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the box.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
 
  private:
   virtual void

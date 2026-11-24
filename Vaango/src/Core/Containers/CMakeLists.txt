@@ -40,11 +40,13 @@ target_link_libraries(Vaango_Core_Containers
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_Core_Containers)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_Core_Containers PRIVATE BUILD_Vaango_Core_Containers)
+endif()
 
 install(TARGETS
   Vaango_Core_Containers
 )
+
+add_subdirectory(UnitTests)
 

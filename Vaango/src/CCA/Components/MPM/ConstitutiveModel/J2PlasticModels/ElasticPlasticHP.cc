@@ -1863,7 +1863,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     //__________________________________
     // Special case for rigid materials
     double totalStrainEnergy = 0.0;
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (auto idx : *pset) {
         pRotation_new[idx]            = pRotation[idx];
         pEqStrainRate_new[idx]        = pEqStrainRate[idx];
@@ -2273,7 +2273,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       pEqPlasticStrainRate_new, pEqPlasticStrainRateLabel_preReloc, pset);
 
     // Special case for rigid materials
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (auto idx : *pset) {
         pPlasticStrain_new[idx]       = pPlasticStrain[idx];
         pEqPlasticStrain_new[idx]     = pEqPlasticStrain[idx];

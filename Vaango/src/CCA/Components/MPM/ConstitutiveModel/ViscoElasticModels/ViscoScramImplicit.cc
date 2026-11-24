@@ -466,7 +466,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     double Bnl[3][24];
     double v[576];
 
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (int idx : *pset) {
         pdTdt[idx]       = 0;
         pstress_new[idx] = Matrix3(0.0);
@@ -664,7 +664,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
       pdTdt[idx]            = 0.0;
     }
 
-    if (matl->getIsRigid()) {
+    if (matl->isRigid()) {
       for (int idx : *pset) {
         pstress_new[idx] = Matrix3(0.0);
       }

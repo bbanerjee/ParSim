@@ -154,7 +154,7 @@ SmoothCylGeomPiece::inside(const Point& p) const {
   double z            = pTransformed.z();
 
   // a) Check is the point is outside the solid composite cylinder
-  if (z < d_capThick || z > d_height + d_capThick) {
+  if (z < -d_capThick || z > d_height + d_capThick) {
     return false;
   }
   double r_sq = x * x + y * y;
@@ -171,9 +171,39 @@ SmoothCylGeomPiece::inside(const Point& p) const {
   return true;
 }
 
-/////////////////////////////////////////////////////////////////////////////
-/*! Find the bounding box for the cylinder */
-/////////////////////////////////////////////////////////////////////////////
+double
+SmoothCylGeomPiece::getSDF(const Point& p) const {
+  Vector pTransformed = p - d_bottom;
+  pTransformed = d_rotation.Transpose() * pTransformed;
+  double x = pTransformed.x();
+  double y = pTransformed.y();
+  double z = pTransformed.z();
+  
+  double r = std::sqrt(x*x + y*y);
+  double dist_r = r - d_radius;
+  double dist_z = std::max(-d_capThick - z, z - (d_height + d_capThick));
+  
+  double outside_dist = Vector(std::max(dist_r, 0.0), std::max(dist_z, 0.0), 0.0).length();
+  double inside_dist = std::min(std::max(dist_r, dist_z), 0.0);
+  double sdf_solid = outside_dist + inside_dist;
+  
+  if (d_thickness < d_radius) {
+    double innerRad = d_radius - d_thickness;
+    double dist_r_inner = innerRad - r;
+    // For hollow cylinders, we take the max of solid cylinder SDF and the negative of inner cylinder SDF
+    // But we also need to consider the end caps.
+    // Simplified:
+    return std::max(sdf_solid, dist_r_inner);
+  }
+  
+  return sdf_solid;
+}
+
+Vector
+SmoothCylGeomPiece::getSDFGradient(const Point& p) const {
+  return GeometryPiece::getSDFGradient(p);
+}
+
 Box
 SmoothCylGeomPiece::getBoundingBox() const {
   // Find the vector along the axis of the cylinder
@@ -185,6 +215,39 @@ SmoothCylGeomPiece::getBoundingBox() const {
   Point hi(top.x() + d_radius, top.y() + d_radius, top.z() + d_radius);
 
   return Box(lo, hi);
+}
+
+double
+SmoothCylGeomPiece::volume() const {
+  double r_out = d_radius;
+  double r_in  = d_radius - d_thickness;
+  double h     = d_height;
+  double v_hollow = M_PI * (r_out * r_out - r_in * r_in) * h;
+  double v_caps   = 2.0 * (M_PI * r_out * r_out * d_capThick);
+  return v_hollow + v_caps;
+}
+
+Point
+SmoothCylGeomPiece::getCenter() const {
+  return d_bottom + (d_top - d_bottom) * 0.5;
+}
+
+Matrix3
+SmoothCylGeomPiece::getInertiaTensor() const {
+  double mass = volume();
+  double r_out = d_radius;
+  double r_in  = d_radius - d_thickness;
+  double h     = d_height;
+  
+  // Approximation for inertia
+  double r_avg2 = 0.5 * (r_out * r_out + r_in * r_in);
+  double izz_local = 0.5 * mass * r_avg2;
+  double ixx_local = (1.0 / 4.0) * mass * r_avg2 + (1.0 / 12.0) * mass * h * h;
+  double iyy_local = ixx_local;
+  
+  Matrix3 I_local(ixx_local, 0, 0, 0, iyy_local, 0, 0, 0, izz_local);
+  
+  return rotateInertiaTensor(I_local, d_rotation.Transpose());
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -62,7 +62,6 @@ using namespace Uintah;
 #define LOCS float
 int main(int argc, char** argv)
 {
-	//Uintah::Parallel::determineIfRunningUnderMPI( argc, argv);	
 	Uintah::Parallel::initializeManager( argc, argv, "");
 	ProcessorGroup *d_myworld=Uintah::Parallel::getRootProcessorGroup();
   MPI_Comm Comm=d_myworld->getComm();	

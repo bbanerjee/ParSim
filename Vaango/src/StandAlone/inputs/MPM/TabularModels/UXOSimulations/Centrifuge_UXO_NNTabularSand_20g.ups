@@ -176,7 +176,7 @@
            <constitutive_model type="tabular_plasticity">
 
              <elastic_moduli_model type="neural_net">
-               <filefile_name_prefix>mlp_regression_keras_total_scaled.h5</filefile_name_prefix>
+               <filename>mlp_regression_keras_total_scaled.h5</filename>
                <min_strain>0.0</min_strain>
                <max_strain>0.452</max_strain>
                <min_pressure>0.0</min_pressure>
@@ -186,7 +186,7 @@
              </elastic_moduli_model>
 
              <yield_condition type="tabular">
-               <filefile_name_prefix>DrySand_YieldData.json</filefile_name_prefix>
+               <filename>DrySand_YieldData.json</filename>
                <independent_variables>Pressure</independent_variables>
                <dependent_variables>SqrtJ2</dependent_variables>
                <interpolation type="linear"/>

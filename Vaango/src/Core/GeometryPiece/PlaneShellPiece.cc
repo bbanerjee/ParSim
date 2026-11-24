@@ -99,6 +99,25 @@ PlaneShellPiece::inside(const Point& p) const {
   return true;
 }
 
+double
+PlaneShellPiece::getSDF(const Point& p) const {
+  Vector pa = p - d_center;
+  double dist_normal = Dot(pa, d_normal);
+  Vector p_proj = pa - d_normal * dist_normal;
+  double dist_radial = p_proj.length() - d_radius;
+  double dist_axial = std::abs(dist_normal) - 0.5 * d_thickness;
+  
+  double outside_dist = Vector(std::max(dist_radial, 0.0), std::max(dist_axial, 0.0), 0.0).length();
+  double inside_dist = std::min(std::max(dist_radial, dist_axial), 0.0);
+  
+  return outside_dist + inside_dist;
+}
+
+Vector
+PlaneShellPiece::getSDFGradient(const Point& p) const {
+  return GeometryPiece::getSDFGradient(p);
+}
+
 //////////
 /*! Find the bounding box for the cylinder */
 Box
@@ -110,6 +129,40 @@ PlaneShellPiece::getBoundingBox() const {
   Point hi(top.x() + d_radius, top.y() + d_radius, top.z() + d_radius);
 
   return Box(lo, hi);
+}
+
+double
+PlaneShellPiece::volume() const {
+  return M_PI * d_radius * d_radius * d_thickness;
+}
+
+Point
+PlaneShellPiece::getCenter() const {
+  return d_center;
+}
+
+Matrix3
+PlaneShellPiece::getInertiaTensor() const {
+  double mass = volume();
+  double r = d_radius;
+  double t = d_thickness;
+  
+  double izz_local = 0.5 * mass * r * r;
+  double ixx_local = 0.25 * mass * r * r + (1.0/12.0) * mass * t * t;
+  double iyy_local = ixx_local;
+  
+  Matrix3 I_local(ixx_local, 0, 0, 0, iyy_local, 0, 0, 0, izz_local);
+  
+  Vector e3 = d_normal;
+  e3.normalize();
+  Vector e1, e2;
+  e3.findOrthogonal(e1, e2);
+  
+  Matrix3 R(e1[0], e2[0], e3[0],
+            e1[1], e2[1], e3[1],
+            e1[2], e2[2], e3[2]);
+            
+  return rotateInertiaTensor(I_local, R);
 }
 
 //////////

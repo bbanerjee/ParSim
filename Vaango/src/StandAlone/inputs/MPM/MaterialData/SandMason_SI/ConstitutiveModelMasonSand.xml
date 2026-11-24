@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- SandMason -->
+<!-- Mohr-Coulomb Mason sand -->
+<Uintah_Include>
+  <include href="MatConstMasonSand.xml"/>
+  <constitutive_model type="mohr_coulomb">
+    <model_type> classic </model_type>
+    <include href="MohrCoulombModelParametersMasonSand.xml"/>
+    <include href="MohrCoulombIntegrationParametersMasonSand.xml"/>
+  </constitutive_model>
+</Uintah_Include>
+

@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- JWL++ ANFO -->
+<Uintah_Include>
+  <jwl_A> 7.73037e11 </jwl_A>
+  <jwl_B> 21.629e9 </jwl_B>
+  <jwl_C> 1.339e9 </jwl_C>
+  <jwl_R1> 4.5 </jwl_R1>
+  <jwl_R2> 1.5 </jwl_R2>
+  <jwl_om> 0.33 </jwl_om>
+  <jwl_rho0> 1844.0 </jwl_rho0>
+</Uintah_Include>
+

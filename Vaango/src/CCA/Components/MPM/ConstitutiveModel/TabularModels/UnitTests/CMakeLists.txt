@@ -31,17 +31,17 @@
 # Copy input files
 #------------------------
 configure_file(tabular_eos.json tabular_eos.json COPYONLY)
-configure_file(HydrostaticCompression_PrescribedDeformation.inp 
-               HydrostaticCompression_PrescribedDeformation.inp COPYONLY)
-
+configure_file(table_eos.json table_eos.json COPYONLY)
 configure_file(tabular_linear_elastic.json tabular_linear_elastic.json COPYONLY)
 configure_file(tabular_von_mises.json tabular_von_mises.json COPYONLY)
 configure_file(tabular_drucker_prager.json tabular_drucker_prager.json COPYONLY)
 configure_file(tabular_cap.json tabular_cap.json COPYONLY)
 configure_file(DrySand_HydrostatData.json DrySand_HydrostatData.json COPYONLY)
+configure_file(DrySand_ElasticData.json DrySand_ElasticData.json COPYONLY)
+configure_file(HydrostaticCompression_PrescribedDeformation.inp 
+               HydrostaticCompression_PrescribedDeformation.inp COPYONLY)
 configure_file(UniaxialStrainRotate_PrescribedDeformation.inp 
                UniaxialStrainRotate_PrescribedDeformation.inp COPYONLY)
-
 configure_file(mlp_regression_keras_total_scaled.h5 
                mlp_regression_keras_total_scaled.h5 COPYONLY)
 
@@ -67,16 +67,20 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
         Vaango_CCA_Components_Models
+        Vaango_CCA_Components_MPM
+        Vaango_Core_Malloc
         ${HDF5_TARGET}
         $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
 )
 
+message(STATUS "Hypre target = ${HYPRE_TARGET}")
+
 #------------------------
 # Google tests
 #------------------------
-set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
+
 set(GTEST_LIB gtest_main gtest)
-include_directories(${GTEST_INCLUDE_DIR})
+
 
 add_executable(testTabularData testTabularData.cc)
 target_link_libraries(testTabularData PRIVATE
@@ -86,16 +90,15 @@ target_link_libraries(testTabularData PRIVATE
   MPM_Diffusion
   LibXml2::LibXml2
   ${HDF5_TARGET}
-  $<$<BOOL:${HAVE_HYPRE}>:${HYPRE_TARGET}>
   Vaango::Options
   Vaango::Warnings
 )
-#set(UNIT_TEST testTabularData)
-#add_custom_command(
-#  TARGET ${UNIT_TEST}
-#  POST_BUILD
-#  COMMAND ${UNIT_TEST}
-#)
+set(UNIT_TEST testTabularData)
+add_custom_command(
+ TARGET ${UNIT_TEST}
+ POST_BUILD
+ COMMAND ${UNIT_TEST}
+)
 
 add_executable(testTabularEOS testTabularEOS.cc)
 target_link_libraries(testTabularEOS PRIVATE
@@ -106,12 +109,12 @@ target_link_libraries(testTabularEOS PRIVATE
   Vaango::Options
   Vaango::Warnings
 )
-#set(UNIT_TEST testTabularEOS)
-#add_custom_command(
-#  TARGET ${UNIT_TEST}
-#  POST_BUILD
-#  COMMAND ${UNIT_TEST}
-#)
+set(UNIT_TEST testTabularEOS)
+add_custom_command(
+ TARGET ${UNIT_TEST}
+ POST_BUILD
+ COMMAND ${UNIT_TEST}
+)
 
 add_executable(testTabularPlasticity testTabularPlasticity.cc)
 target_link_libraries(testTabularPlasticity PRIVATE
@@ -123,12 +126,12 @@ target_link_libraries(testTabularPlasticity PRIVATE
   Vaango::Warnings
 )
 
-#set(UNIT_TEST testTabularPlasticity)
-#add_custom_command(
-#  TARGET ${UNIT_TEST}
-#  POST_BUILD
-#  COMMAND ${UNIT_TEST}
-#)
+set(UNIT_TEST testTabularPlasticity)
+add_custom_command(
+ TARGET ${UNIT_TEST}
+ POST_BUILD
+ COMMAND ${UNIT_TEST}
+)
 
 add_executable(testNeuralNetTabularPlasticity testNeuralNetTabularPlasticity.cc)
 target_link_libraries(testNeuralNetTabularPlasticity PRIVATE
@@ -140,12 +143,12 @@ target_link_libraries(testNeuralNetTabularPlasticity PRIVATE
   Vaango::Warnings
 )
 
-#set(UNIT_TEST testNeuralNetTabularPlasticity)
-#add_custom_command(
-#  TARGET ${UNIT_TEST}
-#  POST_BUILD
-#  COMMAND ${UNIT_TEST}
-#)
+set(UNIT_TEST testNeuralNetTabularPlasticity)
+add_custom_command(
+ TARGET ${UNIT_TEST}
+ POST_BUILD
+ COMMAND ${UNIT_TEST}
+)
 
 add_executable(testTabularPlasticityCap testTabularPlasticityCap.cc)
 target_link_libraries(testTabularPlasticityCap PRIVATE
@@ -156,10 +159,10 @@ target_link_libraries(testTabularPlasticityCap PRIVATE
   Vaango::Options
   Vaango::Warnings
 )
-#set(UNIT_TEST testTabularPlasticityCap)
-#add_custom_command(
-#  TARGET ${UNIT_TEST}
-#  POST_BUILD
-#  COMMAND ${UNIT_TEST}
-#)
+set(UNIT_TEST testTabularPlasticityCap)
+add_custom_command(
+ TARGET ${UNIT_TEST}
+ POST_BUILD
+ COMMAND ${UNIT_TEST}
+)
 

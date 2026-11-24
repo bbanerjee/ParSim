@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Arena dry sand -->
+<Uintah_Include>
+  <yield_condition type="arena">
+    <PEAKI1> 1.0e3 </PEAKI1>
+    <FSLOPE> 0.453  </FSLOPE>
+    <STREN>  1.0e7  </STREN>
+    <YSLOPE> 0.31   </YSLOPE>
+    <BETA>   1.0    </BETA>
+    <CR>     0.5    </CR>
+    <T1>     0.0    </T1>
+    <T2>     0.0    </T2>
+  </yield_condition>
+</Uintah_Include>

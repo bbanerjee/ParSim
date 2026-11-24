@@ -78,6 +78,29 @@ IntersectionGeometryPiece::inside(const Point& p) const {
   return true;
 }
 
+double
+IntersectionGeometryPiece::getSDF(const Point& p) const {
+  double max_sdf = -1.0e30;
+  for (const auto& child : d_children) {
+    max_sdf = std::max(max_sdf, child->getSDF(p));
+  }
+  return max_sdf;
+}
+
+Vector
+IntersectionGeometryPiece::getSDFGradient(const Point& p) const {
+  double max_sdf = -1.0e30;
+  size_t max_idx = 0;
+  for (size_t i = 0; i < d_children.size(); ++i) {
+    double s = d_children[i]->getSDF(p);
+    if (s > max_sdf) {
+      max_sdf = s;
+      max_idx = i;
+    }
+  }
+  return d_children[max_idx]->getSDFGradient(p);
+}
+
 Box
 IntersectionGeometryPiece::getBoundingBox() const {
   Point lo, hi;
@@ -93,6 +116,43 @@ IntersectionGeometryPiece::getBoundingBox() const {
   }
 
   return Box(lo, hi);
+}
+
+double
+IntersectionGeometryPiece::volume() const {
+  double min_vol = 1.0e30;
+  for (const auto& child : d_children) {
+    min_vol = std::min(min_vol, child->volume());
+  }
+  return min_vol;
+}
+
+Point
+IntersectionGeometryPiece::getCenter() const {
+  double min_vol = 1.0e30;
+  size_t min_idx = 0;
+  for (size_t i = 0; i < d_children.size(); ++i) {
+    double vol = d_children[i]->volume();
+    if (vol < min_vol) {
+      min_vol = vol;
+      min_idx = i;
+    }
+  }
+  return d_children[min_idx]->getCenter();
+}
+
+Matrix3
+IntersectionGeometryPiece::getInertiaTensor() const {
+  double min_vol = 1.0e30;
+  size_t min_idx = 0;
+  for (size_t i = 0; i < d_children.size(); ++i) {
+    double vol = d_children[i]->volume();
+    if (vol < min_vol) {
+      min_vol = vol;
+      min_idx = i;
+    }
+  }
+  return d_children[min_idx]->getInertiaTensor();
 }
 
 } // end namespace Uintah

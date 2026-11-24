@@ -82,6 +82,20 @@ SphereShellPiece::inside(const Point& p) const {
     return true;
 }
 
+double
+SphereShellPiece::getSDF(const Point& p) const {
+  Vector diff = p - d_origin;
+  return diff.length() - d_radius;
+}
+
+Vector
+SphereShellPiece::getSDFGradient(const Point& p) const {
+  Vector diff = p - d_origin;
+  double len = diff.length();
+  if (len > 1.0e-12) return diff / len;
+  return Vector(0, 0, 1);
+}
+
 Box
 SphereShellPiece::getBoundingBox() const {
   Point lo(d_origin.x() - d_radius,
@@ -91,6 +105,29 @@ SphereShellPiece::getBoundingBox() const {
            d_origin.y() + d_radius,
            d_origin.z() + d_radius);
   return Box(lo, hi);
+}
+
+double
+SphereShellPiece::volume() const {
+  double r_out = d_radius + 0.5 * d_h;
+  double r_in  = d_radius - 0.5 * d_h;
+  return (4.0 / 3.0) * M_PI * (std::pow(r_out, 3.0) - std::pow(r_in, 3.0));
+}
+
+Point
+SphereShellPiece::getCenter() const {
+  return d_origin;
+}
+
+Matrix3
+SphereShellPiece::getInertiaTensor() const {
+  double mass = volume();
+  double r_out = d_radius + 0.5 * d_h;
+  double r_in  = d_radius - 0.5 * d_h;
+  // Hollow sphere inertia: 2/5 * M * (R_out^5 - R_in^5) / (R_out^3 - R_in^3)
+  double i = (2.0 / 5.0) * mass * (std::pow(r_out, 5.0) - std::pow(r_in, 5.0)) /
+             (std::pow(r_out, 3.0) - std::pow(r_in, 3.0));
+  return Matrix3(i, 0, 0, 0, i, 0, 0, 0, i);
 }
 
 int

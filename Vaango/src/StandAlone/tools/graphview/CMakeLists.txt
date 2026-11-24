@@ -41,6 +41,7 @@ IF(NOT WIN32)
     graphview_libs
     Vaango_Core_Parallel
     Vaango_Core_ProblemSpec
+    Vaango_Core_Malloc
     Vaango_Core_Math
     Vaango_Core_Util
     Vaango_Core_Containers

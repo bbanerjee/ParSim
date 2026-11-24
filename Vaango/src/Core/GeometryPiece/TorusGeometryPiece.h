@@ -109,10 +109,29 @@ class TorusGeometryPiece : public GeometryPiece {
   virtual bool
   inside(const Point& p) const;
 
+  virtual double
+  getSDF(const Point& p) const override;
+
+  virtual Vector
+  getSDFGradient(const Point& p) const override;
+
   //////////
   // Returns the bounding box surrounding the cylinder.
   virtual Box
   getBoundingBox() const;
+
+  /**
+   * Returns the center of the torus.
+   */
+  virtual Point
+  getCenter() const override;
+
+  /**
+   * Returns the inertia tensor of the torus.
+   * Assumes unit density.
+   */
+  virtual Matrix3
+  getInertiaTensor() const override;
 
   //////////
   // Calculate the surface area

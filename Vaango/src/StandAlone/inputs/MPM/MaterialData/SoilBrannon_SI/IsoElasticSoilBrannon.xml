@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Soil Brannon model -->
+<Uintah_Include>
+  <B0>10000</B0>
+  <G0>3750</G0>
+</Uintah_Include>
+

@@ -2303,6 +2303,7 @@ GPUDataWarehouse::getMaterial([[maybe_unused]] int i) const
 #endif
 }
 
+#ifndef KOKKOS_USING_GPU
 //______________________________________________________________________
 //TODO: This is too slow. It needs work.
 
@@ -2444,6 +2445,7 @@ GPUDataWarehouse::copyGpuGhostCellsToGpuVars( const int threadIdxX,
     }
   }
 }
+#endif
 
 //______________________________________________________________________
 //
@@ -4258,13 +4260,3 @@ GPUDataWarehouse::printBlock()
           blockIdx.x, blockIdx.y, blockIdx.z, blockID);
 #endif
 }
-
-/*
-#if defined(HAVE_KOKKOS)
-// Explicit template instantiations
-namespace Uintah {
-  template<> void GPUDataWarehouse::copyGpuGhostCellsToGpuVarsInvoker<Kokkos::Cuda>(Kokkos::Cuda);
-  template<> void GPUDataWarehouse::syncto_device<Kokkos::Cuda>(Kokkos::Cuda);
-}
-#endif
-*/

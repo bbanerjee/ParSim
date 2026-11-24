@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Material Constants for Water -->
+<Uintah_Include>
+  <density>1000.0</density>
+  <thermal_conductivity>1.0</thermal_conductivity>
+  <specific_heat>5</specific_heat>
+  <room_temp>294</room_temp>
+  <melt_temp>273</melt_temp>
+  <initial_material_temperature>294</initial_material_temperature>
+</Uintah_Include>

@@ -47,10 +47,12 @@ target_link_libraries(Vaango_CCA_Components_SimulationCommon
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_CCA_Components_SimulationCommon)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_CCA_Components_SimulationCommon PRIVATE BUILD_Vaango_CCA_Components_SimulationCommon)
+endif()
 
 install(TARGETS
   Vaango_CCA_Components_SimulationCommon
 )
+
+add_subdirectory(UnitTests)

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- SoilBrannon -->
+<!-- Soil Brannon model -->
+<Uintah_Include>
+  <include href="MatConstSoilBrannon.xml"/>
+  <constitutive_model type="soil_model_brannon">
+    <include href="IsoElasticSoilBrannon.xml"/>
+    <include href="YieldFunctionSoilBrannon.xml"/>
+    <include href="CrushCurveSoilBrannon.xml"/>
+    <include href="PorePressureSoilBrannon.xml"/>
+    <include href="KinematicHardeningSoilBrannon.xml"/>
+    <include href="InternalVariableSoilBrannon.xml"/>
+    <subcycling_characteristic_number> 10 </subcycling_characteristic_number>
+  </constitutive_model>
+</Uintah_Include>

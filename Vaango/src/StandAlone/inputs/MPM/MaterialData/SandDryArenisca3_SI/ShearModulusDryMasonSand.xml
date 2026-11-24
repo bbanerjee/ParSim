@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Arenisca 3 dry mason sand-->
+<Uintah_Include>
+  <!-- Shear modulus model -->
+  <G0> 10.0e7</G0>
+  <G1> 0.35 </G1>
+  <G2> -0.35 </G2>
+  <G3> 0.0 </G3>
+  <G4> 0.0 </G4>
+</Uintah_Include>

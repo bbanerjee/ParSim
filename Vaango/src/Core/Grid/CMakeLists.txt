@@ -85,7 +85,11 @@ target_link_libraries(Vaango_Core_Grid
   Vaango::Warnings
 )
 
-IF(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILD_Vaango_Core_Grid)
-ENDIF(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
+  target_compile_definitions(Vaango_Core_Grid PRIVATE BUILD_Vaango_Core_Grid)
+endif()
+
+if (HAVE_KOKKOS)
+  target_compile_definitions(Vaango_Core_Grid PRIVATE KOKKOS_DEPENDENCE)
+endif()
 

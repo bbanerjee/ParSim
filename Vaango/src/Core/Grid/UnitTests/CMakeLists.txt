@@ -27,6 +27,7 @@ include(GoogleTest)
 
 SET(VAANGO_LIBS
     Vaango_Core_Grid
+    Vaango_Core_Malloc
     Vaango_Core_Util
     Vaango_Core_OS
     Vaango_CCA_Components_Schedulers
@@ -36,9 +37,7 @@ SET(VAANGO_LIBS
 #------------------------
 # Google tests
 #------------------------
-set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
 set(GTEST_LIB GTest::gtest_main)
-include_directories(${GTEST_INCLUDE_DIR})
 
 add_executable(testMaterialManager testMaterialManager.cc)
 target_include_directories(testMaterialManager PRIVATE
@@ -52,9 +51,32 @@ target_link_libraries(testMaterialManager PRIVATE
   Vaango::Warnings
 )
 set(UNIT_TEST testMaterialManager)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
+gtest_discover_tests(${UNIT_TEST})
+
+#---------------------------------------------------------
+# testGrid
+#---------------------------------------------------------
+set(UNIT_TEST testGrid)
+add_executable(${UNIT_TEST} testGrid.cc)
+target_link_libraries(${UNIT_TEST} PRIVATE
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  Vaango::Options
+  Vaango::Warnings
 )
+
+if (RUN_UNIT_TESTS_ON_BUILD)
+  add_custom_command(
+    TARGET ${UNIT_TEST}
+    POST_BUILD
+    COMMAND ${UNIT_TEST}
+  )
+endif()
 gtest_discover_tests(${UNIT_TEST})
