@@ -1969,20 +1969,20 @@ ImpMPM::createMatrix(const ProcessorGroup*,
         if (visited[cell] == 0) {
           visited[cell] = 1;
           patch->findNodesFromCell(cell, ni);
-          std::vector<int> dof(0);
-          int l2g_node_num;
+          int nodes_in_cell = 0;
+          for (int k = 0; k < n8or27; k++) {
+            if (patch->containsNode(ni[k])) {
+              ++nodes_in_cell;
+            }
+          }
+          int dofs_in_cell = 3 * nodes_in_cell;
           for (int k = 0; k < n8or27; k++) {
             if (patch->containsNode(ni[k])) {
               // subtract global offset in order to map into array correctly
-              l2g_node_num = l2g[ni[k]] - global_offset;
-              dof.push_back(l2g_node_num);
-              dof.push_back(l2g_node_num + 1);
-              dof.push_back(l2g_node_num + 2);
-            }
-          }
-          for (auto dofi : dof) {
-            for (auto jj = 0u; jj < dof.size(); ++jj) {
-              dof_diag[dofi] += 1;
+              int l2g_node_num = l2g[ni[k]] - global_offset;
+              for (int component = 0; component < 3; ++component) {
+                dof_diag[l2g_node_num + component] += dofs_in_cell;
+              }
             }
           }
         }
