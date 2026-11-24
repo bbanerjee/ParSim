@@ -87,7 +87,10 @@ public:
   operator=(ImpMPM&&) = delete;
 
   virtual void
-  problemSetup(const ProblemSpecP& ) {};
+  problemSetup(const ProblemSpecP& params)
+  {
+    SimulationCommon::problemSetup(params);
+  }
   virtual void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& mat_ps,

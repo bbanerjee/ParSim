@@ -377,12 +377,20 @@ MPMPetscSolver::solve(vector<double>& guess)
     VecDestroy(&true_residual);
     PetscReal relative_true_residual =
       rhs_norm > 0.0 ? true_residual_norm / rhs_norm : true_residual_norm;
+    PetscInt global_rows = 0;
+    MatGetSize(d_A, &global_rows, nullptr);
     PetscPrintf(PETSC_COMM_WORLD,
-                "MPM PETSc solve: %.6f s, iterations=%lld, residual=%.6e, "
+                "MPM PETSc solve: system=%s, rows=%lld, %.6f s, "
+                "iterations=%lld, residual=%.6e, "
+                "rhs_norm=%.6e, true_residual=%.6e, "
                 "true_relative_residual=%.6e, b_dot_x=%.6e, reason=%d%s\n",
+                d_DOFsPerNode == 1 ? "heat" : "mechanics",
+                static_cast<long long>(global_rows),
                 static_cast<double>(end_time - start_time),
                 static_cast<long long>(iterations),
                 static_cast<double>(residual),
+                static_cast<double>(rhs_norm),
+                static_cast<double>(true_residual_norm),
                 static_cast<double>(relative_true_residual),
                 static_cast<double>(PetscRealPart(rhs_solution_dot)),
                 static_cast<int>(reason),
@@ -815,9 +823,28 @@ MPMPetscSolver::removeFixedDOF()
     if (ierr) {
       throw UintahPetscError(ierr, "MatIsSymmetric", __FILE__, __LINE__);
     }
+    PetscInt min_diagonal_index = 0;
+    PetscInt max_diagonal_index = 0;
+    PetscReal min_diagonal = 0.0;
+    PetscReal max_diagonal = 0.0;
+    ierr = MatGetDiagonal(d_A, d_diagonal);
+    if (!ierr) {
+      ierr = VecMin(d_diagonal, &min_diagonal_index, &min_diagonal);
+    }
+    if (!ierr) {
+      ierr = VecMax(d_diagonal, &max_diagonal_index, &max_diagonal);
+    }
+    if (ierr) {
+      throw UintahPetscError(ierr, "PETSc diagonal diagnostics", __FILE__, __LINE__);
+    }
     PetscPrintf(PETSC_COMM_WORLD,
-                "MPM PETSc matrix symmetry after constraints: %s\n",
-                symmetric == PETSC_TRUE ? "yes" : "no");
+                "MPM PETSc matrix after constraints: symmetric=%s, "
+                "diagonal_min=%.6e (row=%lld), diagonal_max=%.6e (row=%lld)\n",
+                symmetric == PETSC_TRUE ? "yes" : "no",
+                static_cast<double>(min_diagonal),
+                static_cast<long long>(min_diagonal_index),
+                static_cast<double>(max_diagonal),
+                static_cast<long long>(max_diagonal_index));
   }
 #endif
 
