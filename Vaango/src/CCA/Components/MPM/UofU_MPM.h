@@ -50,20 +50,10 @@ public:
 
   virtual ~UofU_MPM();
 
-  virtual void
-  recomputeDelT() {}
-  virtual double
-  recomputeDelT(double delT)
-  {
-    return delT * 0.1;
-  }
-
-  virtual void
-  problemSetup(const ProblemSpecP& ) {};
-  virtual void
+  void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
-               GridP& grid, const std::string& name = "");
+               GridP& grid, const std::string& name = "") override;
 
   virtual void
   outputProblemSpec(ProblemSpecP& ps);

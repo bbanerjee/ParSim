@@ -62,9 +62,7 @@ public:
   // for the shell problem */
   //
   ///////////////////////////////////////////////////////////////////////////
-  virtual void
-  problemSetup(const ProblemSpecP& ) {};
-  virtual void
+  void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
                GridP& grid,

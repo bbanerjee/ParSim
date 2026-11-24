@@ -72,12 +72,10 @@ public:
   AMRMPM&
   operator=(AMRMPM&&) = delete;
 
-  virtual void
-  problemSetup(const ProblemSpecP& ) {}
-  virtual void
+  void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
-               GridP& grid, const std::string& name = "");
+               GridP& grid, const std::string& name = "") override;
 
   virtual void
   outputProblemSpec(ProblemSpecP& ps);

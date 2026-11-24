@@ -87,17 +87,22 @@ public:
   auto
   operator=(SerialMPM&&) -> SerialMPM& = delete;
 
-  virtual void
-  recomputeDelT() {}
+  using SimulationCommon::problemSetup;
+  using SimulationCommon::recomputeDelT;
+
+  void
+  setupForSwitching() override
+  {
+    MPMCommon::setupForSwitching();
+  }
+
   double
   recomputeDelT(double delT) override
   {
     return delT * 0.1;
   }
 
-  virtual void
-  problemSetup(const ProblemSpecP& ) {};
-  virtual void
+  void
   problemSetup(const ProblemSpecP& params,
                const ProblemSpecP& restart_prob_spec,
                GridP& grid,
